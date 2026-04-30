@@ -22,9 +22,9 @@ type WakeLockNavigator = Navigator & {
  * Keeps the screen awake while the user is on the rider-facing screens.
  * Mounted by app/(tabs)/layout.tsx so /admin and /about are unaffected.
  *
- * Renders a small toggle badge top-right that lets riders flip the lock
- * on/off; the choice persists in localStorage. If the API is missing we
- * fail silent — no UI at all.
+ * Renders a small sun-icon toggle top-right. Bright = active, dim = off.
+ * Tap toggles; choice persists in localStorage. Wake-lock-unsupported
+ * browsers render nothing — silent fail per spec.
  */
 export function ScreenAwake() {
   const [supported, setSupported] = useState(false);
@@ -109,44 +109,67 @@ export function ScreenAwake() {
     });
   };
 
+  // Bright = active (lock held). Dim = off (preference disabled, or tab
+  // hidden so browser released the lock).
+  const lit = enabled && active;
+  const color = lit ? SS_TOKENS.alert : SS_TOKENS.fg3;
+
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-label={
-        enabled ? "Screen-awake on, tap to disable" : "Screen-awake off, tap to enable"
+        enabled
+          ? "Screen wake lock on, tap to disable"
+          : "Screen wake lock off, tap to enable"
       }
       style={{
         position: "fixed",
         top: 12,
         right: 12,
         zIndex: 30,
-        background: enabled ? SS_TOKENS.bg2 : "transparent",
-        border: `.5px solid ${enabled ? `${SS_TOKENS.sky}55` : SS_TOKENS.hairline}`,
-        color: enabled ? SS_TOKENS.sky : SS_TOKENS.fg3,
-        borderRadius: 999,
-        padding: "5px 10px",
+        width: 32,
+        height: 32,
+        borderRadius: "50%",
+        background: lit ? "rgba(245,184,64,0.12)" : "rgba(11,13,16,0.55)",
+        border: `.5px solid ${lit ? `${SS_TOKENS.alert}55` : SS_TOKENS.hairline}`,
+        color,
         cursor: "pointer",
-        fontFamily: "var(--font-mono)",
-        fontSize: 10,
-        letterSpacing: ".08em",
         display: "inline-flex",
         alignItems: "center",
-        gap: 6,
+        justifyContent: "center",
         backdropFilter: "blur(6px)",
         WebkitBackdropFilter: "blur(6px)",
+        transition: "color 200ms, background 200ms",
       }}
     >
-      <span
-        style={{
-          width: 6,
-          height: 6,
-          borderRadius: "50%",
-          background: active ? SS_TOKENS.sky : SS_TOKENS.fg3,
-          boxShadow: active ? `0 0 6px ${SS_TOKENS.sky}` : "none",
-        }}
-      />
-      {enabled ? "AWAKE" : "OFF"}
+      <SunIcon lit={lit} />
     </button>
+  );
+}
+
+function SunIcon({ lit }: { lit: boolean }) {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={lit ? 2 : 1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="4" fill={lit ? "currentColor" : "none"} />
+      <path d="M12 2 v2" />
+      <path d="M12 20 v2" />
+      <path d="m4.93 4.93 1.41 1.41" />
+      <path d="m17.66 17.66 1.41 1.41" />
+      <path d="M2 12 h2" />
+      <path d="M20 12 h2" />
+      <path d="m4.93 19.07 1.41-1.41" />
+      <path d="m17.66 6.34 1.41-1.41" />
+    </svg>
   );
 }
