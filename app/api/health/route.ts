@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { FLEET } from "@/lib/seed";
 import { getLastSource } from "@/lib/snapshot";
 import { cacheGet, cacheSet, hasKv } from "@/lib/cache";
+import {
+  getOpenskyToken,
+  getOpenskyCreditsRemaining,
+} from "@/lib/opensky";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,29 +45,45 @@ async function pingKv(): Promise<"ok" | "err" | "memory"> {
   }
 }
 
+async function pingOpensky(): Promise<"ok" | "err" | "anonymous"> {
+  if (!process.env.OPENSKY_CLIENT_ID || !process.env.OPENSKY_CLIENT_SECRET) {
+    return "anonymous";
+  }
+  try {
+    const token = await Promise.race([
+      getOpenskyToken(),
+      new Promise<null>((_, rej) =>
+        setTimeout(() => rej(new Error("opensky auth timeout")), PING_TIMEOUT_MS),
+      ),
+    ]);
+    return token ? "ok" : "err";
+  } catch {
+    return "err";
+  }
+}
+
 export async function GET() {
-  // Use ICAO range bbox at 0nm so the call is tiny but exercises the endpoint.
   const adsbfiUrl =
     "https://opendata.adsb.fi/api/v2/lat/47.6/lon/-122.3/dist/1";
-  // Smoky's hex — small, valid, anonymous.
-  const openskyUrl =
-    "https://opensky-network.org/api/states/all?icao24=a3323a";
 
-  const [kv, adsbfi, opensky] = await Promise.all([
+  const [kv, adsbfi, opensky, opensky_credits_remaining] = await Promise.all([
     pingKv(),
     pingUrl(adsbfiUrl),
-    pingUrl(openskyUrl),
+    pingOpensky(),
+    getOpenskyCreditsRemaining(),
   ]);
 
-  const ok = adsbfi === "ok" || opensky === "ok"; // KV is optional
-  const body = {
+  // adsb.fi is the only path that must work for the app to be useful;
+  // OpenSky is a fallback. KV is optional (in-memory fallback exists).
+  const ok = adsbfi === "ok";
+  return NextResponse.json({
     ok,
     kv,
     adsbfi,
     opensky,
+    opensky_credits_remaining,
     tails: FLEET.length,
     source_last: getLastSource(),
     ts: new Date().toISOString(),
-  };
-  return NextResponse.json(body);
+  });
 }

@@ -2,7 +2,13 @@
 // Polite usage: bbox query once per refresh, KV-cached upstream.
 
 import { FLEET, fleetHex } from "./seed";
-import type { Aircraft, AircraftLive, Snapshot } from "./types";
+import { fetchOpenSky } from "./opensky";
+import type {
+  Aircraft,
+  AircraftLive,
+  NormalizedAc,
+  Snapshot,
+} from "./types";
 
 // Precompute icao24 → fleet entry index at module load.
 const FLEET_BY_ICAO = new Map<string, (typeof FLEET)[number]>();
@@ -32,18 +38,9 @@ const FETCH_OPTS: RequestInit = {
 
 // ─── adsb.fi ───────────────────────────────────────────────────────────────
 
-type AdsbFiAc = {
-  hex: string;
-  r?: string;
-  lat?: number;
-  lon?: number;
-  alt_baro?: number | "ground";
-  gs?: number;
-  track?: number;
-};
-type AdsbFiResp = { ac?: AdsbFiAc[]; now?: number };
+type AdsbFiResp = { ac?: NormalizedAc[]; now?: number };
 
-async function fetchAdsbFi(): Promise<AdsbFiAc[]> {
+async function fetchAdsbFi(): Promise<NormalizedAc[]> {
   const url = `https://opendata.adsb.fi/api/v2/lat/${REGION.lat}/lon/${REGION.lon}/dist/${REGION.nm}`;
   const r = await fetch(url, FETCH_OPTS);
   if (!r.ok) throw new Error(`adsb.fi ${r.status}`);
@@ -51,46 +48,17 @@ async function fetchAdsbFi(): Promise<AdsbFiAc[]> {
   return j.ac ?? [];
 }
 
-// ─── OpenSky ───────────────────────────────────────────────────────────────
-
-type OpenSkyResp = { time: number; states: unknown[][] | null };
-
-async function fetchOpenSky(): Promise<AdsbFiAc[]> {
-  const url = `https://opensky-network.org/api/states/all?icao24=${FLEET_HEXES.join(",")}`;
-  const r = await fetch(url, FETCH_OPTS);
-  if (!r.ok) throw new Error(`opensky ${r.status}`);
-  const j = (await r.json()) as OpenSkyResp;
-  // states_vector: [icao24, callsign, country, time_position, last_contact,
-  //   lon, lat, baro_alt, on_ground, velocity, true_track, ...]
-  return (j.states ?? []).map((s) => ({
-    hex: String(s[0] ?? "").toLowerCase(),
-    lon: typeof s[5] === "number" ? (s[5] as number) : undefined,
-    lat: typeof s[6] === "number" ? (s[6] as number) : undefined,
-    alt_baro:
-      s[8] === true
-        ? "ground"
-        : typeof s[7] === "number"
-          ? Math.round((s[7] as number) * 3.28084) // m → ft
-          : undefined,
-    gs:
-      typeof s[9] === "number"
-        ? Math.round((s[9] as number) * 1.94384) // m/s → kt
-        : undefined,
-    track: typeof s[10] === "number" ? (s[10] as number) : undefined,
-  }));
-}
-
 // ─── Normalize + merge ─────────────────────────────────────────────────────
 
 export async function buildSnapshot(): Promise<Snapshot> {
-  let raw: AdsbFiAc[] = [];
+  let raw: NormalizedAc[] = [];
   let source: Snapshot["source"] = "adsbfi";
   try {
     raw = await fetchAdsbFi();
   } catch (e) {
     console.warn("[adsb] primary failed, falling back to OpenSky:", e);
     try {
-      raw = await fetchOpenSky();
+      raw = await fetchOpenSky(FLEET_HEXES);
       source = "opensky";
     } catch (e2) {
       console.error("[adsb] both feeds failed:", e2);
@@ -101,7 +69,7 @@ export async function buildSnapshot(): Promise<Snapshot> {
   }
 
   const now = Date.now();
-  const liveByIcao = new Map<string, AdsbFiAc>();
+  const liveByIcao = new Map<string, NormalizedAc>();
   for (const ac of raw) {
     const hex = ac.hex.toLowerCase();
     if (FLEET_BY_ICAO.has(hex)) liveByIcao.set(hex, ac);

@@ -31,6 +31,24 @@ export type Aircraft = FleetEntry & AircraftLive;
 
 export type SnapshotSource = "adsbfi" | "opensky" | "mock";
 
+/**
+ * Internal feed-agnostic aircraft shape produced by both adsb.fi and OpenSky
+ * adapters. Field names match adsb.fi's v2 API since that's the primary source.
+ */
+export type NormalizedAc = {
+  hex: string;
+  /** Registration / tail number, when the upstream feed provides it. */
+  r?: string;
+  lat?: number;
+  lon?: number;
+  /** Barometric altitude in feet, or "ground" when on the deck. */
+  alt_baro?: number | "ground";
+  /** Ground speed, knots. */
+  gs?: number;
+  /** True track, degrees. */
+  track?: number;
+};
+
 export type Snapshot = {
   fetched_at: number;
   source: SnapshotSource;
