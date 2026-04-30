@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
+import { BASE_URL } from "@/lib/config";
 import "./globals.css";
 
 const inter = Inter({
@@ -19,18 +20,8 @@ const TITLE = "SmokySignal — is the bird up?";
 const DESCRIPTION =
   "Real-time WSP aircraft tracker for Puget Sound motorcyclists. Know when Smoky is watching.";
 
-// Vercel injects VERCEL_PROJECT_PRODUCTION_URL on Production builds and
-// VERCEL_URL per-deployment. Fall back to localhost in dev.
-const siteUrl = (() => {
-  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
-  if (explicit) return explicit;
-  const v =
-    process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
-  return v ? `https://${v}` : "http://localhost:3000";
-})();
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(BASE_URL),
   title: TITLE,
   description: DESCRIPTION,
   openGraph: {
