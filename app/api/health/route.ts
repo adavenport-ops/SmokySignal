@@ -47,9 +47,13 @@ async function pingKv(): Promise<"ok" | "err" | "memory"> {
   }
 }
 
-async function pingOpensky(): Promise<"ok" | "err" | "anonymous"> {
+type OpenskyPing =
+  | { status: "ok" | "anonymous"; error?: undefined }
+  | { status: "err"; error: string };
+
+async function pingOpensky(): Promise<OpenskyPing> {
   if (!process.env.OPENSKY_CLIENT_ID || !process.env.OPENSKY_CLIENT_SECRET) {
-    return "anonymous";
+    return { status: "anonymous" };
   }
   try {
     const token = await Promise.race([
@@ -58,9 +62,10 @@ async function pingOpensky(): Promise<"ok" | "err" | "anonymous"> {
         setTimeout(() => rej(new Error("opensky auth timeout")), PING_TIMEOUT_MS),
       ),
     ]);
-    return token ? "ok" : "err";
-  } catch {
-    return "err";
+    return token ? { status: "ok" } : { status: "err", error: "no token returned" };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { status: "err", error: msg.slice(0, 240) };
   }
 }
 
@@ -68,7 +73,7 @@ export async function GET() {
   const adsbfiUrl =
     "https://opendata.adsb.fi/api/v2/lat/47.6/lon/-122.3/dist/1";
 
-  const [kv, adsbfi, opensky, opensky_credits_remaining] = await Promise.all([
+  const [kv, adsbfi, openskyResult, opensky_credits_remaining] = await Promise.all([
     pingKv(),
     pingUrl(adsbfiUrl),
     pingOpensky(),
@@ -82,7 +87,8 @@ export async function GET() {
     ok,
     kv,
     adsbfi,
-    opensky,
+    opensky: openskyResult.status,
+    ...(openskyResult.error ? { opensky_error: openskyResult.error } : {}),
     opensky_credits_remaining,
     tails: FLEET.length,
     source_last: getLastSource(),
