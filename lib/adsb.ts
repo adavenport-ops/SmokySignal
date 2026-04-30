@@ -31,14 +31,17 @@ const FETCH_OPTS: RequestInit = {
 
 // ─── adsb.fi ───────────────────────────────────────────────────────────────
 
-type AdsbFiResp = { ac?: NormalizedAc[]; now?: number };
+// Top-level field is `aircraft`, NOT `ac` (adsbexchange uses `ac` —
+// don't conflate them). Misreading this field caused every tail to
+// classify as airborne:false from launch through 2026-04-30.
+type AdsbFiResp = { aircraft?: NormalizedAc[]; now?: number };
 
 async function fetchAdsbFi(): Promise<NormalizedAc[]> {
   const url = `https://opendata.adsb.fi/api/v2/lat/${REGION.lat}/lon/${REGION.lon}/dist/${REGION.nm}`;
   const r = await fetch(url, FETCH_OPTS);
   if (!r.ok) throw new Error(`adsb.fi ${r.status}`);
   const j = (await r.json()) as AdsbFiResp;
-  return j.ac ?? [];
+  return j.aircraft ?? [];
 }
 
 // ─── Normalize + merge ─────────────────────────────────────────────────────
@@ -129,7 +132,12 @@ export async function buildSnapshot(): Promise<Snapshot> {
     return { ...entry, ...live };
   });
 
-  return { fetched_at: now, source, aircraft };
+  return {
+    fetched_at: now,
+    source,
+    aircraft,
+    live_seen_count: raw.length,
+  };
 }
 
 export function anyAirborne(snap: Snapshot): boolean {

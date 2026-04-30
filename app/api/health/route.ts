@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { FLEET } from "@/lib/seed";
-import { getLastSource } from "@/lib/snapshot";
+import {
+  getLastSource,
+  peekSnapshot,
+  getLastAirborneTs,
+} from "@/lib/snapshot";
 import { cacheGet, cacheSet, hasKv } from "@/lib/cache";
 import {
   getOpenskyToken,
@@ -83,12 +87,30 @@ export async function GET() {
   const adsbfiUrl =
     "https://opendata.adsb.fi/api/v2/lat/47.6/lon/-122.3/dist/1";
 
-  const [kv, adsbfi, openskyResult, opensky_credits_remaining] = await Promise.all([
+  const [
+    kv,
+    adsbfi,
+    openskyResult,
+    opensky_credits_remaining,
+    snap,
+    last_airborne_ts,
+  ] = await Promise.all([
     pingKv(),
     pingUrl(adsbfiUrl),
     pingOpensky(),
     getOpenskyCreditsRemaining(),
+    peekSnapshot(),
+    getLastAirborneTs(),
   ]);
+
+  // Counts derived from the cached snapshot. live_seen_count = total
+  // aircraft adsb.fi returned in the bbox before fleet filtering;
+  // airborne_count = how many of OUR fleet are airborne. Together they
+  // discriminate failure modes (parser broken vs. fleet just not flying).
+  const airborne_count = snap
+    ? snap.aircraft.filter((a) => a.airborne).length
+    : null;
+  const live_seen_count = snap?.live_seen_count ?? null;
 
   // adsb.fi is the only path that must work for the app to be useful;
   // OpenSky is a fallback. KV is optional (in-memory fallback exists).
@@ -97,6 +119,11 @@ export async function GET() {
     ok,
     kv,
     adsbfi,
+    airborne_count,
+    live_seen_count,
+    last_airborne_ts: last_airborne_ts
+      ? new Date(last_airborne_ts).toISOString()
+      : null,
     opensky: openskyResult.status,
     ...(openskyResult.error ? { opensky_error: openskyResult.error } : {}),
     opensky_credits_remaining,

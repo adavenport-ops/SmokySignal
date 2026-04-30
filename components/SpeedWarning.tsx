@@ -15,6 +15,7 @@ const EMPTY_SNAPSHOT: Snapshot = {
   fetched_at: 0,
   source: "adsbfi",
   aircraft: [],
+  live_seen_count: 0,
 };
 
 // Only the rider-facing screens with location should drive this; / never

@@ -57,4 +57,12 @@ export type Snapshot = {
   fetched_at: number;
   source: SnapshotSource;
   aircraft: Aircraft[];
+  /**
+   * Total count of aircraft the upstream feed returned for the regional
+   * bbox, BEFORE we filter down to our fleet. Useful as a feed-health
+   * signal: if this is 0 for hours during daytime, the upstream parser
+   * is probably broken again (the adsb.fi v2 ac→aircraft rename incident
+   * of P3-debug, 2026-04-30).
+   */
+  live_seen_count: number;
 };
