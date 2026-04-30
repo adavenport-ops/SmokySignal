@@ -1,6 +1,7 @@
 import { TabBar } from "@/components/TabBar";
 import { SpeedWarning } from "@/components/SpeedWarning";
 import { ScreenAwake } from "@/components/ScreenAwake";
+import { AppBadge } from "@/components/AppBadge";
 import { getSpeedWarningEnabled } from "@/lib/flags";
 
 export default async function TabsLayout({
@@ -14,6 +15,7 @@ export default async function TabsLayout({
       {children}
       <TabBar />
       <ScreenAwake />
+      <AppBadge />
       <SpeedWarning enabled={speedWarningEnabled} />
     </>
   );

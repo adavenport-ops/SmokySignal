@@ -1,92 +1,164 @@
-// Activity feed: state-change events derived from comparing successive
-// snapshots. Stored in a Redis list at activity:feed (last 100 entries).
-// Surfaced on the dashboard home and via /api/activity.
+// Activity feed: state-change events derived from successive snapshots.
+// Stored as a Redis list at activity:feed (last 500 entries, 35-day TTL).
+// Surfaced on /activity, on the Glanceable home as a one-line strip,
+// and via /api/activity.
+//
+// Event kinds:
+//   takeoff           — was grounded (or absent), now airborne
+//   landing           — was airborne, now grounded
+//   first_seen        — no prev entry for this tail and now airborne
+//                       (effectively "newly added to the registry and
+//                        already in the air on first observation")
+//   squawk_emergency  — current squawk is 7500/7600/7700 AND prev
+//                       squawk differed (so we only fire on transitions,
+//                       not continuously while the alert is active)
+//
+// `altitude_change` is preserved as a tolerated kind on read for any
+// pre-existing entries written by the previous activity-detection
+// implementation; we no longer emit it.
 
 import { getRedis, cacheGet, cacheSet } from "./cache";
 import type { Aircraft, Snapshot } from "./types";
 
 const FEED_KEY = "activity:feed";
 const PREV_KEY = "aircraft:prev";
-const FEED_LIMIT = 100;
+const FEED_LIMIT = 500;
+const FEED_TTL_SECONDS = 35 * 24 * 60 * 60;
 const PREV_TTL_SECONDS = 24 * 60 * 60;
 const READ_CACHE_TTL = 8;
 
-const MIN_ALT_DELTA_FT = 1000;
+const EMERGENCY_SQUAWKS = new Set(["7500", "7600", "7700"]);
 
-export type ActivityKind = "takeoff" | "landing" | "altitude_change";
+export type ActivityKind =
+  | "takeoff"
+  | "landing"
+  | "first_seen"
+  | "squawk_emergency"
+  | "altitude_change"; // tolerated for read-back; never emitted by current code
 
 export type ActivityEntry = {
-  ts: number; // unix seconds
+  /** ms since epoch (Date.now()) */
+  ts: number;
   tail: string;
+  icao24?: string;
   kind: ActivityKind;
+  squawk?: string | null;
+  lat?: number | null;
+  lon?: number | null;
+  alt_ft?: number | null;
   description: string;
 };
 
-function describe(
-  kind: ActivityKind,
+export function describeEvent(
   tail: string,
   nickname: string | null | undefined,
-  altDelta?: number,
+  kind: ActivityKind,
+  squawk?: string | null,
 ): string {
-  const display = nickname || tail;
-  switch (kind) {
-    case "takeoff":
-      return `${display} off the deck`;
-    case "landing":
-      return `${display} wheels down`;
-    case "altitude_change": {
-      if (altDelta == null) return `${display} altitude shift`;
-      const verb = altDelta > 0 ? "climbing" : "descending";
-      return `${display} ${verb} · ${Math.abs(Math.round(altDelta / 100) * 100)}ft swing`;
-    }
+  const name = nickname ?? tail;
+
+  if (kind === "takeoff") {
+    if (nickname === "Smokey 4") return "Smoky off the deck";
+    if (nickname === "Guardian One") return "Guardian One up from Renton";
+    if (nickname === "Pierce One") return "Pierce One airborne from Thun Field";
+    if (nickname === "SnoHawk 10") return "SnoHawk 10 lifting off";
+    if (nickname === "Air 1") return "Air 1 up from Felts Field";
+    if (nickname) return `${nickname} airborne`;
+    return `${tail} airborne`;
   }
+
+  if (kind === "landing") {
+    if (nickname === "Smokey 4") return "Smoky landed";
+    return `${name} landed`;
+  }
+
+  if (kind === "first_seen") {
+    return `New contact: ${tail}`;
+  }
+
+  if (kind === "squawk_emergency") {
+    const meaning =
+      squawk === "7700"
+        ? "emergency"
+        : squawk === "7600"
+          ? "radio failure"
+          : squawk === "7500"
+            ? "hijack"
+            : "alert";
+    return `⚠ ${name} squawking ${meaning}`;
+  }
+
+  // altitude_change (legacy) or unknown
+  return `${tail} ${kind}`;
+}
+
+function readPrev(snap: Snapshot | null): Map<string, Aircraft> {
+  const m = new Map<string, Aircraft>();
+  if (!snap) return m;
+  for (const a of snap.aircraft) m.set(a.tail, a);
+  return m;
 }
 
 function diffEvents(prev: Snapshot | null, curr: Snapshot): ActivityEntry[] {
-  if (!prev) return [];
-  const prevByTail = new Map<string, Aircraft>();
-  for (const a of prev.aircraft) prevByTail.set(a.tail, a);
-
-  const ts = Math.floor(curr.fetched_at / 1000);
+  const prevByTail = readPrev(prev);
+  const ts = Date.now();
   const out: ActivityEntry[] = [];
 
   for (const a of curr.aircraft) {
     const p = prevByTail.get(a.tail);
-    if (!p) continue;
+    const baseEntry = {
+      ts,
+      tail: a.tail,
+      icao24: a.icao24,
+      lat: a.lat ?? null,
+      lon: a.lon ?? null,
+      alt_ft: a.altitude_ft ?? null,
+    };
 
-    if (!p.airborne && a.airborne) {
+    // first_seen: tail wasn't in prev snapshot at all and is currently
+    // airborne. Fires once per registry add for any tail that's already
+    // up when it joins.
+    if (!p && a.airborne) {
       out.push({
-        ts,
-        tail: a.tail,
+        ...baseEntry,
+        kind: "first_seen",
+        squawk: a.squawk ?? null,
+        description: describeEvent(a.tail, a.nickname, "first_seen"),
+      });
+      // intentional: don't also emit takeoff for the same instant
+      continue;
+    }
+
+    // takeoff
+    if (p && !p.airborne && a.airborne) {
+      out.push({
+        ...baseEntry,
         kind: "takeoff",
-        description: describe("takeoff", a.tail, a.nickname),
+        squawk: a.squawk ?? null,
+        description: describeEvent(a.tail, a.nickname, "takeoff"),
       });
-      continue;
     }
-    if (p.airborne && !a.airborne) {
+
+    // landing
+    if (p && p.airborne && !a.airborne) {
       out.push({
-        ts,
-        tail: a.tail,
+        ...baseEntry,
         kind: "landing",
-        description: describe("landing", a.tail, a.nickname),
+        squawk: a.squawk ?? null,
+        description: describeEvent(a.tail, a.nickname, "landing"),
       });
-      continue;
     }
-    if (
-      p.airborne &&
-      a.airborne &&
-      typeof p.altitude_ft === "number" &&
-      typeof a.altitude_ft === "number"
-    ) {
-      const delta = a.altitude_ft - p.altitude_ft;
-      if (Math.abs(delta) >= MIN_ALT_DELTA_FT) {
-        out.push({
-          ts,
-          tail: a.tail,
-          kind: "altitude_change",
-          description: describe("altitude_change", a.tail, a.nickname, delta),
-        });
-      }
+
+    // squawk transition into emergency code
+    const cs = a.squawk ?? null;
+    const ps = p?.squawk ?? null;
+    if (cs && EMERGENCY_SQUAWKS.has(cs) && cs !== ps) {
+      out.push({
+        ...baseEntry,
+        kind: "squawk_emergency",
+        squawk: cs,
+        description: describeEvent(a.tail, a.nickname, "squawk_emergency", cs),
+      });
     }
   }
 
@@ -94,18 +166,21 @@ function diffEvents(prev: Snapshot | null, curr: Snapshot): ActivityEntry[] {
 }
 
 /**
- * Compute state-change events between previous and current snapshots, append
- * any to the activity feed in KV, and persist current as the new "previous".
- * Best-effort — never throws.
+ * Diff current snapshot vs previous, append events to the feed, persist
+ * current as the new "previous" for next call. Best-effort; never throws.
  */
 export async function recordActivity(curr: Snapshot): Promise<void> {
   const redis = await getRedis();
   if (!redis) return;
+
   let prev: Snapshot | null = null;
   try {
     const raw = await redis.get(PREV_KEY);
     if (raw) {
-      prev = typeof raw === "string" ? (JSON.parse(raw) as Snapshot) : (raw as Snapshot);
+      prev =
+        typeof raw === "string"
+          ? (JSON.parse(raw) as Snapshot)
+          : (raw as Snapshot);
     }
   } catch (e) {
     console.warn("[activity] read prev failed:", e);
@@ -117,21 +192,25 @@ export async function recordActivity(curr: Snapshot): Promise<void> {
       const payload = events.map((e) => JSON.stringify(e));
       await redis.rpush(FEED_KEY, ...payload);
       await redis.ltrim(FEED_KEY, -FEED_LIMIT, -1);
+      await redis.expire(FEED_KEY, FEED_TTL_SECONDS);
     } catch (e) {
       console.warn("[activity] rpush failed:", e);
     }
   }
 
   try {
-    await redis.set(PREV_KEY, JSON.stringify(curr), {
-      ex: PREV_TTL_SECONDS,
-    });
+    await redis.set(PREV_KEY, JSON.stringify(curr), { ex: PREV_TTL_SECONDS });
   } catch (e) {
     console.warn("[activity] write prev failed:", e);
   }
 }
 
-export async function getRecentActivity(limit = 10): Promise<ActivityEntry[]> {
+/**
+ * Most recent N events, newest-first. Tolerates the older feed-entry
+ * shape (no icao24/squawk/lat/lon/alt_ft, ts in seconds) by leaving
+ * those fields undefined.
+ */
+export async function getRecentActivity(limit = 50): Promise<ActivityEntry[]> {
   const cacheKey = `ss:activity-recent:${limit}`;
   const cached = await cacheGet<ActivityEntry[]>(cacheKey);
   if (cached) return cached;
@@ -159,6 +238,8 @@ export async function getRecentActivity(limit = 10): Promise<ActivityEntry[]> {
       return null;
     })
     .filter((e): e is ActivityEntry => e !== null)
+    // Normalize: if ts looks like seconds (10-digit unix), promote to ms.
+    .map((e) => (e.ts < 1e12 ? { ...e, ts: e.ts * 1000 } : e))
     .reverse(); // newest first
 
   await cacheSet(cacheKey, entries, READ_CACHE_TTL);

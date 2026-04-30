@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import type { Aircraft, Snapshot } from "@/lib/types";
+import type { ActivityEntry } from "@/lib/activity";
 import { SMOKY_TAIL } from "@/lib/seed";
 import { SS_TOKENS } from "@/lib/tokens";
 import { fmtAgo, fmtAloft } from "@/lib/format";
@@ -11,11 +13,47 @@ import { Card } from "./Card";
 import { PlaneIcon, planeKindFor } from "./PlaneIcon";
 import { PredictionCard } from "./PredictionCard";
 
-type Props = { initial: Snapshot; mockOn?: boolean };
+type Props = {
+  initial: Snapshot;
+  mockOn?: boolean;
+  initialActivity?: ActivityEntry[];
+};
 
-export function Glanceable({ initial, mockOn = false }: Props) {
+export function Glanceable({
+  initial,
+  mockOn = false,
+  initialActivity = [],
+}: Props) {
   const snap = useAircraft(initial, mockOn);
   const [updatedAgo, setUpdatedAgo] = useState<number>(0);
+  const [activity, setActivity] = useState<ActivityEntry[]>(initialActivity);
+
+  // Poll /api/activity every 30s so the strip stays current without
+  // forcing a full snapshot regen.
+  useEffect(() => {
+    let cancelled = false;
+    const tick = async () => {
+      if (document.visibilityState === "hidden") return;
+      try {
+        const r = await fetch("/api/activity?limit=1", { cache: "no-store" });
+        if (!r.ok) return;
+        const d = (await r.json()) as { entries: ActivityEntry[] };
+        if (!cancelled) setActivity(d.entries);
+      } catch {
+        /* transient */
+      }
+    };
+    const id = setInterval(tick, 30_000);
+    const onVis = () => {
+      if (document.visibilityState === "visible") void tick();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
 
   // "Updated Xs ago" label.
   useEffect(() => {
@@ -76,6 +114,8 @@ export function Glanceable({ initial, mockOn = false }: Props) {
 
       <Hero up={up} smoky={smoky} />
 
+      {activity.length > 0 && <ActivityStrip latest={activity[0]!} />}
+
       {others.length > 0 && <Others others={others} />}
 
       <PredictionCard />
@@ -125,6 +165,60 @@ function Footer() {
       </a>
     </footer>
   );
+}
+
+function ActivityStrip({ latest }: { latest: ActivityEntry }) {
+  return (
+    <Link
+      href="/activity"
+      prefetch={false}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "10px 14px",
+        borderRadius: 10,
+        background: SS_TOKENS.bg1,
+        border: `.5px solid ${SS_TOKENS.hairline}`,
+        textDecoration: "none",
+        color: SS_TOKENS.fg1,
+        fontSize: 14,
+        lineHeight: 1.4,
+      }}
+    >
+      <span
+        aria-hidden
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background: SS_TOKENS.alert,
+          boxShadow: `0 0 8px ${SS_TOKENS.alert}`,
+          flexShrink: 0,
+          animation: "ss-blink 1.6s infinite",
+        }}
+      />
+      <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {latest.description}
+      </span>
+      <span
+        className="ss-mono"
+        style={{ fontSize: 11, color: SS_TOKENS.fg2, flexShrink: 0 }}
+      >
+        {fmtRelativeStrip(latest.ts)}
+      </span>
+    </Link>
+  );
+}
+
+function fmtRelativeStrip(tsMs: number): string {
+  const seconds = Math.max(0, Math.floor((Date.now() - tsMs) / 1000));
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
 function Hero({ up, smoky }: { up: boolean; smoky: Aircraft | undefined }) {

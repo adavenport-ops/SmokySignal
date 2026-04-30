@@ -7,6 +7,7 @@ import { useAircraft } from "@/lib/hooks/useAircraft";
 import { SS_TOKENS } from "@/lib/tokens";
 import { SMOKY_TAIL } from "@/lib/seed";
 import { StatusPill } from "./StatusPill";
+import { SpottedButton } from "./SpottedButton";
 import type { Aircraft, Snapshot } from "@/lib/types";
 
 export type RiderPos = { lat: number; lon: number };
@@ -105,6 +106,8 @@ export function RadarShell({ initial, mockOn = false }: Props) {
       <CompassN />
 
       {airborne.length > 0 && <Carousel airborne={airborne} />}
+
+      <SpottedButton airborne={airborne} />
 
       {toast && <Toast message={toast} hasCarousel={airborne.length > 0} />}
     </main>

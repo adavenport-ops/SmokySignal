@@ -196,7 +196,7 @@ export function Editor({
 
 // ─── shared admin nav ──────────────────────────────────────────────────────
 
-function AdminNav({ active }: { active: "registry" | "flights" }) {
+function AdminNav({ active }: { active: "registry" | "flights" | "spots" }) {
   return (
     <header
       style={{
@@ -224,6 +224,9 @@ function AdminNav({ active }: { active: "registry" | "flights" }) {
         </NavLink>
         <NavLink href="/admin/tracks" active={active === "flights"}>
           FLIGHTS
+        </NavLink>
+        <NavLink href="/admin/spots" active={active === "spots"}>
+          SPOTS
         </NavLink>
         <form action={logoutAction}>
           <button

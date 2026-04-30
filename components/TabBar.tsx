@@ -6,9 +6,10 @@ import { SS_TOKENS } from "@/lib/tokens";
 import type { ReactNode } from "react";
 
 const TABS: { id: string; label: string; href: string; icon: ReactNode }[] = [
-  { id: "now", label: "Now", href: "/", icon: <ActivityIcon /> },
+  { id: "home", label: "Home", href: "/", icon: <HomeIcon /> },
   { id: "radar", label: "Radar", href: "/radar", icon: <RadarIcon /> },
-  { id: "dash", label: "Dash", href: "/dash", icon: <GaugeIcon /> },
+  { id: "activity", label: "Activity", href: "/activity", icon: <ActivityIcon /> },
+  { id: "about", label: "About", href: "/about", icon: <InfoIcon /> },
 ];
 
 export function TabBar() {
@@ -72,7 +73,26 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-// Lucide-style "activity" icon — heartbeat line.
+// Lucide-style "home" icon — house outline.
+function HomeIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <path d="M9 22V12h6v10" />
+    </svg>
+  );
+}
+
+// Lucide-style "activity" icon — stack of horizontal lines (changelog feel).
 function ActivityIcon() {
   return (
     <svg
@@ -85,13 +105,18 @@ function ActivityIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+      <path d="M21 6H8" />
+      <path d="M21 12H8" />
+      <path d="M21 18H8" />
+      <circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none" />
     </svg>
   );
 }
 
-// Lucide-style "gauge" icon — half-circle dial with a needle.
-function GaugeIcon() {
+// Lucide-style "info" icon — circle with i.
+function InfoIcon() {
   return (
     <svg
       width="18"
@@ -103,8 +128,9 @@ function GaugeIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="m12 14 4-4" />
-      <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
     </svg>
   );
 }
