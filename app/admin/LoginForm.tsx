@@ -1,7 +1,13 @@
 import { authenticateAction } from "./actions";
 import { SS_TOKENS } from "@/lib/tokens";
 
-export function LoginForm({ error }: { error?: string }) {
+export function LoginForm({
+  error,
+  next,
+}: {
+  error?: string;
+  next?: string;
+}) {
   return (
     <main
       style={{
@@ -30,6 +36,7 @@ export function LoginForm({ error }: { error?: string }) {
         action={authenticateAction}
         style={{ display: "flex", flexDirection: "column", gap: 8 }}
       >
+        {next && <input type="hidden" name="next" value={next} />}
         <label
           className="ss-mono"
           style={{ fontSize: 10.5, color: SS_TOKENS.fg2, letterSpacing: ".08em" }}

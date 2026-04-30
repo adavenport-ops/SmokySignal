@@ -45,13 +45,24 @@ function requireAdmin() {
   if (!isAdminAuthed()) redirect("/admin");
 }
 
+const VALID_NEXT_TARGETS: Record<string, string> = {
+  tracks: "/admin/tracks",
+};
+
 export async function authenticateAction(formData: FormData) {
   const passcode = s(formData, "passcode");
+  const nextRaw = s(formData, "next");
   if (!passcode || !verifyPasscode(passcode)) {
-    redirect(bouncePath("invalid"));
+    const errPath = VALID_NEXT_TARGETS[nextRaw] ?? "/admin";
+    const params = new URLSearchParams({ error: "invalid" });
+    if (nextRaw && VALID_NEXT_TARGETS[nextRaw]) {
+      params.set("next", nextRaw);
+    }
+    redirect(`${errPath}?${params.toString()}`);
   }
   setAdminCookie();
-  redirect("/admin");
+  const dest = VALID_NEXT_TARGETS[nextRaw] ?? "/admin";
+  redirect(dest);
 }
 
 export async function logoutAction() {

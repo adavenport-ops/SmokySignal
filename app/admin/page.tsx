@@ -19,7 +19,7 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-type SP = { error?: string; saved?: string };
+type SP = { error?: string; saved?: string; next?: string };
 
 export default async function AdminPage({
   searchParams,
@@ -30,7 +30,7 @@ export default async function AdminPage({
     return <PasscodeMissing />;
   }
   if (!isAdminAuthed()) {
-    return <LoginForm error={searchParams.error} />;
+    return <LoginForm error={searchParams.error} next={searchParams.next} />;
   }
 
   const [registry, backups, audit, speedWarningEnabled] = await Promise.all([

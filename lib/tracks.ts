@@ -101,6 +101,100 @@ export async function getRecentPositions(
 }
 
 /** Distinct UTC date count we have track history for, capped at 30 for display. */
+/** Sorted list of YYYYMMDD dates that have tracks for this tail (newest first). */
+export async function listTrackKeys(tail: string): Promise<string[]> {
+  const redis = await getRedis();
+  if (!redis) return [];
+  const dates = new Set<string>();
+  let cursor: string | number = 0;
+  do {
+    const result = (await redis.scan(cursor, {
+      match: `tracks:${tail}:*`,
+      count: 100,
+    })) as [string | number, string[]];
+    for (const k of result[1]) {
+      const d = k.split(":")[2];
+      if (d) dates.add(d);
+    }
+    cursor = result[0];
+  } while (String(cursor) !== "0");
+  return [...dates].sort().reverse();
+}
+
+/** All track points for a single UTC day, oldest → newest. */
+export async function getTracksForDay(
+  tail: string,
+  date: string,
+): Promise<TrackPoint[]> {
+  const redis = await getRedis();
+  if (!redis) return [];
+  const key = `tracks:${tail}:${date}`;
+  let raw: unknown[] = [];
+  try {
+    raw = (await redis.lrange(key, 0, -1)) as unknown[];
+  } catch {
+    return [];
+  }
+  return raw
+    .map((s) => safeParse(s))
+    .filter((p): p is TrackPoint => p !== null);
+}
+
+export type TrackSummary = {
+  totalSamples: number;
+  daysWithData: number;
+  firstSampleTs: number | null;
+  lastSampleTs: number | null;
+};
+
+/** Summary stats for the debug overview — total count, day count, span. */
+export async function getTrackSummary(tail: string): Promise<TrackSummary> {
+  const redis = await getRedis();
+  if (!redis) {
+    return {
+      totalSamples: 0,
+      daysWithData: 0,
+      firstSampleTs: null,
+      lastSampleTs: null,
+    };
+  }
+  const dates = await listTrackKeys(tail); // newest first
+  if (dates.length === 0) {
+    return {
+      totalSamples: 0,
+      daysWithData: 0,
+      firstSampleTs: null,
+      lastSampleTs: null,
+    };
+  }
+
+  // Sum LLEN across each day. Done sequentially — at most 35 days
+  // (matches our 35-day TTL on track keys), so 35 round-trips worst case.
+  let total = 0;
+  for (const date of dates) {
+    try {
+      const len = (await redis.llen(`tracks:${tail}:${date}`)) as number;
+      total += typeof len === "number" ? len : 0;
+    } catch {
+      /* skip */
+    }
+  }
+
+  const newest = dates[0]!;
+  const oldest = dates[dates.length - 1]!;
+  const lastRaw = (await redis.lrange(`tracks:${tail}:${newest}`, -1, -1)) as unknown[];
+  const firstRaw = (await redis.lrange(`tracks:${tail}:${oldest}`, 0, 0)) as unknown[];
+  const last = safeParse(lastRaw[0]);
+  const first = safeParse(firstRaw[0]);
+
+  return {
+    totalSamples: total,
+    daysWithData: dates.length,
+    firstSampleTs: first?.ts ?? null,
+    lastSampleTs: last?.ts ?? null,
+  };
+}
+
 export async function getDistinctDayCount(tail: string): Promise<number> {
   const cacheKey = `ss:tracks-days:${tail}`;
   const cached = await cacheGet<number>(cacheKey);
