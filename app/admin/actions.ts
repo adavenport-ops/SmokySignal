@@ -15,6 +15,7 @@ import {
   restoreBackup,
 } from "@/lib/registry";
 import { invalidateSnapshot } from "@/lib/snapshot";
+import { setSpeedWarningEnabled } from "@/lib/flags";
 import type { FleetEntry } from "@/lib/types";
 
 const TAIL_RE = /^N\d{1,5}[A-Z]{0,2}$/;
@@ -166,6 +167,17 @@ export async function deleteTailAction(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/about");
   redirect(bouncePath(undefined, tail));
+}
+
+export async function setSpeedWarningFlagAction(formData: FormData) {
+  requireAdmin();
+  // Checkbox inputs only post when checked, so absence = false.
+  const enabled = formData.get("enabled") === "on";
+  await setSpeedWarningEnabled(enabled);
+  revalidatePath("/admin");
+  // No path revalidation needed for the flag itself — it's read live in
+  // the (tabs) layout server fetch on each request.
+  redirect(bouncePath(undefined, enabled ? "warn_on" : "warn_off"));
 }
 
 export async function restoreBackupAction(formData: FormData) {

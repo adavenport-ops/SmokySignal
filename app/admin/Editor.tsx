@@ -9,6 +9,7 @@ import {
   updateTailAction,
   deleteTailAction,
   restoreBackupAction,
+  setSpeedWarningFlagAction,
   logoutAction,
 } from "./actions";
 
@@ -23,16 +24,19 @@ const OPERATORS = [
 ] as const;
 
 type Flash = { error?: string; saved?: string };
+type Flags = { speedWarningEnabled: boolean };
 
 export function Editor({
   registry,
   backups,
   audit,
+  flags,
   flash,
 }: {
   registry: FleetEntry[];
   backups: BackupInfo[];
   audit: AuditEntry[];
+  flags: Flags;
   flash: Flash;
 }) {
   const [editingTail, setEditingTail] = useState<string | null>(null);
@@ -136,6 +140,10 @@ export function Editor({
         ) : (
           <AddForm onCancel={() => setShowAdd(false)} />
         )}
+      </Section>
+
+      <Section title="Settings">
+        <FlagsForm enabled={flags.speedWarningEnabled} />
       </Section>
 
       <Section title="Backups" subtitle={`${backups.length} most recent`}>
@@ -260,6 +268,70 @@ function Section({
       </div>
       {children}
     </section>
+  );
+}
+
+function FlagsForm({ enabled }: { enabled: boolean }) {
+  return (
+    <div
+      style={{
+        padding: 14,
+        background: SS_TOKENS.bg1,
+        border: `.5px solid ${SS_TOKENS.hairline}`,
+        borderRadius: 10,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: SS_TOKENS.fg0 }}>
+            Speed warning overlay
+          </div>
+          <div
+            style={{
+              fontSize: 11.5,
+              color: SS_TOKENS.fg2,
+              marginTop: 2,
+              lineHeight: 1.45,
+            }}
+          >
+            Fullscreen alert when rider is speeding inside 5nm of an airborne tail.
+            Off = never shown.
+          </div>
+        </div>
+        <form
+          action={setSpeedWarningFlagAction}
+          style={{ display: "flex", alignItems: "center", gap: 8 }}
+        >
+          {/* Hidden form control so the toggle posts whether currently on or off */}
+          {enabled && <input type="hidden" name="enabled" value="off" />}
+          {!enabled && <input type="hidden" name="enabled" value="on" />}
+          <button
+            type="submit"
+            style={{
+              padding: "6px 12px",
+              borderRadius: 999,
+              background: enabled ? SS_TOKENS.clear : SS_TOKENS.bg2,
+              color: enabled ? "#0b0d10" : SS_TOKENS.fg1,
+              border: `.5px solid ${enabled ? SS_TOKENS.clear : SS_TOKENS.hairline}`,
+              fontWeight: 700,
+              fontSize: 11,
+              letterSpacing: ".06em",
+              cursor: "pointer",
+              minWidth: 56,
+            }}
+          >
+            {enabled ? "ON" : "OFF"}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -473,7 +545,8 @@ function Field({
 
 function FlashMsg({ kind, code }: { kind: "error" | "ok"; code: string }) {
   const color = kind === "error" ? SS_TOKENS.danger : SS_TOKENS.clear;
-  const message = kind === "error" ? errorMessage(code) : `Saved · ${code}`;
+  const message =
+    kind === "error" ? errorMessage(code) : savedMessage(code);
   return (
     <div
       style={{
@@ -489,6 +562,19 @@ function FlashMsg({ kind, code }: { kind: "error" | "ok"; code: string }) {
       {message}
     </div>
   );
+}
+
+function savedMessage(code: string): string {
+  switch (code) {
+    case "warn_on":
+      return "Speed warning enabled.";
+    case "warn_off":
+      return "Speed warning disabled.";
+    case "restored":
+      return "Backup restored. The pre-restore registry was backed up first.";
+    default:
+      return `Saved · ${code}`;
+  }
 }
 
 function errorMessage(code: string): string {

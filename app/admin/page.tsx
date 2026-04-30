@@ -7,6 +7,7 @@ import {
   listBackups,
   getAudit,
 } from "@/lib/registry";
+import { getSpeedWarningEnabled } from "@/lib/flags";
 import { SS_TOKENS } from "@/lib/tokens";
 import { LoginForm } from "./LoginForm";
 import { Editor } from "./Editor";
@@ -32,10 +33,11 @@ export default async function AdminPage({
     return <LoginForm error={searchParams.error} />;
   }
 
-  const [registry, backups, audit] = await Promise.all([
+  const [registry, backups, audit, speedWarningEnabled] = await Promise.all([
     getRegistry(),
     listBackups(),
     getAudit(20),
+    getSpeedWarningEnabled(),
   ]);
 
   return (
@@ -43,6 +45,7 @@ export default async function AdminPage({
       registry={registry}
       backups={backups}
       audit={audit}
+      flags={{ speedWarningEnabled }}
       flash={{ error: searchParams.error, saved: searchParams.saved }}
     />
   );
