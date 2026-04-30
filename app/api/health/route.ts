@@ -10,9 +10,11 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// 5s — Vercel→Keycloak (auth.opensky-network.org) round-trip on cold token
-// refresh routinely exceeds 2s, which was producing spurious "err" reports.
-const PING_TIMEOUT_MS = 5000;
+// 8s — Vercel→Keycloak (auth.opensky-network.org) round-trip on cold token
+// refresh has been observed to take 5-7s. From a residential IP the same call
+// is ~500ms; the latency is paid by Vercel's datacenter egress to the OpenSky
+// auth endpoint, so we accept a longer health-check ceiling here.
+const PING_TIMEOUT_MS = 8000;
 
 async function pingUrl(url: string): Promise<"ok" | "err"> {
   const ctl = new AbortController();
