@@ -54,14 +54,24 @@ export async function getOpenskyToken(): Promise<string | null> {
     throw new Error(`opensky auth ${r.status}: ${detail.slice(0, 200)}`);
   }
   const j = (await r.json()) as { access_token: string; expires_in: number };
-  const ttl = Math.max(60, j.expires_in);
+  const expiresIn = Math.max(60, j.expires_in);
   const token: CachedToken = {
     access_token: j.access_token,
-    expires_at: Date.now() + ttl * 1000,
+    expires_at: Date.now() + expiresIn * 1000,
   };
-  // KV evicts shortly after the token actually expires.
-  await cacheSet(TOKEN_KEY, token, ttl);
+  // Keep the entry in KV for 24h so the health check can use its presence as
+  // evidence that auth has worked recently — Vercel→Keycloak is slow enough
+  // (>8s sometimes) that re-authing on each health hit isn't viable. The
+  // inner `expires_at` still drives refresh when fetchOpenSky actually needs
+  // a usable token.
+  const cacheSeconds = 24 * 60 * 60;
+  await cacheSet(TOKEN_KEY, token, cacheSeconds);
   return token.access_token;
+}
+
+/** Returns the cached token entry without triggering a refresh. */
+export async function peekOpenskyToken(): Promise<CachedToken | null> {
+  return await cacheGet<CachedToken>(TOKEN_KEY);
 }
 
 /**

@@ -5,6 +5,7 @@ import { cacheGet, cacheSet, hasKv } from "@/lib/cache";
 import {
   getOpenskyToken,
   getOpenskyCreditsRemaining,
+  peekOpenskyToken,
 } from "@/lib/opensky";
 
 export const runtime = "nodejs";
@@ -57,6 +58,13 @@ async function pingOpensky(): Promise<OpenskyPing> {
   if (!process.env.OPENSKY_CLIENT_ID || !process.env.OPENSKY_CLIENT_SECRET) {
     return { status: "anonymous" };
   }
+  // Cheap path: a cached token (fresh OR stale) is evidence that auth has
+  // worked recently. Skip the multi-second roundtrip on the common case.
+  const cached = await peekOpenskyToken();
+  if (cached?.access_token) return { status: "ok" };
+
+  // Cold cache: try once. If this fails the next deploy or a successful
+  // /api/aircraft fallback will re-seed the cache.
   try {
     const token = await Promise.race([
       getOpenskyToken(),
