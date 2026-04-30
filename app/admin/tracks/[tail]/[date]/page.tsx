@@ -83,7 +83,7 @@ export default async function DayMapPage({ params, searchParams }: Props) {
           zIndex: 5,
         }}
       >
-        <AdminHeader subtitle="Tracks" />
+        <AdminHeader active="flights" subtitle="Flights" />
         <div
           style={{
             display: "flex",

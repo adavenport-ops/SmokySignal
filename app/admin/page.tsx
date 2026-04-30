@@ -7,6 +7,7 @@ import {
   listBackups,
   getAudit,
 } from "@/lib/registry";
+import { getRecentFlights } from "@/lib/flights";
 import { getSpeedWarningEnabled } from "@/lib/flags";
 import { SS_TOKENS } from "@/lib/tokens";
 import { LoginForm } from "./LoginForm";
@@ -33,12 +34,14 @@ export default async function AdminPage({
     return <LoginForm error={searchParams.error} next={searchParams.next} />;
   }
 
-  const [registry, backups, audit, speedWarningEnabled] = await Promise.all([
-    getRegistry(),
-    listBackups(),
-    getAudit(20),
-    getSpeedWarningEnabled(),
-  ]);
+  const [registry, backups, audit, speedWarningEnabled, flights] =
+    await Promise.all([
+      getRegistry(),
+      listBackups(),
+      getAudit(20),
+      getSpeedWarningEnabled(),
+      getRecentFlights(20),
+    ]);
 
   return (
     <Editor
@@ -46,6 +49,7 @@ export default async function AdminPage({
       backups={backups}
       audit={audit}
       flags={{ speedWarningEnabled }}
+      flights={flights}
       flash={{ error: searchParams.error, saved: searchParams.saved }}
     />
   );

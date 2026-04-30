@@ -80,7 +80,7 @@ export default async function TailTracksPage({ params, searchParams }: Props) {
         color: SS_TOKENS.fg0,
       }}
     >
-      <AdminHeader subtitle="Tracks" />
+      <AdminHeader active="flights" subtitle="Flights" />
 
       <section style={{ marginBottom: 18 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>

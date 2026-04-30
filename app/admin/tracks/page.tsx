@@ -56,7 +56,7 @@ export default async function TracksOverviewPage({
         color: SS_TOKENS.fg0,
       }}
     >
-      <AdminHeader subtitle="Tracks" />
+      <AdminHeader active="flights" subtitle="Flights" />
 
       <p
         style={{

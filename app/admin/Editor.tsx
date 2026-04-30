@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { FleetEntry } from "@/lib/types";
 import type { AuditEntry, BackupInfo } from "@/lib/registry";
+import type { FlightSession } from "@/lib/flights";
 import {
   addTailAction,
   updateTailAction,
@@ -31,12 +33,14 @@ export function Editor({
   backups,
   audit,
   flags,
+  flights,
   flash,
 }: {
   registry: FleetEntry[];
   backups: BackupInfo[];
   audit: AuditEntry[];
   flags: Flags;
+  flights: FlightSession[];
   flash: Flash;
 }) {
   const [editingTail, setEditingTail] = useState<string | null>(null);
@@ -52,46 +56,12 @@ export function Editor({
         color: SS_TOKENS.fg0,
       }}
     >
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          marginBottom: 18,
-        }}
-      >
-        <h1
-          className="ss-mono"
-          style={{
-            fontSize: 16,
-            color: SS_TOKENS.fg0,
-            letterSpacing: ".06em",
-            margin: 0,
-          }}
-        >
-          SMOKYSIGNAL ADMIN
-        </h1>
-        <form action={logoutAction}>
-          <button
-            type="submit"
-            className="ss-mono"
-            style={{
-              background: "transparent",
-              border: 0,
-              color: SS_TOKENS.fg2,
-              fontSize: 11,
-              cursor: "pointer",
-              letterSpacing: ".08em",
-              padding: 4,
-            }}
-          >
-            LOG OUT
-          </button>
-        </form>
-      </header>
+      <AdminNav active="registry" />
 
       {flash.error && <FlashMsg kind="error" code={flash.error} />}
       {flash.saved && <FlashMsg kind="ok" code={flash.saved} />}
+
+      <RecentFlights flights={flights} />
 
       <Section title="Registry" subtitle={`${registry.length} tails`}>
         <div style={{ overflowX: "auto" }}>
@@ -222,6 +192,298 @@ export function Editor({
       </Section>
     </main>
   );
+}
+
+// ─── shared admin nav ──────────────────────────────────────────────────────
+
+function AdminNav({ active }: { active: "registry" | "flights" }) {
+  return (
+    <header
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "baseline",
+        marginBottom: 18,
+        gap: 12,
+      }}
+    >
+      <h1
+        className="ss-mono"
+        style={{
+          fontSize: 16,
+          color: SS_TOKENS.fg0,
+          letterSpacing: ".06em",
+          margin: 0,
+        }}
+      >
+        SMOKYSIGNAL ADMIN
+      </h1>
+      <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+        <NavLink href="/admin" active={active === "registry"}>
+          REGISTRY
+        </NavLink>
+        <NavLink href="/admin/tracks" active={active === "flights"}>
+          FLIGHTS
+        </NavLink>
+        <form action={logoutAction}>
+          <button
+            type="submit"
+            className="ss-mono"
+            style={{
+              fontSize: 11,
+              color: SS_TOKENS.fg2,
+              letterSpacing: ".08em",
+              background: "transparent",
+              border: 0,
+              padding: 0,
+              cursor: "pointer",
+            }}
+          >
+            LOG OUT
+          </button>
+        </form>
+      </div>
+    </header>
+  );
+}
+
+function NavLink({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="ss-mono"
+      style={{
+        fontSize: 11,
+        color: active ? SS_TOKENS.alert : SS_TOKENS.fg1,
+        letterSpacing: ".08em",
+        textDecoration: "none",
+      }}
+    >
+      {children}
+    </Link>
+  );
+}
+
+// ─── recent flights ────────────────────────────────────────────────────────
+
+function RecentFlights({ flights }: { flights: FlightSession[] }) {
+  return (
+    <section style={{ marginBottom: 28 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 10,
+          marginBottom: 10,
+        }}
+      >
+        <h2
+          className="ss-mono"
+          style={{
+            fontSize: 11,
+            letterSpacing: ".12em",
+            color: SS_TOKENS.fg2,
+            textTransform: "uppercase",
+            margin: 0,
+          }}
+        >
+          Recent flights
+        </h2>
+        <span
+          className="ss-mono"
+          style={{ fontSize: 10.5, color: SS_TOKENS.fg3 }}
+        >
+          {flights.length} session{flights.length === 1 ? "" : "s"} · last 7 days
+        </span>
+      </div>
+      {flights.length === 0 ? <FlightsEmpty /> : <FlightsList flights={flights} />}
+    </section>
+  );
+}
+
+function FlightsEmpty() {
+  return (
+    <div
+      style={{
+        padding: "28px 16px",
+        background: SS_TOKENS.bg1,
+        border: `.5px solid ${SS_TOKENS.hairline}`,
+        borderRadius: 12,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 10,
+        color: SS_TOKENS.fg1,
+      }}
+    >
+      <RadarPulse />
+      <div style={{ fontSize: 13 }}>
+        No flights logged yet — system is watching.
+      </div>
+    </div>
+  );
+}
+
+function RadarPulse() {
+  return (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
+      style={{ color: SS_TOKENS.alert, opacity: 0.85 }}
+      aria-hidden
+    >
+      <circle
+        cx="16"
+        cy="16"
+        r="14"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth=".75"
+        opacity="0.4"
+      />
+      <circle
+        cx="16"
+        cy="16"
+        r="9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth=".75"
+        opacity="0.6"
+      />
+      <circle cx="16" cy="16" r="3" fill="currentColor">
+        <animate
+          attributeName="opacity"
+          values="1;0.3;1"
+          dur="1.6s"
+          repeatCount="indefinite"
+        />
+      </circle>
+    </svg>
+  );
+}
+
+function FlightsList({ flights }: { flights: FlightSession[] }) {
+  return (
+    <div
+      style={{
+        background: SS_TOKENS.bg1,
+        border: `.5px solid ${SS_TOKENS.hairline}`,
+        borderRadius: 12,
+        overflow: "hidden",
+      }}
+    >
+      {flights.map((f, i) => (
+        <FlightRow key={`${f.tail}-${f.start_ts}`} flight={f} first={i === 0} />
+      ))}
+    </div>
+  );
+}
+
+function FlightRow({
+  flight,
+  first,
+}: {
+  flight: FlightSession;
+  first: boolean;
+}) {
+  return (
+    <Link
+      href={`/admin/tracks/${flight.tail}/${flight.date}`}
+      className="ss-flight-row"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "minmax(120px, 1.2fr) minmax(160px, 1.6fr) minmax(120px, 1fr)",
+        gap: 12,
+        padding: "12px 14px",
+        alignItems: "center",
+        textDecoration: "none",
+        color: "inherit",
+        borderTop: first ? "0" : `.5px solid ${SS_TOKENS.hairline}`,
+      }}
+    >
+      <div>
+        <div
+          className="ss-mono"
+          style={{ fontSize: 14, fontWeight: 600, color: SS_TOKENS.fg0 }}
+        >
+          {flight.tail}
+        </div>
+        {flight.nickname && (
+          <div style={{ fontSize: 11, color: SS_TOKENS.fg1, marginTop: 2 }}>
+            {flight.nickname}
+          </div>
+        )}
+      </div>
+      <div>
+        <div style={{ fontSize: 12.5, color: SS_TOKENS.fg0 }}>
+          {fmtDateTimeRange(flight.start_ts, flight.end_ts)}
+        </div>
+        <div
+          className="ss-mono"
+          style={{ fontSize: 11, color: SS_TOKENS.fg2, marginTop: 2 }}
+        >
+          {fmtDuration(flight.duration_s)}
+        </div>
+      </div>
+      <div style={{ textAlign: "right" }}>
+        <div
+          className="ss-mono"
+          style={{ fontSize: 13, fontWeight: 600, color: SS_TOKENS.fg0 }}
+        >
+          {flight.max_alt_ft.toLocaleString()} ft
+        </div>
+        <div
+          className="ss-mono"
+          style={{
+            fontSize: 10,
+            color: SS_TOKENS.fg2,
+            marginTop: 2,
+            letterSpacing: ".06em",
+          }}
+        >
+          {flight.sample_count} samples
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function fmtDateTimeRange(startMs: number, endMs: number): string {
+  const start = new Date(startMs);
+  const end = new Date(endMs);
+  const dateStr = start.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+  const startTime = start.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const endTime = end.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${dateStr} · ${startTime} – ${endTime}`;
+}
+
+function fmtDuration(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  if (m < 60) return `${m}m ${String(sec).padStart(2, "0")}s`;
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return `${h}h ${String(mm).padStart(2, "0")}m ${String(sec).padStart(2, "0")}s`;
 }
 
 // ─── pieces ────────────────────────────────────────────────────────────────

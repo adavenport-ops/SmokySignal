@@ -2,7 +2,15 @@ import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 import { logoutAction } from "../actions";
 
-export function AdminHeader({ subtitle }: { subtitle?: string }) {
+type Active = "registry" | "flights";
+
+export function AdminHeader({
+  active,
+  subtitle,
+}: {
+  active: Active;
+  subtitle?: string;
+}) {
   return (
     <header
       style={{
@@ -31,26 +39,20 @@ export function AdminHeader({ subtitle }: { subtitle?: string }) {
         )}
       </h1>
       <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-        <Link
-          href="/admin"
-          className="ss-mono"
-          style={navLinkStyle}
-        >
+        <NavLink href="/admin" active={active === "registry"}>
           REGISTRY
-        </Link>
-        <Link
-          href="/admin/tracks"
-          className="ss-mono"
-          style={navLinkStyle}
-        >
-          TRACKS
-        </Link>
+        </NavLink>
+        <NavLink href="/admin/tracks" active={active === "flights"}>
+          FLIGHTS
+        </NavLink>
         <form action={logoutAction}>
           <button
             type="submit"
             className="ss-mono"
             style={{
-              ...navLinkStyle,
+              fontSize: 11,
+              color: SS_TOKENS.fg2,
+              letterSpacing: ".08em",
               background: "transparent",
               border: 0,
               padding: 0,
@@ -65,9 +67,27 @@ export function AdminHeader({ subtitle }: { subtitle?: string }) {
   );
 }
 
-const navLinkStyle: React.CSSProperties = {
-  fontSize: 11,
-  color: SS_TOKENS.fg2,
-  letterSpacing: ".08em",
-  textDecoration: "none",
-};
+function NavLink({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="ss-mono"
+      style={{
+        fontSize: 11,
+        color: active ? SS_TOKENS.alert : SS_TOKENS.fg1,
+        letterSpacing: ".08em",
+        textDecoration: "none",
+      }}
+    >
+      {children}
+    </Link>
+  );
+}
