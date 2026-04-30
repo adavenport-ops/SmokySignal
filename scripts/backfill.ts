@@ -34,7 +34,9 @@ const C = {
 const FLIGHTS_URL = "https://opensky-network.org/api/flights/aircraft";
 const TRACKS_URL = "https://opensky-network.org/api/tracks/all";
 const UA = "SmokySignal-backfill/0.1";
-const REQUEST_DELAY_MS = 1000;
+const REQUEST_DELAY_MS = 2500;
+const INTER_TAIL_DELAY_MS = 4000;
+const RATE_LIMIT_BACKOFF_MS = 60_000;
 const TRACK_TTL_SECONDS = 35 * 24 * 60 * 60;
 const MIN_SAMPLES_PER_FLIGHT = 3;
 
@@ -132,26 +134,77 @@ async function authedFetch(url: string): Promise<Response> {
   });
 }
 
+/**
+ * Wraps authedFetch with one retry each for 401 (token churn) and 429
+ * (rate limit). 429 honors Retry-After when present, otherwise falls back
+ * to RATE_LIMIT_BACKOFF_MS. Sustained 429 still surfaces as a thrown
+ * error after the second attempt, so the caller can record it per-tail.
+ */
+async function authedFetchWithRetry(url: string): Promise<Response> {
+  let r = await authedFetch(url);
+  if (r.status === 401) {
+    await sleep(200);
+    r = await authedFetch(url);
+  }
+  if (r.status === 429) {
+    const ra = Number(r.headers.get("retry-after"));
+    const waitMs = Number.isFinite(ra) && ra > 0 ? ra * 1000 : RATE_LIMIT_BACKOFF_MS;
+    console.log(
+      `    ${C.yellow}⏸ 429 rate-limited, sleeping ${Math.round(waitMs / 1000)}s${C.reset}`,
+    );
+    await sleep(waitMs);
+    r = await authedFetch(url);
+  }
+  return r;
+}
+
+/**
+ * OpenSky's /api/flights/aircraft caps queries at 2 day-partitions
+ * (not the 30 days some docs claim). Chunk the window into 2-day
+ * spans aligned to UTC midnight, sleep between chunks, dedupe results
+ * by (icao24, firstSeen) in case adjacent chunks overlap on a flight
+ * spanning the boundary.
+ */
+const DAY_SEC = 86400;
+const CHUNK_SEC = 2 * DAY_SEC;
+
 async function fetchFlightsForTail(
   icao: string,
   begin: number,
   end: number,
 ): Promise<Flight[]> {
-  const url = `${FLIGHTS_URL}?icao24=${icao}&begin=${begin}&end=${end}`;
-  let r = await authedFetch(url);
-  if (r.status === 401) {
-    // Force re-auth via shared cache invalidation isn't exposed; one
-    // retry with a fresh getOpenskyToken pickup is the next-best.
-    await sleep(200);
-    r = await authedFetch(url);
+  const startMidnight = Math.floor(begin / DAY_SEC) * DAY_SEC;
+  const endMidnight = Math.ceil(end / DAY_SEC) * DAY_SEC;
+  const all: Flight[] = [];
+
+  let first = true;
+  for (let cs = startMidnight; cs < endMidnight; cs += CHUNK_SEC) {
+    if (!first) await sleep(REQUEST_DELAY_MS);
+    first = false;
+
+    const ce = Math.min(cs + CHUNK_SEC, endMidnight);
+    const url = `${FLIGHTS_URL}?icao24=${icao}&begin=${cs}&end=${ce}`;
+    const r = await authedFetchWithRetry(url);
+    if (r.status === 404) continue; // OpenSky uses 404 for "no flights"
+    if (!r.ok) {
+      const body = await r.text().catch(() => "");
+      throw new Error(
+        `flights ${r.status}${body ? `: ${body.slice(0, 120)}` : ""}`,
+      );
+    }
+    const data = (await r.json()) as Flight[];
+    if (Array.isArray(data)) all.push(...data);
   }
-  if (r.status === 404) return []; // OpenSky uses 404 for "no flights"
-  if (!r.ok) {
-    const body = await r.text().catch(() => "");
-    throw new Error(`flights ${r.status}${body ? `: ${body.slice(0, 120)}` : ""}`);
-  }
-  const data = (await r.json()) as Flight[];
-  return Array.isArray(data) ? data : [];
+
+  // Dedupe — a flight whose start-of-coverage straddles a chunk
+  // boundary can appear in both queries.
+  const seen = new Set<string>();
+  return all.filter((f) => {
+    const k = `${f.icao24}-${f.firstSeen}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
 
 async function fetchTrackForFlight(
@@ -159,11 +212,7 @@ async function fetchTrackForFlight(
   flightTime: number,
 ): Promise<TrackPoint[]> {
   const url = `${TRACKS_URL}?icao24=${icao}&time=${flightTime}`;
-  let r = await authedFetch(url);
-  if (r.status === 401) {
-    await sleep(200);
-    r = await authedFetch(url);
-  }
+  const r = await authedFetchWithRetry(url);
   if (r.status === 404) return [];
   if (!r.ok) {
     const body = await r.text().catch(() => "");
@@ -262,7 +311,10 @@ async function main() {
 
   const summary: SummaryRow[] = [];
 
+  let isFirstTail = true;
   for (const t of tails) {
+    if (!isFirstTail) await sleep(INTER_TAIL_DELAY_MS);
+    isFirstTail = false;
     const icao = fleetHex(t);
     if (!icao) {
       console.log(`${C.yellow}⚠ ${t.tail}: no ICAO24, skipping${C.reset}`);

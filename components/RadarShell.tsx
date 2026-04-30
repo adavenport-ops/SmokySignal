@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import nextDynamic from "next/dynamic";
 import Link from "next/link";
+import type { Map as MaplibreMap } from "maplibre-gl";
 import { useAircraft } from "@/lib/hooks/useAircraft";
 import { SS_TOKENS } from "@/lib/tokens";
 import { SMOKY_TAIL } from "@/lib/seed";
 import { StatusPill } from "./StatusPill";
 import { SpottedButton } from "./SpottedButton";
+import { HotZoneLayer } from "./HotZoneLayer";
 import type { Aircraft, Snapshot } from "@/lib/types";
 
 export type RiderPos = { lat: number; lon: number };
@@ -38,6 +40,7 @@ export function RadarShell({ initial, mockOn = false }: Props) {
 
   const [rider, setRider] = useState<RiderPos | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [map, setMap] = useState<MaplibreMap | null>(null);
 
   // Geolocation only kicks in when this component mounts — i.e. when the user
   // actually visits /radar. The home page never asks.
@@ -66,7 +69,11 @@ export function RadarShell({ initial, mockOn = false }: Props) {
         paddingBottom: TABBAR_HEIGHT,
       }}
     >
-      <RadarMap aircraft={airborne} rider={rider} />
+      <RadarMap aircraft={airborne} rider={rider} onMapReady={setMap} />
+      <HotZoneLayer
+        map={map}
+        bottomBoost={airborne.length > 0 ? 130 : 0}
+      />
 
       <header
         style={{

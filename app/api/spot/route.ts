@@ -4,7 +4,7 @@ import { saveSpot, type SpotAirborneTail, type SpotPayload } from "@/lib/spots";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const NOW_TOLERANCE_MS = 10 * 60 * 1000; // accept ts within 10 min of now
+const NOW_TOLERANCE_MS = 5 * 60 * 1000; // accept ts within 5 min of now
 
 function isFiniteNum(n: unknown): n is number {
   return typeof n === "number" && Number.isFinite(n);

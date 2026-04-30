@@ -64,9 +64,11 @@ type RiderPos = { lat: number; lon: number };
 export default function RadarMap({
   aircraft,
   rider,
+  onMapReady,
 }: {
   aircraft: Aircraft[];
   rider: RiderPos | null;
+  onMapReady?: (map: MaplibreMap | null) => void;
 }) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -78,6 +80,8 @@ export default function RadarMap({
   const aircraftRef = useRef<Aircraft[]>(aircraft);
   const riderRef = useRef<RiderPos | null>(rider);
   const userInteractedAtRef = useRef<number>(0);
+  const onMapReadyRef = useRef(onMapReady);
+  onMapReadyRef.current = onMapReady;
 
   // Mount the map once.
   useEffect(() => {
@@ -157,6 +161,7 @@ export default function RadarMap({
       applyAircraft(aircraftRef.current);
       applyRider(riderRef.current);
       startPulse();
+      onMapReadyRef.current?.(map);
     };
     map.on("load", onLoad);
 
@@ -193,6 +198,7 @@ export default function RadarMap({
       map.off("mouseenter", "aircraft", onMouseEnter);
       map.off("mouseleave", "aircraft", onMouseLeave);
       map.off("click", "aircraft", onClick);
+      onMapReadyRef.current?.(null);
       map.remove();
       mapRef.current = null;
     };
