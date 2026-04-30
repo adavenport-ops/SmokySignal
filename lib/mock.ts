@@ -15,6 +15,7 @@ const OVERRIDES: Record<
     ground_speed_kt: number;
     heading: number;
     time_aloft_min: number;
+    squawk: string | null;
   }>
 > = {
   N305DK: {
@@ -24,6 +25,7 @@ const OVERRIDES: Record<
     ground_speed_kt: 118,
     heading: 184,
     time_aloft_min: 47,
+    squawk: "1234",
   },
   N422CT: {
     lat: 47.671,
@@ -32,6 +34,7 @@ const OVERRIDES: Record<
     ground_speed_kt: 88,
     heading: 270,
     time_aloft_min: 12,
+    squawk: "1200",
   },
 };
 

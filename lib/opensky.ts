@@ -87,7 +87,7 @@ type OpenSkyResp = { time: number; states: unknown[][] | null };
 function normalizeStates(states: unknown[][]): NormalizedAc[] {
   // states_vector schema (positional):
   // [0]=icao24 [5]=lon [6]=lat [7]=baro_alt(m) [8]=on_ground [9]=velocity(m/s)
-  // [10]=true_track
+  // [10]=true_track [14]=squawk
   return states.map((s) => ({
     hex: String(s[0] ?? "").toLowerCase(),
     lon: typeof s[5] === "number" ? (s[5] as number) : undefined,
@@ -103,6 +103,7 @@ function normalizeStates(states: unknown[][]): NormalizedAc[] {
         ? Math.round((s[9] as number) * 1.94384) // m/s → kt
         : undefined,
     track: typeof s[10] === "number" ? (s[10] as number) : undefined,
+    squawk: typeof s[14] === "string" ? (s[14] as string) : null,
   }));
 }
 

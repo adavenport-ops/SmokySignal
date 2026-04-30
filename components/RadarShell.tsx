@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import nextDynamic from "next/dynamic";
 import Link from "next/link";
 import { useAircraft } from "@/lib/hooks/useAircraft";
@@ -7,6 +8,8 @@ import { SS_TOKENS } from "@/lib/tokens";
 import { SMOKY_TAIL } from "@/lib/seed";
 import { StatusPill } from "./StatusPill";
 import type { Aircraft, Snapshot } from "@/lib/types";
+
+export type RiderPos = { lat: number; lon: number };
 
 const RadarMap = nextDynamic(() => import("./RadarMap"), {
   ssr: false,
@@ -32,6 +35,28 @@ export function RadarShell({ initial, mockOn = false }: Props) {
   const airborne = snap.aircraft.filter((a) => a.airborne);
   const total = snap.aircraft.length;
 
+  const [rider, setRider] = useState<RiderPos | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  // Geolocation only kicks in when this component mounts — i.e. when the user
+  // actually visits /radar. The home page never asks.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      flashToast(setToast, "Location off · radar still works");
+      return;
+    }
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setRider({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+      },
+      () => {
+        flashToast(setToast, "Location off · radar still works");
+      },
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
+
   return (
     <main
       style={{
@@ -40,7 +65,7 @@ export function RadarShell({ initial, mockOn = false }: Props) {
         paddingBottom: TABBAR_HEIGHT,
       }}
     >
-      <RadarMap aircraft={airborne} />
+      <RadarMap aircraft={airborne} rider={rider} />
 
       <header
         style={{
@@ -80,7 +105,53 @@ export function RadarShell({ initial, mockOn = false }: Props) {
       <CompassN />
 
       {airborne.length > 0 && <Carousel airborne={airborne} />}
+
+      {toast && <Toast message={toast} hasCarousel={airborne.length > 0} />}
     </main>
+  );
+}
+
+function flashToast(
+  setter: (msg: string | null) => void,
+  message: string,
+  durationMs = 4000,
+) {
+  setter(message);
+  setTimeout(() => setter(null), durationMs);
+}
+
+function Toast({
+  message,
+  hasCarousel,
+}: {
+  message: string;
+  hasCarousel: boolean;
+}) {
+  // Sit just above whatever's currently anchored to the bottom — carousel
+  // when present, tab bar otherwise.
+  const bottomOffset = hasCarousel ? TABBAR_HEIGHT + 130 : TABBAR_HEIGHT + 16;
+  return (
+    <div
+      role="status"
+      style={{
+        position: "absolute",
+        left: "50%",
+        transform: "translateX(-50%)",
+        bottom: bottomOffset,
+        padding: "8px 14px",
+        borderRadius: 8,
+        background: SS_TOKENS.bg2,
+        border: `.5px solid ${SS_TOKENS.hairline}`,
+        color: SS_TOKENS.fg2,
+        fontFamily: "var(--font-mono)",
+        fontSize: 11,
+        letterSpacing: ".04em",
+        zIndex: 20,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {message}
+    </div>
   );
 }
 

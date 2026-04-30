@@ -25,6 +25,8 @@ export type AircraftLive = {
   heading?: number;
   time_aloft_min?: number;
   last_seen_min?: number | null;
+  /** Mode A squawk code (4 octal-ish digits as string) when reported. */
+  squawk?: string | null;
 };
 
 export type Aircraft = FleetEntry & AircraftLive;
@@ -47,6 +49,8 @@ export type NormalizedAc = {
   gs?: number;
   /** True track, degrees. */
   track?: number;
+  /** Mode A squawk code as 4-character string. */
+  squawk?: string | null;
 };
 
 export type Snapshot = {

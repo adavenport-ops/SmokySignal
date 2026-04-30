@@ -1,5 +1,6 @@
 import { buildSnapshot } from "./adsb";
 import { cacheGet, cacheSet } from "./cache";
+import { logTracks } from "./tracks";
 import type { Snapshot, SnapshotSource } from "./types";
 
 const KEY = "ss:snapshot:v1";
@@ -27,6 +28,13 @@ export async function getSnapshot(): Promise<Snapshot> {
   inflight = (async () => {
     try {
       const snap = await buildSnapshot();
+      // Append airborne positions to KV time-series. Best-effort: never fail
+      // /api/aircraft on a track-log error.
+      try {
+        await logTracks(snap);
+      } catch (e) {
+        console.warn("[snapshot] track logging failed:", e);
+      }
       await cacheSet(KEY, snap, TTL_SECONDS);
       lastSource = snap.source;
       return snap;

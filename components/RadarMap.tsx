@@ -15,9 +15,11 @@ import type { Aircraft } from "@/lib/types";
 const PUGET_SOUND: [number, number] = [-122.3, 47.6];
 const DEFAULT_ZOOM = 9;
 
-const PLANE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path d="M12 3 L21 21 L12 17 L3 21 Z" fill="${SS_TOKENS.alert}" stroke="rgba(0,0,0,0.5)" stroke-width="0.5" stroke-linejoin="round"/></svg>`;
+const PLANE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path d="M12 3 L21 21 L12 17 L3 21 Z" fill="${SS_TOKENS.alert}" stroke="${SS_TOKENS.bg0}" stroke-width="1" stroke-linejoin="round"/></svg>`;
 
 const ROTOR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="rgba(245,184,64,0.18)" stroke="${SS_TOKENS.alert}" stroke-width="1.5"/><line x1="2" y1="12" x2="22" y2="12" stroke="${SS_TOKENS.alert}" stroke-width="1" stroke-linecap="round" opacity="0.85"/><circle cx="12" cy="12" r="2" fill="${SS_TOKENS.alert}"/></svg>`;
+
+const RIDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="${SS_TOKENS.sky}" fill-opacity="0.10"/><circle cx="24" cy="24" r="12" fill="${SS_TOKENS.sky}" fill-opacity="0.22"/><circle cx="24" cy="24" r="6" fill="${SS_TOKENS.sky}" stroke="white" stroke-width="2"/></svg>`;
 
 type IconKind = "plane-fixed" | "plane-rotor";
 
@@ -57,14 +59,25 @@ const EMPTY_SNAPSHOT: Snapshot = {
 
 const ANIM_MS = 1000;
 
-export default function RadarMap({ aircraft }: { aircraft: Aircraft[] }) {
+type RiderPos = { lat: number; lon: number };
+
+export default function RadarMap({
+  aircraft,
+  rider,
+}: {
+  aircraft: Aircraft[];
+  rider: RiderPos | null;
+}) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MaplibreMap | null>(null);
   const readyRef = useRef(false);
   const animRef = useRef<number | null>(null);
+  const pulseRef = useRef<number | null>(null);
   const stateRef = useRef<Snapshot>(EMPTY_SNAPSHOT);
   const aircraftRef = useRef<Aircraft[]>(aircraft);
+  const riderRef = useRef<RiderPos | null>(rider);
+  const userInteractedAtRef = useRef<number>(0);
 
   // Mount the map once.
   useEffect(() => {
@@ -95,13 +108,32 @@ export default function RadarMap({ aircraft }: { aircraft: Aircraft[] }) {
     mapRef.current = map;
 
     const onLoad = async () => {
-      const [planeImg, rotorImg] = await Promise.all([
+      const [planeImg, rotorImg, riderImg] = await Promise.all([
         loadSvgBitmap(PLANE_SVG, 32),
         loadSvgBitmap(ROTOR_SVG, 32),
+        loadSvgBitmap(RIDER_SVG, 48),
       ]);
       if (!mapRef.current) return; // guard — unmounted while loading
       map.addImage("plane-fixed", planeImg);
       map.addImage("plane-rotor", rotorImg);
+      map.addImage("rider-dot", riderImg);
+
+      // Rider — under aircraft so chevrons stay visually on top.
+      map.addSource("rider", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+      map.addLayer({
+        id: "rider",
+        type: "symbol",
+        source: "rider",
+        layout: {
+          "icon-image": "rider-dot",
+          "icon-allow-overlap": true,
+          "icon-ignore-placement": true,
+          "icon-size": 0.6,
+        },
+      });
 
       map.addSource("aircraft", {
         type: "geojson",
@@ -122,10 +154,18 @@ export default function RadarMap({ aircraft }: { aircraft: Aircraft[] }) {
       });
 
       readyRef.current = true;
-      // Render whatever aircraft were passed in before the map finished loading.
       applyAircraft(aircraftRef.current);
+      applyRider(riderRef.current);
+      startPulse();
     };
     map.on("load", onLoad);
+
+    // Pause auto-recenter for 15s after any pan or zoom interaction.
+    const onUserInteract = () => {
+      userInteractedAtRef.current = Date.now();
+    };
+    map.on("dragstart", onUserInteract);
+    map.on("zoomstart", onUserInteract);
 
     // Cursor + click on chevrons.
     const onMouseEnter = () => {
@@ -146,7 +186,10 @@ export default function RadarMap({ aircraft }: { aircraft: Aircraft[] }) {
     return () => {
       readyRef.current = false;
       if (animRef.current) cancelAnimationFrame(animRef.current);
+      if (pulseRef.current) cancelAnimationFrame(pulseRef.current);
       map.off("load", onLoad);
+      map.off("dragstart", onUserInteract);
+      map.off("zoomstart", onUserInteract);
       map.off("mouseenter", "aircraft", onMouseEnter);
       map.off("mouseleave", "aircraft", onMouseLeave);
       map.off("click", "aircraft", onClick);
@@ -155,6 +198,66 @@ export default function RadarMap({ aircraft }: { aircraft: Aircraft[] }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Apply rider position when it updates from the geolocation watch.
+  useEffect(() => {
+    riderRef.current = rider;
+    if (readyRef.current) applyRider(rider);
+  }, [rider]);
+
+  // Auto-recenter every 5s, paused for 15s after the user pans or zooms.
+  useEffect(() => {
+    if (!rider) return;
+    const id = setInterval(() => {
+      if (!readyRef.current || !mapRef.current) return;
+      if (Date.now() - userInteractedAtRef.current < 15_000) return;
+      const r = riderRef.current;
+      if (!r) return;
+      mapRef.current.easeTo({
+        center: [r.lon, r.lat],
+        duration: 800,
+      });
+    }, 5_000);
+    return () => clearInterval(id);
+  }, [rider]);
+
+  function startPulse() {
+    const map = mapRef.current;
+    if (!map) return;
+    const start = Date.now();
+    const tick = () => {
+      const phase = (Date.now() - start) / 1600; // 1.6s loop
+      const sized = 0.5 + 0.15 * (Math.sin(phase * Math.PI * 2) + 1);
+      try {
+        map.setLayoutProperty("rider", "icon-size", sized);
+      } catch {
+        // Layer may not exist yet; ignore.
+      }
+      pulseRef.current = requestAnimationFrame(tick);
+    };
+    pulseRef.current = requestAnimationFrame(tick);
+  }
+
+  function applyRider(pos: RiderPos | null) {
+    const map = mapRef.current;
+    if (!map) return;
+    const source = map.getSource("rider") as GeoJSONSource | undefined;
+    if (!source) return;
+    if (!pos) {
+      source.setData({ type: "FeatureCollection", features: [] });
+      return;
+    }
+    source.setData({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [pos.lon, pos.lat] },
+          properties: {},
+        },
+      ],
+    });
+  }
 
   // Re-render features when aircraft updates.
   useEffect(() => {

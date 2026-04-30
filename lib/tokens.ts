@@ -10,6 +10,8 @@ export const SS_TOKENS = {
   fg3: "#3f4651",
   alert: "#f5b840",
   alertDim: "rgba(245,184,64,.18)",
+  warn: "#f59e0b",
+  danger: "#dc2626",
   clear: "#5fcf8a",
   clearDim: "rgba(95,207,138,.16)",
   sky: "#7dd3fc",

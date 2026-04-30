@@ -17,7 +17,7 @@ export function hasKv(): boolean {
 }
 
 let _redis: Redis | null = null;
-async function getRedis(): Promise<Redis | null> {
+export async function getRedis(): Promise<Redis | null> {
   if (!hasKv()) return null;
   if (_redis) return _redis;
   const { Redis } = await import("@upstash/redis");

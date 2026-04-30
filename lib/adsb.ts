@@ -119,6 +119,7 @@ export async function buildSnapshot(): Promise<Snapshot> {
         typeof ac.alt_baro === "number" ? ac.alt_baro : undefined,
       ground_speed_kt: ac.gs,
       heading: ac.track,
+      squawk: ac.squawk ?? null,
       time_aloft_min: grounded ? undefined : time_aloft_min,
       last_seen_min: 0,
     };
