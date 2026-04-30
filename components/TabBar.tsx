@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 const TABS: { id: string; label: string; href: string; icon: ReactNode }[] = [
   { id: "now", label: "Now", href: "/", icon: <ActivityIcon /> },
   { id: "radar", label: "Radar", href: "/radar", icon: <RadarIcon /> },
+  { id: "dash", label: "Dash", href: "/dash", icon: <GaugeIcon /> },
 ];
 
 export function TabBar() {
@@ -85,6 +86,25 @@ function ActivityIcon() {
       strokeLinejoin="round"
     >
       <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  );
+}
+
+// Lucide-style "gauge" icon — half-circle dial with a needle.
+function GaugeIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m12 14 4-4" />
+      <path d="M3.34 19a10 10 0 1 1 17.32 0" />
     </svg>
   );
 }
