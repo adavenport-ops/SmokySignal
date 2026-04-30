@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ss-bg0: #0b0d10;
+  --ss-bg1: #11141a;
+  --ss-bg2: #171b22;
+  --ss-bg3: #1e232c;
+  --ss-fg0: #eef0f3;
+  --ss-fg1: #a8adb6;
+  --ss-fg2: #6b7280;
+  --ss-fg3: #3f4651;
+  --ss-alert: #f5b840;
+  --ss-alert-dim: rgba(245, 184, 64, 0.18);
+  --ss-clear: #5fcf8a;
+  --ss-clear-dim: rgba(95, 207, 138, 0.16);
+  --ss-sky: #7dd3fc;
+  --ss-hairline: rgba(255, 255, 255, 0.06);
+  --ss-hairline-2: rgba(255, 255, 255, 0.10);
+}
+
+html,
+body {
+  background: var(--ss-bg0);
+  color: var(--ss-fg0);
+}
+
+body {
+  font-family: var(--font-inter), Inter, -apple-system, "SF Pro Text", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.ss-mono {
+  font-family: var(--font-mono), "Geist Mono", "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  font-feature-settings: "ss01", "tnum";
+  letter-spacing: 0.02em;
+}
+
+.ss-eyebrow {
+  font-family: var(--font-mono), "Geist Mono", ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ss-fg2);
+}
+
+.ss-divider {
+  height: 0.5px;
+  background: var(--ss-hairline);
+}
+
+.ss-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+@keyframes ss-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes ss-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ss-hero-bg {
+  transition: background 400ms ease-out;
+}
