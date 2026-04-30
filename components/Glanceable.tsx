@@ -5,6 +5,7 @@ import type { Aircraft, Snapshot } from "@/lib/types";
 import { SMOKY_TAIL } from "@/lib/seed";
 import { SS_TOKENS } from "@/lib/tokens";
 import { fmtAgo, fmtAloft } from "@/lib/format";
+import { useAircraft } from "@/lib/hooks/useAircraft";
 import { StatusPill } from "./StatusPill";
 import { Card } from "./Card";
 import { PlaneIcon, planeKindFor } from "./PlaneIcon";
@@ -13,41 +14,8 @@ import { PredictionCard } from "./PredictionCard";
 type Props = { initial: Snapshot; mockOn?: boolean };
 
 export function Glanceable({ initial, mockOn = false }: Props) {
-  const [snap, setSnap] = useState<Snapshot>(initial);
+  const snap = useAircraft(initial, mockOn);
   const [updatedAgo, setUpdatedAgo] = useState<number>(0);
-
-  // Poll /api/aircraft every 10s; pause when the tab is hidden so we don't
-  // hammer the upstream feed in background tabs.
-  useEffect(() => {
-    let cancelled = false;
-    const url = mockOn ? "/api/aircraft?mock=up" : "/api/aircraft";
-
-    const fetchSnap = async () => {
-      if (document.visibilityState === "hidden") return;
-      try {
-        const r = await fetch(url, { cache: "no-store" });
-        if (!r.ok) return;
-        const data = (await r.json()) as Snapshot;
-        if (!cancelled) setSnap(data);
-      } catch {
-        // transient error — next tick retries
-      }
-    };
-
-    void fetchSnap();
-    const id = setInterval(fetchSnap, 10_000);
-
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") void fetchSnap();
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [mockOn]);
 
   // "Updated Xs ago" label.
   useEffect(() => {

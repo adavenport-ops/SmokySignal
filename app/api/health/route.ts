@@ -10,7 +10,9 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const PING_TIMEOUT_MS = 2000;
+// 5s — Vercel→Keycloak (auth.opensky-network.org) round-trip on cold token
+// refresh routinely exceeds 2s, which was producing spurious "err" reports.
+const PING_TIMEOUT_MS = 5000;
 
 async function pingUrl(url: string): Promise<"ok" | "err"> {
   const ctl = new AbortController();
