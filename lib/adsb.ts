@@ -1,23 +1,16 @@
 // ADS-B feed adapters: adsb.fi (primary) + OpenSky (fallback).
 // Polite usage: bbox query once per refresh, KV-cached upstream.
 
-import { FLEET, fleetHex } from "./seed";
+import { fleetHex } from "./seed";
+import { getRegistry } from "./registry";
 import { fetchOpenSky } from "./opensky";
 import type {
   Aircraft,
   AircraftLive,
+  FleetEntry,
   NormalizedAc,
   Snapshot,
 } from "./types";
-
-// Precompute icao24 → fleet entry index at module load.
-const FLEET_BY_ICAO = new Map<string, (typeof FLEET)[number]>();
-for (const f of FLEET) {
-  const hex = fleetHex(f);
-  if (hex) FLEET_BY_ICAO.set(hex, f);
-}
-
-const FLEET_HEXES = [...FLEET_BY_ICAO.keys()];
 
 const REGION = {
   lat: Number(process.env.SS_REGION_LAT ?? 47.6),
@@ -51,6 +44,16 @@ async function fetchAdsbFi(): Promise<NormalizedAc[]> {
 // ─── Normalize + merge ─────────────────────────────────────────────────────
 
 export async function buildSnapshot(): Promise<Snapshot> {
+  // Resolve the registry once per snapshot regen — getRegistry caches in
+  // memory for 5s so this isn't a hot path on KV.
+  const fleet = await getRegistry();
+  const fleetByIcao = new Map<string, FleetEntry>();
+  for (const f of fleet) {
+    const hex = fleetHex(f);
+    if (hex) fleetByIcao.set(hex, f);
+  }
+  const fleetHexes = [...fleetByIcao.keys()];
+
   let raw: NormalizedAc[] = [];
   let source: Snapshot["source"] = "adsbfi";
   try {
@@ -58,7 +61,7 @@ export async function buildSnapshot(): Promise<Snapshot> {
   } catch (e) {
     console.warn("[adsb] primary failed, falling back to OpenSky:", e);
     try {
-      raw = await fetchOpenSky(FLEET_HEXES);
+      raw = await fetchOpenSky(fleetHexes);
       source = "opensky";
     } catch (e2) {
       console.error("[adsb] both feeds failed:", e2);
@@ -72,7 +75,7 @@ export async function buildSnapshot(): Promise<Snapshot> {
   const liveByIcao = new Map<string, NormalizedAc>();
   for (const ac of raw) {
     const hex = ac.hex.toLowerCase();
-    if (FLEET_BY_ICAO.has(hex)) liveByIcao.set(hex, ac);
+    if (fleetByIcao.has(hex)) liveByIcao.set(hex, ac);
   }
 
   // Update first-seen state
@@ -86,7 +89,7 @@ export async function buildSnapshot(): Promise<Snapshot> {
     }
   }
 
-  const aircraft: Aircraft[] = FLEET.map((entry) => {
+  const aircraft: Aircraft[] = fleet.map((entry) => {
     const hex = fleetHex(entry);
     const ac = liveByIcao.get(hex);
     const seen = seenByIcao.get(hex);

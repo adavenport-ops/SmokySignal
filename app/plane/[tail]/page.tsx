@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { FLEET, fleetHex } from "@/lib/seed";
+import { fleetHex } from "@/lib/seed";
+import { getRegistry } from "@/lib/registry";
 import { getSnapshot } from "@/lib/snapshot";
 import { mockAirborneSnapshot } from "@/lib/mock";
 import { getRecentPositions, getDistinctDayCount } from "@/lib/tracks";
@@ -24,14 +25,15 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function PlanePage({ params, searchParams }: Props) {
   const tail = params.tail.toUpperCase();
-  const entry = FLEET.find((f) => f.tail === tail);
-  if (!entry) notFound();
 
-  const [real, history, dayCount] = await Promise.all([
+  const [fleet, real, history, dayCount] = await Promise.all([
+    getRegistry(),
     getSnapshot(),
     getRecentPositions(tail, 20),
     getDistinctDayCount(tail),
   ]);
+  const entry = fleet.find((f) => f.tail === tail);
+  if (!entry) notFound();
   const snap = searchParams.mock === "up" ? mockAirborneSnapshot(real) : real;
 
   const live = snap.aircraft.find((a) => a.tail === tail);

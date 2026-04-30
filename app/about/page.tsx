@@ -1,7 +1,10 @@
 import Link from "next/link";
-import { FLEET, fleetHex } from "@/lib/seed";
+import { fleetHex } from "@/lib/seed";
+import { getRegistry } from "@/lib/registry";
 import { SS_TOKENS } from "@/lib/tokens";
 import { Card } from "@/components/Card";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "SmokySignal · About",
@@ -9,7 +12,8 @@ export const metadata = {
     "What SmokySignal is, where the data comes from, and which tails are tracked.",
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const fleet = await getRegistry();
   return (
     <main
       style={{
@@ -130,7 +134,7 @@ export default function AboutPage() {
                 </tr>
               </thead>
               <tbody>
-                {FLEET.map((f, i) => (
+                {fleet.map((f, i) => (
                   <tr
                     key={f.tail}
                     style={{

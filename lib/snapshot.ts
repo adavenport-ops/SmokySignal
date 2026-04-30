@@ -1,10 +1,26 @@
 import { buildSnapshot } from "./adsb";
-import { cacheGet, cacheSet } from "./cache";
+import { cacheGet, cacheSet, getRedis } from "./cache";
 import { logTracks } from "./tracks";
 import type { Snapshot, SnapshotSource } from "./types";
 
 const KEY = "ss:snapshot:v1";
 const TTL_SECONDS = 10;
+
+/**
+ * Force the next /api/aircraft fetch to rebuild the snapshot from scratch
+ * — used after registry edits so changes are visible immediately rather
+ * than after the 10s KV TTL.
+ */
+export async function invalidateSnapshot(): Promise<void> {
+  const redis = await getRedis();
+  if (redis) {
+    try {
+      await redis.del(KEY);
+    } catch (e) {
+      console.warn("[snapshot] invalidate failed:", e);
+    }
+  }
+}
 
 // Last successful upstream source. Surfaced via /api/health.
 let lastSource: SnapshotSource | null = null;
