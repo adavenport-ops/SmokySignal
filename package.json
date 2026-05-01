@@ -13,6 +13,7 @@
     "backfill:resume": "tsx --env-file=.env.local scripts/backfill.ts --resume --yes"
   },
   "dependencies": {
+    "@radix-ui/react-tooltip": "^1.2.8",
     "@upstash/redis": "^1.37.0",
     "@vercel/analytics": "^2.0.1",
     "maplibre-gl": "^5.24.0",

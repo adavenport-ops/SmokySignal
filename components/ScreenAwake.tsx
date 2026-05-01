@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SS_TOKENS } from "@/lib/tokens";
+import { Tooltip } from "./Tooltip";
 
 const STORAGE_KEY = "ss_wake_lock";
 const PREF_ON = "on";
@@ -116,38 +117,49 @@ export function ScreenAwake() {
   const color = lit ? SS_TOKENS.alert : SS_TOKENS.fg1;
 
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-label={
-        enabled
-          ? "Screen wake lock on, tap to disable"
-          : "Screen wake lock off, tap to enable"
+    <Tooltip
+      side="bottom"
+      align="end"
+      content={
+        lit
+          ? "Wake lock on — your phone won't sleep while SmokySignal is open."
+          : "Wake lock off — phone sleeps normally. Tap to enable."
       }
-      style={{
-        position: "fixed",
-        top: 12,
-        right: 12,
-        zIndex: 30,
-        width: 32,
-        height: 32,
-        borderRadius: "50%",
-        background: lit ? "rgba(245,184,64,0.12)" : "rgba(11,13,16,0.55)",
-        border: `.5px solid ${lit ? `${SS_TOKENS.alert}55` : SS_TOKENS.hairline}`,
-        color,
-        cursor: "pointer",
-        touchAction: "manipulation",
-        WebkitTapHighlightColor: "transparent",
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        backdropFilter: "blur(6px)",
-        WebkitBackdropFilter: "blur(6px)",
-        transition: "color 200ms, background 200ms",
-      }}
     >
-      <MoonStateIcon lit={lit} />
-    </button>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-pressed={enabled}
+        aria-label={
+          enabled
+            ? "Screen wake lock on, tap to disable"
+            : "Screen wake lock off, tap to enable"
+        }
+        style={{
+          position: "fixed",
+          top: 12,
+          right: 12,
+          zIndex: 30,
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          background: lit ? "rgba(245,184,64,0.12)" : "rgba(11,13,16,0.55)",
+          border: `.5px solid ${lit ? `${SS_TOKENS.alert}55` : SS_TOKENS.hairline}`,
+          color,
+          cursor: "pointer",
+          touchAction: "manipulation",
+          WebkitTapHighlightColor: "transparent",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+          transition: "color 200ms, background 200ms",
+        }}
+      >
+        <MoonStateIcon lit={lit} />
+      </button>
+    </Tooltip>
   );
 }
 

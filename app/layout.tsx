@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { BASE_URL } from "@/lib/config";
 import { IOSInstallPrompt } from "@/components/IOSInstallPrompt";
+import { TooltipProvider } from "@/components/Tooltip";
 import "./globals.css";
 
 const inter = Inter({
@@ -54,8 +55,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${mono.variable}`}>
       <body className="ss-app bg-ss-bg0 text-ss-fg0">
-        {children}
-        <IOSInstallPrompt />
+        <TooltipProvider>
+          {children}
+          <IOSInstallPrompt />
+        </TooltipProvider>
         <Analytics />
       </body>
     </html>

@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Map as MaplibreMap, GeoJSONSource } from "maplibre-gl";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { HotZone } from "@/lib/hotzones";
+import { Tooltip } from "./Tooltip";
 
 const VISIBLE_KEY = "ss_hotzones_visible";
 const FILTER_KEY = "ss_hotzones_filter";
@@ -168,28 +169,36 @@ export function HotZoneLayer({ map, bottomBoost = 0 }: Props) {
           gap: 6,
         }}
       >
-        <button
-          type="button"
-          onClick={() => setEnabled((v) => !v)}
-          aria-pressed={enabled}
-          className="ss-mono"
-          style={pillStyle(enabled ? SS_TOKENS.alert : SS_TOKENS.fg1)}
+        <Tooltip
+          side="top"
+          align="start"
+          content="30-day patrol density heatmap. Brighter areas = more time spent. Tap to hide."
         >
-          {enabled ? "● HOT ZONES" : "○ HOT ZONES"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setPanelOpen((v) => !v)}
-          aria-label="Hot zone filters"
-          aria-expanded={panelOpen}
-          className="ss-mono"
-          style={{
-            ...pillStyle(panelOpen ? SS_TOKENS.alert : SS_TOKENS.fg1),
-            padding: "8px 10px",
-          }}
-        >
-          {panelOpen ? "▴" : "▾"}
-        </button>
+          <button
+            type="button"
+            onClick={() => setEnabled((v) => !v)}
+            aria-pressed={enabled}
+            className="ss-mono"
+            style={pillStyle(enabled ? SS_TOKENS.alert : SS_TOKENS.fg1)}
+          >
+            {enabled ? "● HOT ZONES" : "○ HOT ZONES"}
+          </button>
+        </Tooltip>
+        <Tooltip side="top" content="Filter by tail, operator, or region.">
+          <button
+            type="button"
+            onClick={() => setPanelOpen((v) => !v)}
+            aria-label="Hot zone filters"
+            aria-expanded={panelOpen}
+            className="ss-mono"
+            style={{
+              ...pillStyle(panelOpen ? SS_TOKENS.alert : SS_TOKENS.fg1),
+              padding: "8px 10px",
+            }}
+          >
+            {panelOpen ? "▴" : "▾"}
+          </button>
+        </Tooltip>
       </div>
 
       {panelOpen && (

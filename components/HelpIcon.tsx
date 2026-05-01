@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
+import { Tooltip } from "./Tooltip";
 
 /**
  * Small "?" pill that links to /help. Discovery surface so the docs
@@ -23,31 +26,32 @@ export function HelpIcon({
   const inlineStyle: React.CSSProperties = {};
 
   return (
-    <Link
-      href="/help"
-      aria-label={ariaLabel}
-      title="Help & docs"
-      style={{
-        ...(variant === "fixed" ? fixedStyle : inlineStyle),
-        width: 32,
-        height: 32,
-        borderRadius: "50%",
-        background: "rgba(11,13,16,0.55)",
-        border: `.5px solid ${SS_TOKENS.hairline}`,
-        color: SS_TOKENS.fg1,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        textDecoration: "none",
-        fontSize: 14,
-        fontWeight: 700,
-        backdropFilter: "blur(6px)",
-        WebkitBackdropFilter: "blur(6px)",
-        touchAction: "manipulation",
-        WebkitTapHighlightColor: "transparent",
-      }}
-    >
-      ?
-    </Link>
+    <Tooltip side="bottom" align="end" content="Help & docs">
+      <Link
+        href="/help"
+        aria-label={ariaLabel}
+        style={{
+          ...(variant === "fixed" ? fixedStyle : inlineStyle),
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          background: "rgba(11,13,16,0.55)",
+          border: `.5px solid ${SS_TOKENS.hairline}`,
+          color: SS_TOKENS.fg1,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          textDecoration: "none",
+          fontSize: 14,
+          fontWeight: 700,
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+          touchAction: "manipulation",
+          WebkitTapHighlightColor: "transparent",
+        }}
+      >
+        ?
+      </Link>
+    </Tooltip>
   );
 }

@@ -11,6 +11,7 @@ import { StatusPill } from "./StatusPill";
 import { SpottedButton } from "./SpottedButton";
 import { HotZoneLayer } from "./HotZoneLayer";
 import { HelpIcon } from "./HelpIcon";
+import { Tooltip } from "./Tooltip";
 import type { Aircraft, Snapshot } from "@/lib/types";
 
 export type RiderPos = { lat: number; lon: number };
@@ -50,6 +51,12 @@ export function RadarShell({ initial, mockOn = false }: Props) {
       : undefined;
   const counterColor =
     statusInfo.totalAirborne > 0 ? SS_TOKENS.alert : SS_TOKENS.fg1;
+  const pillTooltip =
+    statusInfo.status === "smoky_up"
+      ? "Smoky (N305DK) is airborne and watching this region."
+      : statusInfo.status === "other_up"
+        ? `${statusInfo.othersAirborne.length} non-Smoky watcher${statusInfo.othersAirborne.length === 1 ? "" : "s"} airborne. Smoky's down.`
+        : "Nothing in our 16-tail registry is currently airborne.";
 
   const [rider, setRider] = useState<RiderPos | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -110,17 +117,31 @@ export function RadarShell({ initial, mockOn = false }: Props) {
           zIndex: 10,
         }}
       >
-        <StatusPill kind={pillKind} label={pillLabel} sub={pillSub} big />
-        <span
-          className="ss-mono"
-          style={{
-            fontSize: 10.5,
-            color: counterColor,
-            letterSpacing: ".06em",
-          }}
+        <StatusPill
+          kind={pillKind}
+          label={pillLabel}
+          sub={pillSub}
+          big
+          tooltip={pillTooltip}
+        />
+        <Tooltip
+          side="bottom"
+          align="end"
+          content="How many of our 16 tracked tails are airborne right now."
         >
-          {airborne.length}/{total} AIRB
-        </span>
+          <span
+            className="ss-mono"
+            tabIndex={0}
+            style={{
+              fontSize: 10.5,
+              color: counterColor,
+              letterSpacing: ".06em",
+              cursor: "help",
+            }}
+          >
+            {airborne.length}/{total} AIRB
+          </span>
+        </Tooltip>
       </header>
 
       <CompassN />
@@ -180,30 +201,35 @@ function Toast({
 
 function CompassN() {
   return (
-    <div
-      className="ss-mono"
-      style={{
-        position: "absolute",
-        top: 60,
-        right: 12,
-        width: 28,
-        height: 28,
-        borderRadius: "50%",
-        border: `.5px solid ${SS_TOKENS.hairline2}`,
-        background: "rgba(11,13,16,.7)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 10,
-        fontWeight: 700,
-        color: SS_TOKENS.fg1,
-        zIndex: 10,
-      }}
-    >
-      N
-    </div>
+    <Tooltip side="left" content="Map orientation: north is up.">
+      <div
+        className="ss-mono"
+        tabIndex={0}
+        aria-label="Map north indicator"
+        style={{
+          position: "absolute",
+          top: 60,
+          right: 12,
+          width: 28,
+          height: 28,
+          borderRadius: "50%",
+          border: `.5px solid ${SS_TOKENS.hairline2}`,
+          background: "rgba(11,13,16,.7)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 10,
+          fontWeight: 700,
+          color: SS_TOKENS.fg1,
+          zIndex: 10,
+          cursor: "help",
+        }}
+      >
+        N
+      </div>
+    </Tooltip>
   );
 }
 

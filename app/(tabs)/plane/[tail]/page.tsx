@@ -13,6 +13,7 @@ import type { Aircraft } from "@/lib/types";
 import type { RecentFlightForTail } from "@/lib/flights";
 import { BackLink } from "@/components/BackLink";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
+import { Tooltip } from "@/components/Tooltip";
 
 export const dynamic = "force-dynamic";
 
@@ -118,6 +119,11 @@ export default async function PlanePage({ params, searchParams }: Props) {
                   : `last seen ${fmtAgo(live?.last_seen_min)}`
             }
             big
+            tooltip={
+              up
+                ? "Live state from latest ADS-B observation."
+                : "Some helicopters fly with intermittent transponder coverage; 'last seen' isn't always 'last flew'."
+            }
           />
         </div>
       </header>
@@ -164,14 +170,17 @@ function LiveDataBlock({
         <KV
           label="ALT"
           value={live.altitude_ft != null ? `${live.altitude_ft.toLocaleString()}′` : "—"}
+          tooltip="Pressure altitude in feet, from the aircraft's transponder."
         />
         <KV
           label="GS"
           value={live.ground_speed_kt != null ? `${live.ground_speed_kt} kt` : "—"}
+          tooltip="Ground speed in knots. 1 kt ≈ 1.15 mph."
         />
         <KV
           label="HDG"
           value={live.heading != null ? `${Math.round(live.heading)}°` : "—"}
+          tooltip="Heading in degrees magnetic. 0° = north, 90° = east."
         />
         <SquawkKV squawk={live.squawk ?? null} />
       </div>
@@ -206,13 +215,23 @@ function GroundedNote({ live }: { live: Aircraft | undefined }) {
   );
 }
 
-function KV({ label, value }: { label: string; value: string }) {
-  return (
+function KV({
+  label,
+  value,
+  tooltip,
+}: {
+  label: string;
+  value: string;
+  tooltip?: React.ReactNode;
+}) {
+  const card = (
     <div
+      tabIndex={tooltip ? 0 : undefined}
       style={{
         background: SS_TOKENS.bg2,
         padding: "10px 12px",
         borderRadius: 8,
+        cursor: tooltip ? "help" : "default",
       }}
     >
       <div
@@ -238,6 +257,8 @@ function KV({ label, value }: { label: string; value: string }) {
       </div>
     </div>
   );
+  if (!tooltip) return card;
+  return <Tooltip content={tooltip}>{card}</Tooltip>;
 }
 
 function SquawkKV({ squawk }: { squawk: string | null }) {
@@ -254,11 +275,14 @@ function SquawkKV({ squawk }: { squawk: string | null }) {
     alertNote = "COMMS";
   }
   return (
+    <Tooltip content="4-digit transponder code. 1200 = VFR. 7500 = hijack, 7600 = radio failure, 7700 = general emergency.">
     <div
+      tabIndex={0}
       style={{
         background: SS_TOKENS.bg2,
         padding: "10px 12px",
         borderRadius: 8,
+        cursor: "help",
       }}
     >
       <div
@@ -296,6 +320,7 @@ function SquawkKV({ squawk }: { squawk: string | null }) {
         </div>
       )}
     </div>
+    </Tooltip>
   );
 }
 
@@ -411,7 +436,13 @@ function FleetMeta({ hex, role }: { hex: string; role: string }) {
         marginTop: 8,
       }}
     >
-      {hex} · {role.toUpperCase()}
+      <Tooltip content="ICAO24 Mode-S code — the unique aircraft identifier broadcast over ADS-B. Used to filter the live feed.">
+        <span tabIndex={0} style={{ cursor: "help" }}>
+          {hex}
+        </span>
+      </Tooltip>
+      {" · "}
+      {role.toUpperCase()}
     </div>
   );
 }

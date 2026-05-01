@@ -1,18 +1,30 @@
+"use client";
+
 import { SS_TOKENS } from "@/lib/tokens";
+import { Tooltip } from "./Tooltip";
 
 type Props = {
   kind?: "alert" | "clear";
   label: string;
   sub?: string;
   big?: boolean;
+  tooltip?: React.ReactNode;
 };
 
-export function StatusPill({ kind = "clear", label, sub, big }: Props) {
+export function StatusPill({
+  kind = "clear",
+  label,
+  sub,
+  big,
+  tooltip,
+}: Props) {
   const isAlert = kind === "alert";
   const c = isAlert ? SS_TOKENS.alert : SS_TOKENS.clear;
   const bg = isAlert ? SS_TOKENS.alertDim : SS_TOKENS.clearDim;
-  return (
+  const pill = (
     <span
+      role="status"
+      aria-live="polite"
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -28,6 +40,7 @@ export function StatusPill({ kind = "clear", label, sub, big }: Props) {
       }}
     >
       <span
+        aria-hidden
         style={{
           width: 6,
           height: 6,
@@ -43,4 +56,6 @@ export function StatusPill({ kind = "clear", label, sub, big }: Props) {
       )}
     </span>
   );
+  if (!tooltip) return pill;
+  return <Tooltip content={tooltip}>{pill}</Tooltip>;
 }

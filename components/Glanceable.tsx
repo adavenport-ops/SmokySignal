@@ -13,6 +13,7 @@ import { Card } from "./Card";
 import { PlaneIcon, planeKindFor } from "./PlaneIcon";
 import { PredictionCard } from "./PredictionCard";
 import { HelpIcon } from "./HelpIcon";
+import { Tooltip } from "./Tooltip";
 
 // Hide the activity strip when the most recent event is older than this
 // — a stale "Guardian One up · 8 hours ago" looks more like a bug than
@@ -106,28 +107,37 @@ export function Glanceable({
         }}
       >
         <span className="ss-eyebrow">SmokySignal · Live</span>
-        <span
-          className="ss-mono"
-          style={{
-            fontSize: 10.5,
-            color: SS_TOKENS.fg2,
-            whiteSpace: "nowrap",
-          }}
+        <Tooltip
+          side="bottom"
+          align="end"
+          content={`Time since last successful data pull. ${snap.source === "adsbfi" ? "ADSBFI = adsb.fi (primary feed)." : snap.source === "opensky" ? "OPENSKY = OpenSky Network (fallback)." : "MOCK = synthetic data."}`}
         >
           <span
+            className="ss-mono"
+            tabIndex={0}
             style={{
-              display: "inline-block",
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              background: SS_TOKENS.clear,
-              marginRight: 6,
-              verticalAlign: "middle",
-              animation: "ss-blink 1.6s infinite",
+              fontSize: 10.5,
+              color: SS_TOKENS.fg2,
+              whiteSpace: "nowrap",
+              cursor: "help",
             }}
-          />
-          UPDATED {updatedAgo}s · {snap.source.toUpperCase()}
-        </span>
+          >
+            <span
+              aria-hidden
+              style={{
+                display: "inline-block",
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: SS_TOKENS.clear,
+                marginRight: 6,
+                verticalAlign: "middle",
+                animation: "ss-blink 1.6s infinite",
+              }}
+            />
+            UPDATED {updatedAgo}s · {snap.source.toUpperCase()}
+          </span>
+        </Tooltip>
       </header>
 
       <Hero info={statusInfo} />

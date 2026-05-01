@@ -2,6 +2,7 @@ import Link from "next/link";
 import { fleetHex } from "@/lib/seed";
 import { getRegistry } from "@/lib/registry";
 import { SS_TOKENS } from "@/lib/tokens";
+import { Tooltip } from "@/components/Tooltip";
 
 export const dynamic = "force-dynamic";
 
@@ -68,23 +69,27 @@ export default async function AboutPage() {
         >
           Aircraft positions are pulled from the public ADS-B network.
           Primary feed:{" "}
-          <a
-            href="https://adsb.fi"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
-          >
-            adsb.fi
-          </a>
+          <Tooltip content="Public ADS-B aggregator network. Free, anonymous, attribution required. Our primary live data source.">
+            <a
+              href="https://adsb.fi"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
+            >
+              adsb.fi
+            </a>
+          </Tooltip>
           . Fallback:{" "}
-          <a
-            href="https://opensky-network.org"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
-          >
-            OpenSky Network
-          </a>
+          <Tooltip content="Academic ADS-B network at opensky-network.org. Used for historical track backfill and live fallback.">
+            <a
+              href="https://opensky-network.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
+            >
+              OpenSky Network
+            </a>
+          </Tooltip>
           . Both are anonymous, free, and require attribution — provided
           here and in the home-page footer. We cache snapshots for 10
           seconds so a hundred riders watching the page generate one
