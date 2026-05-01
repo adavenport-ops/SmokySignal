@@ -12,6 +12,7 @@ import { LearningPanel } from "./LearningPanel";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { PredictorOutput, PredictionWindow } from "@/lib/predictor";
 import { LEARNING_THRESHOLD_DAYS, type LearningState } from "@/lib/learning";
+import { PT_TZ, formatTsPacific, getViewerTz } from "@/lib/time";
 
 const MIN_TOTAL_EVENTS_FOR_PREDICTION = 10;
 
@@ -25,6 +26,9 @@ const FALLBACK_LEARNING: LearningState = {
 
 export function PredictionCard({ learning }: { learning?: LearningState }) {
   const [data, setData] = useState<PredictorOutput | null>(null);
+  // Tracked client-side so we only show the "times shown in PT" footnote
+  // for riders whose browser actually resolves to a non-PT zone.
+  const [viewerOutsidePT, setViewerOutsidePT] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,6 +45,10 @@ export function PredictionCard({ learning }: { learning?: LearningState }) {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    setViewerOutsidePT(getViewerTz() !== PT_TZ);
   }, []);
 
   // While loading, render nothing — avoids a flash of the "still learning"
@@ -84,13 +92,13 @@ export function PredictionCard({ learning }: { learning?: LearningState }) {
               lineHeight: 1.3,
             }}
           >
-            {fmtDayLabel(top.window_start)}
+            {fmtPredictionDayLabel(top.window_start)}
           </div>
           <div
             className="ss-mono"
             style={{ fontSize: 12, color: SS_TOKENS.fg1, marginTop: 4 }}
           >
-            {fmtTimeRange(top.window_start, top.window_end)}
+            {fmtPredictionTimeRange(top.window_start, top.window_end)}
           </div>
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -150,8 +158,41 @@ export function PredictionCard({ learning }: { learning?: LearningState }) {
           View weekly forecast →
         </Link>
       </div>
+      {viewerOutsidePT && (
+        <div
+          className="ss-mono"
+          style={{
+            fontSize: 10,
+            color: SS_TOKENS.fg2,
+            marginTop: 8,
+            letterSpacing: ".04em",
+          }}
+        >
+          Times shown in PT (where the bird flies).
+        </div>
+      )}
     </Card>
   );
+}
+
+function ptDayKey(tsMs: number): string {
+  return formatTsPacific(tsMs, "date");
+}
+
+function fmtPredictionDayLabel(iso: string): string {
+  const ts = new Date(iso).getTime();
+  const target = ptDayKey(ts);
+  const today = ptDayKey(Date.now());
+  const tomorrow = ptDayKey(Date.now() + 86_400_000);
+  if (target === today) return "Today";
+  if (target === tomorrow) return "Tomorrow";
+  return formatTsPacific(ts, "date-weekday");
+}
+
+function fmtPredictionTimeRange(startIso: string, endIso: string): string {
+  const start = new Date(startIso).getTime();
+  const end = new Date(endIso).getTime();
+  return `${formatTsPacific(start, "hour-min")} – ${formatTsPacific(end, "hour-min")} PT`;
 }
 
 function confidenceLabel(c: PredictionWindow["confidence_level"]): string {
@@ -160,26 +201,3 @@ function confidenceLabel(c: PredictionWindow["confidence_level"]): string {
   return "EARLY SIGNAL";
 }
 
-function fmtDayLabel(iso: string): string {
-  const ts = new Date(iso).getTime();
-  const now = Date.now();
-  const diffDays = Math.floor((ts - now) / 86_400_000);
-  if (diffDays < 1) return "Today";
-  if (diffDays < 2) return "Tomorrow";
-  return new Date(ts).toLocaleDateString(undefined, {
-    weekday: "long",
-    timeZone: "America/Los_Angeles",
-  });
-}
-
-function fmtTimeRange(startIso: string, endIso: string): string {
-  const start = new Date(startIso);
-  const end = new Date(endIso);
-  const fmt = (d: Date) =>
-    d.toLocaleTimeString(undefined, {
-      hour: "numeric",
-      hour12: true,
-      timeZone: "America/Los_Angeles",
-    });
-  return `${fmt(start)} – ${fmt(end)} PT`;
-}

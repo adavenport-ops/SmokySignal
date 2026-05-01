@@ -11,6 +11,8 @@ import { fleetHex } from "@/lib/seed";
 import { getFlightById, parseFlightId } from "@/lib/flights";
 import { SS_TOKENS } from "@/lib/tokens";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
+import { LocalTime } from "@/components/LocalTime";
+import { fmtDurationHuman } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -152,7 +154,9 @@ export default async function FlightSharePage({ params }: Props) {
           alignSelf: "flex-start",
         }}
       >
-        Completed flight · {fmtDate(session.start_ts)} · {fmtDuration(session.duration_s)}
+        Completed flight ·{" "}
+        <LocalTime ts={session.start_ts} style="date-short" /> ·{" "}
+        {fmtDurationHuman(session.duration_s)}
       </div>
 
       <PlaneTrackMap points={points} inProgress={false} height={320} />
@@ -172,9 +176,15 @@ export default async function FlightSharePage({ params }: Props) {
             gap: 12,
           }}
         >
-          <KV label="FIRST SEEN" value={fmtClock(session.start_ts)} />
-          <KV label="LAST SEEN" value={fmtClock(session.end_ts)} />
-          <KV label="DURATION" value={fmtDuration(session.duration_s)} />
+          <KV
+            label="FIRST SEEN"
+            value={<LocalTime ts={session.start_ts} style="datetime" />}
+          />
+          <KV
+            label="LAST SEEN"
+            value={<LocalTime ts={session.end_ts} style="datetime" />}
+          />
+          <KV label="DURATION" value={fmtDurationHuman(session.duration_s)} />
           <KV label="SAMPLES" value={String(session.sample_count)} />
           <KV
             label="MAX ALT"
@@ -266,7 +276,7 @@ function Missing({ tail }: { tail: string }) {
   );
 }
 
-function KV({ label, value }: { label: string; value: string }) {
+function KV({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div
       style={{
@@ -296,25 +306,3 @@ function KV({ label, value }: { label: string; value: string }) {
   );
 }
 
-function fmtDate(tsMs: number): string {
-  return new Date(tsMs).toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function fmtClock(tsMs: number): string {
-  return new Date(tsMs).toLocaleString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "America/Los_Angeles",
-    timeZoneName: "short",
-  });
-}
-
-function fmtDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  return h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m`;
-}

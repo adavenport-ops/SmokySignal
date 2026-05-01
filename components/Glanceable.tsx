@@ -6,7 +6,7 @@ import type { Aircraft, FleetEntry, Snapshot } from "@/lib/types";
 import type { ActivityEntry } from "@/lib/activity";
 import type { LearningState } from "@/lib/learning";
 import { SS_TOKENS } from "@/lib/tokens";
-import { fmtAloft } from "@/lib/format";
+import { fmtAloft } from "@/lib/time";
 import { useAircraft } from "@/lib/hooks/useAircraft";
 import { computeStatus, type StatusState } from "@/lib/status";
 import { StatusPill } from "./StatusPill";

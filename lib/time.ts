@@ -129,6 +129,14 @@ export function fmtAgo(min: number | null | undefined): string {
   return `${Math.floor(min / 1440)}d ago`;
 }
 
+/** Same as fmtAgo, but takes an absolute timestamp instead of pre-computed minutes. */
+export function fmtAgoTs(tsMs: number | null | undefined): string {
+  if (tsMs == null || Number.isNaN(tsMs)) return "a while";
+  const sec = Math.max(0, Math.floor((Date.now() - tsMs) / 1000));
+  if (sec < 60) return "just now";
+  return fmtAgo(Math.floor(sec / 60));
+}
+
 /** "Today" / "Yesterday" / weekday / short date — tz-aware. */
 export function fmtRelativeDay(tsMs: number, opts?: { tz?: string }): string {
   const tz = opts?.tz ?? getViewerTz();
@@ -151,7 +159,7 @@ export function fmtRelativeDay(tsMs: number, opts?: { tz?: string }): string {
   return formatTs(tsMs, "date-short", opts);
 }
 
-/** "MM:SS" or "HH:MM:SS" duration. */
+/** "MM:SS" or "HH:MM:SS" — clock-style duration for precision contexts. */
 export function fmtDuration(seconds: number): string {
   const s = Math.max(0, Math.floor(seconds));
   const h = Math.floor(s / 3600);
@@ -161,6 +169,14 @@ export function fmtDuration(seconds: number): string {
     return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
   }
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+}
+
+/** "47m" / "3h 45m" — human-readable duration for narrative contexts. */
+export function fmtDurationHuman(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m`;
 }
 
 /** "47m aloft" / "3h 12m aloft" — tz-agnostic. */
