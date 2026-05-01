@@ -12,11 +12,12 @@ import { getSpeedWarningEnabled } from "@/lib/flags";
 import { SS_TOKENS } from "@/lib/tokens";
 import { LoginForm } from "./LoginForm";
 import { Editor } from "./Editor";
+import { Logo } from "@/components/brand/Logo";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "SmokySignal · Admin",
+  title: "Admin",
   robots: { index: false, follow: false },
 };
 
@@ -69,15 +70,28 @@ function PasscodeMissing() {
       }}
     >
       <h1
-        className="ss-mono"
         style={{
-          fontSize: 16,
-          color: SS_TOKENS.fg0,
-          letterSpacing: ".06em",
+          margin: 0,
           marginBottom: 12,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
         }}
       >
-        SMOKYSIGNAL ADMIN
+        <Logo size={20} wordmark />
+        <span
+          className="ss-mono"
+          style={{
+            fontSize: 9.5,
+            color: SS_TOKENS.fg2,
+            letterSpacing: ".12em",
+            padding: "2px 6px",
+            border: `.5px solid ${SS_TOKENS.hairline2}`,
+            borderRadius: 4,
+          }}
+        >
+          ADMIN
+        </span>
       </h1>
       <p>
         <code className="ss-mono">ADMIN_PASSCODE</code> isn&rsquo;t set in this

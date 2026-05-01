@@ -3,7 +3,7 @@ import { getSnapshot } from "@/lib/snapshot";
 import { mockAirborneSnapshot } from "@/lib/mock";
 
 export const metadata = {
-  title: "SmokySignal · Radar",
+  title: "Radar",
 };
 
 export const dynamic = "force-dynamic";

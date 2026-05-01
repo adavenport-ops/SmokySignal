@@ -5,7 +5,7 @@ import { SS_TOKENS } from "@/lib/tokens";
 import { HelpMarkdown, HelpScrollTopButton } from "./HelpView";
 
 export const metadata = {
-  title: "SmokySignal · Help",
+  title: "Help",
   description:
     "What SmokySignal shows you, where the data comes from, and how to read each screen.",
 };

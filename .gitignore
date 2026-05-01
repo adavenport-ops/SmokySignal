@@ -36,3 +36,11 @@ next-env.d.ts
 
 # claude local tooling
 .claude
+
+# Re-include the brand asset directory. Some users' global
+# .gitignore has the macOS-Finder pattern "Icon?" which matches
+# our "icons" directory case-insensitively and silently strips
+# the entire PWA / favicon / OG bundle from commits. Force it
+# back in here.
+!public/icons
+!public/icons/**
