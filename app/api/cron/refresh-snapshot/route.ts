@@ -3,7 +3,13 @@
 // keeps the activity feed firing continuously (recordActivity runs as a
 // side-channel inside getSnapshot's regen path).
 //
-// Schedule: every minute (vercel.json). Auth: Bearer CRON_SECRET.
+// Schedule: vercel.json. Vercel Hobby plan limits crons to once per day,
+// so the default is "0 14 * * *" (daily, 2 PM UTC = 7 AM Pacific). On
+// Pro, change vercel.json to "* * * * *" for per-minute refresh — that
+// gives the activity feed near-real-time event capture independent of
+// user traffic.
+//
+// Auth: Bearer CRON_SECRET.
 
 import { NextResponse } from "next/server";
 import { getSnapshot, invalidateSnapshot } from "@/lib/snapshot";

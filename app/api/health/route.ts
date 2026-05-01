@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { FLEET } from "@/lib/seed";
 import {
   getLastSource,
-  peekSnapshot,
+  peekHealthSnapshot,
   getLastAirborneTs,
 } from "@/lib/snapshot";
 import { cacheGet, cacheSet, hasKv } from "@/lib/cache";
@@ -99,7 +99,7 @@ export async function GET() {
     pingUrl(adsbfiUrl),
     pingOpensky(),
     getOpenskyCreditsRemaining(),
-    peekSnapshot(),
+    peekHealthSnapshot(),
     getLastAirborneTs(),
   ]);
 
@@ -111,6 +111,11 @@ export async function GET() {
     ? snap.aircraft.filter((a) => a.airborne).length
     : null;
   const live_seen_count = snap?.live_seen_count ?? null;
+  // Lets us discriminate "cron isn't running" (stale snapshot, age >> 60s)
+  // from "no airborne fleet" (fresh snapshot, airborne_count = 0).
+  const snapshot_age_s = snap
+    ? Math.max(0, Math.round((Date.now() - snap.fetched_at) / 1000))
+    : null;
 
   // adsb.fi is the only path that must work for the app to be useful;
   // OpenSky is a fallback. KV is optional (in-memory fallback exists).
@@ -121,6 +126,7 @@ export async function GET() {
     adsbfi,
     airborne_count,
     live_seen_count,
+    snapshot_age_s,
     last_airborne_ts: last_airborne_ts
       ? new Date(last_airborne_ts).toISOString()
       : null,

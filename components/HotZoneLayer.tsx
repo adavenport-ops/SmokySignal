@@ -114,6 +114,8 @@ export function HotZoneLayer({ map, bottomBoost = 0 }: Props) {
         WebkitBackdropFilter: "blur(8px)",
         cursor: "pointer",
         whiteSpace: "nowrap",
+        touchAction: "manipulation",
+        WebkitTapHighlightColor: "transparent",
       }}
     >
       {enabled ? "● HOT ZONES" : "○ HOT ZONES"}
@@ -147,31 +149,39 @@ function addOrUpdate(map: MaplibreMap, zones: HotZone[], enabled: boolean) {
         type: "heatmap",
         source: SOURCE_ID,
         paint: {
+          // Single sparse cells (count=1) used to map to weight=0, which
+          // produced no visible heat at all. Floor at 0.2 so any cell
+          // contributes something, then ramp to 1 by count=20. The high-
+          // density Tri-Cities/Olympia clusters still saturate.
           "heatmap-weight": [
             "interpolate",
             ["linear"],
             ["get", "count"],
             1,
-            0,
-            100,
+            0.2,
+            20,
             1,
           ],
-          "heatmap-intensity": 0.6,
-          "heatmap-radius": 24,
+          "heatmap-intensity": 1,
+          // Wider radius helps single points be visible at zoom 9 where
+          // 0.5nm cells are only a few px across.
+          "heatmap-radius": 32,
           "heatmap-color": [
             "interpolate",
             ["linear"],
             ["heatmap-density"],
             0,
             "rgba(0,0,0,0)",
-            0.2,
-            "rgba(245,184,64,0.20)",
-            0.5,
-            "rgba(245,184,64,0.50)",
+            0.05,
+            "rgba(245,184,64,0.18)",
+            0.3,
+            "rgba(245,184,64,0.55)",
+            0.7,
+            "rgba(245,140,40,0.70)",
             1.0,
-            "rgba(220,38,38,0.70)",
+            "rgba(220,38,38,0.78)",
           ],
-          "heatmap-opacity": 0.7,
+          "heatmap-opacity": 0.85,
         },
       },
       beforeId,

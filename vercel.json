@@ -3,7 +3,7 @@
   "crons": [
     {
       "path": "/api/cron/refresh-snapshot",
-      "schedule": "* * * * *"
+      "schedule": "0 14 * * *"
     },
     {
       "path": "/api/cron/refresh-hotzones",

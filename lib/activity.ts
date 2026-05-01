@@ -106,13 +106,19 @@ function diffEvents(prev: Snapshot | null, curr: Snapshot): ActivityEntry[] {
 
   for (const a of curr.aircraft) {
     const p = prevByTail.get(a.tail);
-    const baseEntry = {
-      ts,
-      tail: a.tail,
-      icao24: a.icao24,
+    const currentPos = {
       lat: a.lat ?? null,
       lon: a.lon ?? null,
       alt_ft: a.altitude_ft ?? null,
+    };
+    // For landings the current snapshot has the plane at on_ground=true
+    // (or absent), so its lat/lon are stale or null. The previous
+    // snapshot is when we last saw it airborne — that's the position
+    // worth recording.
+    const lastAirbornePos = {
+      lat: p?.lat ?? currentPos.lat,
+      lon: p?.lon ?? currentPos.lon,
+      alt_ft: p?.altitude_ft ?? currentPos.alt_ft,
     };
 
     // first_seen: tail wasn't in prev snapshot at all and is currently
@@ -120,7 +126,10 @@ function diffEvents(prev: Snapshot | null, curr: Snapshot): ActivityEntry[] {
     // up when it joins.
     if (!p && a.airborne) {
       out.push({
-        ...baseEntry,
+        ts,
+        tail: a.tail,
+        icao24: a.icao24,
+        ...currentPos,
         kind: "first_seen",
         squawk: a.squawk ?? null,
         description: describeEvent(a.tail, a.nickname, "first_seen"),
@@ -129,20 +138,27 @@ function diffEvents(prev: Snapshot | null, curr: Snapshot): ActivityEntry[] {
       continue;
     }
 
-    // takeoff
+    // takeoff — current position is the moment of liftoff
     if (p && !p.airborne && a.airborne) {
       out.push({
-        ...baseEntry,
+        ts,
+        tail: a.tail,
+        icao24: a.icao24,
+        ...currentPos,
         kind: "takeoff",
         squawk: a.squawk ?? null,
         description: describeEvent(a.tail, a.nickname, "takeoff"),
       });
     }
 
-    // landing
+    // landing — use the LAST airborne position (prev snapshot), since
+    // the current one is on the ground with stale coords or missing.
     if (p && p.airborne && !a.airborne) {
       out.push({
-        ...baseEntry,
+        ts,
+        tail: a.tail,
+        icao24: a.icao24,
+        ...lastAirbornePos,
         kind: "landing",
         squawk: a.squawk ?? null,
         description: describeEvent(a.tail, a.nickname, "landing"),
@@ -154,7 +170,10 @@ function diffEvents(prev: Snapshot | null, curr: Snapshot): ActivityEntry[] {
     const ps = p?.squawk ?? null;
     if (cs && EMERGENCY_SQUAWKS.has(cs) && cs !== ps) {
       out.push({
-        ...baseEntry,
+        ts,
+        tail: a.tail,
+        icao24: a.icao24,
+        ...currentPos,
         kind: "squawk_emergency",
         squawk: cs,
         description: describeEvent(a.tail, a.nickname, "squawk_emergency", cs),

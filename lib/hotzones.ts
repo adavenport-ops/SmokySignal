@@ -19,6 +19,24 @@ import { listTrackKeys, getTracksForDay } from "./tracks";
 // individual position pings.
 export const GRID_CELL_DEG = 0.0083;
 export const HOTZONE_DAYS_BACK = 30;
+// Defensive Pacific-NW envelope. Anything outside is data-quality
+// noise — old ADS-B records under a recycled N-number, hex collision
+// from a different aircraft using the same Mode-S code, etc. Live
+// snapshots from /api/aircraft already region-filter so this only
+// matters for the historical backfill path.
+const REGION_LAT_MIN = 45.0;
+const REGION_LAT_MAX = 49.5;
+const REGION_LON_MIN = -125.0;
+const REGION_LON_MAX = -116.0;
+
+function inRegion(lat: number, lon: number): boolean {
+  return (
+    lat >= REGION_LAT_MIN &&
+    lat <= REGION_LAT_MAX &&
+    lon >= REGION_LON_MIN &&
+    lon <= REGION_LON_MAX
+  );
+}
 
 const CURRENT_KEY = "hotzones:current";
 const LAST_REFRESH_KEY = "hotzones:last_refresh_ts";
@@ -65,6 +83,7 @@ export async function aggregateHotZones(): Promise<HotZone[]> {
     for (const date of keep) {
       const points = await getTracksForDay(t.tail, date);
       for (const p of points) {
+        if (!inRegion(p.lat, p.lon)) continue;
         const cellLat = Math.floor(p.lat / GRID_CELL_DEG) * GRID_CELL_DEG;
         const cellLon = Math.floor(p.lon / GRID_CELL_DEG) * GRID_CELL_DEG;
         const key = `${cellLat.toFixed(4)},${cellLon.toFixed(4)}`;
