@@ -78,3 +78,52 @@ body {
 .ss-hero-bg {
   transition: background 400ms ease-out;
 }
+
+/* Visible keyboard focus rings everywhere — but only on keyboard
+   navigation, not on mouse clicks (matches macOS/iOS conventions). */
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--ss-alert);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skip-to-main-content link — invisible until keyboard-focused, then
+   pops in as a pill at the top so screen-reader / keyboard users can
+   jump past the persistent header chrome. */
+.ss-skip-link {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 8px 14px;
+  z-index: 100;
+  background: var(--ss-bg1);
+  color: var(--ss-fg0);
+  border: 0.5px solid var(--ss-hairline-2);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  /* Off-screen but still focusable */
+  transform: translateY(-200%);
+  transition: transform 120ms ease;
+}
+.ss-skip-link:focus,
+.ss-skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* Respect prefers-reduced-motion: kill the pulsers + transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -12,7 +12,10 @@ export default async function TabsLayout({
   const speedWarningEnabled = await getSpeedWarningEnabled();
   return (
     <>
-      {children}
+      <a href="#main-content" className="ss-skip-link">
+        Skip to main content
+      </a>
+      <div id="main-content">{children}</div>
       <TabBar />
       <ScreenAwake />
       <AppBadge />

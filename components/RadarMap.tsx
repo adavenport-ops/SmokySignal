@@ -346,6 +346,8 @@ export default function RadarMap({
   return (
     <div
       ref={containerRef}
+      role="region"
+      aria-label={`Live aircraft map, showing ${aircraft.length} airborne tail${aircraft.length === 1 ? "" : "s"}`}
       style={{
         position: "absolute",
         inset: 0,

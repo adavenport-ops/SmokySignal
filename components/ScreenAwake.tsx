@@ -131,20 +131,19 @@ export function ScreenAwake() {
         onClick={onToggle}
         aria-pressed={enabled}
         aria-label={
-          enabled
-            ? "Screen wake lock on, tap to disable"
-            : "Screen wake lock off, tap to enable"
+          enabled ? "Keep screen awake (currently on)" : "Allow screen to sleep (currently off)"
         }
         style={{
           position: "fixed",
-          top: 12,
-          right: 12,
+          top: 6,
+          right: 6,
           zIndex: 30,
-          width: 32,
-          height: 32,
+          width: 44,
+          height: 44,
+          padding: 6,
           borderRadius: "50%",
-          background: lit ? "rgba(245,184,64,0.12)" : "rgba(11,13,16,0.55)",
-          border: `.5px solid ${lit ? `${SS_TOKENS.alert}55` : SS_TOKENS.hairline}`,
+          background: "transparent",
+          border: 0,
           color,
           cursor: "pointer",
           touchAction: "manipulation",
@@ -152,12 +151,27 @@ export function ScreenAwake() {
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          backdropFilter: "blur(6px)",
-          WebkitBackdropFilter: "blur(6px)",
-          transition: "color 200ms, background 200ms",
+          transition: "color 200ms",
         }}
       >
-        <MoonStateIcon lit={lit} />
+        <span
+          aria-hidden
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            background: lit ? "rgba(245,184,64,0.12)" : "rgba(11,13,16,0.55)",
+            border: `.5px solid ${lit ? `${SS_TOKENS.alert}55` : SS_TOKENS.hairline}`,
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            transition: "background 200ms, border-color 200ms",
+          }}
+        >
+          <MoonStateIcon lit={lit} />
+        </span>
       </button>
     </Tooltip>
   );

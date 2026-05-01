@@ -19,11 +19,18 @@ export function HelpIcon({
 }) {
   const fixedStyle: React.CSSProperties = {
     position: "fixed",
-    top: 12,
-    right: 52,
+    top: 6,
+    right: 50,
     zIndex: 30,
+    width: 44,
+    height: 44,
+    padding: 6,
   };
-  const inlineStyle: React.CSSProperties = {};
+  const inlineStyle: React.CSSProperties = {
+    width: 44,
+    height: 44,
+    padding: 6,
+  };
 
   return (
     <Tooltip side="bottom" align="end" content="Help & docs">
@@ -32,25 +39,34 @@ export function HelpIcon({
         aria-label={ariaLabel}
         style={{
           ...(variant === "fixed" ? fixedStyle : inlineStyle),
-          width: 32,
-          height: 32,
-          borderRadius: "50%",
-          background: "rgba(11,13,16,0.55)",
-          border: `.5px solid ${SS_TOKENS.hairline}`,
-          color: SS_TOKENS.fg1,
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
           textDecoration: "none",
-          fontSize: 14,
-          fontWeight: 700,
-          backdropFilter: "blur(6px)",
-          WebkitBackdropFilter: "blur(6px)",
           touchAction: "manipulation",
           WebkitTapHighlightColor: "transparent",
         }}
       >
-        ?
+        <span
+          aria-hidden
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            background: "rgba(11,13,16,0.55)",
+            border: `.5px solid ${SS_TOKENS.hairline}`,
+            color: SS_TOKENS.fg1,
+            fontSize: 14,
+            fontWeight: 700,
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+          }}
+        >
+          ?
+        </span>
       </Link>
     </Tooltip>
   );

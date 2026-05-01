@@ -16,6 +16,7 @@ export function TabBar() {
   const pathname = usePathname();
   return (
     <nav
+      aria-label="Main"
       style={{
         position: "fixed",
         left: 0,
@@ -39,14 +40,19 @@ export function TabBar() {
             key={t.id}
             href={t.href}
             prefetch
+            aria-current={active ? "page" : undefined}
             style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               gap: 3,
               padding: "6px 10px",
+              minWidth: 56,
+              minHeight: 44,
               color: active ? SS_TOKENS.fg0 : SS_TOKENS.fg2,
               textDecoration: "none",
+              touchAction: "manipulation",
+              WebkitTapHighlightColor: "transparent",
             }}
           >
             <span style={{ fontSize: 18, lineHeight: 1, display: "flex" }}>
