@@ -10,25 +10,34 @@ import maplibregl, {
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useRouter } from "next/navigation";
 import { SS_TOKENS } from "@/lib/tokens";
-import type { Aircraft } from "@/lib/types";
+import type { Aircraft, FleetRole } from "@/lib/types";
+import {
+  aircraftSvg,
+  glyphRoleFor,
+  type GlyphRole,
+} from "@/lib/brand/aircraft-glyphs";
 
 const PUGET_SOUND: [number, number] = [-122.3, 47.6];
 const DEFAULT_ZOOM = 9;
 
-const PLANE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path d="M12 3 L21 21 L12 17 L3 21 Z" fill="${SS_TOKENS.alert}" stroke="${SS_TOKENS.bg0}" stroke-width="1" stroke-linejoin="round"/></svg>`;
+// Aircraft glyphs are role-keyed images in MapLibre's image atlas. We
+// load one per role at map-init and the symbol layer's icon-image
+// expression picks the right one per feature via properties.icon.
+// 'unknown' maps to 'aircraft-smokey' (see glyphRoleFor — conservative
+// alert default, matches computeStatus()).
+const AIRCRAFT_ICON_SIZE = 32; // bitmap raster size; layer `icon-size` scales it
+const ROLE_ICON_KEY: Record<GlyphRole, string> = {
+  smokey: "aircraft-smokey",
+  patrol: "aircraft-patrol",
+  sar: "aircraft-sar",
+  transport: "aircraft-transport",
+};
 
-const ROTOR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="rgba(245,184,64,0.18)" stroke="${SS_TOKENS.alert}" stroke-width="1.5"/><line x1="2" y1="12" x2="22" y2="12" stroke="${SS_TOKENS.alert}" stroke-width="1" stroke-linecap="round" opacity="0.85"/><circle cx="12" cy="12" r="2" fill="${SS_TOKENS.alert}"/></svg>`;
+function iconForRole(role: FleetRole | undefined | null): string {
+  return ROLE_ICON_KEY[glyphRoleFor(role)];
+}
 
 const RIDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="${SS_TOKENS.sky}" fill-opacity="0.10"/><circle cx="24" cy="24" r="12" fill="${SS_TOKENS.sky}" fill-opacity="0.22"/><circle cx="24" cy="24" r="6" fill="${SS_TOKENS.sky}" stroke="white" stroke-width="2"/></svg>`;
-
-type IconKind = "plane-fixed" | "plane-rotor";
-
-function iconForModel(model: string | undefined | null): IconKind {
-  if (!model) return "plane-fixed";
-  return /Bell|UH-1|MD|Hughes|407|206|505/i.test(model)
-    ? "plane-rotor"
-    : "plane-fixed";
-}
 
 async function loadSvgBitmap(svg: string, size: number): Promise<ImageBitmap> {
   const blob = new Blob([svg], { type: "image/svg+xml" });
@@ -46,7 +55,10 @@ async function loadSvgBitmap(svg: string, size: number): Promise<ImageBitmap> {
 type Snapshot = {
   fromByTail: Map<string, [number, number]>;
   toByTail: Map<string, [number, number]>;
-  metaByTail: Map<string, { icon: IconKind; track: number; nickname: string | null }>;
+  metaByTail: Map<
+    string,
+    { icon: string; track: number; nickname: string | null }
+  >;
   startedAt: number;
 };
 
@@ -112,15 +124,23 @@ export default function RadarMap({
     mapRef.current = map;
 
     const onLoad = async () => {
-      const [planeImg, rotorImg, riderImg] = await Promise.all([
-        loadSvgBitmap(PLANE_SVG, 32),
-        loadSvgBitmap(ROTOR_SVG, 32),
+      // Load all four role glyphs in parallel + the rider dot. The map's
+      // symbol layer expression picks the right one per feature via
+      // properties.icon = "aircraft-${role}".
+      const roleEntries = Object.entries(ROLE_ICON_KEY) as Array<
+        [GlyphRole, string]
+      >;
+      const [riderImg, ...roleImgs] = await Promise.all([
         loadSvgBitmap(RIDER_SVG, 48),
+        ...roleEntries.map(([role]) =>
+          loadSvgBitmap(aircraftSvg(role, { size: AIRCRAFT_ICON_SIZE }), AIRCRAFT_ICON_SIZE),
+        ),
       ]);
       if (!mapRef.current) return; // guard — unmounted while loading
-      map.addImage("plane-fixed", planeImg);
-      map.addImage("plane-rotor", rotorImg);
       map.addImage("rider-dot", riderImg);
+      roleEntries.forEach(([, key], i) => {
+        map.addImage(key, roleImgs[i]!);
+      });
 
       // Rider — under aircraft so chevrons stay visually on top.
       map.addSource("rider", {
@@ -294,12 +314,15 @@ export default function RadarMap({
     }
 
     const newTo = new Map<string, [number, number]>();
-    const newMeta = new Map<string, { icon: IconKind; track: number; nickname: string | null }>();
+    const newMeta = new Map<
+      string,
+      { icon: string; track: number; nickname: string | null }
+    >();
     for (const a of list) {
       if (a.lat == null || a.lon == null) continue;
       newTo.set(a.tail, [a.lon, a.lat]);
       newMeta.set(a.tail, {
-        icon: iconForModel(a.model),
+        icon: iconForRole(a.role),
         track: a.heading ?? 0,
         nickname: a.nickname,
       });
