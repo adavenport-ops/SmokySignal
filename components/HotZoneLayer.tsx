@@ -13,7 +13,9 @@ import { useEffect, useRef, useState } from "react";
 import type { Map as MaplibreMap, GeoJSONSource } from "maplibre-gl";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { HotZone } from "@/lib/hotzones";
+import type { LearningState } from "@/lib/learning";
 import { Tooltip } from "./Tooltip";
+import { LearningPanel } from "./LearningPanel";
 
 const VISIBLE_KEY = "ss_hotzones_visible";
 const FILTER_KEY = "ss_hotzones_filter";
@@ -82,9 +84,10 @@ type Props = {
   map: MaplibreMap | null;
   /** Extra px above the tab bar — pass when the airborne carousel is on. */
   bottomBoost?: number;
+  learning?: LearningState;
 };
 
-export function HotZoneLayer({ map, bottomBoost = 0 }: Props) {
+export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
   const [enabled, setEnabled] = useState<boolean>(true);
   const [filter, setFilter] = useState<Filter>(DEFAULT_FILTER);
   const [zones, setZones] = useState<HotZone[] | null>(null);
@@ -292,8 +295,57 @@ export function HotZoneLayer({ map, bottomBoost = 0 }: Props) {
 
   const bottom = TABBAR_HEIGHT + 16 + bottomBoost;
 
+  // Empty-state messaging: only show once we know zones returned empty AND
+  // the toggle is on (otherwise the user explicitly hid them). Sits just
+  // above the toggle row so it doesn't fight the map.
+  const showEmptyState = enabled && zones !== null && zones.length === 0;
+  const emptyVariant: "learning" | "filter" = learning?.stillLearning
+    ? "learning"
+    : "filter";
+
   return (
     <>
+      {showEmptyState && emptyVariant === "learning" && learning && (
+        <LearningPanel
+          state={learning}
+          zonesLearned={0}
+          variant="overlay"
+          style={{
+            position: "absolute",
+            left: 12,
+            right: 12,
+            bottom: bottom + 56,
+            zIndex: 11,
+            maxWidth: 380,
+            margin: "0 auto",
+          }}
+        />
+      )}
+      {showEmptyState && emptyVariant === "filter" && (
+        <div
+          className="ss-mono"
+          style={{
+            position: "absolute",
+            left: 12,
+            right: 12,
+            bottom: bottom + 56,
+            zIndex: 11,
+            maxWidth: 380,
+            margin: "0 auto",
+            padding: "10px 14px",
+            borderRadius: 12,
+            background: "rgba(11,13,16,0.92)",
+            border: `.5px solid ${SS_TOKENS.hairline2}`,
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            color: SS_TOKENS.fg1,
+            fontSize: 11,
+            letterSpacing: ".04em",
+          }}
+        >
+          No hot zones in your filter — try widening the operator or region.
+        </div>
+      )}
       <div
         style={{
           position: "absolute",

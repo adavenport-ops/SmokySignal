@@ -2,6 +2,7 @@ import { Glanceable } from "@/components/Glanceable";
 import { getSnapshot } from "@/lib/snapshot";
 import { mockAirborneSnapshot } from "@/lib/mock";
 import { getRecentActivity } from "@/lib/activity";
+import { getLearningState } from "@/lib/learning";
 
 export const dynamic = "force-dynamic";
 
@@ -12,9 +13,10 @@ export default async function Page({
 }: {
   searchParams: SP;
 }) {
-  const [real, activity] = await Promise.all([
+  const [real, activity, learning] = await Promise.all([
     getSnapshot(),
     getRecentActivity(1),
+    getLearningState(),
   ]);
   const mockOn = searchParams.mock === "up";
   const initial = mockOn ? mockAirborneSnapshot(real) : real;
@@ -23,6 +25,7 @@ export default async function Page({
       initial={initial}
       mockOn={mockOn}
       initialActivity={activity}
+      learning={learning}
     />
   );
 }

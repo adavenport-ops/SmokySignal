@@ -13,6 +13,7 @@ import { HotZoneLayer } from "./HotZoneLayer";
 import { HelpIcon } from "./HelpIcon";
 import { Tooltip } from "./Tooltip";
 import type { Aircraft, FleetEntry, Snapshot } from "@/lib/types";
+import type { LearningState } from "@/lib/learning";
 
 export type RiderPos = { lat: number; lon: number };
 
@@ -31,9 +32,13 @@ const RadarMap = nextDynamic(() => import("./RadarMap"), {
 
 const TABBAR_HEIGHT = 66;
 
-type Props = { initial: Snapshot; mockOn?: boolean };
+type Props = {
+  initial: Snapshot;
+  mockOn?: boolean;
+  learning?: LearningState;
+};
 
-export function RadarShell({ initial, mockOn = false }: Props) {
+export function RadarShell({ initial, mockOn = false, learning }: Props) {
   const snap = useAircraft(initial, mockOn);
   const fleetMap = useMemo(
     () => new Map<string, FleetEntry>(snap.aircraft.map((a) => [a.tail, a])),
@@ -87,6 +92,7 @@ export function RadarShell({ initial, mockOn = false }: Props) {
       <HotZoneLayer
         map={map}
         bottomBoost={airborne.length > 0 ? 130 : 0}
+        learning={learning}
       />
       <HelpIcon />
 
