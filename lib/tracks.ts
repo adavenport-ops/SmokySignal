@@ -9,6 +9,7 @@
 // Each daily key gets a 35-day TTL so the rolling window auto-cleans.
 
 import { getRedis } from "./cache";
+import { recordFirstSampleIfMissing } from "./learning";
 import type { Snapshot } from "./types";
 
 export type TrackPoint = {
@@ -40,25 +41,34 @@ export async function logTracks(snap: Snapshot): Promise<void> {
   const date = utcDateKey(new Date(snap.fetched_at));
   const tsSec = Math.floor(snap.fetched_at / 1000);
 
-  const writes = snap.aircraft
-    .filter((a) => a.airborne && a.lat != null && a.lon != null)
-    .map(async (a) => {
-      const key = `tracks:${a.tail}:${date}`;
-      const point: TrackPoint = {
-        lat: a.lat as number,
-        lon: a.lon as number,
-        alt: a.altitude_ft ?? null,
-        spd: a.ground_speed_kt ?? null,
-        trk: a.heading ?? null,
-        ts: tsSec,
-      };
-      try {
-        await redis.rpush(key, JSON.stringify(point));
-        await redis.expire(key, TTL_SECONDS);
-      } catch (e) {
-        console.warn(`[tracks] rpush failed for ${a.tail}:`, e);
-      }
-    });
+  const points = snap.aircraft.filter(
+    (a) => a.airborne && a.lat != null && a.lon != null,
+  );
+  // Seed the learning-state timer on the first ingest after this code
+  // ships. Idempotent NX-write — a no-op after the first call. Skip when
+  // we have nothing to write so an empty-sky deploy doesn't start the
+  // clock prematurely.
+  if (points.length > 0) {
+    await recordFirstSampleIfMissing(new Date(snap.fetched_at));
+  }
+
+  const writes = points.map(async (a) => {
+    const key = `tracks:${a.tail}:${date}`;
+    const point: TrackPoint = {
+      lat: a.lat as number,
+      lon: a.lon as number,
+      alt: a.altitude_ft ?? null,
+      spd: a.ground_speed_kt ?? null,
+      trk: a.heading ?? null,
+      ts: tsSec,
+    };
+    try {
+      await redis.rpush(key, JSON.stringify(point));
+      await redis.expire(key, TTL_SECONDS);
+    } catch (e) {
+      console.warn(`[tracks] rpush failed for ${a.tail}:`, e);
+    }
+  });
 
   await Promise.allSettled(writes);
 }

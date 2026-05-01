@@ -1,0 +1,216 @@
+// Canonical "Learning your sky" panel — three variants of the same
+// content. Used wherever a surface depends on hot-zone or forecast data
+// that's still being collected. Single component so the copy + day
+// counter never disagree across home, radar, and forecast.
+//
+// Voice rules baked in (design/BRAND.md §3):
+//  - No emoji, no exclamation marks.
+//  - Mono on every numeric (day count, events seen, days remaining).
+//  - "Channel 19" garnish appears at most once across the page.
+//  - Copy is "you'll wait days," never "loading."
+
+import { LEARNING_THRESHOLD_DAYS, type LearningState } from "@/lib/learning";
+import { SS_TOKENS } from "@/lib/tokens";
+
+type Variant = "card" | "banner" | "overlay";
+
+type Props = {
+  state: LearningState;
+  /** Hot-zones surface: how many zones have been learned so far. */
+  zonesLearned?: number;
+  /** Prediction card / forecast: total takeoff events seen. */
+  eventsSeen?: number;
+  variant?: Variant;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export function LearningPanel({
+  state,
+  zonesLearned,
+  eventsSeen,
+  variant = "card",
+  className,
+  style,
+}: Props) {
+  const headline = computeHeadline(state);
+  const body = computeBody(state, eventsSeen, zonesLearned);
+  const day = state.daysElapsed;
+  const cap = LEARNING_THRESHOLD_DAYS;
+  const eyebrow = state.stillLearning
+    ? `LEARNING YOUR SKY · DAY ${day} OF ${cap}`
+    : `LEARNING YOUR SKY · ${cap}+ DAYS IN`;
+
+  if (variant === "banner") {
+    return (
+      <div
+        className={className}
+        style={{
+          background: SS_TOKENS.bg1,
+          border: `.5px solid ${SS_TOKENS.hairline}`,
+          borderRadius: 12,
+          padding: "10px 14px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+          ...style,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+          <span
+            className="ss-mono"
+            style={{ fontSize: 9.5, letterSpacing: ".1em", color: SS_TOKENS.fg2 }}
+          >
+            {eyebrow}
+          </span>
+          <span
+            className="ss-mono"
+            style={{ fontSize: 10.5, color: SS_TOKENS.fg1 }}
+          >
+            {progressLabel(state)}
+          </span>
+        </div>
+        <ProgressBar progress={state.progress} />
+        <p style={{ fontSize: 12, color: SS_TOKENS.fg1, margin: 0, lineHeight: 1.45 }}>
+          {body}
+        </p>
+      </div>
+    );
+  }
+
+  const cardInner = (
+    <>
+      <div
+        className="ss-mono"
+        style={{
+          fontSize: 9.5,
+          letterSpacing: ".1em",
+          color: SS_TOKENS.fg2,
+          marginBottom: 8,
+        }}
+      >
+        {eyebrow}
+      </div>
+      <h3
+        style={{
+          fontSize: 16,
+          fontWeight: 700,
+          color: SS_TOKENS.fg0,
+          letterSpacing: "-.01em",
+          margin: 0,
+          marginBottom: 8,
+        }}
+      >
+        {headline}
+      </h3>
+      <ProgressBar progress={state.progress} />
+      <p
+        style={{
+          fontSize: 13,
+          color: SS_TOKENS.fg1,
+          margin: 0,
+          marginTop: 10,
+          lineHeight: 1.5,
+        }}
+      >
+        {body}
+      </p>
+    </>
+  );
+
+  if (variant === "overlay") {
+    return (
+      <div
+        className={className}
+        style={{
+          background: "rgba(11,13,16,0.92)",
+          border: `.5px solid ${SS_TOKENS.hairline2}`,
+          borderRadius: 14,
+          padding: "14px 16px",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+          ...style,
+        }}
+      >
+        {cardInner}
+      </div>
+    );
+  }
+
+  // card (default)
+  return (
+    <section
+      className={className}
+      style={{
+        background: SS_TOKENS.bg1,
+        border: `.5px solid ${SS_TOKENS.hairline}`,
+        borderRadius: 14,
+        padding: "14px 16px",
+        ...style,
+      }}
+    >
+      {cardInner}
+    </section>
+  );
+}
+
+function ProgressBar({ progress }: { progress: number }) {
+  const clamped = Math.max(0, Math.min(1, progress));
+  return (
+    <div
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={LEARNING_THRESHOLD_DAYS}
+      aria-valuenow={Math.round(clamped * LEARNING_THRESHOLD_DAYS)}
+      style={{
+        width: "100%",
+        height: 2,
+        background: SS_TOKENS.hairline,
+        borderRadius: 1,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          width: `${(clamped * 100).toFixed(2)}%`,
+          height: "100%",
+          background: SS_TOKENS.alert,
+        }}
+      />
+    </div>
+  );
+}
+
+function computeHeadline(state: LearningState): string {
+  if (state.stillLearning) return "Channel 19's tuning in.";
+  return "Sky's quiet enough to count.";
+}
+
+function computeBody(
+  state: LearningState,
+  eventsSeen?: number,
+  zonesLearned?: number,
+): string {
+  const events = eventsSeen ?? 0;
+  const zones = zonesLearned ?? 0;
+  if (state.daysElapsed < 7) {
+    return `We just got our ears on. Forecasts and hot zones come online once we've watched the sky for ${LEARNING_THRESHOLD_DAYS} days.`;
+  }
+  if (state.stillLearning) {
+    const d = state.daysRemaining;
+    const dayWord = d === 1 ? "day" : "days";
+    return `${d} ${dayWord} of listening to go before forecasts get sharp. Hot zones need a month of patrols to settle.`;
+  }
+  // past threshold but data sparse
+  if (zonesLearned !== undefined && zones > 0) {
+    return `${zones} zones learned so far. Sky's been quieter than expected — give it another week and the patterns sharpen.`;
+  }
+  return `${events} takeoffs logged. Sky's been quieter than expected — give it another week and the patterns surface.`;
+}
+
+function progressLabel(state: LearningState): string {
+  if (state.stillLearning) {
+    return `${state.daysElapsed}/${LEARNING_THRESHOLD_DAYS} days`;
+  }
+  return `${LEARNING_THRESHOLD_DAYS}+ days`;
+}
