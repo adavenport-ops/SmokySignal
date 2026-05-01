@@ -26,16 +26,54 @@ let memCache: { value: FleetEntry[]; expiresAt: number } | null = null;
 
 function parseFleet(raw: unknown): FleetEntry[] | null {
   if (raw == null) return null;
-  if (Array.isArray(raw)) return raw as FleetEntry[];
-  if (typeof raw === "string") {
+  let arr: unknown[] | null = null;
+  if (Array.isArray(raw)) arr = raw;
+  else if (typeof raw === "string") {
     try {
       const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? (parsed as FleetEntry[]) : null;
+      arr = Array.isArray(parsed) ? parsed : null;
     } catch {
       return null;
     }
   }
-  return null;
+  if (!arr) return null;
+  // Backfill the post-v1 fields (role, roleConfidence, roleDescription) on
+  // read so older registry rows continue to work without a manual
+  // migration. Conservative default for role is "unknown" → triggers
+  // alert pill.
+  return arr.map((row) => {
+    const e = row as Partial<FleetEntry> & Record<string, unknown>;
+    return {
+      tail: String(e.tail ?? ""),
+      hex: e.hex ?? null,
+      operator: String(e.operator ?? ""),
+      model: String(e.model ?? ""),
+      nickname: (e.nickname as string | null) ?? null,
+      base: String(e.base ?? ""),
+      // Older rows had a free-text `role` (mission description). Promote
+      // it to roleDescription if the new typed field is missing.
+      roleDescription:
+        typeof e.roleDescription === "string"
+          ? e.roleDescription
+          : typeof (e as { role?: unknown }).role === "string" &&
+              !["smokey", "patrol", "sar", "transport", "unknown"].includes(
+                (e as { role: string }).role,
+              )
+            ? (e as { role: string }).role
+            : "—",
+      role:
+        typeof e.role === "string" &&
+        ["smokey", "patrol", "sar", "transport", "unknown"].includes(e.role)
+          ? (e.role as FleetEntry["role"])
+          : "unknown",
+      roleConfidence:
+        typeof e.roleConfidence === "string" &&
+        ["confirmed", "tentative", "unknown"].includes(e.roleConfidence)
+          ? (e.roleConfidence as FleetEntry["roleConfidence"])
+          : "unknown",
+      roleNote: typeof e.roleNote === "string" ? e.roleNote : undefined,
+    } satisfies FleetEntry;
+  });
 }
 
 export async function getRegistry(): Promise<FleetEntry[]> {

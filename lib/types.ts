@@ -1,3 +1,18 @@
+/**
+ * Role drives the home + radar status pill via lib/status.ts. Only smokey
+ * (speed-enforcement fixed-wing) and patrol (multi-role helicopters) trigger
+ * the alert pill; sar / transport stay green; unknown is treated as alert
+ * (conservative default for tails we haven't classified yet).
+ */
+export type FleetRole =
+  | "smokey"
+  | "patrol"
+  | "sar"
+  | "transport"
+  | "unknown";
+
+export type RoleConfidence = "confirmed" | "tentative" | "unknown";
+
 export type FleetEntry = {
   tail: string;
   /**
@@ -9,9 +24,22 @@ export type FleetEntry = {
   operator: string;
   model: string;
   nickname: string | null;
-  role: string;
+  /**
+   * Free-text mission description (e.g. "Speed enforcement"). Surfaced in the
+   * /about registry and on the plane detail page. Distinct from `role` /
+   * `roleConfidence`, which drive the status-pill semantics.
+   */
+  roleDescription: string;
   /** Home airport: ICAO code + city. */
   base: string;
+  /** Role classification driving the status pill. See lib/status.ts. */
+  role: FleetRole;
+  roleConfidence: RoleConfidence;
+  /**
+   * Optional 1-line note explaining the classification. Visible in the admin
+   * editor and as a tooltip on /plane/[tail]. ≤120 chars.
+   */
+  roleNote?: string;
 };
 
 export type AircraftLive = {

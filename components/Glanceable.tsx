@@ -1,23 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import type { Aircraft, Snapshot } from "@/lib/types";
+import type { Aircraft, FleetEntry, Snapshot } from "@/lib/types";
 import type { ActivityEntry } from "@/lib/activity";
 import { SS_TOKENS } from "@/lib/tokens";
-import { fmtAgo, fmtAloft } from "@/lib/format";
+import { fmtAloft } from "@/lib/format";
 import { useAircraft } from "@/lib/hooks/useAircraft";
-import { deriveStatus, type FleetStatusInfo } from "@/lib/status";
+import { computeStatus, type StatusState } from "@/lib/status";
 import { StatusPill } from "./StatusPill";
 import { Card } from "./Card";
 import { PlaneIcon, planeKindFor } from "./PlaneIcon";
 import { PredictionCard } from "./PredictionCard";
 import { HelpIcon } from "./HelpIcon";
 import { Tooltip } from "./Tooltip";
+import { Logo } from "./brand/Logo";
 
-// Hide the activity strip when the most recent event is older than this
-// — a stale "Guardian One up · 8 hours ago" looks more like a bug than
-// a feature on the home screen.
+// Hide the activity strip when the most recent event is older than this —
+// a stale "Guardian One up · 8 hours ago" looks more like a bug than a
+// feature on the home screen.
 const ACTIVITY_STRIP_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 
 type Props = {
@@ -62,7 +63,7 @@ export function Glanceable({
     };
   }, []);
 
-  // "Updated Xs ago" label.
+  // "Updated Xs" label.
   useEffect(() => {
     setUpdatedAgo(0);
     const id = setInterval(() => {
@@ -71,8 +72,12 @@ export function Glanceable({
     return () => clearInterval(id);
   }, [snap.fetched_at]);
 
-  const statusInfo = deriveStatus(snap);
-  const others = statusInfo.othersAirborne;
+  const fleetMap = useMemo(
+    () => new Map<string, FleetEntry>(snap.aircraft.map((a) => [a.tail, a])),
+    [snap.aircraft],
+  );
+  const status = useMemo(() => computeStatus(snap, fleetMap), [snap, fleetMap]);
+  const others = snap.aircraft.filter((a) => a.airborne);
   const latestActivity =
     activity.length > 0 &&
     Date.now() - activity[0]!.ts < ACTIVITY_STRIP_MAX_AGE_MS
@@ -99,14 +104,36 @@ export function Glanceable({
           justifyContent: "space-between",
           alignItems: "center",
           marginTop: 4,
-          // Reserve room for the fixed wake-lock + help buttons (top:12,
-          // right:12 + right:52, both 32px wide) so the source line never
+          // Reserve room for the fixed wake-lock + help buttons (right:6
+          // and right:50 each 44px hit area) so the source line never
           // tucks under either icon.
           paddingRight: 96,
           gap: 12,
         }}
       >
-        <span className="ss-eyebrow">SmokySignal · Live</span>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            minWidth: 0,
+          }}
+        >
+          <Logo size={20} wordmark />
+          <span
+            className="ss-mono"
+            style={{
+              fontSize: 9.5,
+              color: SS_TOKENS.fg2,
+              letterSpacing: ".12em",
+              padding: "2px 6px",
+              border: `.5px solid ${SS_TOKENS.hairline2}`,
+              borderRadius: 4,
+            }}
+          >
+            LIVE
+          </span>
+        </div>
         <Tooltip
           side="bottom"
           align="end"
@@ -140,7 +167,7 @@ export function Glanceable({
         </Tooltip>
       </header>
 
-      <Hero info={statusInfo} />
+      <Hero status={status} />
 
       {latestActivity && <ActivityStrip latest={latestActivity} />}
 
@@ -185,12 +212,19 @@ function Footer() {
         OpenSky Network
       </a>
       <br />
-      <a
+      <Link
         href="/about"
         style={{ color: SS_TOKENS.fg1, textDecoration: "underline" }}
       >
-        About · Legal
-      </a>
+        About
+      </Link>
+      {" · "}
+      <Link
+        href="/legal"
+        style={{ color: SS_TOKENS.fg1, textDecoration: "underline" }}
+      >
+        Legal
+      </Link>
     </footer>
   );
 }
@@ -249,11 +283,10 @@ function fmtRelativeStrip(tsMs: number): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-function Hero({ info }: { info: FleetStatusInfo }) {
-  const isAlert = info.status !== "all_clear";
+function Hero({ status }: { status: StatusState }) {
+  const isAlert = status.kind === "alert";
   const accentColor = isAlert ? SS_TOKENS.alert : SS_TOKENS.clear;
   const halo = isAlert ? SS_TOKENS.alertDim : SS_TOKENS.clearDim;
-
   return (
     <section
       className="ss-hero-bg"
@@ -268,7 +301,7 @@ function Hero({ info }: { info: FleetStatusInfo }) {
         className="ss-eyebrow"
         style={{ color: accentColor, animation: "ss-fade 400ms ease-out" }}
       >
-        {heroEyebrow(info)}
+        {status.pill}
       </div>
       <h1
         style={{
@@ -277,134 +310,52 @@ function Hero({ info }: { info: FleetStatusInfo }) {
           letterSpacing: "-.04em",
           lineHeight: 1.05,
           marginTop: 10,
-          color: SS_TOKENS.fg0,
+          color: accentColor,
         }}
       >
-        <HeroHeadline info={info} accent={accentColor} />
+        {status.headline}
       </h1>
-
       <p
         style={{
           marginTop: 14,
-          fontSize: 14,
+          fontSize: 15,
           color: SS_TOKENS.fg1,
-          lineHeight: 1.45,
+          lineHeight: 1.5,
         }}
       >
-        <HeroSubcopy info={info} />
+        {status.body}
       </p>
-
-      {info.status === "smoky_up" && info.smokyAirborne && (
+      {status.footnote && (
+        <p
+          style={{
+            marginTop: 8,
+            fontSize: 12.5,
+            fontStyle: "italic",
+            color: SS_TOKENS.fg2,
+            lineHeight: 1.45,
+          }}
+        >
+          {status.footnote}
+        </p>
+      )}
+      {status.lead && status.kind === "alert" && (
         <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {info.smokyAirborne.time_aloft_min != null && (
+          {status.lead.aircraft.time_aloft_min != null && (
             <StatusPill
               kind="alert"
-              label={fmtAloft(info.smokyAirborne.time_aloft_min)}
+              label={fmtAloft(status.lead.aircraft.time_aloft_min)}
             />
           )}
-          {info.smokyAirborne.ground_speed_kt != null && (
+          {status.lead.aircraft.ground_speed_kt != null && (
             <StatusPill
               kind="alert"
-              label={`${info.smokyAirborne.ground_speed_kt} kt`}
+              label={`${status.lead.aircraft.ground_speed_kt} kt`}
             />
           )}
         </div>
       )}
     </section>
   );
-}
-
-function heroEyebrow(info: FleetStatusInfo): string {
-  if (info.status === "smoky_up") return "BIRD UP";
-  if (info.status === "other_up") return "EYES UP";
-  return "ALL CLEAR";
-}
-
-function HeroHeadline({
-  info,
-  accent,
-}: {
-  info: FleetStatusInfo;
-  accent: string;
-}) {
-  if (info.status === "smoky_up") {
-    return (
-      <>
-        Smoky&rsquo;s
-        <br />
-        <span style={{ color: accent }}>watching.</span>
-      </>
-    );
-  }
-  if (info.status === "other_up") {
-    if (info.othersAirborne.length === 1) {
-      const a = info.othersAirborne[0]!;
-      const label = a.nickname ?? a.tail;
-      return (
-        <span style={{ color: accent }}>
-          {a.nickname ? (
-            label
-          ) : (
-            <span className="ss-mono" style={{ letterSpacing: "-.02em" }}>
-              {label}
-            </span>
-          )}{" "}
-          is up.
-        </span>
-      );
-    }
-    return (
-      <span style={{ color: accent }}>
-        {info.othersAirborne.length} watchers
-        <br />
-        airborne.
-      </span>
-    );
-  }
-  // all_clear
-  return (
-    <>
-      Smoky&rsquo;s
-      <br />
-      <span style={{ color: accent }}>down.</span>
-    </>
-  );
-}
-
-function HeroSubcopy({ info }: { info: FleetStatusInfo }) {
-  if (info.status === "smoky_up") {
-    const s = info.smokyAirborne;
-    return (
-      <>
-        Airborne at{" "}
-        <b style={{ color: SS_TOKENS.fg0 }}>
-          {s?.altitude_ft != null ? (
-            <span className="ss-mono">
-              {s.altitude_ft.toLocaleString()}&prime;
-            </span>
-          ) : (
-            "altitude unknown"
-          )}
-        </b>
-        {s?.ground_speed_kt != null && (
-          <>
-            {" · "}
-            <span className="ss-mono">{s.ground_speed_kt} kt</span>
-          </>
-        )}
-        . Mind the throttle. Take it easy.
-      </>
-    );
-  }
-  if (info.status === "other_up") {
-    return info.othersAirborne.length === 1 ? (
-      <>Smoky&rsquo;s down — but a watcher is airborne.</>
-    ) : (
-      <>Smoky&rsquo;s down — but the sky is busy.</>
-    );
-  }
-  // all_clear
-  return <>No WSP plane up locally for a while. Send it.</>;
 }
 
 function Others({ others }: { others: Aircraft[] }) {
@@ -417,12 +368,12 @@ function Others({ others }: { others: Aircraft[] }) {
           padding: "0 4px 8px",
         }}
       >
-        <span className="ss-eyebrow">Also airborne</span>
+        <span className="ss-eyebrow">Also up</span>
         <span
           className="ss-mono"
           style={{ fontSize: 10.5, color: SS_TOKENS.fg2 }}
         >
-          {others.length} ACTIVE
+          {others.length} UP
         </span>
       </div>
       <Card padded={false}>
@@ -443,7 +394,7 @@ function Others({ others }: { others: Aircraft[] }) {
             <PlaneIcon
               size={18}
               kind={planeKindFor(p.model)}
-              color={SS_TOKENS.alert}
+              color={p.role === "sar" || p.role === "transport" ? SS_TOKENS.fg1 : SS_TOKENS.alert}
             />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div

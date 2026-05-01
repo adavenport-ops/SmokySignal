@@ -14,6 +14,7 @@ import type { RecentFlightForTail } from "@/lib/flights";
 import { BackLink } from "@/components/BackLink";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { Tooltip } from "@/components/Tooltip";
+import { roleBadgeStyle, roleBadgeText, roleTooltip } from "@/lib/role-display";
 
 export const dynamic = "force-dynamic";
 
@@ -107,7 +108,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
         >
           {entry.operator} · {entry.model} · {entry.base}
         </div>
-        <div style={{ marginTop: 12 }}>
+        <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           <StatusPill
             kind={up ? "alert" : "clear"}
             label={up ? "AIRBORNE · WATCHING" : "GROUNDED"}
@@ -125,6 +126,27 @@ export default async function PlanePage({ params, searchParams }: Props) {
                 : "Some helicopters fly with intermittent transponder coverage; 'last seen' isn't always 'last flew'."
             }
           />
+          <Tooltip content={roleTooltip(entry.role)}>
+            <span tabIndex={0} className="ss-mono" style={roleBadgeStyle(entry.role)}>
+              {roleBadgeText(entry.role)}
+            </span>
+          </Tooltip>
+          {entry.roleConfidence === "tentative" && (
+            <Tooltip content="Role is best-guess from public records. May be refined.">
+              <span
+                tabIndex={0}
+                className="ss-mono"
+                style={{
+                  fontSize: 10,
+                  color: SS_TOKENS.fg2,
+                  fontStyle: "italic",
+                  cursor: "help",
+                }}
+              >
+                (tentative)
+              </span>
+            </Tooltip>
+          )}
         </div>
       </header>
 
@@ -143,7 +165,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
         <RecentTrackBlock tail={entry.tail} flight={recentFlight} />
       </section>
 
-      <FleetMeta hex={fleetHex(entry).toUpperCase()} role={entry.role} />
+      <FleetMeta hex={fleetHex(entry).toUpperCase()} role={entry.roleDescription} />
     </main>
   );
 }
@@ -206,10 +228,11 @@ function GroundedNote({ live }: { live: Aircraft | undefined }) {
         Currently
       </div>
       <div style={{ fontSize: 14, color: SS_TOKENS.fg1 }}>
-        On the ground · last seen{" "}
+        On the ground. Last seen{" "}
         <span className="ss-mono" style={{ color: SS_TOKENS.fg0 }}>
           {fmtAgo(live?.last_seen_min)}
-        </span>
+        </span>{" "}
+        back.
       </div>
     </Card>
   );
@@ -343,7 +366,7 @@ function RecentTrackBlock({
             lineHeight: 1.45,
           }}
         >
-          No flight history yet. Once {tail} flies, the track will appear
+          No flight history yet. Once {tail} goes up, the track shows up
           here.
         </div>
       </Card>

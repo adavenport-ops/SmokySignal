@@ -18,30 +18,48 @@ const mono = JetBrains_Mono({
   variable: "--font-mono",
 });
 
-const TITLE = "SmokySignal — is the bird up?";
+const TITLE = "SmokySignal — Is the bird up?";
 const DESCRIPTION =
-  "Real-time WSP aircraft tracker for Puget Sound motorcyclists. Know when Smoky is watching.";
+  "Live tracking of WSP aviation over Puget Sound. Know before you go.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
-  title: TITLE,
+  title: { default: TITLE, template: "%s · SmokySignal" },
   description: DESCRIPTION,
+  applicationName: "SmokySignal",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icons/favicon.svg", type: "image/svg+xml" },
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icons/favicon-96.png", sizes: "96x96", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+    other: [
+      { rel: "mask-icon", url: "/icons/safari-pinned-tab.svg", color: "#f5b840" },
+    ],
+  },
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
     type: "website",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "SmokySignal" }],
+    siteName: "SmokySignal",
+    url: "/",
+    images: [
+      { url: "/icons/og-image.png", width: 1200, height: 630, alt: "SmokySignal" },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
-    images: ["/og.png"],
+    images: ["/icons/og-image.png"],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b0d10",
+  themeColor: "#0B0D10",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
