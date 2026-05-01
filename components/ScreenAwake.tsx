@@ -22,9 +22,10 @@ type WakeLockNavigator = Navigator & {
  * Keeps the screen awake while the user is on the rider-facing screens.
  * Mounted by app/(tabs)/layout.tsx so /admin and /about are unaffected.
  *
- * Renders a small sun-icon toggle top-right. Bright = active, dim = off.
- * Tap toggles; choice persists in localStorage. Wake-lock-unsupported
- * browsers render nothing — silent fail per spec.
+ * Renders a small moon-icon toggle top-right. Filled moon-with-slash
+ * (MoonOff) = lock is held / screen won't sleep. Outline moon = lock
+ * released / screen will sleep. Tap toggles; choice persists in
+ * localStorage. Wake-lock-unsupported browsers render nothing.
  */
 export function ScreenAwake() {
   const [supported, setSupported] = useState(false);
@@ -109,10 +110,10 @@ export function ScreenAwake() {
     });
   };
 
-  // Bright = active (lock held). Dim = off (preference disabled, or tab
-  // hidden so browser released the lock).
+  // Lit = wake lock is currently held. Unlit = preference disabled or
+  // tab hidden so the browser released it.
   const lit = enabled && active;
-  const color = lit ? SS_TOKENS.alert : SS_TOKENS.fg3;
+  const color = lit ? SS_TOKENS.alert : SS_TOKENS.fg1;
 
   return (
     <button
@@ -135,6 +136,8 @@ export function ScreenAwake() {
         border: `.5px solid ${lit ? `${SS_TOKENS.alert}55` : SS_TOKENS.hairline}`,
         color,
         cursor: "pointer",
+        touchAction: "manipulation",
+        WebkitTapHighlightColor: "transparent",
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
@@ -143,33 +146,29 @@ export function ScreenAwake() {
         transition: "color 200ms, background 200ms",
       }}
     >
-      <SunIcon lit={lit} />
+      <MoonStateIcon lit={lit} />
     </button>
   );
 }
 
-function SunIcon({ lit }: { lit: boolean }) {
+// Lucide-style Moon (lit=false: outline, screen will sleep) and
+// MoonOff (lit=true: filled crescent with diagonal slash, screen
+// won't sleep).
+function MoonStateIcon({ lit }: { lit: boolean }) {
   return (
     <svg
       width="18"
       height="18"
       viewBox="0 0 24 24"
-      fill="none"
+      fill={lit ? "currentColor" : "none"}
       stroke="currentColor"
-      strokeWidth={lit ? 2 : 1.5}
+      strokeWidth={1.8}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
     >
-      <circle cx="12" cy="12" r="4" fill={lit ? "currentColor" : "none"} />
-      <path d="M12 2 v2" />
-      <path d="M12 20 v2" />
-      <path d="m4.93 4.93 1.41 1.41" />
-      <path d="m17.66 17.66 1.41 1.41" />
-      <path d="M2 12 h2" />
-      <path d="M20 12 h2" />
-      <path d="m4.93 19.07 1.41-1.41" />
-      <path d="m17.66 6.34 1.41-1.41" />
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+      {lit && <path d="m2 2 20 20" />}
     </svg>
   );
 }
