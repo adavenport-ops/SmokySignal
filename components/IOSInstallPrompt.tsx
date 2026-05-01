@@ -84,6 +84,18 @@ export function IOSInstallPrompt() {
     >
       <div style={{ flex: 1, fontSize: 12.5, lineHeight: 1.45, color: SS_TOKENS.fg0 }}>
         Install SmokySignal — tap <ShareIcon /> then &ldquo;Add to Home Screen&rdquo;
+        <span
+          className="ss-mono"
+          style={{
+            display: "block",
+            marginTop: 4,
+            fontSize: 10.5,
+            color: SS_TOKENS.fg2,
+            letterSpacing: ".04em",
+          }}
+        >
+          Add to Home Screen → Open SmokySignal → arm alerts.
+        </span>
       </div>
       <button
         type="button"

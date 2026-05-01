@@ -2,7 +2,7 @@
 // Server-side imports (lib/push/store, lib/push/dispatcher) MUST NOT pull
 // from this file — keep the SW + Push API surface client-only.
 
-import type { AlertPrefs } from "./store";
+import type { AlertPrefs } from "./types";
 
 export type SubscribeResult =
   | { ok: true; id: string; sub: PushSubscription }
