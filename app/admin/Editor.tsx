@@ -120,6 +120,10 @@ export function Editor({
         <FlagsForm enabled={flags.speedWarningEnabled} />
       </Section>
 
+      <Section title="Push" subtitle="broadcast test ping">
+        <PushTestButton />
+      </Section>
+
       <Section title="Backups" subtitle={`${backups.length} most recent`}>
         {backups.length === 0 ? (
           <Empty>No backups yet — they&rsquo;re created automatically on every save.</Empty>
@@ -936,6 +940,42 @@ function RoleConfidenceSelect({
           </option>
         ))}
       </select>
+    </div>
+  );
+}
+
+function PushTestButton() {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const click = async () => {
+    if (busy) return;
+    if (!confirm("Broadcast a test push to ALL opted-in subscriptions?")) return;
+    setBusy(true);
+    setResult(null);
+    try {
+      const r = await fetch("/api/push/test", { method: "POST" });
+      const data = (await r.json()) as { sent?: number; removed?: number; error?: string };
+      if (!r.ok) {
+        setResult(`Failed: ${data.error ?? r.status}`);
+      } else {
+        setResult(`Sent ${data.sent ?? 0} · pruned ${data.removed ?? 0}`);
+      }
+    } catch (e) {
+      setResult(`Error: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <button type="button" onClick={click} style={smallButtonStyle} disabled={busy}>
+        {busy ? "Sending…" : "Broadcast test ping"}
+      </button>
+      {result && (
+        <span className="ss-mono" style={{ fontSize: 11, color: SS_TOKENS.fg2 }}>
+          {result}
+        </span>
+      )}
     </div>
   );
 }

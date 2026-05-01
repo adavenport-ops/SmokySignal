@@ -245,6 +245,37 @@ export async function recordActivity(curr: Snapshot): Promise<void> {
     } catch (e) {
       console.warn("[activity] rpush failed:", e);
     }
+
+    // Fan out push notifications for each takeoff. Best-effort; the
+    // dispatcher's own try/catch + dedupe key keep this from breaking
+    // the snapshot pipeline. Fire all in parallel since the dispatcher
+    // already de-duplicates per (tail, minute).
+    const takeoffs = events.filter((e) => e.kind === "takeoff");
+    if (takeoffs.length > 0) {
+      try {
+        const { dispatchTakeoff } = await import("./push/dispatcher");
+        await Promise.all(
+          takeoffs.map((e) =>
+            dispatchTakeoff({
+              tail: e.tail,
+              role: e.role ?? "unknown",
+              roleConfidence: "unknown",
+              nickname:
+                curr.aircraft.find((a) => a.tail === e.tail)?.nickname ?? null,
+              lat: e.lat ?? null,
+              lon: e.lon ?? null,
+              alt_ft: e.alt_ft ?? null,
+              ts_iso: new Date(e.ts).toISOString(),
+            }).catch((err) => {
+              console.warn("[activity] dispatchTakeoff failed:", err);
+              return null;
+            }),
+          ),
+        );
+      } catch (e) {
+        console.warn("[activity] push dispatch import/init failed:", e);
+      }
+    }
   }
 
   try {
