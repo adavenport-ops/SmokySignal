@@ -24,6 +24,19 @@ Open `design/SmokySignal.html` in any modern browser. Use the **Tweaks** toggle 
 
 ---
 
+## Running locally
+
+```bash
+npm install
+npx vercel link
+npm run env:pull
+npm run dev
+```
+
+Full setup: see `HOW_TO_HAND_OFF.md` §2.5.
+
+---
+
 ## Fidelity
 
 **High-fidelity** for visuals, layout, copy, and interaction logic. Final colors, typography, spacing, component composition, and state behavior are all locked. Pixel-match the designs.

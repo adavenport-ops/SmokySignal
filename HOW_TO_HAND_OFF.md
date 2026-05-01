@@ -49,6 +49,24 @@ smokysignal-app/
 
 ---
 
+## 2.5. First-time local dev setup
+
+Once the repo is cloned (or after a fresh `git pull` onto a new machine):
+
+```bash
+cd ~/Dev/SmokySignal
+npm install
+npx vercel link            # one-time. Pick the SmokySignal project.
+npm run env:pull           # populates .env.local from Vercel Development scope.
+npm run dev                # predev hook checks for missing keys.
+```
+
+If `npm run dev` aborts with a missing-env error, follow its instructions — usually it just means re-running `npm run env:pull` after Vercel got new env vars. If `npx vercel` itself errors with "token provided via VERCEL_TOKEN environment variable is not valid," your shell has a stale token set; `unset VERCEL_TOKEN` and try again.
+
+**MapTiler note.** If `npm run dev` boots but the radar map shows blank tiles, your MapTiler key may be domain-restricted to production hosts. Open https://cloud.maptiler.com/account/keys/, edit the key, and add `http://localhost:3000` (or `*` for any localhost port) to the allowed origins. Or generate a separate unrestricted dev key and put it in `.env.local` only.
+
+---
+
 ## 3. Open Claude Code in that repo
 
 ```bash
