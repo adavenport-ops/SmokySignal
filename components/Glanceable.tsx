@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Aircraft, FleetEntry, Snapshot } from "@/lib/types";
 import type { ActivityEntry } from "@/lib/activity";
+import type { LearningState } from "@/lib/learning";
 import { SS_TOKENS } from "@/lib/tokens";
 import { fmtAloft } from "@/lib/format";
 import { useAircraft } from "@/lib/hooks/useAircraft";
@@ -25,12 +26,14 @@ type Props = {
   initial: Snapshot;
   mockOn?: boolean;
   initialActivity?: ActivityEntry[];
+  learning?: LearningState;
 };
 
 export function Glanceable({
   initial,
   mockOn = false,
   initialActivity = [],
+  learning,
 }: Props) {
   const snap = useAircraft(initial, mockOn);
   const [updatedAgo, setUpdatedAgo] = useState<number>(0);
@@ -173,7 +176,7 @@ export function Glanceable({
 
       {others.length > 0 && <Others others={others} />}
 
-      <PredictionCard />
+      <PredictionCard learning={learning} />
 
       <Footer />
     </main>

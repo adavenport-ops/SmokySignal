@@ -88,6 +88,18 @@ The map shows the in-progress flight if the plane is currently up (with a pulsin
 
 `/forecast` shows a 7×24 grid: probability of any fleet takeoff per hour-of-week. Brighter cells = more historical activity. The current Pacific (day, hour) is outlined in amber. Tap any cell to see which tails most commonly fly in that bucket.
 
+## Why is it still learning?
+
+You'll see a "Learning your sky" panel on the home, radar, or forecast screens until SmokySignal has watched the sky for a full 30 days. We track the start of that window from the first ADS-B sample we ingested — not from when you opened the app — so the timer ticks for everyone in sync.
+
+A month is the floor for these features to mean something:
+
+- **Hot zones** need at least four weekend cycles of patrols before the heatmap settles. Two flights over the same county look like a hot zone after a week and like noise after a month.
+- **The forecast grid** needs roughly one observation per hour-of-week before any cell's probability stops jumping around. That's 168 buckets to fill from a fleet of 16 tails.
+- **The home prediction card** holds back its "next likely sweep" line until both the day count clears and we've logged enough takeoffs to call a pattern (10+).
+
+The counter on the panel shows where we are in the 30-day window. Past day 30, the panels switch to "30+ days in" and the data-driven cards take over. If a panel still appears past day 30, it means we've crossed the time threshold but the data is still sparse — usually because the sky's been quieter than expected. Give it another week.
+
 ## Public flight share pages
 
 Every flight gets a permanent shareable URL: `/flight/{TAIL}/{FLIGHT_ID}`. You can grab it via the **Share** button next to the back link on any plane detail page (and on the admin recent-flights view). The link works without auth and includes a social-friendly preview image.
@@ -110,7 +122,7 @@ Your screen wake-lock preference and hot-zone filter live in your phone's local 
 
 ## Troubleshooting
 
-- **The hot-zones heatmap is empty.** It depends on accumulated track data and refreshes daily. After a fresh deploy or if you're filtering to a specific tail with little history, the layer may legitimately have nothing to render.
+- **The hot-zones heatmap is empty.** Either we're inside the 30-day learning window (see "Why is it still learning?" above), or your filter is narrow enough that nothing matches — try widening the operator or region.
 - **The map shows "MapTiler key missing."** The deployment is missing its `NEXT_PUBLIC_MAPTILER_KEY` environment variable. The app still works, but maps won't render.
 - **"Couldn't get a fix" when tapping Spotted.** Your browser's location permission is denied or your GPS is having a moment. Allow location access for `smokysignal.app` in browser settings.
 - **The activity feed is empty.** Either no fleet member has had a state change recently, or — if it's been many hours — the cron job that refreshes the snapshot may be on its daily schedule. Activity events fire once per snapshot refresh.

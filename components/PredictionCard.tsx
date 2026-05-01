@@ -1,18 +1,29 @@
 "use client";
 
 // Reads /api/predict on mount and renders the top likely-sweep window
-// derived from accumulated activity events. Falls back to a "still
-// learning" card when sample size is too small or the cache is empty.
+// derived from accumulated activity events. Renders the canonical
+// LearningPanel whenever we're inside the 30-day learning window OR
+// the predictor returned too few events for a useful forecast.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "./Card";
+import { LearningPanel } from "./LearningPanel";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { PredictorOutput, PredictionWindow } from "@/lib/predictor";
+import { LEARNING_THRESHOLD_DAYS, type LearningState } from "@/lib/learning";
 
 const MIN_TOTAL_EVENTS_FOR_PREDICTION = 10;
 
-export function PredictionCard() {
+const FALLBACK_LEARNING: LearningState = {
+  firstSampleIso: null,
+  daysElapsed: 0,
+  daysRemaining: LEARNING_THRESHOLD_DAYS,
+  progress: 0,
+  stillLearning: true,
+};
+
+export function PredictionCard({ learning }: { learning?: LearningState }) {
   const [data, setData] = useState<PredictorOutput | null>(null);
 
   useEffect(() => {
@@ -38,7 +49,18 @@ export function PredictionCard() {
 
   const tooFew = data.total_events < MIN_TOTAL_EVENTS_FOR_PREDICTION;
   const top = data.windows[0];
-  if (tooFew || !top) return <Learning total={data.total_events} />;
+  // Show the learning panel whenever we're inside the 30-day window OR
+  // the predictor doesn't have enough data yet. Past the threshold + with
+  // enough events, the regular forecast card takes over.
+  if (learning?.stillLearning || tooFew || !top) {
+    return (
+      <LearningPanel
+        state={learning ?? FALLBACK_LEARNING}
+        eventsSeen={data.total_events}
+        variant="card"
+      />
+    );
+  }
 
   return (
     <Card>
@@ -127,23 +149,6 @@ export function PredictionCard() {
         >
           View weekly forecast →
         </Link>
-      </div>
-    </Card>
-  );
-}
-
-function Learning({ total }: { total: number }) {
-  return (
-    <Card>
-      <div className="ss-eyebrow" style={{ marginBottom: 6 }}>
-        Still learning
-      </div>
-      <div
-        style={{ fontSize: 14, color: SS_TOKENS.fg1, lineHeight: 1.45 }}
-      >
-        We&rsquo;ve seen {total} takeoff
-        {total === 1 ? "" : "s"} so far. Predictions appear once we have
-        more historical data to draw on.
       </div>
     </Card>
   );

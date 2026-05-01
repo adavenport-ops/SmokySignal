@@ -2,6 +2,8 @@ import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 import { getForecastGrid } from "@/lib/predictor";
 import { ForecastGridView } from "@/components/ForecastGridView";
+import { LearningPanel } from "@/components/LearningPanel";
+import { getLearningState } from "@/lib/learning";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -9,8 +11,16 @@ export const metadata = {
   description: "Weekly probability of fleet takeoffs by hour and day.",
 };
 
+const FORECAST_LEARNING_EVENT_FLOOR = 30;
+
 export default async function ForecastPage() {
-  const grid = await getForecastGrid();
+  const [grid, learning] = await Promise.all([
+    getForecastGrid(),
+    getLearningState(),
+  ]);
+  const showLearning =
+    learning.stillLearning ||
+    grid.total_events < FORECAST_LEARNING_EVENT_FLOOR;
   return (
     <main
       style={{
@@ -63,12 +73,20 @@ export default async function ForecastPage() {
             margin: 0,
           }}
         >
-          Probability of any fleet takeoff by hour-of-week, derived from{" "}
-          {grid.total_events} historical takeoff event
-          {grid.total_events === 1 ? "" : "s"}. Brighter cells = more
-          likely. Tap a cell to see the most common tails.
+          Hour-of-week probability of any fleet takeoff, drawn from{" "}
+          <span className="ss-mono">{grid.total_events}</span> logged
+          takeoff{grid.total_events === 1 ? "" : "s"}. Brighter cells,
+          busier hour. Tap a cell to see the regular birds.
         </p>
       </section>
+
+      {showLearning && (
+        <LearningPanel
+          state={learning}
+          eventsSeen={grid.total_events}
+          variant="banner"
+        />
+      )}
 
       <ForecastGridView grid={grid} />
     </main>
