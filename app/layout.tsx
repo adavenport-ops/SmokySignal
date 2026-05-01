@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { BASE_URL } from "@/lib/config";
 import { IOSInstallPrompt } from "@/components/IOSInstallPrompt";
+import { SwRegistrar } from "@/components/SwRegistrar";
 import { TooltipProvider } from "@/components/Tooltip";
 import "./globals.css";
 
@@ -78,6 +79,7 @@ export default function RootLayout({
         <TooltipProvider>
           {children}
           <IOSInstallPrompt />
+          <SwRegistrar />
         </TooltipProvider>
         <Analytics />
       </body>
