@@ -56,7 +56,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
         minHeight: "100dvh",
         maxWidth: 460,
         margin: "0 auto",
-        padding: "12px 18px 60px",
+        padding: "12px 18px 100px",
         display: "flex",
         flexDirection: "column",
         gap: 16,
@@ -96,7 +96,9 @@ export default async function PlanePage({ params, searchParams }: Props) {
             sub={
               up
                 ? fmtAloft(live?.time_aloft_min)
-                : `last seen ${fmtAgo(live?.last_seen_min)}`
+                : recentFlight
+                  ? `Last flew ${fmtRelativeShort(recentFlight.session.end_ts)}`
+                  : `last seen ${fmtAgo(live?.last_seen_min)}`
             }
             big
           />
@@ -113,7 +115,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
 
       <section>
         <div className="ss-eyebrow" style={{ marginBottom: 8 }}>
-          Recent track
+          {recentFlight && !up ? "Last flight" : "Recent track"}
         </div>
         <RecentTrackBlock tail={entry.tail} flight={recentFlight} />
       </section>

@@ -96,12 +96,20 @@ export function Glanceable({
           justifyContent: "space-between",
           alignItems: "center",
           marginTop: 4,
+          // Reserve room for the fixed wake-lock button at top:12 right:12
+          // (32px button + ~12px buffer) so the source line never tucks under it.
+          paddingRight: 48,
+          gap: 12,
         }}
       >
         <span className="ss-eyebrow">SmokySignal · Live</span>
         <span
           className="ss-mono"
-          style={{ fontSize: 10.5, color: SS_TOKENS.fg2 }}
+          style={{
+            fontSize: 10.5,
+            color: SS_TOKENS.fg2,
+            whiteSpace: "nowrap",
+          }}
         >
           <span
             style={{
@@ -115,7 +123,7 @@ export function Glanceable({
               animation: "ss-blink 1.6s infinite",
             }}
           />
-          UPDATED {updatedAgo}s AGO · {snap.source.toUpperCase()}
+          UPDATED {updatedAgo}s · {snap.source.toUpperCase()}
         </span>
       </header>
 

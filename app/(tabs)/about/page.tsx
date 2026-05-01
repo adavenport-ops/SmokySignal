@@ -2,7 +2,6 @@ import Link from "next/link";
 import { fleetHex } from "@/lib/seed";
 import { getRegistry } from "@/lib/registry";
 import { SS_TOKENS } from "@/lib/tokens";
-import { Card } from "@/components/Card";
 
 export const dynamic = "force-dynamic";
 
@@ -104,92 +103,103 @@ export default async function AboutPage() {
         >
           These are the tails this app currently watches. The list comes
           from public ADS-B sightings cross-referenced with state and
-          county fleet records. If you spot an error, holler.
+          county fleet records. Tap any tail to see its detail page.
         </p>
-        <Card padded={false}>
-          <div style={{ overflowX: "auto" }}>
-            <table
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: 10 }}
+        >
+          {fleet.map((f) => (
+            <Link
+              key={f.tail}
+              href={`/plane/${f.tail}`}
+              prefetch={false}
               style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 12,
-                minWidth: 560,
+                display: "block",
+                textDecoration: "none",
+                color: "inherit",
+                background: SS_TOKENS.bg1,
+                border: `.5px solid ${SS_TOKENS.hairline}`,
+                borderRadius: 12,
+                padding: "12px 14px",
               }}
             >
-              <thead>
-                <tr
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: 8,
+                  flexWrap: "wrap",
+                }}
+              >
+                <span
+                  className="ss-mono"
                   style={{
-                    textAlign: "left",
-                    color: SS_TOKENS.fg2,
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 10,
-                    letterSpacing: ".08em",
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: SS_TOKENS.alert,
+                    letterSpacing: "-.02em",
                   }}
                 >
-                  <th style={{ padding: "10px 12px 6px", fontWeight: 600 }}>TAIL</th>
-                  <th style={{ padding: "10px 6px 6px", fontWeight: 600 }}>HEX</th>
-                  <th style={{ padding: "10px 6px 6px", fontWeight: 600 }}>OPERATOR</th>
-                  <th style={{ padding: "10px 6px 6px", fontWeight: 600 }}>MODEL</th>
-                  <th style={{ padding: "10px 12px 6px", fontWeight: 600 }}>BASE</th>
-                </tr>
-              </thead>
-              <tbody>
-                {fleet.map((f, i) => (
-                  <tr
-                    key={f.tail}
+                  {f.tail}
+                </span>
+                {f.nickname && (
+                  <span
                     style={{
-                      borderTop:
-                        i === 0 ? 0 : `.5px solid ${SS_TOKENS.hairline}`,
+                      fontSize: 13,
+                      color: SS_TOKENS.fg1,
+                      fontStyle: "italic",
                     }}
                   >
-                    <td
-                      className="ss-mono"
-                      style={{
-                        padding: "10px 12px",
-                        fontWeight: 600,
-                        color: SS_TOKENS.fg0,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {f.tail}
-                      {f.nickname && (
-                        <span
-                          style={{
-                            color: SS_TOKENS.fg2,
-                            fontWeight: 400,
-                            marginLeft: 6,
-                          }}
-                        >
-                          &ldquo;{f.nickname}&rdquo;
-                        </span>
-                      )}
-                    </td>
-                    <td
-                      className="ss-mono"
-                      style={{
-                        padding: "10px 6px",
-                        color: SS_TOKENS.fg2,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {fleetHex(f).toUpperCase()}
-                    </td>
-                    <td style={{ padding: "10px 6px", color: SS_TOKENS.fg1, whiteSpace: "nowrap" }}>
-                      {f.operator}
-                    </td>
-                    <td style={{ padding: "10px 6px", color: SS_TOKENS.fg1 }}>
-                      {f.model}
-                    </td>
-                    <td style={{ padding: "10px 12px", color: SS_TOKENS.fg1, whiteSpace: "nowrap" }}>
-                      {f.base}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+                    &ldquo;{f.nickname}&rdquo;
+                  </span>
+                )}
+              </div>
+              <div
+                style={{ fontSize: 12, color: SS_TOKENS.fg1, marginTop: 4 }}
+              >
+                {f.operator} · {f.model}
+              </div>
+              <div
+                className="ss-mono"
+                style={{
+                  fontSize: 10.5,
+                  color: SS_TOKENS.fg2,
+                  marginTop: 4,
+                  letterSpacing: ".04em",
+                }}
+              >
+                {fleetHex(f).toUpperCase()} · {f.base}
+              </div>
+            </Link>
+          ))}
+        </div>
       </Section>
+
+      <footer
+        className="ss-mono"
+        style={{
+          marginTop: 8,
+          fontSize: 10.5,
+          color: SS_TOKENS.fg2,
+          letterSpacing: ".04em",
+          lineHeight: 1.55,
+        }}
+      >
+        Found a bug or wrong tail?{" "}
+        <a
+          href="mailto:feedback@smokysignal.app"
+          style={{ color: SS_TOKENS.fg1, textDecoration: "underline" }}
+        >
+          feedback@smokysignal.app
+        </a>
+        <br />
+        <Link
+          href="/legal"
+          style={{ color: SS_TOKENS.fg1, textDecoration: "underline" }}
+        >
+          Legal · disclaimers
+        </Link>
+      </footer>
     </main>
   );
 }

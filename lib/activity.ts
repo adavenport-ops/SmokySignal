@@ -59,6 +59,7 @@ export function describeEvent(
 
   if (kind === "takeoff") {
     if (nickname === "Smokey 4") return "Smoky off the deck";
+    if (nickname === "Smokey 3") return "Smokey 3 off the deck";
     if (nickname === "Guardian One") return "Guardian One up from Renton";
     if (nickname === "Pierce One") return "Pierce One airborne from Thun Field";
     if (nickname === "SnoHawk 10") return "SnoHawk 10 lifting off";
@@ -69,6 +70,7 @@ export function describeEvent(
 
   if (kind === "landing") {
     if (nickname === "Smokey 4") return "Smoky landed";
+    if (nickname === "Smokey 3") return "Smokey 3 landed";
     return `${name} landed`;
   }
 
