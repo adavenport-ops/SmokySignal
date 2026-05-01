@@ -1,0 +1,257 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeSlug from "rehype-slug";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import { SS_TOKENS } from "@/lib/tokens";
+
+export function HelpMarkdown({ source }: { source: string }) {
+  return (
+    <div className="ss-help-prose">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[
+          rehypeSlug,
+          [
+            rehypeAutolinkHeadings,
+            {
+              behavior: "append",
+              properties: { className: "ss-help-anchor", ariaLabel: "Permalink" },
+              content: { type: "text", value: " #" },
+            },
+          ],
+        ]}
+        components={{
+          h1: (props) => (
+            <h1
+              style={{
+                fontSize: 36,
+                fontWeight: 800,
+                letterSpacing: "-.03em",
+                color: SS_TOKENS.fg0,
+                margin: "0 0 16px",
+                lineHeight: 1.15,
+              }}
+              {...props}
+            />
+          ),
+          h2: (props) => (
+            <h2
+              style={{
+                fontSize: 24,
+                fontWeight: 700,
+                color: SS_TOKENS.fg0,
+                marginTop: 48,
+                marginBottom: 16,
+                paddingBottom: 8,
+                borderBottom: `.5px solid ${SS_TOKENS.hairline}`,
+                lineHeight: 1.3,
+              }}
+              {...props}
+            />
+          ),
+          h3: (props) => (
+            <h3
+              style={{
+                fontSize: 18,
+                fontWeight: 600,
+                color: SS_TOKENS.fg0,
+                marginTop: 32,
+                marginBottom: 12,
+                lineHeight: 1.4,
+              }}
+              {...props}
+            />
+          ),
+          p: (props) => (
+            <p
+              style={{
+                fontSize: 16,
+                color: SS_TOKENS.fg1,
+                lineHeight: 1.7,
+                margin: "0 0 16px",
+              }}
+              {...props}
+            />
+          ),
+          ul: (props) => (
+            <ul
+              style={{
+                paddingLeft: 20,
+                margin: "0 0 18px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                color: SS_TOKENS.fg1,
+                fontSize: 16,
+                lineHeight: 1.6,
+              }}
+              {...props}
+            />
+          ),
+          ol: (props) => (
+            <ol
+              style={{
+                paddingLeft: 22,
+                margin: "0 0 18px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                color: SS_TOKENS.fg1,
+                fontSize: 16,
+                lineHeight: 1.6,
+              }}
+              {...props}
+            />
+          ),
+          li: (props) => <li {...props} />,
+          a: ({ href, children, className, ...rest }) => {
+            const isAnchor = className === "ss-help-anchor";
+            return (
+              <a
+                href={href}
+                className={className}
+                style={
+                  isAnchor
+                    ? {
+                        color: SS_TOKENS.fg3,
+                        textDecoration: "none",
+                        marginLeft: 8,
+                        opacity: 0,
+                        transition: "opacity 200ms",
+                        fontSize: ".75em",
+                      }
+                    : {
+                        color: SS_TOKENS.alert,
+                        textDecoration: "underline",
+                        textDecorationColor: `${SS_TOKENS.alert}55`,
+                      }
+                }
+                {...rest}
+              >
+                {children}
+              </a>
+            );
+          },
+          code: ({ children, ...rest }) => (
+            <code
+              style={{
+                fontFamily: "var(--font-mono)",
+                background: SS_TOKENS.bg1,
+                color: SS_TOKENS.fg0,
+                fontSize: ".92em",
+                padding: "2px 5px",
+                borderRadius: 3,
+              }}
+              {...rest}
+            >
+              {children}
+            </code>
+          ),
+          pre: ({ children, ...rest }) => (
+            <pre
+              style={{
+                fontFamily: "var(--font-mono)",
+                background: SS_TOKENS.bg1,
+                color: SS_TOKENS.fg0,
+                padding: 16,
+                borderRadius: 8,
+                overflowX: "auto",
+                fontSize: 13,
+                lineHeight: 1.55,
+                margin: "0 0 18px",
+                border: `.5px solid ${SS_TOKENS.hairline}`,
+              }}
+              {...rest}
+            >
+              {children}
+            </pre>
+          ),
+          blockquote: (props) => (
+            <blockquote
+              style={{
+                margin: "0 0 18px",
+                paddingLeft: 14,
+                borderLeft: `4px solid ${SS_TOKENS.fg3}`,
+                color: SS_TOKENS.fg1,
+                fontStyle: "italic",
+                fontSize: 16,
+                lineHeight: 1.6,
+              }}
+              {...props}
+            />
+          ),
+          hr: () => (
+            <hr
+              style={{
+                border: 0,
+                borderTop: `.5px solid ${SS_TOKENS.hairline}`,
+                margin: "32px 0",
+              }}
+            />
+          ),
+          strong: (props) => (
+            <strong style={{ color: SS_TOKENS.fg0, fontWeight: 700 }} {...props} />
+          ),
+          em: (props) => (
+            <em style={{ color: SS_TOKENS.fg1, fontStyle: "italic" }} {...props} />
+          ),
+        }}
+      >
+        {source}
+      </ReactMarkdown>
+      <style>{`
+        .ss-help-prose h2:hover .ss-help-anchor,
+        .ss-help-prose h3:hover .ss-help-anchor,
+        .ss-help-prose h2:focus-within .ss-help-anchor,
+        .ss-help-prose h3:focus-within .ss-help-anchor {
+          opacity: 1 !important;
+        }
+        .ss-help-prose h2 { scroll-margin-top: 72px; }
+        .ss-help-prose h3 { scroll-margin-top: 72px; }
+      `}</style>
+    </div>
+  );
+}
+
+export function HelpScrollTopButton() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 800);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  if (!show) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      aria-label="Scroll to top"
+      className="ss-mono"
+      style={{
+        position: "fixed",
+        right: 18,
+        bottom: 24,
+        zIndex: 20,
+        padding: "10px 14px",
+        borderRadius: 999,
+        background: "rgba(11,13,16,0.85)",
+        border: `.5px solid ${SS_TOKENS.hairline2}`,
+        color: SS_TOKENS.fg1,
+        fontSize: 11,
+        letterSpacing: ".06em",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        cursor: "pointer",
+        touchAction: "manipulation",
+        WebkitTapHighlightColor: "transparent",
+      }}
+    >
+      ↑ Top
+    </button>
+  );
+}

@@ -65,6 +65,20 @@ export function AdminHeader({
             LOG OUT
           </button>
         </form>
+        <Link
+          href="/help"
+          aria-label="Help and documentation"
+          title="Help & docs"
+          className="ss-mono"
+          style={{
+            fontSize: 11,
+            color: SS_TOKENS.fg2,
+            letterSpacing: ".08em",
+            textDecoration: "none",
+          }}
+        >
+          ?
+        </Link>
       </div>
     </header>
   );

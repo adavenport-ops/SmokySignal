@@ -199,6 +199,13 @@ export default async function AboutPage() {
         >
           Legal · disclaimers
         </Link>
+        {" · "}
+        <Link
+          href="/help"
+          style={{ color: SS_TOKENS.fg1, textDecoration: "underline" }}
+        >
+          Help
+        </Link>
       </footer>
     </main>
   );

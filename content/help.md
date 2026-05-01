@@ -1,0 +1,106 @@
+# SmokySignal help
+
+A short tour of what SmokySignal shows you, where the data comes from, and how to read each screen.
+
+## What this app is
+
+SmokySignal is a situational-awareness tool for motorcyclists in the Puget Sound region. It tells you, in one glance, whether a known traffic-enforcement aircraft is currently airborne and roughly where it's working. The point is to be informed, not to evade — knowing the bird is up is the same as seeing a marked patrol car ahead. Ride within the limit and ride well.
+
+We track 16 fixed-wing planes and helicopters across WSP, KCSO, Pierce SO, Snohomish SO, Spokane SO, and other Washington state agencies. The full list is on the **About** page.
+
+## The home screen
+
+The hero panel is the headline. It always reads as one of three states:
+
+- **BIRD UP / Smoky's watching.** — N305DK (Smokey 4) is airborne. Mind the throttle.
+- **EYES UP / "{nickname} is up."** — Smoky's down, but another watcher (Guardian One, Pierce One, etc.) is in the air. Specifics in the subhead.
+- **ALL CLEAR / Smoky's down.** — Nothing in our registry is currently airborne in the region.
+
+Below the hero, the **activity strip** shows the most recent state-change event — a takeoff, landing, or emergency squawk. It auto-hides if there's nothing recent (older than 6 hours).
+
+The **also airborne** card lists every other watcher up right now. Tap any row to open its detail page.
+
+The **next likely sweep** card is a probability prediction based on accumulated takeoff history. It only appears once we've gathered enough data; otherwise the home shows a "still learning" placeholder.
+
+In the top-right, the small **moon icon** toggles a screen wake lock — handy on the bike. Filled with a slash through it means "screen will stay on." Outline crescent means "screen sleeps normally."
+
+## The radar screen
+
+The map is a live view centered on Puget Sound. The status pill at the top mirrors the home screen's state:
+
+- **SMOKY UP** (amber) — N305DK airborne
+- **EYES UP** (amber) — another watcher airborne
+- **SMOKY DOWN** (green) — all clear
+
+Top-right shows `0/16` — how many of our 16 tracked tails are airborne right now. The number turns amber any time it's nonzero.
+
+Each airborne plane appears as an amber chevron pointing along its current heading. Helicopters use a circular rotor icon. Tap a chevron to open the plane detail page.
+
+When something's airborne, a horizontal carousel slides up from the bottom with one card per plane — quick stats and a tap-target for each.
+
+The **Hot Zones** toggle bottom-left shows a heatmap of where fleet aircraft have spent time over the last 30 days. Brighter = more time. The chevron next to the toggle opens a filter panel:
+
+- **Show**: All / Smoky / By operator
+- **Region**: Puget Sound (default) / Statewide
+
+The **Spotted** button (binoculars icon, bottom-right) lets you log an in-person sighting. Tap it once when you actually see a plane, and it records your GPS location and any airborne fleet members visible at the time. Useful for ground-truthing the live data.
+
+The pulsing **blue dot** is your current location.
+
+## The activity feed
+
+Each row is a state-change event for one of our tracked tails. Icons:
+
+- **↗ Takeoff** — was grounded, now airborne
+- **↘ Landing** — was airborne, now grounded
+- **✦ First seen** — newly added tail, already in the air on first observation
+- **⚠ Emergency squawk** — transponder code 7500/7600/7700
+
+Tap a row to open the plane detail page. The feed polls every 30 seconds while the tab is visible.
+
+## The plane detail page
+
+Each tail has its own page at `/plane/{TAIL}`. It shows:
+
+- **Status pill**: `AIRBORNE · WATCHING` (amber) or `GROUNDED` (green) with last-seen relative time
+- **Live data block** (when airborne): altitude, ground speed, heading, squawk code
+- **Recent track**: a real interactive map of the most recent flight session, with a polyline of the path. Pinch to zoom, drag to pan.
+- **Session metadata**: first/last seen, duration, sample count, max altitude
+- **Fleet metadata**: ICAO24 hex code and operational role
+
+The map shows the in-progress flight if the plane is currently airborne (with a pulsing end dot), or the most recent completed flight if grounded.
+
+## The forecast
+
+`/forecast` shows a 7×24 grid: probability of any fleet takeoff per hour-of-week. Brighter cells = more historical activity. The current Pacific (day, hour) is outlined in amber. Tap any cell to see which tails most commonly fly in that bucket.
+
+## Public flight share pages
+
+Every flight gets a permanent shareable URL: `/flight/{TAIL}/{FLIGHT_ID}`. You can grab it via the **Share** button next to the back link on any plane detail page (and on the admin recent-flights view). The link works without auth and includes a social-friendly preview image.
+
+Flights are kept for 30 days; older ones are pruned automatically.
+
+## Where the data comes from
+
+Aircraft positions are pulled from public ADS-B telemetry. The primary source is [adsb.fi](https://adsb.fi); the fallback is [OpenSky Network](https://opensky-network.org). Both are anonymous, free, and require attribution — provided in the app footer and on the legal page.
+
+The tail registry is built from publicly available state and county fleet records. If you spot a wrong tail or a misclassified aircraft, email **feedback@smokysignal.app**.
+
+We don't use enforcement-tier feeds, FlightAware Pro, ADS-B Exchange premium, or anything not freely available to anyone with a Pi and a dongle.
+
+## Privacy
+
+We don't track who you are or what you do in the app. The only thing that touches our servers is the **Spotted** button — when tapped, it sends your current location plus the timestamp to our database. That data isn't tied to any account or identifier; it's used to validate when planes go silent on ADS-B.
+
+Your screen wake-lock preference and hot-zone filter live in your phone's local storage and never leave the device.
+
+## Troubleshooting
+
+- **The hot-zones heatmap is empty.** It depends on accumulated track data and refreshes daily. After a fresh deploy or if you're filtering to a specific tail with little history, the layer may legitimately have nothing to render.
+- **The map shows "MapTiler key missing."** The deployment is missing its `NEXT_PUBLIC_MAPTILER_KEY` environment variable. The app still works, but maps won't render.
+- **"Couldn't get a fix" when tapping Spotted.** Your browser's location permission is denied or your GPS is having a moment. Allow location access for `smokysignal.app` in browser settings.
+- **The activity feed is empty.** Either no fleet member has had a state change recently, or — if it's been many hours — the cron job that refreshes the snapshot may be on its daily schedule. Activity events fire once per snapshot refresh.
+
+## Project info
+
+SmokySignal is a personal/hobby project. Source: [github.com/adavenport-ops/SmokySignal](https://github.com/adavenport-ops/SmokySignal). Bug reports and corrections to [feedback@smokysignal.app](mailto:feedback@smokysignal.app). See [Legal](/legal) for disclaimers and attribution.

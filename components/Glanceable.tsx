@@ -12,6 +12,7 @@ import { StatusPill } from "./StatusPill";
 import { Card } from "./Card";
 import { PlaneIcon, planeKindFor } from "./PlaneIcon";
 import { PredictionCard } from "./PredictionCard";
+import { HelpIcon } from "./HelpIcon";
 
 // Hide the activity strip when the most recent event is older than this
 // — a stale "Guardian One up · 8 hours ago" looks more like a bug than
@@ -90,15 +91,17 @@ export function Glanceable({
         margin: "0 auto",
       }}
     >
+      <HelpIcon />
       <header
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           marginTop: 4,
-          // Reserve room for the fixed wake-lock button at top:12 right:12
-          // (32px button + ~12px buffer) so the source line never tucks under it.
-          paddingRight: 48,
+          // Reserve room for the fixed wake-lock + help buttons (top:12,
+          // right:12 + right:52, both 32px wide) so the source line never
+          // tucks under either icon.
+          paddingRight: 96,
           gap: 12,
         }}
       >

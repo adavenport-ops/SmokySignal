@@ -10,6 +10,7 @@ import { deriveStatus } from "@/lib/status";
 import { StatusPill } from "./StatusPill";
 import { SpottedButton } from "./SpottedButton";
 import { HotZoneLayer } from "./HotZoneLayer";
+import { HelpIcon } from "./HelpIcon";
 import type { Aircraft, Snapshot } from "@/lib/types";
 
 export type RiderPos = { lat: number; lon: number };
@@ -86,6 +87,7 @@ export function RadarShell({ initial, mockOn = false }: Props) {
         map={map}
         bottomBoost={airborne.length > 0 ? 130 : 0}
       />
+      <HelpIcon />
 
       <header
         style={{
@@ -93,10 +95,10 @@ export function RadarShell({ initial, mockOn = false }: Props) {
           left: 0,
           right: 0,
           top: 0,
-          // Right padding 56px reserves room for the fixed wake-lock
-          // button at top:12 right:12 so the airborne counter never
-          // tucks under the moon icon.
-          padding: "12px 56px 12px 16px",
+          // Right padding 96px reserves room for the fixed wake-lock
+          // button (right:12) AND the help icon (right:52) so the
+          // airborne counter never tucks under either.
+          padding: "12px 96px 12px 16px",
           background: "rgba(11,13,16,.7)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
