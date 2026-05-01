@@ -3,11 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/check-env.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/check-env.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "env:pull": "vercel env pull .env.local --environment=development --yes",
     "backfill": "tsx --env-file=.env.local scripts/backfill.ts",
     "backfill:dry": "tsx --env-file=.env.local scripts/backfill.ts --dry",
     "backfill:resume": "tsx --env-file=.env.local scripts/backfill.ts --resume --yes"
