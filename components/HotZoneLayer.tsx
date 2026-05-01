@@ -212,21 +212,34 @@ export function HotZoneLayer({ map, bottomBoost = 0 }: Props) {
       }
     };
 
-    if (map.isStyleLoaded()) {
+    // MapLibre-known-good idiom: poll isStyleLoaded() and call
+    // addLayerOnce only when the style is actually ready. The
+    // previous attempt used `load` + `styledata` directly, but
+    // styledata fires DURING style updates (isStyleLoaded false) —
+    // calls made then are accepted by MapLibre but silently dropped
+    // when the style finishes loading.
+    let cancelled = false;
+    const POLL_MS = 80;
+    const MAX_POLLS = 75; // ~6s ceiling
+    let polls = 0;
+    const tryAdd = () => {
+      if (cancelled || !map) return;
+      if (map.getSource(SOURCE_ID)) return; // already added
+      if (!map.isStyleLoaded()) {
+        if (++polls > MAX_POLLS) {
+          console.warn("[HZ] gave up waiting for style.load after", polls, "polls");
+          return;
+        }
+        setTimeout(tryAdd, POLL_MS);
+        return;
+      }
       addLayerOnce();
-    } else {
-      console.log("[HZ] style not loaded yet, waiting on load + styledata");
-      map.once("load", addLayerOnce);
-      // Belt-and-suspenders: styledata also fires after style swaps and
-      // covers the case where `load` already fired before we attached.
-      map.once("styledata", addLayerOnce);
-    }
+    };
+    tryAdd();
 
     return () => {
-      // Tear down on map change / unmount.
+      cancelled = true;
       try {
-        map.off("load", addLayerOnce);
-        map.off("styledata", addLayerOnce);
         if (map.getLayer(LAYER_ID)) map.removeLayer(LAYER_ID);
         if (map.getSource(SOURCE_ID)) map.removeSource(SOURCE_ID);
       } catch {
