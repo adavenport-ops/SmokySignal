@@ -212,34 +212,29 @@ export function HotZoneLayer({ map, bottomBoost = 0 }: Props) {
       }
     };
 
-    // MapLibre-known-good idiom: poll isStyleLoaded() and call
-    // addLayerOnce only when the style is actually ready. The
-    // previous attempt used `load` + `styledata` directly, but
-    // styledata fires DURING style updates (isStyleLoaded false) —
-    // calls made then are accepted by MapLibre but silently dropped
-    // when the style finishes loading.
+    // MapLibre v5 + Next.js + dynamic-imported map instance: the
+    // map's isStyleLoaded() can return false indefinitely even after
+    // the map is visually rendered, so polling on it never succeeds
+    // (verified — gave up after 76 polls / 6 s with the map clearly
+    // loaded). The bulletproof pattern is to attempt addSource/
+    // addLayer optimistically and retry on every `data` event until
+    // the source actually persists. addSource throws if the style
+    // isn't loaded; we catch that and let the next data event
+    // re-attempt. Once the source exists, subsequent attempts no-op.
     let cancelled = false;
-    const POLL_MS = 80;
-    const MAX_POLLS = 75; // ~6s ceiling
-    let polls = 0;
-    const tryAdd = () => {
+    const ensure = () => {
       if (cancelled || !map) return;
-      if (map.getSource(SOURCE_ID)) return; // already added
-      if (!map.isStyleLoaded()) {
-        if (++polls > MAX_POLLS) {
-          console.warn("[HZ] gave up waiting for style.load after", polls, "polls");
-          return;
-        }
-        setTimeout(tryAdd, POLL_MS);
-        return;
-      }
+      if (map.getSource(SOURCE_ID)) return; // already attached, done
       addLayerOnce();
     };
-    tryAdd();
+
+    ensure(); // attempt synchronously
+    map.on("data", ensure); // and on every data tick
 
     return () => {
       cancelled = true;
       try {
+        map.off("data", ensure);
         if (map.getLayer(LAYER_ID)) map.removeLayer(LAYER_ID);
         if (map.getSource(SOURCE_ID)) map.removeSource(SOURCE_ID);
       } catch {
