@@ -45,7 +45,10 @@ function readEnvFile(p) {
   }
 }
 
-const env = readEnvFile(ENV_LOCAL);
+// On Vercel / CI there is no .env.local — env vars are injected directly
+// into process.env. Source from there and skip the file-missing nag.
+const isCI = process.env.VERCEL === "1" || process.env.CI === "true";
+const env = isCI ? { ...process.env } : readEnvFile(ENV_LOCAL);
 
 if (!env) {
   console.error(
