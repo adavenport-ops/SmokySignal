@@ -18,7 +18,7 @@
 // implementation; we no longer emit it.
 
 import { getRedis, cacheGet, cacheSet } from "./cache";
-import type { Aircraft, Snapshot } from "./types";
+import type { Aircraft, FleetRole, Snapshot } from "./types";
 
 const FEED_KEY = "activity:feed";
 const PREV_KEY = "aircraft:prev";
@@ -41,6 +41,9 @@ export type ActivityEntry = {
   ts: number;
   tail: string;
   icao24?: string;
+  /** FleetRole at the time the event was recorded — used to color the
+   *  event icon in the activity feed. Older entries may not have this. */
+  role?: FleetRole;
   kind: ActivityKind;
   squawk?: string | null;
   lat?: number | null;
@@ -49,33 +52,46 @@ export type ActivityEntry = {
   description: string;
 };
 
+/**
+ * Generates the human-readable description for an event. Branches on
+ * fleet role so SAR / transport events read calmer than smokey / patrol
+ * events ("on a run" vs "off the deck"). Older callers without the role
+ * arg get the conservative default behavior.
+ */
 export function describeEvent(
   tail: string,
   nickname: string | null | undefined,
   kind: ActivityKind,
   squawk?: string | null,
+  role: FleetRole = "unknown",
 ): string {
   const name = nickname ?? tail;
 
   if (kind === "takeoff") {
-    if (nickname === "Smokey 4") return "Smoky off the deck";
-    if (nickname === "Smokey 3") return "Smokey 3 off the deck";
-    if (nickname === "Guardian One") return "Guardian One up from Renton";
-    if (nickname === "Pierce One") return "Pierce One airborne from Thun Field";
-    if (nickname === "SnoHawk 10") return "SnoHawk 10 lifting off";
-    if (nickname === "Air 1") return "Air 1 up from Felts Field";
-    if (nickname) return `${nickname} airborne`;
-    return `${tail} airborne`;
+    if (role === "smokey") {
+      if (nickname === "Smokey 4") return "Smokey off the deck";
+      return `${name} off the deck`;
+    }
+    if (role === "patrol") {
+      return `${name} up`;
+    }
+    if (role === "sar") {
+      return `${name} on a run`;
+    }
+    if (role === "transport") {
+      return `${name} up`;
+    }
+    return `${name} up`;
   }
 
   if (kind === "landing") {
-    if (nickname === "Smokey 4") return "Smoky landed";
-    if (nickname === "Smokey 3") return "Smokey 3 landed";
-    return `${name} landed`;
+    if (role === "sar") return `${name} back on the ground`;
+    if (role === "smokey" && nickname === "Smokey 4") return "Smokey down";
+    return `${name} down`;
   }
 
   if (kind === "first_seen") {
-    return `New contact: ${tail}`;
+    return `${name} on watch`;
   }
 
   if (kind === "squawk_emergency") {
@@ -87,7 +103,7 @@ export function describeEvent(
           : squawk === "7500"
             ? "hijack"
             : "alert";
-    return `⚠ ${name} squawking ${meaning}`;
+    return `${name} squawking ${meaning}`;
   }
 
   // altitude_change (legacy) or unknown
@@ -123,6 +139,8 @@ function diffEvents(prev: Snapshot | null, curr: Snapshot): ActivityEntry[] {
       alt_ft: p?.altitude_ft ?? currentPos.alt_ft,
     };
 
+    const role: FleetRole = a.role ?? "unknown";
+
     // first_seen: tail wasn't in prev snapshot at all and is currently
     // airborne. Fires once per registry add for any tail that's already
     // up when it joins.
@@ -131,10 +149,11 @@ function diffEvents(prev: Snapshot | null, curr: Snapshot): ActivityEntry[] {
         ts,
         tail: a.tail,
         icao24: a.icao24,
+        role,
         ...currentPos,
         kind: "first_seen",
         squawk: a.squawk ?? null,
-        description: describeEvent(a.tail, a.nickname, "first_seen"),
+        description: describeEvent(a.tail, a.nickname, "first_seen", null, role),
       });
       // intentional: don't also emit takeoff for the same instant
       continue;
@@ -146,10 +165,11 @@ function diffEvents(prev: Snapshot | null, curr: Snapshot): ActivityEntry[] {
         ts,
         tail: a.tail,
         icao24: a.icao24,
+        role,
         ...currentPos,
         kind: "takeoff",
         squawk: a.squawk ?? null,
-        description: describeEvent(a.tail, a.nickname, "takeoff"),
+        description: describeEvent(a.tail, a.nickname, "takeoff", null, role),
       });
     }
 
@@ -160,10 +180,11 @@ function diffEvents(prev: Snapshot | null, curr: Snapshot): ActivityEntry[] {
         ts,
         tail: a.tail,
         icao24: a.icao24,
+        role,
         ...lastAirbornePos,
         kind: "landing",
         squawk: a.squawk ?? null,
-        description: describeEvent(a.tail, a.nickname, "landing"),
+        description: describeEvent(a.tail, a.nickname, "landing", null, role),
       });
     }
 
@@ -175,10 +196,17 @@ function diffEvents(prev: Snapshot | null, curr: Snapshot): ActivityEntry[] {
         ts,
         tail: a.tail,
         icao24: a.icao24,
+        role,
         ...currentPos,
         kind: "squawk_emergency",
         squawk: cs,
-        description: describeEvent(a.tail, a.nickname, "squawk_emergency", cs),
+        description: describeEvent(
+          a.tail,
+          a.nickname,
+          "squawk_emergency",
+          cs,
+          role,
+        ),
       });
     }
   }

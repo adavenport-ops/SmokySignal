@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import nextDynamic from "next/dynamic";
 import Link from "next/link";
 import type { Map as MaplibreMap } from "maplibre-gl";
 import { useAircraft } from "@/lib/hooks/useAircraft";
 import { SS_TOKENS } from "@/lib/tokens";
-import { deriveStatus } from "@/lib/status";
+import { computeStatus } from "@/lib/status";
 import { StatusPill } from "./StatusPill";
 import { SpottedButton } from "./SpottedButton";
 import { HotZoneLayer } from "./HotZoneLayer";
 import { HelpIcon } from "./HelpIcon";
 import { Tooltip } from "./Tooltip";
-import type { Aircraft, Snapshot } from "@/lib/types";
+import type { Aircraft, FleetEntry, Snapshot } from "@/lib/types";
 
 export type RiderPos = { lat: number; lon: number };
 
@@ -35,28 +35,22 @@ type Props = { initial: Snapshot; mockOn?: boolean };
 
 export function RadarShell({ initial, mockOn = false }: Props) {
   const snap = useAircraft(initial, mockOn);
-  const statusInfo = deriveStatus(snap);
+  const fleetMap = useMemo(
+    () => new Map<string, FleetEntry>(snap.aircraft.map((a) => [a.tail, a])),
+    [snap.aircraft],
+  );
+  const status = useMemo(() => computeStatus(snap, fleetMap), [snap, fleetMap]);
   const airborne = snap.aircraft.filter((a) => a.airborne);
   const total = snap.aircraft.length;
-  const pillKind = statusInfo.status === "all_clear" ? "clear" : "alert";
-  const pillLabel =
-    statusInfo.status === "smoky_up"
-      ? "SMOKY UP"
-      : statusInfo.status === "other_up"
-        ? "EYES UP"
-        : "SMOKY DOWN";
-  const pillSub =
-    statusInfo.status === "other_up" && statusInfo.othersAirborne.length > 1
-      ? `${statusInfo.othersAirborne.length} watching`
-      : undefined;
-  const counterColor =
-    statusInfo.totalAirborne > 0 ? SS_TOKENS.alert : SS_TOKENS.fg1;
+  const pillKind = status.kind;
   const pillTooltip =
-    statusInfo.status === "smoky_up"
-      ? "Smoky (N305DK) is airborne and watching this region."
-      : statusInfo.status === "other_up"
-        ? `${statusInfo.othersAirborne.length} non-Smoky watcher${statusInfo.othersAirborne.length === 1 ? "" : "s"} airborne. Smoky's down.`
-        : "Nothing in our 16-tail registry is currently airborne.";
+    status.kind === "alert"
+      ? `${status.alertCount} alert-class aircraft up — see /help for the role taxonomy.`
+      : status.lead
+        ? `Nothing alerting. ${status.lead.entry.nickname ?? status.lead.aircraft.tail} is up but classified ${status.lead.entry.role}.`
+        : "Nothing in our 16-tail registry is currently up.";
+  const counterColor =
+    status.alertCount > 0 ? SS_TOKENS.alert : SS_TOKENS.fg1;
 
   const [rider, setRider] = useState<RiderPos | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -119,15 +113,15 @@ export function RadarShell({ initial, mockOn = false }: Props) {
       >
         <StatusPill
           kind={pillKind}
-          label={pillLabel}
-          sub={pillSub}
+          label={status.pill}
+          sub={status.pillSub}
           big
           tooltip={pillTooltip}
         />
         <Tooltip
           side="bottom"
           align="end"
-          content="How many of our 16 tracked tails are airborne right now."
+          content="How many of our 16 tracked tails are up right now."
         >
           <span
             className="ss-mono"
@@ -139,7 +133,7 @@ export function RadarShell({ initial, mockOn = false }: Props) {
               cursor: "help",
             }}
           >
-            {airborne.length}/{total} AIRB
+            {airborne.length}/{total} UP
           </span>
         </Tooltip>
       </header>

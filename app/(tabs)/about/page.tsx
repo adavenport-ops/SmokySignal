@@ -3,11 +3,14 @@ import { fleetHex } from "@/lib/seed";
 import { getRegistry } from "@/lib/registry";
 import { SS_TOKENS } from "@/lib/tokens";
 import { Tooltip } from "@/components/Tooltip";
+import { Logo } from "@/components/brand/Logo";
+import { roleBadgeStyle, roleBadgeText, roleTooltip } from "@/lib/role-display";
+import type { FleetEntry } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "SmokySignal · About",
+  title: "About",
   description:
     "What SmokySignal is, where the data comes from, and which tails are tracked.",
 };
@@ -49,14 +52,48 @@ export default async function AboutPage() {
       </header>
 
       <Section eyebrow="What this is">
-        <p style={{ fontSize: 14, lineHeight: 1.55, color: SS_TOKENS.fg1 }}>
-          SmokySignal is a situational-awareness tool for motorcyclists in
-          the Puget Sound region. It tells you, in one glance, whether a
-          known traffic-enforcement aircraft is currently airborne and
-          where it&rsquo;s working. The point is to be informed, not to
-          evade — knowing the bird is up is the same as seeing a marked
-          patrol car ahead. Ride within the limit and ride well.
+        <p
+          style={{
+            fontSize: 22,
+            fontWeight: 700,
+            letterSpacing: "-.02em",
+            lineHeight: 1.25,
+            color: SS_TOKENS.fg0,
+            margin: "0 0 14px",
+          }}
+        >
+          Truckers called them Smokey. We just kept the name.
         </p>
+        <p style={{ fontSize: 14, lineHeight: 1.55, color: SS_TOKENS.fg1, margin: 0 }}>
+          SmokySignal tells motorcyclists, drivers, and curious locals — in
+          one glance — whether the bird is up, where it is, and what it&rsquo;s
+          watching. Coverage: King County, Pierce County, and the I-5 / I-405 /
+          SR-512 corridors.
+        </p>
+      </Section>
+
+      <Section eyebrow="The name">
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <OriginStep
+            title="The campaign hat"
+            body="WSP troopers wear a flat-brimmed, high-crowned campaign hat — the same silhouette as Smokey Bear. The hat earned them the nickname long before any aircraft were involved."
+          />
+          <OriginGlyph rotate={-6} />
+          <OriginStep
+            title="CB-radio slang"
+            body="In the 1970s, peak CB era, truckers coined a private vocabulary for warning each other about speed traps. Because of the hat, troopers became Smokey on the airwaves. Smokey and the Bandit (1977) cemented it in pop culture."
+          />
+          <OriginGlyph rotate={3} />
+          <OriginStep
+            title="The aviation callsign"
+            body="WSP Aviation embraced the nickname. Their fleet — Cessnas with FLIR cameras for clocking speeders from the sky — operates under the official callsign &ldquo;Smokey,&rdquo; numbered Smokey 1, Smokey 4, etc."
+          />
+          <OriginGlyph rotate={-2} />
+          <OriginStep
+            title="SmokySignal"
+            body="Smokey (the bear, the trooper, the plane) plus smoke signal (the original beacon-warning system) plus signal (radio, transmission, alert). The product is the modern smoke signal — a quiet, glanceable warning that the bird is watching."
+          />
+        </div>
       </Section>
 
       <Section eyebrow="Data sources">
@@ -67,8 +104,8 @@ export default async function AboutPage() {
             color: SS_TOKENS.fg1,
           }}
         >
-          Aircraft positions are pulled from the public ADS-B network.
-          Primary feed:{" "}
+          Aircraft positions are pulled from the public ADS-B network. Primary
+          feed:{" "}
           <Tooltip content="Public ADS-B aggregator network. Free, anonymous, attribution required. Our primary live data source.">
             <a
               href="https://adsb.fi"
@@ -90,10 +127,9 @@ export default async function AboutPage() {
               OpenSky Network
             </a>
           </Tooltip>
-          . Both are anonymous, free, and require attribution — provided
-          here and in the home-page footer. We cache snapshots for 10
-          seconds so a hundred riders watching the page generate one
-          upstream call.
+          . Both are anonymous, free, and require attribution — provided here
+          and in the home footer. We cache snapshots for 10 seconds so a
+          hundred riders watching the page generate one upstream call.
         </p>
       </Section>
 
@@ -106,76 +142,13 @@ export default async function AboutPage() {
             marginBottom: 10,
           }}
         >
-          These are the tails this app currently watches. The list comes
-          from public ADS-B sightings cross-referenced with state and
-          county fleet records. Tap any tail to see its detail page.
+          These are the tails this app currently watches. The list comes from
+          public ADS-B sightings cross-referenced with state and county fleet
+          records. Tap any tail to see its detail page.
         </p>
-        <div
-          style={{ display: "flex", flexDirection: "column", gap: 10 }}
-        >
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {fleet.map((f) => (
-            <Link
-              key={f.tail}
-              href={`/plane/${f.tail}`}
-              prefetch={false}
-              style={{
-                display: "block",
-                textDecoration: "none",
-                color: "inherit",
-                background: SS_TOKENS.bg1,
-                border: `.5px solid ${SS_TOKENS.hairline}`,
-                borderRadius: 12,
-                padding: "12px 14px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  gap: 8,
-                  flexWrap: "wrap",
-                }}
-              >
-                <span
-                  className="ss-mono"
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color: SS_TOKENS.alert,
-                    letterSpacing: "-.02em",
-                  }}
-                >
-                  {f.tail}
-                </span>
-                {f.nickname && (
-                  <span
-                    style={{
-                      fontSize: 13,
-                      color: SS_TOKENS.fg1,
-                      fontStyle: "italic",
-                    }}
-                  >
-                    &ldquo;{f.nickname}&rdquo;
-                  </span>
-                )}
-              </div>
-              <div
-                style={{ fontSize: 12, color: SS_TOKENS.fg1, marginTop: 4 }}
-              >
-                {f.operator} · {f.model}
-              </div>
-              <div
-                className="ss-mono"
-                style={{
-                  fontSize: 10.5,
-                  color: SS_TOKENS.fg2,
-                  marginTop: 4,
-                  letterSpacing: ".04em",
-                }}
-              >
-                {fleetHex(f).toUpperCase()} · {f.base}
-              </div>
-            </Link>
+            <TailCard key={f.tail} entry={f} />
           ))}
         </div>
       </Section>
@@ -187,9 +160,21 @@ export default async function AboutPage() {
           fontSize: 10.5,
           color: SS_TOKENS.fg2,
           letterSpacing: ".04em",
-          lineHeight: 1.55,
+          lineHeight: 1.6,
         }}
       >
+        <span
+          style={{
+            display: "block",
+            fontSize: 9,
+            letterSpacing: ".18em",
+            color: SS_TOKENS.fg2,
+            textTransform: "uppercase",
+            marginBottom: 6,
+          }}
+        >
+          Got your ears on?
+        </span>
         Found a bug or wrong tail?{" "}
         <a
           href="mailto:feedback@smokysignal.app"
@@ -202,7 +187,7 @@ export default async function AboutPage() {
           href="/legal"
           style={{ color: SS_TOKENS.fg1, textDecoration: "underline" }}
         >
-          Legal · disclaimers
+          Legal
         </Link>
         {" · "}
         <Link
@@ -213,6 +198,151 @@ export default async function AboutPage() {
         </Link>
       </footer>
     </main>
+  );
+}
+
+function TailCard({ entry }: { entry: FleetEntry }) {
+  const badge = roleBadgeText(entry.role);
+  const tentative = entry.roleConfidence === "tentative";
+  return (
+    <Link
+      href={`/plane/${entry.tail}`}
+      prefetch={false}
+      style={{
+        display: "block",
+        textDecoration: "none",
+        color: "inherit",
+        background: SS_TOKENS.bg1,
+        border: `.5px solid ${SS_TOKENS.hairline}`,
+        borderRadius: 12,
+        padding: "12px 14px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 8,
+          flexWrap: "wrap",
+        }}
+      >
+        <span
+          className="ss-mono"
+          style={{
+            fontSize: 16,
+            fontWeight: 700,
+            color: SS_TOKENS.alert,
+            letterSpacing: "-.02em",
+          }}
+        >
+          {entry.tail}
+        </span>
+        {entry.nickname && (
+          <span
+            style={{
+              fontSize: 13,
+              color: SS_TOKENS.fg1,
+              fontStyle: "italic",
+            }}
+          >
+            &ldquo;{entry.nickname}&rdquo;
+          </span>
+        )}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          flexWrap: "wrap",
+          marginTop: 6,
+        }}
+      >
+        <span style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
+          {entry.operator} · {entry.model}
+        </span>
+        <Tooltip content={roleTooltip(entry.role)}>
+          <span
+            className="ss-mono"
+            style={roleBadgeStyle(entry.role)}
+            tabIndex={0}
+          >
+            {badge}
+          </span>
+        </Tooltip>
+        {tentative && (
+          <Tooltip content="Role is best-guess from public records. May be refined.">
+            <span
+              className="ss-mono"
+              tabIndex={0}
+              style={{
+                fontSize: 9.5,
+                color: SS_TOKENS.fg2,
+                fontStyle: "italic",
+                cursor: "help",
+              }}
+            >
+              (tentative)
+            </span>
+          </Tooltip>
+        )}
+      </div>
+      <div
+        className="ss-mono"
+        style={{
+          fontSize: 10.5,
+          color: SS_TOKENS.fg2,
+          marginTop: 4,
+          letterSpacing: ".04em",
+        }}
+      >
+        {fleetHex(entry).toUpperCase()} · {entry.base}
+      </div>
+    </Link>
+  );
+}
+
+function OriginStep({ title, body }: { title: string; body: string }) {
+  return (
+    <div>
+      <h3
+        style={{
+          fontSize: 14,
+          fontWeight: 700,
+          color: SS_TOKENS.fg0,
+          margin: 0,
+          marginBottom: 4,
+        }}
+      >
+        {title}
+      </h3>
+      <p
+        style={{
+          fontSize: 13.5,
+          color: SS_TOKENS.fg1,
+          lineHeight: 1.55,
+          margin: 0,
+        }}
+      >
+        {body}
+      </p>
+    </div>
+  );
+}
+
+function OriginGlyph({ rotate }: { rotate: number }) {
+  return (
+    <div
+      aria-hidden
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        color: SS_TOKENS.fg3,
+        transform: `rotate(${rotate}deg)`,
+      }}
+    >
+      <Logo size={24} mono />
+    </div>
   );
 }
 

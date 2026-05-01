@@ -216,7 +216,7 @@ function NearestCard({
             }}
           />
           <span style={{ fontSize: 14, color: SS_TOKENS.fg1 }}>
-            All clear · Smoky&rsquo;s down
+            All clear · Smokey&rsquo;s down
           </span>
         </div>
       ) : (
@@ -248,7 +248,7 @@ function ContextLine({
     text = `Mind the throttle · ${display} ${nearest.distanceNm.toFixed(1)}nm away`;
     color = SS_TOKENS.warn;
   } else if (airborneCount > 0) {
-    text = "Smoky up but not nearby";
+    text = "Smokey up but not nearby";
     color = SS_TOKENS.fg1;
   } else {
     text = "Clear skies";

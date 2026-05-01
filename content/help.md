@@ -4,21 +4,35 @@ A short tour of what SmokySignal shows you, where the data comes from, and how t
 
 ## What this app is
 
-SmokySignal is a situational-awareness tool for motorcyclists in the Puget Sound region. It tells you, in one glance, whether a known traffic-enforcement aircraft is currently airborne and roughly where it's working. The point is to be informed, not to evade — knowing the bird is up is the same as seeing a marked patrol car ahead. Ride within the limit and ride well.
+SmokySignal is a situational-awareness tool for motorcyclists in the Puget Sound region. It tells you, in one glance, whether a known traffic-enforcement aircraft is up and roughly where it's working. The point is to be informed, not to evade — knowing the bird is up is the same as seeing a marked patrol car ahead. Ride within the limit and ride well.
 
 We track 16 fixed-wing planes and helicopters across WSP, KCSO, Pierce SO, Snohomish SO, Spokane SO, and other Washington state agencies. The full list is on the **About** page.
+
+## What's a Smokey?
+
+SmokySignal tracks 16 aircraft across four roles. Only some of them mean you should ease off the throttle.
+
+**SMOKEY** (speed enforcement) — fixed-wing planes, usually Cessnas with FLIR cameras, used for clocking speed from the air. WSP runs five of these. Pierce SO runs one. If any of these are up, the status pill goes amber and the headline says "Smokey's up."
+
+**PATROL** (multi-role helicopter) — county sheriff helicopters that may be doing traffic, pursuit, or SAR. Status goes amber as a precaution, with the pill reading "Eyes up."
+
+**SAR** (search and rescue) — Hueys and similar. Almost always responding to a rescue, not enforcement. Status stays green; we just note the rescue in a footnote.
+
+**TRANSPORT** — state aircraft used for executive transport or aerial photography. Status stays green.
+
+Roles are best-guess from public records. The admin tail editor lets us refine them as we learn. A "(tentative)" suffix on the badge means we're not 100% certain about the classification yet.
 
 ## The home screen
 
 The hero panel is the headline. It always reads as one of three states:
 
-- **BIRD UP / Smoky's watching.** — N305DK (Smokey 4) is airborne. Mind the throttle.
-- **EYES UP / "{nickname} is up."** — Smoky's down, but another watcher (Guardian One, Pierce One, etc.) is in the air. Specifics in the subhead.
-- **ALL CLEAR / Smoky's down.** — Nothing in our registry is currently airborne in the region.
+- **SMOKEY UP / Smokey's up.** — A speed-enforcement plane is in the air. Mind the throttle.
+- **EYES UP / Eyes up.** — No Smokey, but a patrol helicopter is up. Could be traffic or SAR; we err on alert.
+- **ALL CLEAR / Smokey's down.** — Nothing alert-class is up. If a SAR or transport aircraft happens to be in the air, you'll see a small footnote.
 
 Below the hero, the **activity strip** shows the most recent state-change event — a takeoff, landing, or emergency squawk. It auto-hides if there's nothing recent (older than 6 hours).
 
-The **also airborne** card lists every other watcher up right now. Tap any row to open its detail page.
+The **also up** card lists every other watcher up right now. Tap any row to open its detail page.
 
 The **next likely sweep** card is a probability prediction based on accumulated takeoff history. It only appears once we've gathered enough data; otherwise the home shows a "still learning" placeholder.
 
@@ -28,19 +42,19 @@ In the top-right, the small **moon icon** toggles a screen wake lock — handy o
 
 The map is a live view centered on Puget Sound. The status pill at the top mirrors the home screen's state:
 
-- **SMOKY UP** (amber) — N305DK airborne
-- **EYES UP** (amber) — another watcher airborne
-- **SMOKY DOWN** (green) — all clear
+- **SMOKEY UP** (amber) — a speed-enforcement plane is up
+- **EYES UP** (amber) — a patrol helicopter is up (no Smokey)
+- **ALL CLEAR** (green) — nothing alert-class is up
 
-Top-right shows `0/16` — how many of our 16 tracked tails are airborne right now. The number turns amber any time it's nonzero.
+Top-right shows `0/16 UP` — how many of our 16 tracked tails are up right now. The number turns amber any time it's nonzero.
 
-Each airborne plane appears as an amber chevron pointing along its current heading. Helicopters use a circular rotor icon. Tap a chevron to open the plane detail page.
+Each up plane appears as an amber chevron pointing along its current heading. Helicopters use a circular rotor icon. Tap a chevron to open the plane detail page.
 
-When something's airborne, a horizontal carousel slides up from the bottom with one card per plane — quick stats and a tap-target for each.
+When something's up, a horizontal carousel slides up from the bottom with one card per plane — quick stats and a tap-target for each.
 
 The **Hot Zones** toggle bottom-left shows a heatmap of where fleet aircraft have spent time over the last 30 days. Brighter = more time. The chevron next to the toggle opens a filter panel:
 
-- **Show**: All / Smoky / By operator
+- **Show**: All / Smokey / By operator
 - **Region**: Puget Sound (default) / Statewide
 
 The **Spotted** button (binoculars icon, bottom-right) lets you log an in-person sighting. Tap it once when you actually see a plane, and it records your GPS location and any airborne fleet members visible at the time. Useful for ground-truthing the live data.
@@ -51,10 +65,10 @@ The pulsing **blue dot** is your current location.
 
 Each row is a state-change event for one of our tracked tails. Icons:
 
-- **↗ Takeoff** — was grounded, now airborne
-- **↘ Landing** — was airborne, now grounded
-- **✦ First seen** — newly added tail, already in the air on first observation
-- **⚠ Emergency squawk** — transponder code 7500/7600/7700
+- **↗ Takeoff** — was grounded, now up
+- **↘ Landing** — was up, now grounded
+- **✦ First seen** — newly added tail, already up on first observation
+- **⚠ Emergency squawk** — transponder code 7500 / 7600 / 7700
 
 Tap a row to open the plane detail page. The feed polls every 30 seconds while the tab is visible.
 
@@ -62,13 +76,13 @@ Tap a row to open the plane detail page. The feed polls every 30 seconds while t
 
 Each tail has its own page at `/plane/{TAIL}`. It shows:
 
-- **Status pill**: `AIRBORNE · WATCHING` (amber) or `GROUNDED` (green) with last-seen relative time
-- **Live data block** (when airborne): altitude, ground speed, heading, squawk code
+- **Status pill**: `AIRBORNE · WATCHING` (amber) or `GROUNDED` (green) with last-seen relative time, plus a small role badge ("SPEED ENFORCEMENT", "MULTI-ROLE PATROL", etc.)
+- **Live data block** (when up): altitude, ground speed, heading, squawk code
 - **Recent track**: a real interactive map of the most recent flight session, with a polyline of the path. Pinch to zoom, drag to pan.
 - **Session metadata**: first/last seen, duration, sample count, max altitude
 - **Fleet metadata**: ICAO24 hex code and operational role
 
-The map shows the in-progress flight if the plane is currently airborne (with a pulsing end dot), or the most recent completed flight if grounded.
+The map shows the in-progress flight if the plane is currently up (with a pulsing end dot), or the most recent completed flight if grounded.
 
 ## The forecast
 

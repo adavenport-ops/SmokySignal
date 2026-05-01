@@ -3,19 +3,25 @@
 @tailwind utilities;
 
 :root {
-  --ss-bg0: #0b0d10;
-  --ss-bg1: #11141a;
-  --ss-bg2: #171b22;
-  --ss-bg3: #1e232c;
-  --ss-fg0: #eef0f3;
-  --ss-fg1: #a8adb6;
-  --ss-fg2: #6b7280;
+  --ss-bg0: #0B0D10;
+  --ss-bg1: #15181D;
+  --ss-bg2: #1E2229;
+  --ss-bg3: #1E2229;
+  --ss-fg0: #F2F4F7;
+  --ss-fg1: #A8AEB8;
+  --ss-fg2: #6B7380;
   --ss-fg3: #3f4651;
+  /* SEMANTIC: speed-enforcement plane up. Matches the icon files in
+     Design/ — alert orange is amber #f5b840, not BRAND.md's #FF7A1A.
+     #FF7A1A is reserved as --ss-warn for future speed-warning UX. */
   --ss-alert: #f5b840;
-  --ss-alert-dim: rgba(245, 184, 64, 0.18);
-  --ss-clear: #5fcf8a;
-  --ss-clear-dim: rgba(95, 207, 138, 0.16);
-  --ss-sky: #7dd3fc;
+  --ss-alert-dim: rgba(245, 184, 64, 0.13);
+  --ss-warn: #FF7A1A;
+  --ss-warn-dim: rgba(255, 122, 26, 0.13);
+  --ss-clear: #5DD9A7;
+  --ss-clear-dim: rgba(93, 217, 167, 0.13);
+  --ss-sky: #5BB6FF;
+  --ss-sky-dim: rgba(91, 182, 255, 0.13);
   --ss-hairline: rgba(255, 255, 255, 0.06);
   --ss-hairline-2: rgba(255, 255, 255, 0.10);
 }
@@ -33,13 +39,14 @@ body {
 }
 
 .ss-mono {
-  font-family: var(--font-mono), "Geist Mono", "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  font-feature-settings: "ss01", "tnum";
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  font-feature-settings: "zero", "ss20", "cv01", "tnum";
   letter-spacing: 0.02em;
 }
 
 .ss-eyebrow {
-  font-family: var(--font-mono), "Geist Mono", ui-monospace, Menlo, monospace;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-feature-settings: "zero";
   font-size: 10.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;

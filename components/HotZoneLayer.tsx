@@ -463,7 +463,7 @@ function FilterPanel({
           active={filter.showMode === "smoky"}
           onClick={() => onChange({ ...filter, showMode: "smoky" })}
         >
-          Smoky
+          Smokey
         </Pill>
         <Pill
           active={filter.showMode === "operator"}

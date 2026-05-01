@@ -16,7 +16,7 @@ import {
 } from "@/lib/registry";
 import { invalidateSnapshot } from "@/lib/snapshot";
 import { setSpeedWarningEnabled } from "@/lib/flags";
-import type { FleetEntry } from "@/lib/types";
+import type { FleetEntry, FleetRole, RoleConfidence } from "@/lib/types";
 
 const TAIL_RE = /^N\d{1,5}[A-Z]{0,2}$/;
 const HEX_RE = /^[A-F0-9]{6}$/;
@@ -71,6 +71,19 @@ export async function logoutAction() {
   redirect("/");
 }
 
+const VALID_ROLES: readonly FleetRole[] = [
+  "smokey",
+  "patrol",
+  "sar",
+  "transport",
+  "unknown",
+] as const;
+const VALID_CONFIDENCE: readonly RoleConfidence[] = [
+  "confirmed",
+  "tentative",
+  "unknown",
+] as const;
+
 function readEntryFromForm(formData: FormData): {
   entry: FleetEntry | null;
   errorCode: string | null;
@@ -85,7 +98,11 @@ function readEntryFromForm(formData: FormData): {
   const hexRaw = s(formData, "hex").toUpperCase();
   const hex = hexRaw || null;
   const base = s(formData, "base");
-  const role = s(formData, "role") || "—";
+  const roleDescription = s(formData, "roleDescription") || "—";
+  const roleRaw = s(formData, "role").toLowerCase();
+  const confidenceRaw = s(formData, "roleConfidence").toLowerCase();
+  const roleNoteRaw = s(formData, "roleNote");
+  const roleNote = roleNoteRaw ? roleNoteRaw.slice(0, 120) : undefined;
 
   if (!TAIL_RE.test(tail)) return { entry: null, errorCode: "bad_tail" };
   if (hex && !HEX_RE.test(hex)) return { entry: null, errorCode: "bad_hex" };
@@ -95,9 +112,26 @@ function readEntryFromForm(formData: FormData): {
   }
   if (!model) return { entry: null, errorCode: "bad_model" };
   if (!base) return { entry: null, errorCode: "bad_base" };
+  if (!VALID_ROLES.includes(roleRaw as FleetRole)) {
+    return { entry: null, errorCode: "bad_role" };
+  }
+  if (!VALID_CONFIDENCE.includes(confidenceRaw as RoleConfidence)) {
+    return { entry: null, errorCode: "bad_confidence" };
+  }
 
   return {
-    entry: { tail, operator, model, nickname, role, base, hex },
+    entry: {
+      tail,
+      operator,
+      model,
+      nickname,
+      roleDescription,
+      base,
+      hex,
+      role: roleRaw as FleetRole,
+      roleConfidence: confidenceRaw as RoleConfidence,
+      roleNote,
+    },
     errorCode: null,
   };
 }

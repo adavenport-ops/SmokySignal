@@ -16,6 +16,7 @@ import {
   setSpeedWarningFlagAction,
   logoutAction,
 } from "./actions";
+import { Logo } from "@/components/brand/Logo";
 
 const OPERATORS = [
   "WSP",
@@ -76,7 +77,8 @@ export function Editor({
                 <Th>MODEL</Th>
                 <Th>NICKNAME</Th>
                 <Th>BASE</Th>
-                <Th>ROLE</Th>
+                <Th>MISSION</Th>
+                <Th>CLASS</Th>
                 <Th>ACTIONS</Th>
               </tr>
             </thead>
@@ -210,15 +212,27 @@ function AdminNav({ active }: { active: "registry" | "flights" | "spots" }) {
       }}
     >
       <h1
-        className="ss-mono"
         style={{
-          fontSize: 16,
-          color: SS_TOKENS.fg0,
-          letterSpacing: ".06em",
           margin: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
         }}
       >
-        SMOKYSIGNAL ADMIN
+        <Logo size={20} wordmark />
+        <span
+          className="ss-mono"
+          style={{
+            fontSize: 9.5,
+            color: SS_TOKENS.fg2,
+            letterSpacing: ".12em",
+            padding: "2px 6px",
+            border: `.5px solid ${SS_TOKENS.hairline2}`,
+            borderRadius: 4,
+          }}
+        >
+          ADMIN
+        </span>
       </h1>
       <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
         <NavLink href="/admin" active={active === "registry"}>
@@ -643,7 +657,13 @@ function ReadRow({
       <Td>{entry.model}</Td>
       <Td dim>{entry.nickname ?? "—"}</Td>
       <Td>{entry.base}</Td>
-      <Td dim>{entry.role}</Td>
+      <Td dim>{entry.roleDescription}</Td>
+      <Td dim>
+        {entry.role}
+        {entry.roleConfidence !== "confirmed" && (
+          <span style={{ color: SS_TOKENS.fg2 }}> ({entry.roleConfidence})</span>
+        )}
+      </Td>
       <Td>
         <div style={{ display: "flex", gap: 6 }}>
           <button onClick={onEdit} style={smallButtonStyle}>
@@ -687,7 +707,7 @@ function EditRow({
         background: "rgba(245,184,64,0.04)",
       }}
     >
-      <td colSpan={8} style={{ padding: 10 }}>
+      <td colSpan={9} style={{ padding: 10 }}>
         <form
           action={updateTailAction}
           style={{
@@ -706,7 +726,25 @@ function EditRow({
           <Field label="Model" name="model" defaultValue={entry.model} required />
           <Field label="Nickname" name="nickname" defaultValue={entry.nickname ?? ""} />
           <Field label="Base" name="base" defaultValue={entry.base} required />
-          <Field label="Role" name="role" defaultValue={entry.role} />
+          <Field label="Mission (free text)" name="roleDescription" defaultValue={entry.roleDescription} />
+          <RoleSelect
+            label="Class (drives status pill)"
+            name="role"
+            defaultValue={entry.role}
+            required
+          />
+          <RoleConfidenceSelect
+            label="Confidence"
+            name="roleConfidence"
+            defaultValue={entry.roleConfidence}
+            required
+          />
+          <Field
+            label="Class note (≤120 chars, optional)"
+            name="roleNote"
+            defaultValue={entry.roleNote ?? ""}
+            maxLength={120}
+          />
           <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
             <button type="submit" style={primaryButtonStyle}>
               Save
@@ -741,7 +779,10 @@ function AddForm({ onCancel }: { onCancel: () => void }) {
       <Field label="Model (e.g. Cessna 182T)" name="model" required />
       <Field label="Nickname (optional)" name="nickname" />
       <Field label="Base (e.g. KOLM Olympia)" name="base" required />
-      <Field label="Role (optional)" name="role" />
+      <Field label="Mission (free text, optional)" name="roleDescription" />
+      <RoleSelect label="Class (drives status pill)" name="role" required />
+      <RoleConfidenceSelect label="Confidence" name="roleConfidence" required />
+      <Field label="Class note (≤120 chars, optional)" name="roleNote" maxLength={120} />
       <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
         <button type="submit" style={primaryButtonStyle}>
           Save tail
@@ -796,12 +837,14 @@ function Field({
   defaultValue,
   mono,
   required,
+  maxLength,
 }: {
   label: string;
   name: string;
   defaultValue?: string;
   mono?: boolean;
   required?: boolean;
+  maxLength?: number;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -810,11 +853,89 @@ function Field({
         name={name}
         defaultValue={defaultValue}
         required={required}
+        maxLength={maxLength}
         style={{
           ...inputStyle,
           fontFamily: mono ? "var(--font-mono)" : undefined,
         }}
       />
+    </div>
+  );
+}
+
+const ROLE_OPTIONS: Array<{ value: import("@/lib/types").FleetRole; label: string }> = [
+  { value: "smokey", label: "smokey — fixed-wing speed enforcement" },
+  { value: "patrol", label: "patrol — multi-role helicopter" },
+  { value: "sar", label: "sar — search & rescue" },
+  { value: "transport", label: "transport — exec / multi-mission" },
+  { value: "unknown", label: "unknown — default to alert" },
+];
+
+const CONFIDENCE_OPTIONS: Array<{
+  value: import("@/lib/types").RoleConfidence;
+  label: string;
+}> = [
+  { value: "confirmed", label: "confirmed" },
+  { value: "tentative", label: "tentative" },
+  { value: "unknown", label: "unknown" },
+];
+
+function RoleSelect({
+  label,
+  name,
+  defaultValue,
+  required,
+}: {
+  label: string;
+  name: string;
+  defaultValue?: import("@/lib/types").FleetRole;
+  required?: boolean;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <label style={fieldLabelStyle}>{label.toUpperCase()}</label>
+      <select
+        name={name}
+        defaultValue={defaultValue ?? "unknown"}
+        required={required}
+        style={inputStyle}
+      >
+        {ROLE_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function RoleConfidenceSelect({
+  label,
+  name,
+  defaultValue,
+  required,
+}: {
+  label: string;
+  name: string;
+  defaultValue?: import("@/lib/types").RoleConfidence;
+  required?: boolean;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <label style={fieldLabelStyle}>{label.toUpperCase()}</label>
+      <select
+        name={name}
+        defaultValue={defaultValue ?? "unknown"}
+        required={required}
+        style={inputStyle}
+      >
+        {CONFIDENCE_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
