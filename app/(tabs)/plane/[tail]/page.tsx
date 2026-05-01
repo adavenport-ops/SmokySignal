@@ -4,7 +4,7 @@ import { fleetHex } from "@/lib/seed";
 import { getRegistry } from "@/lib/registry";
 import { getSnapshot } from "@/lib/snapshot";
 import { mockAirborneSnapshot } from "@/lib/mock";
-import { getMostRecentFlightForTail } from "@/lib/flights";
+import { getMostRecentFlightForTail, flightIdFromTs } from "@/lib/flights";
 import { SS_TOKENS } from "@/lib/tokens";
 import { StatusPill } from "@/components/StatusPill";
 import { Card } from "@/components/Card";
@@ -12,6 +12,7 @@ import { fmtAgo, fmtAloft } from "@/lib/format";
 import type { Aircraft } from "@/lib/types";
 import type { RecentFlightForTail } from "@/lib/flights";
 import { BackLink } from "@/components/BackLink";
+import { ShareLinkButton } from "@/components/ShareLinkButton";
 
 export const dynamic = "force-dynamic";
 
@@ -62,7 +63,23 @@ export default async function PlanePage({ params, searchParams }: Props) {
         gap: 16,
       }}
     >
-      <BackLink />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <BackLink />
+        {recentFlight && (
+          <ShareLinkButton
+            path={`/flight/${entry.tail}/${flightIdFromTs(recentFlight.session.start_ts)}`}
+            label="Share flight"
+            size="sm"
+          />
+        )}
+      </div>
 
       <header>
         <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>

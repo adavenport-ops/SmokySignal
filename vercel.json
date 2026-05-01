@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/refresh-hotzones",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-predictor",
+      "schedule": "30 4 * * *"
     }
   ]
 }

@@ -6,6 +6,8 @@ import { SS_TOKENS } from "@/lib/tokens";
 import type { FleetEntry } from "@/lib/types";
 import type { AuditEntry, BackupInfo } from "@/lib/registry";
 import type { FlightSession } from "@/lib/flights";
+import { flightIdFromTs } from "@/lib/flights";
+import { ShareLinkButton } from "@/components/ShareLinkButton";
 import {
   addTailAction,
   updateTailAction,
@@ -398,22 +400,24 @@ function FlightRow({
   flight: FlightSession;
   first: boolean;
 }) {
+  const sharePath = `/flight/${flight.tail}/${flightIdFromTs(flight.start_ts)}`;
   return (
-    <Link
-      href={`/admin/tracks/${flight.tail}/${flight.date}`}
+    <div
       className="ss-flight-row"
       style={{
         display: "grid",
-        gridTemplateColumns: "minmax(120px, 1.2fr) minmax(160px, 1.6fr) minmax(120px, 1fr)",
+        gridTemplateColumns:
+          "minmax(120px, 1.2fr) minmax(160px, 1.6fr) minmax(120px, 1fr) auto",
         gap: 12,
         padding: "12px 14px",
         alignItems: "center",
-        textDecoration: "none",
-        color: "inherit",
         borderTop: first ? "0" : `.5px solid ${SS_TOKENS.hairline}`,
       }}
     >
-      <div>
+      <Link
+        href={`/admin/tracks/${flight.tail}/${flight.date}`}
+        style={{ textDecoration: "none", color: "inherit" }}
+      >
         <div
           className="ss-mono"
           style={{ fontSize: 14, fontWeight: 600, color: SS_TOKENS.fg0 }}
@@ -425,8 +429,11 @@ function FlightRow({
             {flight.nickname}
           </div>
         )}
-      </div>
-      <div>
+      </Link>
+      <Link
+        href={`/admin/tracks/${flight.tail}/${flight.date}`}
+        style={{ textDecoration: "none", color: "inherit" }}
+      >
         <div style={{ fontSize: 12.5, color: SS_TOKENS.fg0 }}>
           {fmtDateTimeRange(flight.start_ts, flight.end_ts)}
         </div>
@@ -436,8 +443,11 @@ function FlightRow({
         >
           {fmtDuration(flight.duration_s)}
         </div>
-      </div>
-      <div style={{ textAlign: "right" }}>
+      </Link>
+      <Link
+        href={`/admin/tracks/${flight.tail}/${flight.date}`}
+        style={{ textDecoration: "none", color: "inherit", textAlign: "right" }}
+      >
         <div
           className="ss-mono"
           style={{ fontSize: 13, fontWeight: 600, color: SS_TOKENS.fg0 }}
@@ -455,8 +465,9 @@ function FlightRow({
         >
           {flight.sample_count} samples
         </div>
-      </div>
-    </Link>
+      </Link>
+      <ShareLinkButton path={sharePath} label="Share" size="sm" />
+    </div>
   );
 }
 

@@ -44,9 +44,3 @@ export function fleetHex(entry: FleetEntry): string {
   return (nNumberToIcao(entry.tail) ?? "").toLowerCase();
 }
 
-// Static prediction cards from design/data.jsx — pending hot-zone learning (milestone 4+).
-export const PREDICTIONS_TODAY = [
-  { window: "06:30 – 09:00", zones: ["I-5 · Tukwila", "I-405 · Bellevue"], confidence: 0.82, label: "AM rush sweep" },
-  { window: "15:30 – 18:30", zones: ["I-5 · Tukwila", "I-405 · Bellevue", "SR-512 · Lakewood"], confidence: 0.91, label: "PM rush sweep" },
-  { window: "13:00 – 16:00", zones: ["I-90 · Issaquah"], confidence: 0.54, label: "Weekend canyon run" },
-] as const;

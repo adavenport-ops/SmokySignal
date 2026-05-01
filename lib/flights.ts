@@ -178,3 +178,69 @@ function pointsForSession(
   const endSec = Math.ceil(session.end_ts / 1000);
   return samples.filter((p) => p.ts >= startSec && p.ts <= endSec);
 }
+
+/**
+ * Compact UTC stamp at minute precision: "20260501T0629". Used as the
+ * flightId in /flight/[tail]/[flightId] URLs so a flight has a stable,
+ * shareable canonical address for as long as its underlying tracks
+ * remain in KV (35-day TTL).
+ */
+export function flightIdFromTs(tsMs: number): string {
+  const d = new Date(tsMs);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${y}${m}${day}T${hh}${mm}`;
+}
+
+/**
+ * Inverse of flightIdFromTs — decodes a "YYYYMMDDTHHMM" stamp back to
+ * { dateKey: "YYYYMMDD", timestampMs }. Returns null on malformed input.
+ */
+export function parseFlightId(
+  flightId: string,
+): { dateKey: string; tsMs: number } | null {
+  const m = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})$/.exec(flightId);
+  if (!m) return null;
+  const [, y, mo, d, h, min] = m;
+  const tsMs = Date.UTC(+y!, +mo! - 1, +d!, +h!, +min!);
+  if (!Number.isFinite(tsMs)) return null;
+  return { dateKey: `${y}${mo}${d}`, tsMs };
+}
+
+const FLIGHT_LOOKUP_TOLERANCE_MS = 30_000;
+
+/**
+ * Look up a single flight session by its public flightId. Returns the
+ * session (with its raw points + nickname) or null if the underlying
+ * tracks have been pruned. Used by the public /flight/[tail]/[flightId]
+ * share page.
+ */
+export async function getFlightById(
+  tail: string,
+  nickname: string | null,
+  flightId: string,
+): Promise<RecentFlightForTail | null> {
+  const parsed = parseFlightId(flightId);
+  if (!parsed) return null;
+  const { dateKey, tsMs } = parsed;
+
+  const samples = await getTracksForDay(tail, dateKey);
+  const sessions = sessionsFromDay(
+    { tail, nickname } as FleetEntry,
+    dateKey,
+    samples,
+  );
+  const match = sessions.find(
+    (s) => Math.abs(s.start_ts - tsMs) <= FLIGHT_LOOKUP_TOLERANCE_MS,
+  );
+  if (!match) return null;
+  const points = pointsForSession(samples, match);
+  return {
+    session: match,
+    points,
+    inProgress: false, // public share pages are always for completed flights
+  };
+}
