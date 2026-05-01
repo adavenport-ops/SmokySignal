@@ -10,7 +10,7 @@ import { useAircraft } from "@/lib/hooks/useAircraft";
 import { computeStatus, type StatusState } from "@/lib/status";
 import { StatusPill } from "./StatusPill";
 import { Card } from "./Card";
-import { PlaneIcon, planeKindFor } from "./PlaneIcon";
+import { PlaneIcon } from "./PlaneIcon";
 import { PredictionCard } from "./PredictionCard";
 import { HelpIcon } from "./HelpIcon";
 import { Tooltip } from "./Tooltip";
@@ -391,11 +391,7 @@ function Others({ others }: { others: Aircraft[] }) {
                   : `.5px solid ${SS_TOKENS.hairline}`,
             }}
           >
-            <PlaneIcon
-              size={18}
-              kind={planeKindFor(p.model)}
-              color={p.role === "sar" || p.role === "transport" ? SS_TOKENS.fg1 : SS_TOKENS.alert}
-            />
+            <PlaneIcon size={18} role={p.role} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
                 className="ss-mono"
