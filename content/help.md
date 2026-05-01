@@ -22,6 +22,14 @@ SmokySignal tracks 16 aircraft across four roles. Only some of them mean you sho
 
 Roles are best-guess from public records. The admin tail editor lets us refine them as we learn. A "(tentative)" suffix on the badge means we're not 100% certain about the classification yet.
 
+## Does this app report me to WSP?
+
+No. SmokySignal is a one-way receiver. We pull public aircraft signals from [adsb.fi](https://adsb.fi) and OpenSky and render them. Your location, your speed, your taps — none of it leaves the device.
+
+There are no rider accounts, no individual analytics, no back channel to any agency. The repository is public; the data flow is fully visible at [/legal](/legal).
+
+If a friend tells you the app secretly snitches when you cross 80, they're working with bad intel. We listen on the open channel. We don't broadcast.
+
 ## The home screen
 
 The hero panel is the headline. It always reads as one of three states:
