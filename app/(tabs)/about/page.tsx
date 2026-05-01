@@ -96,6 +96,8 @@ export default async function AboutPage() {
         </div>
       </Section>
 
+      <PrivacyCallout />
+
       <Section eyebrow="Data sources">
         <p
           style={{
@@ -359,6 +361,55 @@ function Section({
         {eyebrow}
       </div>
       {children}
+    </section>
+  );
+}
+
+function PrivacyCallout() {
+  return (
+    <section
+      style={{
+        background: SS_TOKENS.bg1,
+        border: `.5px solid ${SS_TOKENS.hairline}`,
+        borderRadius: 14,
+        padding: "14px 16px",
+      }}
+    >
+      <div className="ss-eyebrow" style={{ marginBottom: 8 }}>
+        Privacy · Channel 19
+      </div>
+      <h3
+        style={{
+          fontSize: 16,
+          fontWeight: 700,
+          color: SS_TOKENS.fg0,
+          letterSpacing: "-.01em",
+          margin: 0,
+          marginBottom: 8,
+        }}
+      >
+        We listen, we don&rsquo;t talk.
+      </h3>
+      <p
+        style={{
+          fontSize: 13,
+          lineHeight: 1.5,
+          color: SS_TOKENS.fg1,
+          margin: 0,
+        }}
+      >
+        SmokySignal pulls public aircraft signals and renders them. Nothing
+        about you, your speed, or your phone leaves your device on its way
+        to anyone — including WSP. Full data flow on{" "}
+        <Link
+          href="/legal"
+          className="ss-mono"
+          style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
+        >
+          /legal
+        </Link>
+        .
+      </p>
     </section>
   );
 }
