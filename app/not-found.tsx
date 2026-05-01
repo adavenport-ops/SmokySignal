@@ -3,7 +3,7 @@ import { SS_TOKENS } from "@/lib/tokens";
 import { Logo } from "@/components/brand/Logo";
 
 export const metadata = {
-  title: "Lost your signal · SmokySignal",
+  title: "Lost your signal",
   robots: { index: false, follow: false },
 };
 
@@ -42,7 +42,7 @@ export default function NotFound() {
             textTransform: "uppercase",
           }}
         >
-          404 · No copy
+          404 · Not found
         </span>
         <h1
           style={{
