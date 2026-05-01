@@ -37,6 +37,9 @@ const UA = "SmokySignal-backfill/0.1";
 const REQUEST_DELAY_MS = 2500;
 const INTER_TAIL_DELAY_MS = 4000;
 const RATE_LIMIT_BACKOFF_MS = 60_000;
+// If OpenSky tells us to wait longer than this, abort the run instead of
+// sleeping — better to surface the blocker than burn the rate counter.
+const RATE_LIMIT_MAX_WAIT_MS = 5 * 60 * 1000;
 const TRACK_TTL_SECONDS = 35 * 24 * 60 * 60;
 const MIN_SAMPLES_PER_FLIGHT = 3;
 
@@ -135,10 +138,26 @@ async function authedFetch(url: string): Promise<Response> {
 }
 
 /**
+ * Reads OpenSky's preferred wait hint from a 429 response. Tries the
+ * non-standard X-Rate-Limit-Retry-After-Seconds header (what they
+ * actually return), then the RFC standard Retry-After. Returns null
+ * when neither is parseable.
+ */
+function read429RetrySeconds(r: Response): number | null {
+  const xrl = Number(r.headers.get("x-rate-limit-retry-after-seconds"));
+  if (Number.isFinite(xrl) && xrl > 0) return xrl;
+  const ra = Number(r.headers.get("retry-after"));
+  if (Number.isFinite(ra) && ra > 0) return ra;
+  return null;
+}
+
+/**
  * Wraps authedFetch with one retry each for 401 (token churn) and 429
- * (rate limit). 429 honors Retry-After when present, otherwise falls back
- * to RATE_LIMIT_BACKOFF_MS. Sustained 429 still surfaces as a thrown
- * error after the second attempt, so the caller can record it per-tail.
+ * (rate limit). For 429 we read OpenSky's per-endpoint retry hint —
+ * if the wait exceeds RATE_LIMIT_MAX_WAIT_MS we abort the whole run,
+ * since that's a daily-quota signal, not a burst limit. Otherwise we
+ * sleep the requested duration once and retry; sustained 429 still
+ * surfaces as a thrown error so the per-tail summary records it.
  */
 async function authedFetchWithRetry(url: string): Promise<Response> {
   let r = await authedFetch(url);
@@ -147,8 +166,16 @@ async function authedFetchWithRetry(url: string): Promise<Response> {
     r = await authedFetch(url);
   }
   if (r.status === 429) {
-    const ra = Number(r.headers.get("retry-after"));
-    const waitMs = Number.isFinite(ra) && ra > 0 ? ra * 1000 : RATE_LIMIT_BACKOFF_MS;
+    const hintSec = read429RetrySeconds(r);
+    if (hintSec != null && hintSec * 1000 > RATE_LIMIT_MAX_WAIT_MS) {
+      const hours = (hintSec / 3600).toFixed(1);
+      die(
+        `OpenSky rate limit exceeded — Retry-After ${hintSec}s (~${hours}h). ` +
+          `Aborting; re-run after the window resets.`,
+      );
+    }
+    const waitMs =
+      hintSec != null ? hintSec * 1000 : RATE_LIMIT_BACKOFF_MS;
     console.log(
       `    ${C.yellow}⏸ 429 rate-limited, sleeping ${Math.round(waitMs / 1000)}s${C.reset}`,
     );
