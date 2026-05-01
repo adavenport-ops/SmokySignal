@@ -8,9 +8,32 @@ import type { Aircraft } from "@/lib/types";
 const STORAGE_KEY = "ss_last_spot";
 const RATE_LIMIT_MS = 30_000;
 const TABBAR_HEIGHT = 66;
+const TOAST_MS = 3500;
+
+// Wrapping localStorage protects us against iOS Safari private-browsing
+// where the API throws on every call.
+function safeReadLastSpot(): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const v = window.localStorage.getItem(STORAGE_KEY);
+    const n = Number(v ?? 0);
+    return Number.isFinite(n) ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+function safeWriteLastSpot(ts: number): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, String(ts));
+  } catch {
+    /* private mode — rate limit becomes per-session, that's fine */
+  }
+}
 
 export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
   const [toast, setToast] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [pulsing, setPulsing] = useState(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -21,39 +44,48 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
     [],
   );
 
-  const flash = (msg: string) => {
+  const flash = (msg: string, ms = TOAST_MS) => {
     setToast(msg);
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = setTimeout(() => setToast(null), 2000);
+    toastTimerRef.current = setTimeout(() => setToast(null), ms);
   };
 
   const onTap = async () => {
     if (typeof window === "undefined") return;
+    if (busy) return; // single-flight — ignore re-taps while a fix is in flight
+
+    // Immediate visual ack — the user gets feedback in the same frame as
+    // the tap, so there's no "did anything happen?" ambiguity even if the
+    // geolocation prompt takes a beat.
+    setPulsing(true);
+    setTimeout(() => setPulsing(false), 200);
+
     // 1) rate limit
-    const last = Number(window.localStorage.getItem(STORAGE_KEY) ?? 0);
-    if (Number.isFinite(last) && Date.now() - last < RATE_LIMIT_MS) {
+    const last = safeReadLastSpot();
+    if (last > 0 && Date.now() - last < RATE_LIMIT_MS) {
       flash("Easy there — wait a bit");
       return;
     }
-    // 2) one-shot location fix
+    // 2) feature check
     if (!navigator.geolocation) {
       flash("Need location to log a spot");
       return;
     }
 
+    setBusy(true);
+    flash("Locating…", 8000);
     try {
       const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
           maximumAge: 0,
-          timeout: 5000,
+          timeout: 8000,
         });
       });
       const riderLat = pos.coords.latitude;
       const riderLon = pos.coords.longitude;
       const ts = Date.now();
 
-      // 4) build airborne_tails snapshot
       const payloadTails = airborne
         .filter((a) => a.lat != null && a.lon != null)
         .map((a) => ({
@@ -66,7 +98,6 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
               : null,
         }));
 
-      // 5) post
       const r = await fetch("/api/spot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -81,19 +112,19 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
         flash("Spot didn't save");
         return;
       }
-      // 6) record success time
-      window.localStorage.setItem(STORAGE_KEY, String(ts));
+      safeWriteLastSpot(ts);
       flash("Spotted, thanks");
-      // 7) brief scale animation
-      setPulsing(true);
-      setTimeout(() => setPulsing(false), 200);
     } catch (e) {
       const code = (e as GeolocationPositionError | undefined)?.code;
       if (code === 1 /* PERMISSION_DENIED */) {
-        flash("Need location to log a spot");
+        flash("Location denied — enable in Settings to log spots");
+      } else if (code === 3 /* TIMEOUT */) {
+        flash("Location took too long — try again");
       } else {
         flash("Couldn't get a fix");
       }
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -102,6 +133,7 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
       <button
         type="button"
         aria-label="Log a spot of an airborne aircraft"
+        aria-busy={busy}
         onClick={onTap}
         style={{
           position: "fixed",
@@ -115,13 +147,20 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
           color: SS_TOKENS.bg0,
           border: 0,
           cursor: "pointer",
+          // Removes iOS' 300ms double-tap delay and disables browser
+          // gestures (pinch zoom) on top of the tap target — the
+          // single biggest cause of "tap doesn't respond" on Safari.
+          touchAction: "manipulation",
+          // Suppresses the iOS gray flash; we have our own scale animation.
+          WebkitTapHighlightColor: "transparent",
+          opacity: busy ? 0.85 : 1,
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
           boxShadow:
             "0 4px 16px rgba(245,184,64,0.30), 0 1px 4px rgba(0,0,0,0.40)",
           transform: pulsing ? "scale(0.9)" : "scale(1)",
-          transition: "transform 200ms ease",
+          transition: "transform 200ms ease, opacity 200ms ease",
         }}
       >
         <BinocularsIcon />

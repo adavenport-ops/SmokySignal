@@ -4,14 +4,19 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Aircraft, Snapshot } from "@/lib/types";
 import type { ActivityEntry } from "@/lib/activity";
-import { SMOKY_TAIL } from "@/lib/seed";
 import { SS_TOKENS } from "@/lib/tokens";
 import { fmtAgo, fmtAloft } from "@/lib/format";
 import { useAircraft } from "@/lib/hooks/useAircraft";
+import { deriveStatus, type FleetStatusInfo } from "@/lib/status";
 import { StatusPill } from "./StatusPill";
 import { Card } from "./Card";
 import { PlaneIcon, planeKindFor } from "./PlaneIcon";
 import { PredictionCard } from "./PredictionCard";
+
+// Hide the activity strip when the most recent event is older than this
+// — a stale "Guardian One up · 8 hours ago" looks more like a bug than
+// a feature on the home screen.
+const ACTIVITY_STRIP_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 
 type Props = {
   initial: Snapshot;
@@ -64,11 +69,13 @@ export function Glanceable({
     return () => clearInterval(id);
   }, [snap.fetched_at]);
 
-  const smoky = snap.aircraft.find((a) => a.tail === SMOKY_TAIL);
-  const others = snap.aircraft.filter(
-    (a) => a.airborne && a.tail !== SMOKY_TAIL,
-  );
-  const up = Boolean(smoky?.airborne);
+  const statusInfo = deriveStatus(snap);
+  const others = statusInfo.othersAirborne;
+  const latestActivity =
+    activity.length > 0 &&
+    Date.now() - activity[0]!.ts < ACTIVITY_STRIP_MAX_AGE_MS
+      ? activity[0]!
+      : null;
 
   return (
     <main
@@ -112,9 +119,9 @@ export function Glanceable({
         </span>
       </header>
 
-      <Hero up={up} smoky={smoky} />
+      <Hero info={statusInfo} />
 
-      {activity.length > 0 && <ActivityStrip latest={activity[0]!} />}
+      {latestActivity && <ActivityStrip latest={latestActivity} />}
 
       {others.length > 0 && <Others others={others} />}
 
@@ -221,10 +228,10 @@ function fmtRelativeStrip(tsMs: number): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-function Hero({ up, smoky }: { up: boolean; smoky: Aircraft | undefined }) {
-  const eyebrow = up ? "THE BIRD IS UP" : "ALL CLEAR";
-  const accentColor = up ? SS_TOKENS.alert : SS_TOKENS.clear;
-  const halo = up ? SS_TOKENS.alertDim : SS_TOKENS.clearDim;
+function Hero({ info }: { info: FleetStatusInfo }) {
+  const isAlert = info.status !== "all_clear";
+  const accentColor = isAlert ? SS_TOKENS.alert : SS_TOKENS.clear;
+  const halo = isAlert ? SS_TOKENS.alertDim : SS_TOKENS.clearDim;
 
   return (
     <section
@@ -240,23 +247,19 @@ function Hero({ up, smoky }: { up: boolean; smoky: Aircraft | undefined }) {
         className="ss-eyebrow"
         style={{ color: accentColor, animation: "ss-fade 400ms ease-out" }}
       >
-        {eyebrow}
+        {heroEyebrow(info)}
       </div>
       <h1
         style={{
-          fontSize: "clamp(48px, 14vw, 72px)",
+          fontSize: "clamp(40px, 12vw, 64px)",
           fontWeight: 800,
           letterSpacing: "-.04em",
-          lineHeight: 1,
+          lineHeight: 1.05,
           marginTop: 10,
           color: SS_TOKENS.fg0,
         }}
       >
-        Smoky&rsquo;s
-        <br />
-        <span style={{ color: accentColor }}>
-          {up ? "watching." : "down."}
-        </span>
+        <HeroHeadline info={info} accent={accentColor} />
       </h1>
 
       <p
@@ -267,52 +270,120 @@ function Hero({ up, smoky }: { up: boolean; smoky: Aircraft | undefined }) {
           lineHeight: 1.45,
         }}
       >
-        {up && smoky ? (
-          <>
-            Airborne at{" "}
-            <b style={{ color: SS_TOKENS.fg0 }}>
-              {smoky.altitude_ft != null ? (
-                <span className="ss-mono">
-                  {smoky.altitude_ft.toLocaleString()}&prime;
-                </span>
-              ) : (
-                "altitude unknown"
-              )}
-            </b>
-            {smoky.ground_speed_kt != null && (
-              <>
-                {" · "}
-                <span className="ss-mono">{smoky.ground_speed_kt} kt</span>
-              </>
-            )}
-            . Mind the throttle.
-          </>
-        ) : (
-          <>
-            No WSP plane up locally for{" "}
-            <b style={{ color: SS_TOKENS.fg0 }}>
-              {fmtAgo(smoky?.last_seen_min ?? null)}
-            </b>
-            . Send it.
-          </>
-        )}
+        <HeroSubcopy info={info} />
       </p>
 
-      {up && smoky && (
+      {info.status === "smoky_up" && info.smokyAirborne && (
         <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {smoky.time_aloft_min != null && (
-            <StatusPill kind="alert" label={fmtAloft(smoky.time_aloft_min)} />
-          )}
-          {smoky.ground_speed_kt != null && (
+          {info.smokyAirborne.time_aloft_min != null && (
             <StatusPill
               kind="alert"
-              label={`${smoky.ground_speed_kt} kt`}
+              label={fmtAloft(info.smokyAirborne.time_aloft_min)}
+            />
+          )}
+          {info.smokyAirborne.ground_speed_kt != null && (
+            <StatusPill
+              kind="alert"
+              label={`${info.smokyAirborne.ground_speed_kt} kt`}
             />
           )}
         </div>
       )}
     </section>
   );
+}
+
+function heroEyebrow(info: FleetStatusInfo): string {
+  if (info.status === "smoky_up") return "BIRD UP";
+  if (info.status === "other_up") return "EYES UP";
+  return "ALL CLEAR";
+}
+
+function HeroHeadline({
+  info,
+  accent,
+}: {
+  info: FleetStatusInfo;
+  accent: string;
+}) {
+  if (info.status === "smoky_up") {
+    return (
+      <>
+        Smoky&rsquo;s
+        <br />
+        <span style={{ color: accent }}>watching.</span>
+      </>
+    );
+  }
+  if (info.status === "other_up") {
+    if (info.othersAirborne.length === 1) {
+      const a = info.othersAirborne[0]!;
+      const label = a.nickname ?? a.tail;
+      return (
+        <span style={{ color: accent }}>
+          {a.nickname ? (
+            label
+          ) : (
+            <span className="ss-mono" style={{ letterSpacing: "-.02em" }}>
+              {label}
+            </span>
+          )}{" "}
+          is up.
+        </span>
+      );
+    }
+    return (
+      <span style={{ color: accent }}>
+        {info.othersAirborne.length} watchers
+        <br />
+        airborne.
+      </span>
+    );
+  }
+  // all_clear
+  return (
+    <>
+      Smoky&rsquo;s
+      <br />
+      <span style={{ color: accent }}>down.</span>
+    </>
+  );
+}
+
+function HeroSubcopy({ info }: { info: FleetStatusInfo }) {
+  if (info.status === "smoky_up") {
+    const s = info.smokyAirborne;
+    return (
+      <>
+        Airborne at{" "}
+        <b style={{ color: SS_TOKENS.fg0 }}>
+          {s?.altitude_ft != null ? (
+            <span className="ss-mono">
+              {s.altitude_ft.toLocaleString()}&prime;
+            </span>
+          ) : (
+            "altitude unknown"
+          )}
+        </b>
+        {s?.ground_speed_kt != null && (
+          <>
+            {" · "}
+            <span className="ss-mono">{s.ground_speed_kt} kt</span>
+          </>
+        )}
+        . Mind the throttle. Take it easy.
+      </>
+    );
+  }
+  if (info.status === "other_up") {
+    return info.othersAirborne.length === 1 ? (
+      <>Smoky&rsquo;s down — but a watcher is airborne.</>
+    ) : (
+      <>Smoky&rsquo;s down — but the sky is busy.</>
+    );
+  }
+  // all_clear
+  return <>No WSP plane up locally for a while. Send it.</>;
 }
 
 function Others({ others }: { others: Aircraft[] }) {

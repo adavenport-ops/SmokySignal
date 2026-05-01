@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { Map as MaplibreMap } from "maplibre-gl";
 import { useAircraft } from "@/lib/hooks/useAircraft";
 import { SS_TOKENS } from "@/lib/tokens";
-import { SMOKY_TAIL } from "@/lib/seed";
+import { deriveStatus } from "@/lib/status";
 import { StatusPill } from "./StatusPill";
 import { SpottedButton } from "./SpottedButton";
 import { HotZoneLayer } from "./HotZoneLayer";
@@ -33,10 +33,22 @@ type Props = { initial: Snapshot; mockOn?: boolean };
 
 export function RadarShell({ initial, mockOn = false }: Props) {
   const snap = useAircraft(initial, mockOn);
-  const smoky = snap.aircraft.find((a) => a.tail === SMOKY_TAIL);
-  const up = Boolean(smoky?.airborne);
+  const statusInfo = deriveStatus(snap);
   const airborne = snap.aircraft.filter((a) => a.airborne);
   const total = snap.aircraft.length;
+  const pillKind = statusInfo.status === "all_clear" ? "clear" : "alert";
+  const pillLabel =
+    statusInfo.status === "smoky_up"
+      ? "SMOKY UP"
+      : statusInfo.status === "other_up"
+        ? "EYES UP"
+        : "SMOKY DOWN";
+  const pillSub =
+    statusInfo.status === "other_up" && statusInfo.othersAirborne.length > 1
+      ? `${statusInfo.othersAirborne.length} watching`
+      : undefined;
+  const counterColor =
+    statusInfo.totalAirborne > 0 ? SS_TOKENS.alert : SS_TOKENS.fg1;
 
   const [rider, setRider] = useState<RiderPos | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -93,20 +105,16 @@ export function RadarShell({ initial, mockOn = false }: Props) {
           zIndex: 10,
         }}
       >
-        <StatusPill
-          kind={up ? "alert" : "clear"}
-          label={up ? "SMOKY UP" : "SMOKY DOWN"}
-          big
-        />
+        <StatusPill kind={pillKind} label={pillLabel} sub={pillSub} big />
         <span
           className="ss-mono"
           style={{
             fontSize: 10.5,
-            color: SS_TOKENS.fg2,
+            color: counterColor,
             letterSpacing: ".06em",
           }}
         >
-          {airborne.length}/{total} AIRBORNE
+          {airborne.length}/{total} AIRB
         </span>
       </header>
 

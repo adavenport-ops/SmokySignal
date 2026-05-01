@@ -8,7 +8,7 @@
 //
 // Each daily key gets a 35-day TTL so the rolling window auto-cleans.
 
-import { getRedis, cacheGet, cacheSet } from "./cache";
+import { getRedis } from "./cache";
 import type { Snapshot } from "./types";
 
 export type TrackPoint = {
@@ -21,7 +21,6 @@ export type TrackPoint = {
 };
 
 const TTL_SECONDS = 35 * 24 * 60 * 60; // 35 days
-const READ_CACHE_TTL = 60; // seconds — avoids hammering KV on detail-page renders
 
 function utcDateKey(d: Date): string {
   const y = d.getUTCFullYear();
@@ -64,43 +63,6 @@ export async function logTracks(snap: Snapshot): Promise<void> {
   await Promise.allSettled(writes);
 }
 
-/**
- * Most recent N positions for a given tail, oldest → newest. Reads today's
- * list and falls back to yesterday if today has fewer than N samples (so the
- * orbit glyph stays useful right after midnight UTC).
- */
-export async function getRecentPositions(
-  tail: string,
-  count: number,
-): Promise<TrackPoint[]> {
-  const cacheKey = `ss:tracks-recent:${tail}:${count}`;
-  const cached = await cacheGet<TrackPoint[]>(cacheKey);
-  if (cached) return cached;
-
-  const redis = await getRedis();
-  if (!redis) return [];
-
-  const now = new Date();
-  const today = `tracks:${tail}:${utcDateKey(now)}`;
-  const yesterday = `tracks:${tail}:${utcDateKey(new Date(now.getTime() - 86_400_000))}`;
-
-  const todayRaw = (await redis.lrange(today, -count, -1)) as string[];
-  let collected = todayRaw;
-  if (todayRaw.length < count) {
-    const need = count - todayRaw.length;
-    const yesterdayRaw = (await redis.lrange(yesterday, -need, -1)) as string[];
-    collected = [...yesterdayRaw, ...todayRaw];
-  }
-
-  const points = collected
-    .map((s) => safeParse(s))
-    .filter((p): p is TrackPoint => p !== null);
-
-  await cacheSet(cacheKey, points, READ_CACHE_TTL);
-  return points;
-}
-
-/** Distinct UTC date count we have track history for, capped at 30 for display. */
 /** Sorted list of YYYYMMDD dates that have tracks for this tail (newest first). */
 export async function listTrackKeys(tail: string): Promise<string[]> {
   const redis = await getRedis();
@@ -193,35 +155,6 @@ export async function getTrackSummary(tail: string): Promise<TrackSummary> {
     firstSampleTs: first?.ts ?? null,
     lastSampleTs: last?.ts ?? null,
   };
-}
-
-export async function getDistinctDayCount(tail: string): Promise<number> {
-  const cacheKey = `ss:tracks-days:${tail}`;
-  const cached = await cacheGet<number>(cacheKey);
-  if (cached != null) return cached;
-
-  const redis = await getRedis();
-  if (!redis) return 0;
-
-  const days = new Set<string>();
-  let cursor: string | number = 0;
-  do {
-    const result = (await redis.scan(cursor, {
-      match: `tracks:${tail}:*`,
-      count: 100,
-    })) as [string | number, string[]];
-    const [next, keys] = result;
-    for (const k of keys) {
-      const date = k.split(":")[2];
-      if (date) days.add(date);
-    }
-    cursor = next;
-    // Upstash returns "0" (string) when scan completes.
-  } while (String(cursor) !== "0");
-
-  const count = days.size;
-  await cacheSet(cacheKey, count, READ_CACHE_TTL);
-  return count;
 }
 
 function safeParse(s: unknown): TrackPoint | null {

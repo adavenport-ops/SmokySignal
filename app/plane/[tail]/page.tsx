@@ -1,18 +1,32 @@
 import { notFound } from "next/navigation";
+import nextDynamic from "next/dynamic";
 import { fleetHex } from "@/lib/seed";
 import { getRegistry } from "@/lib/registry";
 import { getSnapshot } from "@/lib/snapshot";
 import { mockAirborneSnapshot } from "@/lib/mock";
-import { getRecentPositions, getDistinctDayCount } from "@/lib/tracks";
+import { getMostRecentFlightForTail } from "@/lib/flights";
 import { SS_TOKENS } from "@/lib/tokens";
 import { StatusPill } from "@/components/StatusPill";
 import { Card } from "@/components/Card";
-import { OrbitGlyph } from "@/components/OrbitGlyph";
 import { fmtAgo, fmtAloft } from "@/lib/format";
 import type { Aircraft } from "@/lib/types";
+import type { RecentFlightForTail } from "@/lib/flights";
 import { BackLink } from "@/components/BackLink";
 
 export const dynamic = "force-dynamic";
+
+const PlaneTrackMap = nextDynamic(() => import("@/components/PlaneTrackMap"), {
+  ssr: false,
+  loading: () => (
+    <div
+      style={{
+        height: 280,
+        background: SS_TOKENS.bg0,
+        borderRadius: 12,
+      }}
+    />
+  ),
+});
 
 type Props = {
   params: { tail: string };
@@ -26,14 +40,10 @@ export async function generateMetadata({ params }: Props) {
 export default async function PlanePage({ params, searchParams }: Props) {
   const tail = params.tail.toUpperCase();
 
-  const [fleet, real, history, dayCount] = await Promise.all([
-    getRegistry(),
-    getSnapshot(),
-    getRecentPositions(tail, 20),
-    getDistinctDayCount(tail),
-  ]);
+  const [fleet, real] = await Promise.all([getRegistry(), getSnapshot()]);
   const entry = fleet.find((f) => f.tail === tail);
   if (!entry) notFound();
+  const recentFlight = await getMostRecentFlightForTail(tail, entry.nickname);
   const snap = searchParams.mock === "up" ? mockAirborneSnapshot(real) : real;
 
   const live = snap.aircraft.find((a) => a.tail === tail);
@@ -105,63 +115,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
         <div className="ss-eyebrow" style={{ marginBottom: 8 }}>
           Recent track
         </div>
-        <Card>
-          {history.length >= 3 ? (
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <OrbitGlyph history={history} size={120} />
-            </div>
-          ) : (
-            <div
-              style={{
-                fontSize: 13,
-                color: SS_TOKENS.fg2,
-                textAlign: "center",
-                padding: "16px 8px",
-              }}
-            >
-              Tracking…
-              <div
-                className="ss-mono"
-                style={{ fontSize: 11, color: SS_TOKENS.fg3, marginTop: 6 }}
-              >
-                {history.length} sample{history.length === 1 ? "" : "s"} so far
-              </div>
-            </div>
-          )}
-        </Card>
-      </section>
-
-      <section>
-        <div className="ss-eyebrow" style={{ marginBottom: 8 }}>
-          Typical haunts
-        </div>
-        <Card>
-          <div style={{ fontSize: 14, fontWeight: 600, color: SS_TOKENS.fg0 }}>
-            Learning your sky
-          </div>
-          <div
-            className="ss-mono"
-            style={{
-              fontSize: 11,
-              color: SS_TOKENS.fg2,
-              marginTop: 6,
-              letterSpacing: ".06em",
-            }}
-          >
-            {Math.min(dayCount, 30)}/30 DAYS
-          </div>
-          <div
-            style={{
-              fontSize: 11.5,
-              color: SS_TOKENS.fg2,
-              marginTop: 8,
-              lineHeight: 1.45,
-            }}
-          >
-            Top hot zones for {entry.tail} appear here once we have 30 days of
-            position history.
-          </div>
-        </Card>
+        <RecentTrackBlock tail={entry.tail} flight={recentFlight} />
       </section>
 
       <FleetMeta hex={fleetHex(entry).toUpperCase()} role={entry.role} />
@@ -324,6 +278,106 @@ function SquawkKV({ squawk }: { squawk: string | null }) {
       )}
     </div>
   );
+}
+
+function RecentTrackBlock({
+  tail,
+  flight,
+}: {
+  tail: string;
+  flight: RecentFlightForTail | null;
+}) {
+  if (!flight || flight.points.length < 2) {
+    return (
+      <Card>
+        <div
+          style={{
+            fontSize: 13,
+            color: SS_TOKENS.fg2,
+            textAlign: "center",
+            padding: "16px 8px",
+            lineHeight: 1.45,
+          }}
+        >
+          No flight history yet. Once {tail} flies, the track will appear
+          here.
+        </div>
+      </Card>
+    );
+  }
+
+  const { session, points, inProgress } = flight;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <PlaneTrackMap points={points} inProgress={inProgress} />
+      <Card>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 10,
+          }}
+        >
+          <KV label="FIRST" value={fmtClock(session.start_ts)} />
+          <KV
+            label={inProgress ? "NOW" : "LAST"}
+            value={fmtClock(session.end_ts)}
+          />
+          <KV label="DURATION" value={fmtDuration(session.duration_s)} />
+          <KV label="SAMPLES" value={String(session.sample_count)} />
+          <KV
+            label="MAX ALT"
+            value={
+              session.max_alt_ft > 0
+                ? `${session.max_alt_ft.toLocaleString()}′`
+                : "—"
+            }
+          />
+          <KV
+            label="STATUS"
+            value={inProgress ? "IN PROGRESS" : fmtRelativeShort(session.end_ts)}
+          />
+        </div>
+        <div
+          style={{
+            fontSize: 11,
+            color: SS_TOKENS.fg2,
+            marginTop: 12,
+            lineHeight: 1.45,
+          }}
+        >
+          Tap map to interact · pinch to zoom.
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function fmtClock(ms: number): string {
+  return new Date(ms).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function fmtDuration(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return h > 0
+    ? `${h}h ${String(m).padStart(2, "0")}m`
+    : `${m}m`;
+}
+
+function fmtRelativeShort(tsMs: number): string {
+  const sec = Math.max(0, Math.floor((Date.now() - tsMs) / 1000));
+  if (sec < 60) return "just now";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  return `${Math.floor(hr / 24)}d ago`;
 }
 
 function FleetMeta({ hex, role }: { hex: string; role: string }) {

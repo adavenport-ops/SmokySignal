@@ -124,3 +124,57 @@ export async function getRecentFlights(limit = 20): Promise<FlightSession[]> {
   await cacheSet(CACHE_KEY, result, CACHE_TTL_SECONDS);
   return result;
 }
+
+export type RecentFlightForTail = {
+  session: FlightSession;
+  /** All track points belonging to this session, oldest → newest. */
+  points: TrackPoint[];
+  /** True when this is the in-progress trailing session for an airborne tail. */
+  inProgress: boolean;
+};
+
+/**
+ * Most recent flight session for a single tail, with its track points
+ * for rendering. Walks back through the daily track keys and returns
+ * the last session found. The newest session of the newest day with
+ * data is the "most recent" — when the tail is currently airborne,
+ * that session is in-progress and `inProgress` is true. Returns null
+ * when no day has enough samples to count as a session.
+ */
+export async function getMostRecentFlightForTail(
+  tail: string,
+  nickname: string | null,
+): Promise<RecentFlightForTail | null> {
+  const dates = await listTrackKeys(tail); // newest first
+  for (const date of dates) {
+    const samples = await getTracksForDay(tail, date);
+    const sessions = sessionsFromDay(
+      { tail, nickname } as FleetEntry,
+      date,
+      samples,
+    );
+    if (sessions.length === 0) continue;
+
+    const last = sessions[sessions.length - 1]!;
+    // Reconstruct the points belonging to that session by replaying the
+    // gap-split logic — cheaper than threading point arrays through the
+    // session output type for the one caller that needs them.
+    const points = pointsForSession(samples, last);
+    const inProgress = Date.now() - last.end_ts < SESSION_GAP_MS;
+    return { session: last, points, inProgress };
+  }
+  return null;
+}
+
+/**
+ * Pull only the points that fall within the session's start/end window.
+ * Samples are already chronological from getTracksForDay.
+ */
+function pointsForSession(
+  samples: TrackPoint[],
+  session: FlightSession,
+): TrackPoint[] {
+  const startSec = Math.floor(session.start_ts / 1000);
+  const endSec = Math.ceil(session.end_ts / 1000);
+  return samples.filter((p) => p.ts >= startSec && p.ts <= endSec);
+}
