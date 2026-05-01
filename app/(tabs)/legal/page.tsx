@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 
 export const metadata = {
-  title: "SmokySignal · Legal",
+  title: "Legal",
   description: "Disclaimers and data attribution.",
 };
 

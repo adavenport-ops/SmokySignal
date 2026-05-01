@@ -20,7 +20,9 @@ const mono = JetBrains_Mono({
 
 const TITLE = "SmokySignal — Is the bird up?";
 const DESCRIPTION =
-  "Live tracking of WSP aviation over Puget Sound. Know before you go.";
+  "Live WSP & sheriff aircraft tracker for King & Pierce County riders. Know when Smokey's watching.";
+const SOCIAL_DESCRIPTION =
+  "Live aircraft tracker for King & Pierce County riders.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -42,7 +44,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: TITLE,
-    description: DESCRIPTION,
+    description: SOCIAL_DESCRIPTION,
     type: "website",
     siteName: "SmokySignal",
     url: "/",
@@ -53,7 +55,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: TITLE,
-    description: DESCRIPTION,
+    description: SOCIAL_DESCRIPTION,
     images: ["/icons/og-image.png"],
   },
 };

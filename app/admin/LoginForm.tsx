@@ -1,5 +1,6 @@
 import { authenticateAction } from "./actions";
 import { SS_TOKENS } from "@/lib/tokens";
+import { Logo } from "@/components/brand/Logo";
 
 export function LoginForm({
   error,
@@ -22,14 +23,27 @@ export function LoginForm({
       }}
     >
       <h1
-        className="ss-mono"
         style={{
-          fontSize: 16,
-          color: SS_TOKENS.fg0,
-          letterSpacing: ".06em",
+          margin: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
         }}
       >
-        SMOKYSIGNAL ADMIN
+        <Logo size={20} wordmark />
+        <span
+          className="ss-mono"
+          style={{
+            fontSize: 9.5,
+            color: SS_TOKENS.fg2,
+            letterSpacing: ".12em",
+            padding: "2px 6px",
+            border: `.5px solid ${SS_TOKENS.hairline2}`,
+            borderRadius: 4,
+          }}
+        >
+          ADMIN
+        </span>
       </h1>
 
       <form
