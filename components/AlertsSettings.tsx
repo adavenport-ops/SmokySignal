@@ -30,6 +30,12 @@ import {
   setProximityEnabled,
   setProximityThresholdNm,
 } from "@/lib/proximity-alert";
+import {
+  isVoiceModeEnabled,
+  isVoiceModeSupported,
+  setVoiceModeEnabled,
+  speakAlert,
+} from "@/lib/voice-mode";
 
 type LoadState = "loading" | "ready";
 
@@ -54,10 +60,14 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
   const [busy, setBusy] = useState(false);
   const [proximityOn, setProximityOn] = useState<boolean>(false);
   const [proximityNm, setProximityNm] = useState<number>(DEFAULT_PROXIMITY_NM);
+  const [voiceOn, setVoiceOn] = useState<boolean>(false);
+  const [voiceSupported, setVoiceSupported] = useState<boolean>(true);
   // Hydrate proximity prefs from localStorage on mount.
   useEffect(() => {
     setProximityOn(isProximityEnabled());
     setProximityNm(getProximityThresholdNm());
+    setVoiceOn(isVoiceModeEnabled());
+    setVoiceSupported(isVoiceModeSupported());
   }, []);
 
   // Hydrate from current SW state on mount.
@@ -498,6 +508,55 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
               <span className="ss-mono" style={{ fontSize: 11, color: SS_TOKENS.fg2 }}>
                 NM
               </span>
+            </div>
+          </Section>
+
+          {/* Voice readback (NX4) — when an alert fires while the page
+              is open, speak the body via speechSynthesis. iOS needs a
+              user gesture before the first speak() works; the toggle
+              click + the test-notification flow both prime the API. */}
+          <Section eyebrow="Voice">
+            <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: 0, lineHeight: 1.45 }}>
+              Read alerts aloud while the page is open. Useful with helmet
+              audio. Closed-tab background pings don't speak.
+            </p>
+            <div
+              style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10 }}
+            >
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: voiceSupported ? "pointer" : "not-allowed",
+                  opacity: voiceSupported ? 1 : 0.5,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={voiceOn}
+                  disabled={!voiceSupported}
+                  onChange={(e) => {
+                    const next = e.target.checked;
+                    setVoiceOn(next);
+                    setVoiceModeEnabled(next);
+                    // Prime the API on first opt-in so iOS allows
+                    // subsequent speak() calls without user gesture.
+                    if (next) speakAlert("Voice readback on.");
+                  }}
+                />
+                <span className="ss-mono" style={{ fontSize: 12, letterSpacing: ".04em" }}>
+                  ENABLED
+                </span>
+              </label>
+              {!voiceSupported && (
+                <span
+                  className="ss-mono"
+                  style={{ fontSize: 11, color: SS_TOKENS.fg2 }}
+                >
+                  UNSUPPORTED
+                </span>
+              )}
             </div>
           </Section>
 

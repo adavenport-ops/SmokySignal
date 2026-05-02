@@ -22,7 +22,30 @@ self.addEventListener("push", (event) => {
     data: payload.data || {},
     silent: payload.silent === true,
   };
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    Promise.all([
+      self.registration.showNotification(title, options),
+      // Voice readback bridge — broadcast title/body to any open client
+      // so it can call speechSynthesis. SW itself can't speak. No-op
+      // when no tab is open; the page-side listener gates on the
+      // ss_voice_mode localStorage key.
+      clients
+        .matchAll({ type: "window", includeUncontrolled: true })
+        .then((wins) => {
+          for (const w of wins) {
+            try {
+              w.postMessage({
+                kind: "ss-voice-readback",
+                title,
+                body: options.body,
+              });
+            } catch (_) {
+              // best-effort
+            }
+          }
+        }),
+    ]),
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {
