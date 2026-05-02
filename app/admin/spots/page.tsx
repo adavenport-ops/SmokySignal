@@ -8,6 +8,7 @@ import { SS_TOKENS } from "@/lib/tokens";
 import { LoginForm } from "../LoginForm";
 import { AdminHeader } from "../tracks/AdminHeader";
 import { formatTs } from "@/lib/time";
+import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -41,6 +42,7 @@ export default async function AdminSpotsPage({
   }
 
   const spots = await listRecentSpots(100);
+  const hour12 = isHour12(getTimeFormatPref());
 
   return (
     <main
@@ -102,7 +104,7 @@ export default async function AdminSpotsPage({
                         borderTop: `.5px solid ${SS_TOKENS.hairline}`,
                       }}
                     >
-                      <Td mono>{formatTs(s.ts, "datetime")}</Td>
+                      <Td mono>{formatTs(s.ts, "datetime", { hour12 })}</Td>
                       <Td mono>{s.lat.toFixed(4)}</Td>
                       <Td mono>{s.lon.toFixed(4)}</Td>
                       <Td>

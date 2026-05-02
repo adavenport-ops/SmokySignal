@@ -4,6 +4,7 @@ import { getForecastGrid } from "@/lib/predictor";
 import { ForecastGridView } from "@/components/ForecastGridView";
 import { LearningPanel } from "@/components/LearningPanel";
 import { getLearningState } from "@/lib/learning";
+import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -21,6 +22,7 @@ export default async function ForecastPage() {
   const showLearning =
     learning.stillLearning ||
     grid.total_events < FORECAST_LEARNING_EVENT_FLOOR;
+  const hour12 = isHour12(getTimeFormatPref());
   return (
     <main
       style={{
@@ -88,7 +90,7 @@ export default async function ForecastPage() {
         />
       )}
 
-      <ForecastGridView grid={grid} />
+      <ForecastGridView grid={grid} hour12={hour12} />
     </main>
   );
 }

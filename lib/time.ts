@@ -27,32 +27,51 @@ const TIME_BEARING: ReadonlySet<FormatStyle> = new Set([
   "hour-min",
 ]);
 
-export function formatTs(
-  tsMs: number | null | undefined,
-  style: FormatStyle,
-): string {
-  if (tsMs == null || Number.isNaN(tsMs)) return "—";
-  const d = new Date(tsMs);
-  const tz = PT_TZ;
-  let out: string;
-  switch (style) {
-    case "time":
-    case "hour-min":
-      out = d.toLocaleTimeString([], {
-        hour: "2-digit",
+export type FormatOpts = {
+  /** Render as 12-hour with AM/PM. Default false (24-hour, brand default). */
+  hour12?: boolean;
+};
+
+function timeOpts(hour12: boolean): Intl.DateTimeFormatOptions {
+  return hour12
+    ? { hour: "numeric", minute: "2-digit", hour12: true, timeZone: PT_TZ }
+    : { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: PT_TZ };
+}
+
+function timeSecOpts(hour12: boolean): Intl.DateTimeFormatOptions {
+  return hour12
+    ? {
+        hour: "numeric",
         minute: "2-digit",
-        hour12: false,
-        timeZone: tz,
-      });
-      break;
-    case "time-sec":
-      out = d.toLocaleTimeString([], {
+        second: "2-digit",
+        hour12: true,
+        timeZone: PT_TZ,
+      }
+    : {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
         hour12: false,
-        timeZone: tz,
-      });
+        timeZone: PT_TZ,
+      };
+}
+
+export function formatTs(
+  tsMs: number | null | undefined,
+  style: FormatStyle,
+  opts?: FormatOpts,
+): string {
+  if (tsMs == null || Number.isNaN(tsMs)) return "—";
+  const d = new Date(tsMs);
+  const hour12 = opts?.hour12 ?? false;
+  let out: string;
+  switch (style) {
+    case "time":
+    case "hour-min":
+      out = d.toLocaleTimeString([], timeOpts(hour12));
+      break;
+    case "time-sec":
+      out = d.toLocaleTimeString([], timeSecOpts(hour12));
       break;
     case "date":
       // sv-SE forces ISO-style YYYY-MM-DD regardless of viewer locale.
@@ -60,30 +79,25 @@ export function formatTs(
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
-        timeZone: tz,
+        timeZone: PT_TZ,
       });
       break;
     case "date-short":
       out = d.toLocaleDateString([], {
         month: "short",
         day: "numeric",
-        timeZone: tz,
+        timeZone: PT_TZ,
       });
       break;
     case "date-weekday":
       out = d.toLocaleDateString([], {
         weekday: "long",
-        timeZone: tz,
+        timeZone: PT_TZ,
       });
       break;
     case "datetime": {
       const date = formatTs(tsMs, "date");
-      const time = d.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        timeZone: tz,
-      });
+      const time = d.toLocaleTimeString([], timeOpts(hour12));
       return `${date} ${time} PT`;
     }
     case "iso-utc":
@@ -96,9 +110,10 @@ export function formatTs(
 export function formatTsBare(
   tsMs: number | null | undefined,
   style: FormatStyle,
+  opts?: FormatOpts,
 ): string {
   if (tsMs == null || Number.isNaN(tsMs)) return "—";
-  return formatTs(tsMs, style).replace(/\s+PT$/, "");
+  return formatTs(tsMs, style, opts).replace(/\s+PT$/, "");
 }
 
 /**

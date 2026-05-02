@@ -28,14 +28,20 @@ export function utcDateKey(d: Date): string {
   return `${y}${m}${day}`;
 }
 
-export function fmtPtTime(tsSec: number | null | undefined): string {
+export function fmtPtTime(
+  tsSec: number | null | undefined,
+  hour12 = false,
+): string {
   if (tsSec == null) return "—";
-  return formatTs(tsSec * 1000, "time-sec");
+  return formatTs(tsSec * 1000, "time-sec", { hour12 });
 }
 
-export function fmtPtDateTime(tsSec: number | null | undefined): string {
+export function fmtPtDateTime(
+  tsSec: number | null | undefined,
+  hour12 = false,
+): string {
   if (tsSec == null) return "—";
-  return formatTs(tsSec * 1000, "datetime");
+  return formatTs(tsSec * 1000, "datetime", { hour12 });
 }
 
 export function fmtDuration(spanSec: number): string {

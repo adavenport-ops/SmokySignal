@@ -27,6 +27,7 @@ type Props = {
   mockOn?: boolean;
   initialActivity?: ActivityEntry[];
   learning?: LearningState;
+  hour12?: boolean;
 };
 
 export function Glanceable({
@@ -34,6 +35,7 @@ export function Glanceable({
   mockOn = false,
   initialActivity = [],
   learning,
+  hour12 = false,
 }: Props) {
   const snap = useAircraft(initial, mockOn);
   const [updatedAgo, setUpdatedAgo] = useState<number>(0);
@@ -176,7 +178,7 @@ export function Glanceable({
 
       {others.length > 0 && <Others others={others} />}
 
-      <PredictionCard learning={learning} />
+      <PredictionCard learning={learning} hour12={hour12} />
 
       <Footer />
     </main>

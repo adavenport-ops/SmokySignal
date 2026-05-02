@@ -20,6 +20,7 @@ import {
   fmtDuration,
   ktToMph,
 } from "../fmt";
+import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -60,6 +61,7 @@ export default async function TailTracksPage({ params, searchParams }: Props) {
       return { date, samples };
     }),
   );
+  const hour12 = isHour12(getTimeFormatPref());
 
   // Recent samples: pull last RECENT_SAMPLES from the most recent day(s).
   const recentSamples: typeof dayBlocks[number]["samples"] = [];
@@ -113,11 +115,11 @@ export default async function TailTracksPage({ params, searchParams }: Props) {
         <Stat label="DAYS WITH DATA" value={String(summary.daysWithData)} />
         <Stat
           label="FIRST SAMPLE"
-          value={fmtPtDateTime(summary.firstSampleTs)}
+          value={fmtPtDateTime(summary.firstSampleTs, hour12)}
         />
         <Stat
           label="LAST SAMPLE"
-          value={fmtPtDateTime(summary.lastSampleTs)}
+          value={fmtPtDateTime(summary.lastSampleTs, hour12)}
         />
       </Card>
 
@@ -153,9 +155,9 @@ export default async function TailTracksPage({ params, searchParams }: Props) {
                         marginTop: 2,
                       }}
                     >
-                      {b.samples.length} samples · {fmtPtTime(first?.ts)}
+                      {b.samples.length} samples · {fmtPtTime(first?.ts, hour12)}
                       {" → "}
-                      {fmtPtTime(last?.ts)} · {duration}
+                      {fmtPtTime(last?.ts, hour12)} · {duration}
                     </div>
                   </div>
                   {b.samples.length >= 2 && (
@@ -197,7 +199,7 @@ export default async function TailTracksPage({ params, searchParams }: Props) {
                     borderTop: `.5px solid ${SS_TOKENS.hairline}`,
                   }}
                 >
-                  <Td mono>{fmtPtDateTime(p.ts)}</Td>
+                  <Td mono>{fmtPtDateTime(p.ts, hour12)}</Td>
                   <Td mono>{p.lat.toFixed(4)}</Td>
                   <Td mono>{p.lon.toFixed(4)}</Td>
                   <Td mono>{p.alt != null ? `${p.alt}'` : "—"}</Td>

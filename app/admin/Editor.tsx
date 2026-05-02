@@ -39,6 +39,7 @@ export function Editor({
   flags,
   flights,
   flash,
+  hour12,
 }: {
   registry: FleetEntry[];
   backups: BackupInfo[];
@@ -46,6 +47,7 @@ export function Editor({
   flags: Flags;
   flights: FlightSession[];
   flash: Flash;
+  hour12: boolean;
 }) {
   const [editingTail, setEditingTail] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -65,7 +67,7 @@ export function Editor({
       {flash.error && <FlashMsg kind="error" code={flash.error} />}
       {flash.saved && <FlashMsg kind="ok" code={flash.saved} />}
 
-      <RecentFlights flights={flights} />
+      <RecentFlights flights={flights} hour12={hour12} />
 
       <Section title="Registry" subtitle={`${registry.length} tails`}>
         <div style={{ overflowX: "auto" }}>
@@ -298,7 +300,7 @@ function NavLink({
 
 // ─── recent flights ────────────────────────────────────────────────────────
 
-function RecentFlights({ flights }: { flights: FlightSession[] }) {
+function RecentFlights({ flights, hour12 }: { flights: FlightSession[]; hour12: boolean }) {
   return (
     <section style={{ marginBottom: 28 }}>
       <div
@@ -328,7 +330,11 @@ function RecentFlights({ flights }: { flights: FlightSession[] }) {
           {flights.length} session{flights.length === 1 ? "" : "s"} · last 7 days
         </span>
       </div>
-      {flights.length === 0 ? <FlightsEmpty /> : <FlightsList flights={flights} />}
+      {flights.length === 0 ? (
+        <FlightsEmpty />
+      ) : (
+        <FlightsList flights={flights} hour12={hour12} />
+      )}
     </section>
   );
 }
@@ -395,7 +401,7 @@ function RadarPulse() {
   );
 }
 
-function FlightsList({ flights }: { flights: FlightSession[] }) {
+function FlightsList({ flights, hour12 }: { flights: FlightSession[]; hour12: boolean }) {
   return (
     <div
       style={{
@@ -406,7 +412,12 @@ function FlightsList({ flights }: { flights: FlightSession[] }) {
       }}
     >
       {flights.map((f, i) => (
-        <FlightRow key={`${f.tail}-${f.start_ts}`} flight={f} first={i === 0} />
+        <FlightRow
+          key={`${f.tail}-${f.start_ts}`}
+          flight={f}
+          first={i === 0}
+          hour12={hour12}
+        />
       ))}
     </div>
   );
@@ -415,9 +426,11 @@ function FlightsList({ flights }: { flights: FlightSession[] }) {
 function FlightRow({
   flight,
   first,
+  hour12,
 }: {
   flight: FlightSession;
   first: boolean;
+  hour12: boolean;
 }) {
   const sharePath = `/flight/${flight.tail}/${flightIdFromTs(flight.start_ts)}`;
   return (
@@ -455,8 +468,8 @@ function FlightRow({
       >
         <div style={{ fontSize: 12.5, color: SS_TOKENS.fg0 }}>
           {formatTs(flight.start_ts, "date-short")} ·{" "}
-          {formatTsBare(flight.start_ts, "time")} –{" "}
-          {formatTs(flight.end_ts, "time")}
+          {formatTsBare(flight.start_ts, "time", { hour12 })} –{" "}
+          {formatTs(flight.end_ts, "time", { hour12 })}
         </div>
         <div
           className="ss-mono"

@@ -9,6 +9,7 @@ import { SS_TOKENS } from "@/lib/tokens";
 import { StatusPill } from "@/components/StatusPill";
 import { Card } from "@/components/Card";
 import { fmtAgo, fmtAgoTs, fmtAloft, formatTs } from "@/lib/time";
+import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 import type { Aircraft } from "@/lib/types";
 import type { RecentFlightForTail } from "@/lib/flights";
 import { BackLink } from "@/components/BackLink";
@@ -52,6 +53,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
   const live = snap.aircraft.find((a) => a.tail === tail);
   const up = Boolean(live?.airborne);
   const updatedSec = Math.max(0, Math.floor((Date.now() - snap.fetched_at) / 1000));
+  const hour12 = isHour12(getTimeFormatPref());
 
   return (
     <main
@@ -162,7 +164,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
         <div className="ss-eyebrow" style={{ marginBottom: 8 }}>
           {recentFlight && !up ? "Last flight" : "Recent track"}
         </div>
-        <RecentTrackBlock tail={entry.tail} flight={recentFlight} />
+        <RecentTrackBlock tail={entry.tail} flight={recentFlight} hour12={hour12} />
       </section>
 
       <FleetMeta hex={fleetHex(entry).toUpperCase()} role={entry.roleDescription} />
@@ -350,9 +352,11 @@ function SquawkKV({ squawk }: { squawk: string | null }) {
 function RecentTrackBlock({
   tail,
   flight,
+  hour12,
 }: {
   tail: string;
   flight: RecentFlightForTail | null;
+  hour12: boolean;
 }) {
   if (!flight || flight.points.length < 2) {
     return (
@@ -385,10 +389,10 @@ function RecentTrackBlock({
             gap: 10,
           }}
         >
-          <KV label="FIRST" value={formatTs(session.start_ts, "datetime")} />
+          <KV label="FIRST" value={formatTs(session.start_ts, "datetime", { hour12 })} />
           <KV
             label={inProgress ? "NOW" : "LAST"}
-            value={formatTs(session.end_ts, "datetime")}
+            value={formatTs(session.end_ts, "datetime", { hour12 })}
           />
           <KV label="DURATION" value={fmtSessionDuration(session.duration_s)} />
           <KV label="SAMPLES" value={String(session.sample_count)} />
