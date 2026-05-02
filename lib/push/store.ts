@@ -12,7 +12,12 @@
 
 import { createHash } from "node:crypto";
 import { getRedis } from "../cache";
-import { DEFAULT_PREFS, type AlertPrefs, type StoredSubscription } from "./types";
+import {
+  DEFAULT_PREFS,
+  type AlertPrefs,
+  type StoredSubscription,
+  type UserZoneSpec,
+} from "./types";
 
 // Re-export so server-side callers can keep their existing import sites.
 export {
@@ -20,6 +25,7 @@ export {
   type AlertPrefs,
   type AlertTier,
   type StoredSubscription,
+  type UserZoneSpec,
 } from "./types";
 
 const SUB_PREFIX = "push:sub:";
@@ -31,15 +37,47 @@ export function subscriptionId(sub: PushSubscriptionJSON): string {
   return createHash("sha256").update(sub.endpoint).digest("hex").slice(0, 24);
 }
 
+function sanitizeUserZones(v: unknown): UserZoneSpec[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out: UserZoneSpec[] = [];
+  for (const z of v) {
+    if (!z || typeof z !== "object") continue;
+    const r = z as Record<string, unknown>;
+    if (
+      typeof r.lat === "number" &&
+      Number.isFinite(r.lat) &&
+      typeof r.lon === "number" &&
+      Number.isFinite(r.lon) &&
+      typeof r.radiusNm === "number" &&
+      Number.isFinite(r.radiusNm) &&
+      r.radiusNm > 0 &&
+      typeof r.label === "string"
+    ) {
+      out.push({
+        lat: r.lat,
+        lon: r.lon,
+        radiusNm: r.radiusNm,
+        label: r.label.slice(0, 64),
+      });
+    }
+  }
+  // Cap at 32 zones per subscriber — generous for any plausible rider use,
+  // bounded so a malformed client can't fan out an unbounded payload.
+  return out.slice(0, 32);
+}
+
 function mergePrefs(partial?: Partial<AlertPrefs>): AlertPrefs {
   if (!partial) return { ...DEFAULT_PREFS };
-  return {
+  const merged: AlertPrefs = {
     tier: partial.tier === "all" ? "all" : "alert_only",
     zones: Array.isArray(partial.zones) ? partial.zones : "any",
     quiet_start_h: clampHour(partial.quiet_start_h, DEFAULT_PREFS.quiet_start_h),
     quiet_end_h: clampHour(partial.quiet_end_h, DEFAULT_PREFS.quiet_end_h),
     tz: typeof partial.tz === "string" && partial.tz ? partial.tz : DEFAULT_PREFS.tz,
   };
+  const userZones = sanitizeUserZones(partial.userZones);
+  if (userZones !== undefined) merged.userZones = userZones;
+  return merged;
 }
 
 function clampHour(v: unknown, fallback: number): number {

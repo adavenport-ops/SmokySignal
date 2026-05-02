@@ -13,6 +13,7 @@ import {
   removeSubscription,
   type AlertPrefs,
   type StoredSubscription,
+  type UserZoneSpec,
 } from "./store";
 import type { FleetRole, RoleConfidence } from "../types";
 
@@ -94,7 +95,13 @@ export async function dispatchTakeoff(
   let skipped = 0;
   let removed = 0;
   for (const stored of subs) {
-    const skip = shouldSkip(stored.prefs, args.role, aircraftZone);
+    const skip = shouldSkip(
+      stored.prefs,
+      args.role,
+      args.lat,
+      args.lon,
+      aircraftZone,
+    );
     if (skip) {
       skipped++;
       continue;
@@ -117,17 +124,53 @@ function buildDedupeKey(tail: string, tsIso: string): string {
   return `${tail}:${minute}`;
 }
 
+// Per-degree shorthand for the user-zone bbox check. 1° latitude is
+// 60 nm everywhere; 1° longitude is ~41 nm at 47°N (Puget Sound).
+// Slight over-inclusion outside that latitude band is acceptable —
+// rider zone match is a "could you care?" check, not a hard fence.
+const NM_PER_DEG_LAT = 60;
+const NM_PER_DEG_LON_47N = 41;
+
+function matchesUserZone(
+  lat: number,
+  lon: number,
+  userZones?: UserZoneSpec[],
+): boolean {
+  if (!userZones || userZones.length === 0) return false;
+  for (const z of userZones) {
+    const latDeg = z.radiusNm / NM_PER_DEG_LAT;
+    const lonDeg = z.radiusNm / NM_PER_DEG_LON_47N;
+    if (Math.abs(lat - z.lat) <= latDeg && Math.abs(lon - z.lon) <= lonDeg) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function shouldSkip(
   prefs: AlertPrefs,
   role: FleetRole,
+  lat: number | null,
+  lon: number | null,
   aircraftZone: string | null,
 ): boolean {
   // tier
   if (prefs.tier === "alert_only" && !ALERT_ROLES.has(role)) return true;
-  // zone
-  if (Array.isArray(prefs.zones) && prefs.zones.length > 0) {
-    if (aircraftZone == null) return true;
-    if (!prefs.zones.includes(aircraftZone)) return true;
+  // zone — predefined list AND/OR user-defined geofences. Any explicit
+  // zone constraint imposes the gate; matching either kind passes it.
+  // Empty constraints (no predefined + no user zones) means "any" — no gate.
+  const hasPredefined = Array.isArray(prefs.zones) && prefs.zones.length > 0;
+  const hasUser = Array.isArray(prefs.userZones) && prefs.userZones.length > 0;
+  if (hasPredefined || hasUser) {
+    const matchesPredefined =
+      hasPredefined &&
+      aircraftZone != null &&
+      (prefs.zones as string[]).includes(aircraftZone);
+    const matchesUser =
+      hasUser && lat != null && lon != null
+        ? matchesUserZone(lat, lon, prefs.userZones)
+        : false;
+    if (!matchesPredefined && !matchesUser) return true;
   }
   // quiet hours
   if (insideQuietHours(prefs)) return true;
