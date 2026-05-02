@@ -23,6 +23,13 @@ import {
   type AlertPrefs,
   type AlertTier,
 } from "@/lib/push/types";
+import {
+  DEFAULT_PROXIMITY_NM,
+  getProximityThresholdNm,
+  isProximityEnabled,
+  setProximityEnabled,
+  setProximityThresholdNm,
+} from "@/lib/proximity-alert";
 
 type LoadState = "loading" | "ready";
 
@@ -45,6 +52,13 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
   const [prefs, setPrefs] = useState<AlertPrefs>(DEFAULT_PREFS);
   const [toast, setToast] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [proximityOn, setProximityOn] = useState<boolean>(false);
+  const [proximityNm, setProximityNm] = useState<number>(DEFAULT_PROXIMITY_NM);
+  // Hydrate proximity prefs from localStorage on mount.
+  useEffect(() => {
+    setProximityOn(isProximityEnabled());
+    setProximityNm(getProximityThresholdNm());
+  }, []);
 
   // Hydrate from current SW state on mount.
   useEffect(() => {
@@ -405,6 +419,73 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
               {prefs.zones === "any"
                 ? "ANY ZONE"
                 : `${prefs.zones.length} ZONE${prefs.zones.length === 1 ? "" : "S"}`}
+            </div>
+          </Section>
+
+          {/* Proximity (foreground-only, client-side) — fires a local
+              notification when an alert-tier tail enters the threshold
+              while the app is open + GPS granted. No server-side rider
+              position; pure client logic. */}
+          <Section eyebrow="Proximity">
+            <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: 0, lineHeight: 1.45 }}>
+              While the app is open and GPS is granted, ping me when a
+              tracked bird gets within range.
+            </p>
+            <div
+              style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10 }}
+            >
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={proximityOn}
+                  onChange={(e) => {
+                    const next = e.target.checked;
+                    setProximityOn(next);
+                    setProximityEnabled(next);
+                  }}
+                />
+                <span className="ss-mono" style={{ fontSize: 12, letterSpacing: ".04em" }}>
+                  ENABLED
+                </span>
+              </label>
+              <span style={{ flex: 1 }} />
+              <input
+                type="number"
+                min={1}
+                max={50}
+                value={proximityNm}
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  if (Number.isFinite(n) && n > 0) {
+                    setProximityNm(n);
+                    setProximityThresholdNm(n);
+                  }
+                }}
+                disabled={!proximityOn}
+                aria-label="Proximity threshold in nautical miles"
+                style={{
+                  width: 56,
+                  padding: "6px 8px",
+                  background: SS_TOKENS.bg2,
+                  border: `.5px solid ${SS_TOKENS.hairline2}`,
+                  borderRadius: 6,
+                  color: SS_TOKENS.fg0,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 13,
+                  textAlign: "right",
+                  opacity: proximityOn ? 1 : 0.5,
+                }}
+              />
+              <span className="ss-mono" style={{ fontSize: 11, color: SS_TOKENS.fg2 }}>
+                NM
+              </span>
             </div>
           </Section>
 

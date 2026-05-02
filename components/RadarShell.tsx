@@ -13,6 +13,12 @@ import { HotZoneLayer } from "./HotZoneLayer";
 import { UserZoneLayer } from "./UserZoneLayer";
 import { AircraftTrailLayer } from "./AircraftTrailLayer";
 import { addUserZone } from "@/lib/user-zones";
+import {
+  detectProximityHits,
+  fireProximityNotifications,
+  getProximityThresholdNm,
+  isProximityEnabled,
+} from "@/lib/proximity-alert";
 import { HelpIcon } from "./HelpIcon";
 import { Tooltip } from "./Tooltip";
 import { FreshnessLabel } from "./FreshnessLabel";
@@ -126,6 +132,25 @@ export function RadarShell({
       showRings ? "1" : "0",
     );
   }, [showRings]);
+
+  // Foreground proximity alerts. Runs whenever snap.aircraft changes
+  // (every poll cycle from useAircraft) — when a tracked alert-tier
+  // tail enters the rider's threshold, fire a local notification via
+  // the SW. No server-side rider position storage; pure client logic.
+  // Per-tail cooldown lives in localStorage to prevent re-firing
+  // every 10s while a plane orbits within range.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (document.visibilityState !== "visible") return;
+    if (!rider) return;
+    if (!isProximityEnabled()) return;
+    const hits = detectProximityHits(
+      snap.aircraft,
+      rider,
+      getProximityThresholdNm(),
+    );
+    if (hits.length > 0) void fireProximityNotifications(hits);
+  }, [snap.aircraft, rider]);
 
   // Geolocation only kicks in when this component mounts — i.e. when the user
   // actually visits /radar. The home page never asks.
