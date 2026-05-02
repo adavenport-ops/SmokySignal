@@ -38,6 +38,41 @@ Audience: Puget Sound motorcyclists. Brand voice: dark theme, mono numerics,
   `use context7` to the prompt. Context7 fetches current docs into the
   model's context — beats relying on training-cutoff knowledge.
 
+### Continuous testing surfaces (P20 wired)
+
+Four GitHub Actions / spec layers run in addition to `npm run verify-prod`:
+
+- **Voice gate** (`.github/workflows/voice-gate.yml`) — every PR. Pure
+  regex/wordlist (no LLM, no auth) checking rider-facing copy against
+  `design/BRAND.md` §3+§8. Fails on banned vocab, emoji, exclamation
+  marks. Posts P1 nudges as a comment. Source of truth: the rule lists
+  in `.github/scripts/voice-gate.mjs`.
+- **PR persona walks** (`.github/workflows/persona-walk-pr.yml`) —
+  every PR with rider-facing changes. Walks 3 personas (sport-bike-rider,
+  skeptic, lurker) × routes inferred from the diff against the Vercel
+  preview URL. Posts a single PR comment with the consensus. Requires
+  `VERCEL_TOKEN` + `VERCEL_PROJECT_ID` secrets and one of
+  `CLAUDE_CODE_OAUTH_TOKEN` (subscription, preferred) /
+  `ANTHROPIC_API_KEY`. Auto-skips with a warning when secrets missing.
+- **Nightly persona sweep** (`.github/workflows/persona-walk-nightly.yml`)
+  — cron 04:00 PT. Full 8-personas × 8-routes sweep against prod,
+  uploads 90-day artifact with `consensus.md` + `findings.json`.
+- **Findings → issues** (`.github/scripts/findings-to-issues.mjs`,
+  invoked at the end of the nightly workflow) — opens one GitHub issue
+  per high-signal finding (≥3 personas, no matching open issue).
+  Auto-labels by category.
+
+Behavioral persona walks (`tests/visual/personas/behavioral-walks.spec.ts`)
+exercise act-and-observe goals (tap, scroll, navigate) and emit a
+JSON action log per (persona, route). Run alongside the static specs.
+
+### Mock state machine
+
+`?mock=<state>` query param drives reproducible UI states for QA and
+persona walks. States: `up`, `down`, `eyes-up`, `multiple`, `stale`.
+Source: `lib/mock-state.ts`. Use these to validate copy/UX without
+waiting for a live event.
+
 ## Architecture quick-reference
 
 - `lib/snapshot.ts` — fleet snapshot from adsb.fi (primary) + OpenSky (fallback)
