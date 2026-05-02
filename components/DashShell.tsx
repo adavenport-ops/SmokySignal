@@ -16,6 +16,9 @@ import type { ActivityEntry } from "@/lib/activity";
 
 const TABBAR_HEIGHT = 66;
 const NEAR_NM = 5;
+// Top-N airborne planes to surface in the watcher list. Three is enough
+// to convey crowdedness without dominating the screen.
+const NEAREST_LIST_LIMIT = 3;
 
 type Props = {
   initial: Snapshot;
@@ -35,20 +38,25 @@ export function DashShell({ initial, initialActivity, mockOn = false }: Props) {
     [snap.aircraft],
   );
 
-  // Nearest airborne plane by Haversine.
-  const nearest = useMemo<{
-    plane: Aircraft;
-    distanceNm: number;
-  } | null>(() => {
-    if (!pos) return null;
-    let best: { plane: Aircraft; distanceNm: number } | null = null;
+  // Top-N airborne planes by Haversine distance — sorted ascending so
+  // nearestList[0] is the single closest. Drives both the watcher list
+  // and the proximity-flash trigger.
+  const nearestList = useMemo<
+    Array<{ plane: Aircraft; distanceNm: number }>
+  >(() => {
+    if (!pos) return [];
+    const ranked: Array<{ plane: Aircraft; distanceNm: number }> = [];
     for (const a of airborne) {
       if (a.lat == null || a.lon == null) continue;
-      const d = haversineNm(pos.lat, pos.lon, a.lat, a.lon);
-      if (!best || d < best.distanceNm) best = { plane: a, distanceNm: d };
+      ranked.push({
+        plane: a,
+        distanceNm: haversineNm(pos.lat, pos.lon, a.lat, a.lon),
+      });
     }
-    return best;
+    ranked.sort((x, y) => x.distanceNm - y.distanceNm);
+    return ranked.slice(0, NEAREST_LIST_LIMIT);
   }, [pos, airborne]);
+  const nearest = nearestList[0] ?? null;
 
   // Poll /api/activity every 10s.
   useEffect(() => {
@@ -104,7 +112,11 @@ export function DashShell({ initial, initialActivity, mockOn = false }: Props) {
         />
       </header>
 
-      <NearestCard nearest={nearest} riderHasFix={Boolean(pos)} smokyUp={up} />
+      <NearestCard
+        nearestList={nearestList}
+        riderHasFix={Boolean(pos)}
+        smokyUp={up}
+      />
 
       <ContextLine
         airborneCount={airborne.length}
@@ -127,74 +139,139 @@ export function DashShell({ initial, initialActivity, mockOn = false }: Props) {
 }
 
 function NearestCard({
-  nearest,
+  nearestList,
   riderHasFix,
   smokyUp,
 }: {
-  nearest: { plane: Aircraft; distanceNm: number } | null;
+  nearestList: Array<{ plane: Aircraft; distanceNm: number }>;
   riderHasFix: boolean;
   smokyUp: boolean;
 }) {
   return (
-    <Card>
-      <div className="ss-eyebrow" style={{ marginBottom: 6 }}>
-        Nearest watcher
+    <Card padded={false}>
+      <div style={{ padding: "12px 14px 8px" }}>
+        <span className="ss-eyebrow">Nearest watchers</span>
       </div>
-      {nearest ? (
-        <div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-            <span
-              className="ss-mono"
-              style={{ fontSize: 16, fontWeight: 700, color: SS_TOKENS.fg0 }}
-            >
-              {nearest.plane.tail}
-            </span>
-            {nearest.plane.nickname && (
-              <span style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
-                &ldquo;{nearest.plane.nickname}&rdquo;
-              </span>
-            )}
-          </div>
-          <div
-            className="ss-mono"
-            style={{
-              fontSize: 22,
-              fontWeight: 700,
-              color: nearest.distanceNm <= NEAR_NM ? SS_TOKENS.alert : SS_TOKENS.fg0,
-              marginTop: 4,
-            }}
-          >
-            {nearest.distanceNm.toFixed(1)} nm
-          </div>
-          <div style={{ fontSize: 11.5, color: SS_TOKENS.fg2, marginTop: 2 }}>
-            {nearest.plane.operator} · {nearest.plane.model}
-          </div>
-        </div>
-      ) : !riderHasFix ? (
-        <div style={{ fontSize: 13, color: SS_TOKENS.fg2 }}>
-          Need your location to compute distance — accept the prompt above to enable.
-        </div>
-      ) : !smokyUp ? (
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: SS_TOKENS.clear,
-              boxShadow: `0 0 8px ${SS_TOKENS.clear}`,
-            }}
-          />
-          <span style={{ fontSize: 14, color: SS_TOKENS.fg1 }}>
-            All clear · Smokey&rsquo;s down
-          </span>
-        </div>
+      {nearestList.length > 0 ? (
+        nearestList.map((entry, i) => (
+          <NearestRow key={entry.plane.tail} entry={entry} primary={i === 0} />
+        ))
       ) : (
-        <div style={{ fontSize: 13, color: SS_TOKENS.fg2 }}>
-          A plane is up but we don&rsquo;t have its position yet.
-        </div>
+        <NearestEmpty riderHasFix={riderHasFix} smokyUp={smokyUp} />
       )}
     </Card>
+  );
+}
+
+function NearestRow({
+  entry,
+  primary,
+}: {
+  entry: { plane: Aircraft; distanceNm: number };
+  primary: boolean;
+}) {
+  const inRange = entry.distanceNm <= NEAR_NM;
+  return (
+    <Link
+      href={`/plane/${entry.plane.tail}`}
+      prefetch={false}
+      style={{
+        display: "flex",
+        gap: 12,
+        alignItems: "baseline",
+        justifyContent: "space-between",
+        padding: "10px 14px",
+        borderTop: `.5px solid ${SS_TOKENS.hairline}`,
+        textDecoration: "none",
+        color: "inherit",
+      }}
+    >
+      <div style={{ minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          <span
+            className="ss-mono"
+            style={{
+              fontSize: primary ? 15 : 13,
+              fontWeight: 700,
+              color: SS_TOKENS.fg0,
+            }}
+          >
+            {entry.plane.tail}
+          </span>
+          {entry.plane.nickname && (
+            <span
+              style={{
+                fontSize: 11.5,
+                color: SS_TOKENS.fg2,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {entry.plane.nickname}
+            </span>
+          )}
+        </div>
+        <div style={{ fontSize: 11, color: SS_TOKENS.fg2, marginTop: 1 }}>
+          {entry.plane.operator} · {entry.plane.model}
+        </div>
+      </div>
+      <span
+        className="ss-mono"
+        style={{
+          fontSize: primary ? 18 : 14,
+          fontWeight: 700,
+          color: inRange ? SS_TOKENS.alert : SS_TOKENS.fg1,
+        }}
+      >
+        {entry.distanceNm.toFixed(1)} nm
+      </span>
+    </Link>
+  );
+}
+
+function NearestEmpty({
+  riderHasFix,
+  smokyUp,
+}: {
+  riderHasFix: boolean;
+  smokyUp: boolean;
+}) {
+  const baseStyle: React.CSSProperties = {
+    padding: "12px 14px 16px",
+    borderTop: `.5px solid ${SS_TOKENS.hairline}`,
+  };
+  if (!riderHasFix) {
+    return (
+      <div style={{ ...baseStyle, fontSize: 13, color: SS_TOKENS.fg2 }}>
+        Need your location to compute distance — accept the prompt above to enable.
+      </div>
+    );
+  }
+  if (!smokyUp) {
+    return (
+      <div
+        style={{ ...baseStyle, display: "flex", alignItems: "center", gap: 10 }}
+      >
+        <span
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: SS_TOKENS.clear,
+            boxShadow: `0 0 8px ${SS_TOKENS.clear}`,
+          }}
+        />
+        <span style={{ fontSize: 14, color: SS_TOKENS.fg1 }}>
+          All clear · Smokey&rsquo;s down
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div style={{ ...baseStyle, fontSize: 13, color: SS_TOKENS.fg2 }}>
+      A plane is up but we don&rsquo;t have its position yet.
+    </div>
   );
 }
 
