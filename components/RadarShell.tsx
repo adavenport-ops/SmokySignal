@@ -60,6 +60,19 @@ export function RadarShell({ initial, mockOn = false, learning }: Props) {
   const [rider, setRider] = useState<RiderPos | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [map, setMap] = useState<MaplibreMap | null>(null);
+  const [showRings, setShowRings] = useState(false);
+  // Hydrate the rings pref from localStorage on mount.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setShowRings(window.localStorage.getItem("ss_distance_rings_visible") === "1");
+  }, []);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      "ss_distance_rings_visible",
+      showRings ? "1" : "0",
+    );
+  }, [showRings]);
 
   // Geolocation only kicks in when this component mounts — i.e. when the user
   // actually visits /radar. The home page never asks.
@@ -88,11 +101,24 @@ export function RadarShell({ initial, mockOn = false, learning }: Props) {
         paddingBottom: TABBAR_HEIGHT,
       }}
     >
-      <RadarMap aircraft={airborne} rider={rider} onMapReady={setMap} />
+      <RadarMap
+        aircraft={airborne}
+        rider={rider}
+        showDistanceRings={showRings}
+        onMapReady={setMap}
+      />
       <HotZoneLayer
         map={map}
         bottomBoost={airborne.length > 0 ? 130 : 0}
         learning={learning}
+      />
+      <DistanceRingsToggle
+        active={showRings}
+        onToggle={() => setShowRings((v) => !v)}
+        bottom={
+          TABBAR_HEIGHT + 16 + (airborne.length > 0 ? 130 : 0)
+        }
+        disabled={!rider}
       />
       <HelpIcon />
 
@@ -361,5 +387,69 @@ function Stat({ label, value }: { label: string; value: string }) {
         {value}
       </div>
     </div>
+  );
+}
+
+function DistanceRingsToggle({
+  active,
+  onToggle,
+  bottom,
+  disabled,
+}: {
+  active: boolean;
+  onToggle: () => void;
+  bottom: number;
+  disabled?: boolean;
+}) {
+  // Sit just above the hot-zones toggle row so it doesn't compete for the
+  // same horizontal space. Also disabled when there's no rider position to
+  // pin the rings to — the toggle stays visible (so the user knows the
+  // feature exists) but greys out.
+  return (
+    <Tooltip
+      side="top"
+      align="start"
+      content={
+        disabled
+          ? "Distance rings need your location. Allow location access on /radar."
+          : "5 / 10 / 15 nm rings around your position. Tap to toggle."
+      }
+    >
+      <button
+        type="button"
+        onClick={() => {
+          if (!disabled) onToggle();
+        }}
+        aria-pressed={active}
+        aria-disabled={disabled}
+        className="ss-mono"
+        style={{
+          position: "absolute",
+          left: 12,
+          bottom: bottom + 44,
+          zIndex: 12,
+          padding: "8px 12px",
+          borderRadius: 999,
+          background: "rgba(11,13,16,0.78)",
+          border: `.5px solid ${SS_TOKENS.hairline2}`,
+          color: disabled
+            ? SS_TOKENS.fg3
+            : active
+              ? SS_TOKENS.alert
+              : SS_TOKENS.fg1,
+          fontSize: 11,
+          letterSpacing: ".06em",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          cursor: disabled ? "not-allowed" : "pointer",
+          whiteSpace: "nowrap",
+          touchAction: "manipulation",
+          WebkitTapHighlightColor: "transparent",
+          opacity: disabled ? 0.6 : 1,
+        }}
+      >
+        {active ? "● RINGS" : "○ RINGS"}
+      </button>
+    </Tooltip>
   );
 }
