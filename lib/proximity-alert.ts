@@ -11,6 +11,7 @@
 
 import { haversineNm } from "./geo";
 import type { Aircraft, FleetRole } from "./types";
+import { speakAlert } from "./voice-mode";
 
 export const PROXIMITY_THRESHOLD_KEY = "ss_proximity_threshold_nm";
 export const PROXIMITY_ENABLED_KEY = "ss_proximity_enabled";
@@ -119,13 +120,18 @@ export async function fireProximityNotifications(
     const name = h.nickname ?? h.tail;
     const dist = h.distanceNm.toFixed(1);
     try {
-      await reg.showNotification(`${name} nearby`, {
-        body: `${dist} nm out. ${h.role === "smokey" ? "Watching." : "Eyes up."}`,
+      const title = `${name} nearby`;
+      const body = `${dist} nm out. ${h.role === "smokey" ? "Watching." : "Eyes up."}`;
+      await reg.showNotification(title, {
+        body,
         icon: "/icons/icon-192.png",
         badge: "/icons/favicon-96.png",
         tag: `proximity-${h.tail}`,
         data: { url: `/plane/${h.tail}`, tail: h.tail, kind: "proximity" },
       });
+      // Voice-mode readback (no-op when off / unsupported). Title + body
+      // separated by a period so the synth pauses naturally.
+      speakAlert(`${title}. ${body}`);
       markSeen(h.tail);
       posted += 1;
     } catch {
