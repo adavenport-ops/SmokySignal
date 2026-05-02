@@ -28,6 +28,10 @@ type Props = {
   initialActivity?: ActivityEntry[];
   learning?: LearningState;
   hour12?: boolean;
+  /** Optional historical-context phrase rendered under the Hero
+   *  ("usually up at this hour. 67% of weeks."). Server computes,
+   *  passes the string in. null = hide. */
+  contextLine?: string | null;
 };
 
 export function Glanceable({
@@ -36,6 +40,7 @@ export function Glanceable({
   initialActivity = [],
   learning,
   hour12 = false,
+  contextLine = null,
 }: Props) {
   const snap = useAircraft(initial, mockOn);
   const [updatedAgo, setUpdatedAgo] = useState<number>(0);
@@ -173,6 +178,21 @@ export function Glanceable({
       </header>
 
       <Hero status={status} />
+
+      {contextLine && (
+        <p
+          className="ss-mono"
+          style={{
+            fontSize: 12,
+            color: SS_TOKENS.fg2,
+            margin: "-4px 4px 0",
+            letterSpacing: ".02em",
+            lineHeight: 1.4,
+          }}
+        >
+          {contextLine}
+        </p>
+      )}
 
       {latestActivity && <ActivityStrip latest={latestActivity} />}
 
