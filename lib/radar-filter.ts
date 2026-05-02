@@ -21,7 +21,21 @@ export type RadarFilter = {
 export const RADAR_FILTER_KEY = "ss_hotzones_filter";
 export const RADAR_FILTER_CHANGE_EVENT = "ss-radar-filter-change";
 
-export const SMOKY_TAILS = ["N305DK", "N2446X"] as const;
+/**
+ * Roles that count as "Smokey" — speed-enforcement birds. The filter
+ * UI labels this "Smokey" because that's the rider mental model; the
+ * implementation matches by classified role, NOT a hardcoded tail list,
+ * so a new WSP smokey added to the registry is automatically included.
+ */
+export const SMOKY_FILTER_ROLES = ["smokey", "patrol"] as const;
+
+/**
+ * @deprecated Use SMOKY_FILTER_ROLES instead. Retained as an empty
+ * array so any prior import compiles, but no longer drives filtering
+ * — role-based classification (lib/types.ts FleetRole) is the source
+ * of truth.
+ */
+export const SMOKY_TAILS: readonly string[] = [];
 export const OPERATORS = [
   "WSP",
   "KCSO",
@@ -73,13 +87,14 @@ export function writeRadarFilter(f: RadarFilter): void {
 }
 
 export function passesAircraftFilter(
-  aircraft: { tail: string; operator: string },
+  aircraft: { tail: string; operator: string; role?: string },
   f: RadarFilter,
 ): boolean {
   if (f.showMode === "all") return true;
   if (f.showMode === "smoky") {
-    return SMOKY_TAILS.includes(
-      aircraft.tail as (typeof SMOKY_TAILS)[number],
+    return (
+      typeof aircraft.role === "string" &&
+      (SMOKY_FILTER_ROLES as readonly string[]).includes(aircraft.role)
     );
   }
   if (f.showMode === "operator" && f.operator) {
