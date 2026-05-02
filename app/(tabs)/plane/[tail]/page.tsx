@@ -291,7 +291,9 @@ function SquawkKV({ squawk }: { squawk: string | null }) {
   const value = squawk ?? "—";
   let alertNote: string | null = null;
   if (!squawk) {
-    color = SS_TOKENS.fg3;
+    // fg2 not fg3 — fg3 fails WCAG AA on bg-0 for body text. Same
+    // fix pattern as the FleetMeta footer (PR #13).
+    color = SS_TOKENS.fg2;
   } else if (squawk === "7700" || squawk === "7500") {
     color = SS_TOKENS.danger;
     alertNote = squawk === "7700" ? "EMERGENCY" : "HIJACK";

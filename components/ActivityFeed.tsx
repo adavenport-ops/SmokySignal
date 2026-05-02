@@ -151,7 +151,9 @@ function Row({ entry, first }: { entry: ActivityEntry; first: boolean }) {
       <span
         style={{
           fontSize: 18,
-          color: SS_TOKENS.fg3,
+          // fg2 not fg3 — chevron is a navigation affordance and needs
+          // visible contrast on the row background.
+          color: SS_TOKENS.fg2,
           flexShrink: 0,
           lineHeight: 1,
         }}
