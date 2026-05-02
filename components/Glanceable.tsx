@@ -17,6 +17,7 @@ import { HelpIcon } from "./HelpIcon";
 import { Tooltip } from "./Tooltip";
 import { Logo } from "./brand/Logo";
 import { FreshnessLabel } from "./FreshnessLabel";
+import { ArmAlertsCallout } from "./ArmAlertsCallout";
 
 // Hide the activity strip when the most recent event is older than this —
 // a stale "Guardian One up · 8 hours ago" looks more like a bug than a
@@ -200,6 +201,8 @@ export function Glanceable({
       )}
 
       {latestActivity && <ActivityStrip latest={latestActivity} />}
+
+      <ArmAlertsCallout />
 
       {others.length > 0 && <Others others={others} />}
 
