@@ -4,6 +4,16 @@
 
 export type AlertTier = "all" | "alert_only";
 
+/** Server-side mirror of a UserZone — coordinates + radius + label only,
+ *  no IDs, no timestamps. The dispatcher matches takeoff coords against
+ *  these on the server so a rider's zone list drives push routing. */
+export type UserZoneSpec = {
+  lat: number;
+  lon: number;
+  radiusNm: number;
+  label: string;
+};
+
 export type AlertPrefs = {
   /**
    * 'alert_only' (default) → only fire pushes for smokey + patrol + unknown
@@ -16,6 +26,13 @@ export type AlertPrefs = {
    * Otherwise an array of hot-zone cell IDs the rider has opted into.
    */
   zones: string[] | "any";
+  /**
+   * Rider-defined geofences (synced from lib/user-zones.ts). When present
+   * + non-empty, the dispatcher matches takeoff coords against these in
+   * addition to the predefined `zones` list — predefined OR user match
+   * makes the takeoff eligible for that subscriber.
+   */
+  userZones?: UserZoneSpec[];
   /** Rider-local hour at which quiet hours START (24-hour, 0-23). */
   quiet_start_h: number;
   /** Rider-local hour at which quiet hours END (24-hour, 0-23). */
