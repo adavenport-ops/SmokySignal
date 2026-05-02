@@ -32,6 +32,16 @@ const PlaneTrackMap = nextDynamic(() => import("@/components/PlaneTrackMap"), {
   ),
 });
 
+const PerPlaneHeatLayer = nextDynamic(
+  () => import("@/components/PerPlaneHeatLayer"),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ height: 220, background: SS_TOKENS.bg0 }} />
+    ),
+  },
+);
+
 type Props = {
   params: { tail: string };
   searchParams: { mock?: string };
@@ -165,6 +175,24 @@ export default async function PlanePage({ params, searchParams }: Props) {
           {recentFlight && !up ? "Last flight" : "Recent track"}
         </div>
         <RecentTrackBlock tail={entry.tail} flight={recentFlight} hour12={hour12} />
+      </section>
+
+      <section>
+        <Card padded={false}>
+          <div style={{ padding: "12px 14px 8px" }}>
+            <div className="ss-eyebrow">Where this plane patrols</div>
+            <div
+              style={{
+                fontSize: 11.5,
+                color: SS_TOKENS.fg2,
+                marginTop: 2,
+              }}
+            >
+              30-day heatmap of recorded positions
+            </div>
+          </div>
+          <PerPlaneHeatLayer tail={entry.tail} />
+        </Card>
       </section>
 
       <FleetMeta tail={entry.tail} hex={fleetHex(entry).toUpperCase()} role={entry.roleDescription} />
