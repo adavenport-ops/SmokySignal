@@ -107,6 +107,15 @@ export function removeUserZone(id: string): void {
   writeAll(readUserZones().filter((z) => z.id !== id));
 }
 
+export function updateUserZone(
+  id: string,
+  patch: Partial<Pick<UserZone, "label" | "radiusNm">>,
+): void {
+  writeAll(
+    readUserZones().map((z) => (z.id === id ? { ...z, ...patch } : z)),
+  );
+}
+
 export function clearUserZones(): void {
   writeAll([]);
 }

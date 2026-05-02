@@ -420,6 +420,18 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                 ? "ANY ZONE"
                 : `${prefs.zones.length} ZONE${prefs.zones.length === 1 ? "" : "S"}`}
             </div>
+            <Link
+              href="/settings/zones"
+              style={{
+                display: "inline-block",
+                marginTop: 10,
+                color: SS_TOKENS.alert,
+                fontSize: 13,
+                textDecoration: "none",
+              }}
+            >
+              Manage your zones →
+            </Link>
           </Section>
 
           {/* Proximity (foreground-only, client-side) — fires a local
