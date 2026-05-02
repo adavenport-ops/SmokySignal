@@ -6,17 +6,15 @@ import { useAircraft } from "@/lib/hooks/useAircraft";
 import { useRiderPos } from "@/lib/hooks/useRiderPos";
 import { SS_TOKENS } from "@/lib/tokens";
 import { SMOKY_TAIL } from "@/lib/seed";
-import { haversineNm, DEFAULT_SPEED_LIMIT_MPH } from "@/lib/geo";
+import { haversineNm } from "@/lib/geo";
 import { StatusPill } from "./StatusPill";
 import { Card } from "./Card";
-import { Speedometer } from "./Speedometer";
 import { AlertsOptInCard } from "./AlertsOptInCard";
 import type { Aircraft, Snapshot } from "@/lib/types";
 import type { ActivityEntry } from "@/lib/activity";
 
 const TABBAR_HEIGHT = 66;
 const NEAR_NM = 5;
-const MPS_TO_MPH = 2.236936;
 
 type Props = {
   initial: Snapshot;
@@ -26,7 +24,7 @@ type Props = {
 
 export function DashShell({ initial, initialActivity, mockOn = false }: Props) {
   const snap = useAircraft(initial, mockOn);
-  const { pos, unavailable } = useRiderPos();
+  const { pos } = useRiderPos();
   const [activity, setActivity] = useState<ActivityEntry[]>(initialActivity);
 
   const smoky = snap.aircraft.find((a) => a.tail === SMOKY_TAIL);
@@ -35,15 +33,6 @@ export function DashShell({ initial, initialActivity, mockOn = false }: Props) {
     () => snap.aircraft.filter((a) => a.airborne),
     [snap.aircraft],
   );
-
-  // Speed in mph from device. Some browsers report null when stationary.
-  const mph =
-    pos?.speedMps != null && pos.speedMps >= 0
-      ? pos.speedMps * MPS_TO_MPH
-      : 0;
-  const hasSpeedSignal = pos?.speedMps != null && pos.speedMps >= 0;
-  const limit = DEFAULT_SPEED_LIMIT_MPH;
-  const speeding = mph > limit;
 
   // Nearest airborne plane by Haversine.
   const nearest = useMemo<{
@@ -114,40 +103,9 @@ export function DashShell({ initial, initialActivity, mockOn = false }: Props) {
         />
       </header>
 
-      <Card>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            paddingTop: 6,
-          }}
-        >
-          <Speedometer
-            mph={mph}
-            limit={limit}
-            hasSignal={hasSpeedSignal}
-          />
-        </div>
-        {unavailable && (
-          <div
-            className="ss-mono"
-            style={{
-              marginTop: 8,
-              textAlign: "center",
-              fontSize: 11,
-              color: SS_TOKENS.fg2,
-              letterSpacing: ".04em",
-            }}
-          >
-            Location off · speed unavailable
-          </div>
-        )}
-      </Card>
-
       <NearestCard nearest={nearest} riderHasFix={Boolean(pos)} smokyUp={up} />
 
       <ContextLine
-        speeding={speeding}
         airborneCount={airborne.length}
         nearest={nearest}
       />
@@ -232,23 +190,17 @@ function NearestCard({
 }
 
 function ContextLine({
-  speeding,
   airborneCount,
   nearest,
 }: {
-  speeding: boolean;
   airborneCount: number;
   nearest: { plane: Aircraft; distanceNm: number } | null;
 }) {
   let text: string;
   let color: string;
-  if (
-    speeding &&
-    nearest &&
-    nearest.distanceNm <= NEAR_NM
-  ) {
+  if (nearest && nearest.distanceNm <= NEAR_NM) {
     const display = nearest.plane.nickname || nearest.plane.tail;
-    text = `Mind the throttle · ${display} ${nearest.distanceNm.toFixed(1)}nm away`;
+    text = `Heads up · ${display} ${nearest.distanceNm.toFixed(1)}nm away`;
     color = SS_TOKENS.warn;
   } else if (airborneCount > 0) {
     text = "Smokey up but not nearby";

@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 const TABS: { id: string; label: string; href: string; icon: ReactNode }[] = [
   { id: "home", label: "Home", href: "/", icon: <HomeIcon /> },
   { id: "radar", label: "Radar", href: "/radar", icon: <RadarIcon /> },
+  { id: "dash", label: "Dash", href: "/dash", icon: <DashIcon /> },
   { id: "activity", label: "Activity", href: "/activity", icon: <ActivityIcon /> },
   { id: "about", label: "About", href: "/about", icon: <InfoIcon /> },
 ];
@@ -137,6 +138,25 @@ function InfoIcon() {
       <circle cx="12" cy="12" r="10" />
       <path d="M12 16v-4" />
       <path d="M12 8h.01" />
+    </svg>
+  );
+}
+
+// Lucide-style "gauge" icon — at-a-glance dashboard summary.
+function DashIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m12 14 4-4" />
+      <path d="M3.34 19a10 10 0 1 1 17.32 0" />
     </svg>
   );
 }
