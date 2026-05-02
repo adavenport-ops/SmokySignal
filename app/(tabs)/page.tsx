@@ -1,6 +1,6 @@
 import { Glanceable } from "@/components/Glanceable";
 import { getSnapshot } from "@/lib/snapshot";
-import { mockAirborneSnapshot } from "@/lib/mock";
+import { applyMockState, parseMockState } from "@/lib/mock-state";
 import { getRecentActivity } from "@/lib/activity";
 import { getLearningState } from "@/lib/learning";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
@@ -22,8 +22,9 @@ export default async function Page({
     getLearningState(),
     getFreshness(),
   ]);
-  const mockOn = searchParams.mock === "up";
-  const initial = mockOn ? mockAirborneSnapshot(real) : real;
+  const mockState = parseMockState(searchParams.mock);
+  const mockOn = mockState !== null;
+  const initial = applyMockState(real, mockState);
   const hour12 = isHour12(getTimeFormatPref());
   // Historical context line — null when learning, sparse, or no bucket data.
   const isCurrentlyUp = initial.aircraft.some((a) => a.airborne);
