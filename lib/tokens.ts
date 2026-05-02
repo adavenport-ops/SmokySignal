@@ -13,7 +13,7 @@ export const SS_TOKENS = {
   bg3: "#1E2229", // legacy alias for bg2 — used in a few places, kept to avoid churn
   fg0: "#F2F4F7", // primary text
   fg1: "#A8AEB8", // secondary text
-  fg2: "#6B7380", // tertiary / metadata
+  fg2: "#82899A", // tertiary / metadata — bumped from #6B7380 to clear WCAG AA 4.5:1 on bg-0
   fg3: "#3f4651", // legacy quaternary — kept for some inline styles
   alert: "#f5b840", // SEMANTIC: speed-enforcement plane up
   alertDim: "rgba(245,184,64,0.13)",

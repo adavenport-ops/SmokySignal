@@ -156,12 +156,14 @@ export function LearningPanel({
 
 function ProgressBar({ progress }: { progress: number }) {
   const clamped = Math.max(0, Math.min(1, progress));
+  const day = Math.round(clamped * LEARNING_THRESHOLD_DAYS);
   return (
     <div
       role="progressbar"
+      aria-label={`Learning progress: day ${day} of ${LEARNING_THRESHOLD_DAYS}`}
       aria-valuemin={0}
       aria-valuemax={LEARNING_THRESHOLD_DAYS}
-      aria-valuenow={Math.round(clamped * LEARNING_THRESHOLD_DAYS)}
+      aria-valuenow={day}
       style={{
         width: "100%",
         height: 2,

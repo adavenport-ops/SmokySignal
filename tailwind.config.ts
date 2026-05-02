@@ -16,7 +16,7 @@ const config: Config = {
           bg3: "#1E2229",
           fg0: "#F2F4F7",
           fg1: "#A8AEB8",
-          fg2: "#6B7380",
+          fg2: "#82899A",
           fg3: "#3f4651",
           alert: "#f5b840",
           "alert-dim": "rgba(245,184,64,.13)",
