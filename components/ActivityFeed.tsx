@@ -38,11 +38,10 @@ export function ActivityFeed({ initial }: { initial: ActivityEntry[] }) {
 
   return (
     <main
+      className="ss-page-narrow"
       style={{
         minHeight: "100dvh",
         padding: `12px 18px ${TABBAR_HEIGHT + 24}px`,
-        maxWidth: 460,
-        margin: "0 auto",
         display: "flex",
         flexDirection: "column",
         gap: 14,

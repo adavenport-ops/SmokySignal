@@ -19,14 +19,13 @@ export default async function AboutPage() {
   const fleet = await getRegistry();
   return (
     <main
+      className="ss-page-narrow"
       style={{
         minHeight: "100dvh",
         padding: "12px 18px 60px",
         display: "flex",
         flexDirection: "column",
         gap: 18,
-        maxWidth: 460,
-        margin: "0 auto",
       }}
     >
       <header
