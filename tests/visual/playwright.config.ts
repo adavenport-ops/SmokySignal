@@ -3,7 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 const BASE = process.env.SS_VISUAL_BASE_URL ?? "https://smokysignal.app";
 
 export default defineConfig({
-  testDir: "./specs",
+  testDir: ".",
+  testMatch: ["specs/**/*.spec.ts", "personas/**/*.spec.ts"],
   outputDir: "./out/test-output",
   reporter: [
     ["html", { outputFolder: "./out/playwright-html", open: "never" }],
