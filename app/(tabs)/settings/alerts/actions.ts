@@ -2,7 +2,12 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { TIME_FORMAT_COOKIE, type TimeFormat } from "@/lib/user-prefs";
+import {
+  CONTRAST_COOKIE,
+  TIME_FORMAT_COOKIE,
+  type ContrastMode,
+  type TimeFormat,
+} from "@/lib/user-prefs";
 
 const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60;
 
@@ -21,5 +26,20 @@ export async function setTimeFormatAction(formData: FormData): Promise<void> {
   });
   // Revalidate every page that renders times so the new format takes effect
   // on the next paint instead of waiting for a navigation.
+  revalidatePath("/", "layout");
+}
+
+/** Persist contrast variant. Same cookie pattern as time format. */
+export async function setContrastAction(formData: FormData): Promise<void> {
+  const raw = formData.get("contrast");
+  const next: ContrastMode = raw === "high" ? "high" : "normal";
+  cookies().set({
+    name: CONTRAST_COOKIE,
+    value: next,
+    path: "/",
+    maxAge: ONE_YEAR_SECONDS,
+    sameSite: "lax",
+    httpOnly: false,
+  });
   revalidatePath("/", "layout");
 }

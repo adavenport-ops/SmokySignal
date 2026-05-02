@@ -5,6 +5,7 @@ import { BASE_URL } from "@/lib/config";
 import { IOSInstallPrompt } from "@/components/IOSInstallPrompt";
 import { SwRegistrar } from "@/components/SwRegistrar";
 import { TooltipProvider } from "@/components/Tooltip";
+import { getContrastPref } from "@/lib/user-prefs";
 import "./globals.css";
 
 const inter = Inter({
@@ -81,9 +82,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const contrast = getContrastPref();
   return (
     <html lang="en" className={`${inter.variable} ${mono.variable}`}>
-      <body className="ss-app bg-ss-bg0 text-ss-fg0">
+      <body
+        className="ss-app bg-ss-bg0 text-ss-fg0"
+        data-contrast={contrast}
+      >
         <TooltipProvider>
           {children}
           <IOSInstallPrompt />
