@@ -19,6 +19,10 @@ import {
 
 const PUGET_SOUND: [number, number] = [-122.3, 47.6];
 const DEFAULT_ZOOM = 9;
+// Street-level zoom used the first time the rider's geolocation resolves
+// — opens the map on the rider's actual neighborhood instead of the
+// whole Puget Sound region.
+const RIDER_ZOOM = 11;
 
 // 1 nautical mile in degrees latitude (constant). Longitude varies with
 // latitude — use cos(lat) to scale per-ring.
@@ -118,6 +122,10 @@ export default function RadarMap({
   const aircraftRef = useRef<Aircraft[]>(aircraft);
   const riderRef = useRef<RiderPos | null>(rider);
   const showDistanceRingsRef = useRef<boolean>(showDistanceRings);
+  // Tracks whether we've done the one-time zoom-to-rider on first
+  // geolocation resolve. Subsequent rider changes only recenter
+  // (the existing 5s loop), they don't change zoom.
+  const didFirstRiderZoomRef = useRef<boolean>(false);
   const userInteractedAtRef = useRef<number>(0);
   const onMapReadyRef = useRef(onMapReady);
   onMapReadyRef.current = onMapReady;
@@ -256,6 +264,16 @@ export default function RadarMap({
       applyAircraft(aircraftRef.current);
       applyRider(riderRef.current);
       applyDistanceRings(riderRef.current);
+      // Map mounted with rider already known (geolocation resolved
+      // before MapLibre finished loading) — do the one-time zoom now.
+      if (riderRef.current && !didFirstRiderZoomRef.current) {
+        didFirstRiderZoomRef.current = true;
+        map.flyTo({
+          center: [riderRef.current.lon, riderRef.current.lat],
+          zoom: RIDER_ZOOM,
+          duration: 1000,
+        });
+      }
       startPulse();
       onMapReadyRef.current?.(map);
     };
@@ -302,11 +320,26 @@ export default function RadarMap({
   }, []);
 
   // Apply rider position when it updates from the geolocation watch.
+  // First time the rider resolves AND the map is ready, fly to their
+  // position at street-level zoom so a Tacoma rider opens to Tacoma,
+  // not to the regional Puget Sound overview.
   useEffect(() => {
     riderRef.current = rider;
     if (readyRef.current) {
       applyRider(rider);
       applyDistanceRings(rider);
+      if (rider && !didFirstRiderZoomRef.current && mapRef.current) {
+        didFirstRiderZoomRef.current = true;
+        // Skip the auto-zoom if the user has already manually panned
+        // or zoomed (they meant it).
+        if (Date.now() - userInteractedAtRef.current >= 15_000) {
+          mapRef.current.flyTo({
+            center: [rider.lon, rider.lat],
+            zoom: RIDER_ZOOM,
+            duration: 1000,
+          });
+        }
+      }
     }
   }, [rider]);
 
