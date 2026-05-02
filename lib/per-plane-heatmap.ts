@@ -11,11 +11,12 @@
 import { getRedis } from "./cache";
 import { listTrackKeys, getTracksForDay } from "./tracks";
 import { GRID_CELL_DEG, HOTZONE_DAYS_BACK, type HotZone } from "./hotzones";
+import { hotzonesPlaneKey } from "./storage-keys";
 
 const TTL_SECONDS = 6 * 60 * 60;
 
 function cacheKey(tail: string): string {
-  return `hotzones:plane:${tail.toUpperCase()}`;
+  return hotzonesPlaneKey(tail);
 }
 
 function utcDateKey(d: Date): string {

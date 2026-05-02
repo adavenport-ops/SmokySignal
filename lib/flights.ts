@@ -10,9 +10,10 @@ import {
 } from "./tracks";
 import { getRegistry } from "./registry";
 import { cacheGet, cacheSet } from "./cache";
+import { flightsRecentCacheKey } from "./storage-keys";
 import type { FleetEntry } from "./types";
 
-const CACHE_KEY = "flights:recent_cache_v1";
+const CACHE_KEY = flightsRecentCacheKey();
 const CACHE_TTL_SECONDS = 30;
 
 const LOOKBACK_DAYS = 7;

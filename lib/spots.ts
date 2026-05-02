@@ -3,6 +3,12 @@
 // listRecentSpots() (30s cache).
 
 import { getRedis, cacheGet, cacheSet } from "./cache";
+import {
+  SPOTS_PREFIX,
+  spotKey,
+  spotScanPattern,
+  spotsRecentCacheKey,
+} from "./storage-keys";
 
 export type SpotAirborneTail = {
   tail: string;
@@ -20,9 +26,8 @@ export type SpotPayload = {
 
 export type StoredSpot = SpotPayload & { id: string };
 
-const PREFIX = "spots:";
 const SPOT_TTL_SECONDS = 35 * 24 * 60 * 60;
-const RECENT_CACHE_KEY = "spots:recent_cache_v1";
+const RECENT_CACHE_KEY = spotsRecentCacheKey();
 const RECENT_CACHE_TTL = 30;
 
 function utcDateKey(d: Date): string {
@@ -42,7 +47,7 @@ export async function saveSpot(payload: SpotPayload): Promise<StoredSpot> {
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const stored: StoredSpot = { ...payload, id };
   const date = utcDateKey(new Date(payload.ts));
-  const key = `${PREFIX}${date}:${id}`;
+  const key = spotKey(date, id);
 
   await redis.set(key, JSON.stringify(stored), { ex: SPOT_TTL_SECONDS });
   // Bust the recent-cache so the admin page reflects the new spot
@@ -99,9 +104,9 @@ export async function listRecentSpots(limit = 100): Promise<StoredSpot[]> {
 
   // Scan only the date-prefixed keys we care about.
   const cutoff = utcDateKey(new Date(Date.now() - LOOKBACK_DAYS * 86_400_000));
-  const allKeys = await scanKeys(`${PREFIX}*`);
+  const allKeys = await scanKeys(spotScanPattern());
   const keys = allKeys.filter((k) => {
-    const date = k.slice(PREFIX.length).split(":")[0];
+    const date = k.slice(SPOTS_PREFIX.length).split(":")[0];
     return date != null && date >= cutoff;
   });
   if (keys.length === 0) {
