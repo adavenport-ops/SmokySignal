@@ -16,6 +16,7 @@ import {
   glyphRoleFor,
   type GlyphRole,
 } from "@/lib/brand/aircraft-glyphs";
+import { REGIONS, type RegionId } from "@/lib/regions";
 
 const PUGET_SOUND: [number, number] = [-122.3, 47.6];
 const DEFAULT_ZOOM = 9;
@@ -101,11 +102,16 @@ export default function RadarMap({
   aircraft,
   rider,
   showDistanceRings = false,
+  regionId,
   onMapReady,
 }: {
   aircraft: Aircraft[];
   rider: RiderPos | null;
   showDistanceRings?: boolean;
+  /** Pivots the map view between Puget Sound / counties / All-WA.
+   *  When undefined or "puget_sound", no flyTo — preserves the
+   *  existing rider-zoom + auto-recenter behavior. */
+  regionId?: RegionId;
   onMapReady?: (map: MaplibreMap | null) => void;
 }) {
   const router = useRouter();
@@ -323,6 +329,29 @@ export default function RadarMap({
       /* layer not yet attached */
     }
   }, [showDistanceRings]);
+
+  // When the rider changes region (Puget Sound → Spokane etc), fly the
+  // map to the region's centroid + default zoom. Skipped on initial
+  // mount where regionId starts at "puget_sound" — that's the existing
+  // default and a flyTo would feel like a flicker.
+  const lastRegionRef = useRef<RegionId | undefined>(regionId);
+  useEffect(() => {
+    if (!regionId || regionId === lastRegionRef.current) return;
+    lastRegionRef.current = regionId;
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    const r = REGIONS[regionId];
+    if (!r) return;
+    map.flyTo({
+      center: [r.centerLon, r.centerLat],
+      zoom: r.zoomLevel,
+      duration: 800,
+    });
+    // Mark that the user "interacted" so the auto-recenter loop pauses
+    // for 15s — otherwise the next 5s tick would yank them back to
+    // their geolocation and undo the region pivot.
+    userInteractedAtRef.current = Date.now();
+  }, [regionId]);
 
   // Auto-recenter every 5s, paused for 15s after the user pans or zooms.
   useEffect(() => {
