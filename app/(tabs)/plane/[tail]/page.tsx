@@ -167,7 +167,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
         <RecentTrackBlock tail={entry.tail} flight={recentFlight} hour12={hour12} />
       </section>
 
-      <FleetMeta hex={fleetHex(entry).toUpperCase()} role={entry.roleDescription} />
+      <FleetMeta tail={entry.tail} hex={fleetHex(entry).toUpperCase()} role={entry.roleDescription} />
     </main>
   );
 }
@@ -432,7 +432,15 @@ function fmtSessionDuration(seconds: number): string {
   return h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m`;
 }
 
-function FleetMeta({ hex, role }: { hex: string; role: string }) {
+function FleetMeta({
+  tail,
+  hex,
+  role,
+}: {
+  tail: string;
+  hex: string;
+  role: string;
+}) {
   return (
     <div
       className="ss-mono"
@@ -444,15 +452,29 @@ function FleetMeta({ hex, role }: { hex: string; role: string }) {
         letterSpacing: ".06em",
         textAlign: "center",
         marginTop: 8,
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+        alignItems: "center",
       }}
     >
-      <Tooltip content="ICAO24 Mode-S code — the unique aircraft identifier broadcast over ADS-B. Used to filter the live feed.">
-        <span tabIndex={0} style={{ cursor: "help" }}>
-          {hex}
-        </span>
-      </Tooltip>
-      {" · "}
-      {role.toUpperCase()}
+      <div>
+        <Tooltip content="ICAO24 Mode-S code — the unique aircraft identifier broadcast over ADS-B. Used to filter the live feed.">
+          <span tabIndex={0} style={{ cursor: "help" }}>
+            {hex}
+          </span>
+        </Tooltip>
+        {" · "}
+        {role.toUpperCase()}
+      </div>
+      <a
+        href={`https://registry.faa.gov/aircraftinquiry/Search/NNumberResult?nNumberTxt=${tail}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ color: SS_TOKENS.fg2, textDecoration: "none" }}
+      >
+        FAA registry →
+      </a>
     </div>
   );
 }
