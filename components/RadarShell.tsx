@@ -11,6 +11,7 @@ import { StatusPill } from "./StatusPill";
 import { SpottedButton } from "./SpottedButton";
 import { HotZoneLayer } from "./HotZoneLayer";
 import { UserZoneLayer } from "./UserZoneLayer";
+import { AircraftTrailLayer } from "./AircraftTrailLayer";
 import { addUserZone } from "@/lib/user-zones";
 import { HelpIcon } from "./HelpIcon";
 import { Tooltip } from "./Tooltip";
@@ -166,6 +167,7 @@ export function RadarShell({
         learning={learning}
       />
       <UserZoneLayer map={map} />
+      <AircraftTrailLayer map={map} airborne={airborne} />
       <AddZoneButton
         rider={rider}
         onAdded={(label) => flashToast(setToast, `Zone "${label}" added`)}
