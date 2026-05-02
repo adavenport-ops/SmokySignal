@@ -34,27 +34,43 @@ export function ArmAlertsCallout() {
       return;
     }
     let cancelled = false;
+
+    // Compute the dismiss-aware "available" state up front so we can
+    // fall back to it without re-reading localStorage from the timeout.
+    const dismissedAt = Number(
+      window.localStorage.getItem(DISMISS_KEY) ?? "0",
+    );
+    const recentlyDismissed = Date.now() - dismissedAt < DISMISS_MS;
+    const availableState: State = { kind: "available", recentlyDismissed };
+
+    // Race the SW-ready / subscription check against a 2.5s timeout.
+    // Without this, a slow or hung serviceWorker.ready promise leaves
+    // the component stuck in "loading" forever — no CTA ever renders.
+    // First-visit prod traces showed this happening on iOS PWAs and
+    // chromium contexts where the SW had not yet completed registration.
+    const SW_TIMEOUT_MS = 2500;
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled) return;
+      // Use the functional setter so we don't clobber a real "armed"
+      // result that arrived in the same tick.
+      setState((prev) => (prev.kind === "loading" ? availableState : prev));
+    }, SW_TIMEOUT_MS);
+
     navigator.serviceWorker.ready
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => {
         if (cancelled) return;
-        if (sub) {
-          setState({ kind: "armed" });
-          return;
-        }
-        const dismissedAt = Number(
-          window.localStorage.getItem(DISMISS_KEY) ?? "0",
-        );
-        const recentlyDismissed = Date.now() - dismissedAt < DISMISS_MS;
-        setState({ kind: "available", recentlyDismissed });
+        window.clearTimeout(timeoutId);
+        setState(sub ? { kind: "armed" } : availableState);
       })
       .catch(() => {
-        if (!cancelled) {
-          setState({ kind: "available", recentlyDismissed: false });
-        }
+        if (cancelled) return;
+        window.clearTimeout(timeoutId);
+        setState(availableState);
       });
     return () => {
       cancelled = true;
+      window.clearTimeout(timeoutId);
     };
   }, []);
 
