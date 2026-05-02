@@ -14,63 +14,25 @@ import type { Map as MaplibreMap, GeoJSONSource } from "maplibre-gl";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { HotZone } from "@/lib/hotzones";
 import type { LearningState } from "@/lib/learning";
+import {
+  DEFAULT_RADAR_FILTER,
+  OPERATORS,
+  RADAR_FILTER_CHANGE_EVENT,
+  SMOKY_TAILS,
+  readRadarFilter,
+  writeRadarFilter,
+  type RadarFilter as Filter,
+} from "@/lib/radar-filter";
 import { Tooltip } from "./Tooltip";
 import { LearningPanel } from "./LearningPanel";
 
 const VISIBLE_KEY = "ss_hotzones_visible";
-const FILTER_KEY = "ss_hotzones_filter";
 const SOURCE_ID = "hotzones";
 const LAYER_ID = "hotzones-heat";
 const AIRCRAFT_LAYER_ID = "aircraft";
 const TABBAR_HEIGHT = 66;
 
-const SMOKY_TAILS = ["N305DK", "N2446X"] as const;
-const OPERATORS = [
-  "WSP",
-  "KCSO",
-  "Pierce SO",
-  "Snohomish SO",
-  "Spokane SO",
-  "State of WA",
-] as const;
-
-type ShowMode = "all" | "smoky" | "operator";
-type Region = "puget_sound" | "all";
-
-type Filter = {
-  showMode: ShowMode;
-  operator: string | null;
-  region: Region;
-};
-
-const DEFAULT_FILTER: Filter = {
-  showMode: "all",
-  operator: "WSP",
-  region: "puget_sound",
-};
-
-function readFilter(): Filter {
-  if (typeof window === "undefined") return DEFAULT_FILTER;
-  try {
-    const raw = window.localStorage.getItem(FILTER_KEY);
-    if (!raw) return DEFAULT_FILTER;
-    const parsed = JSON.parse(raw) as Partial<Filter>;
-    return {
-      showMode:
-        parsed.showMode === "smoky" || parsed.showMode === "operator"
-          ? parsed.showMode
-          : "all",
-      operator:
-        typeof parsed.operator === "string" &&
-        OPERATORS.includes(parsed.operator as (typeof OPERATORS)[number])
-          ? parsed.operator
-          : "WSP",
-      region: parsed.region === "all" ? "all" : "puget_sound",
-    };
-  } catch {
-    return DEFAULT_FILTER;
-  }
-}
+const DEFAULT_FILTER = DEFAULT_RADAR_FILTER;
 
 function buildQueryString(f: Filter): string {
   const p = new URLSearchParams();
@@ -99,13 +61,23 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
 
   console.log("[HZ] mount/render — map?", !!map, "zones?", zones?.length ?? null);
 
-  // Load persisted state once on mount.
+  // Load persisted state once on mount, and stay in sync with any other
+  // component that mutates the shared radar filter (e.g. a future global
+  // FilterPanel) via the cross-component change event.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const v = window.localStorage.getItem(VISIBLE_KEY);
     if (v === "0") setEnabled(false);
     else if (v === "1") setEnabled(true);
-    setFilter(readFilter());
+    setFilter(readRadarFilter());
+    const onFilterChange = (e: Event) => {
+      const detail = (e as CustomEvent<Filter>).detail;
+      if (detail) setFilter(detail);
+    };
+    window.addEventListener(RADAR_FILTER_CHANGE_EVENT, onFilterChange);
+    return () => {
+      window.removeEventListener(RADAR_FILTER_CHANGE_EVENT, onFilterChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -113,9 +85,10 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
     window.localStorage.setItem(VISIBLE_KEY, enabled ? "1" : "0");
   }, [enabled]);
 
+  // Persist via the shared writer so the change event fires for any
+  // other subscriber (RadarShell, etc) listening for filter updates.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(FILTER_KEY, JSON.stringify(filter));
+    writeRadarFilter(filter);
   }, [filter]);
 
   // Fetch (re-fetch when filter changes). Each request is small + edge-cached

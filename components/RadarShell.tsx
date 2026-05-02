@@ -16,6 +16,13 @@ import { FreshnessLabel } from "./FreshnessLabel";
 import { RegionSelector } from "./RegionSelector";
 import { REGION_CHANGE_EVENT, getRegion } from "@/lib/region-pref";
 import type { RegionId } from "@/lib/regions";
+import {
+  DEFAULT_RADAR_FILTER,
+  RADAR_FILTER_CHANGE_EVENT,
+  passesAircraftFilter,
+  readRadarFilter,
+  type RadarFilter,
+} from "@/lib/radar-filter";
 import type { Aircraft, FleetEntry, Snapshot } from "@/lib/types";
 import type { LearningState } from "@/lib/learning";
 
@@ -56,7 +63,31 @@ export function RadarShell({
     [snap.aircraft],
   );
   const status = useMemo(() => computeStatus(snap, fleetMap), [snap, fleetMap]);
-  const airborne = snap.aircraft.filter((a) => a.airborne);
+  // Mirror the heatmap chevron's filter so aircraft markers stay in sync —
+  // tapping "Smokey only" should hide non-smokey markers as well as
+  // non-smokey heat. Read once on mount and subscribe to the shared
+  // change event for cross-component updates.
+  const [radarFilter, setRadarFilter] = useState<RadarFilter>(
+    DEFAULT_RADAR_FILTER,
+  );
+  useEffect(() => {
+    setRadarFilter(readRadarFilter());
+    const onFilterChange = (e: Event) => {
+      const detail = (e as CustomEvent<RadarFilter>).detail;
+      if (detail) setRadarFilter(detail);
+    };
+    window.addEventListener(RADAR_FILTER_CHANGE_EVENT, onFilterChange);
+    return () => {
+      window.removeEventListener(RADAR_FILTER_CHANGE_EVENT, onFilterChange);
+    };
+  }, []);
+  const airborne = useMemo(
+    () =>
+      snap.aircraft.filter(
+        (a) => a.airborne && passesAircraftFilter(a, radarFilter),
+      ),
+    [snap.aircraft, radarFilter],
+  );
   const total = snap.aircraft.length;
   const pillKind = status.kind;
   const pillTooltip =
