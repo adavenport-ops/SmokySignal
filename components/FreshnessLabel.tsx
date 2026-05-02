@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { SS_TOKENS } from "@/lib/tokens";
 import { STALE_MS } from "@/lib/freshness";
+import { formatTsBare } from "@/lib/time";
 
 type Props = {
   /** ms-since-epoch of the last successful track sample. null = unknown. */
@@ -37,6 +38,7 @@ export function FreshnessLabel({ lastSampleMs, className, style }: Props) {
   const stale = ageMs > STALE_MS;
   const m = Math.floor(ageMs / 60_000);
   const label = m < 1 ? "JUST NOW" : `${m}m AGO`;
+  const clock = formatTsBare(lastSampleMs, "hour-min");
   return (
     <span
       className={`ss-mono ${className ?? ""}`}
@@ -52,7 +54,7 @@ export function FreshnessLabel({ lastSampleMs, className, style }: Props) {
           : undefined
       }
     >
-      LAST SAMPLE — {label}
+      LAST SAMPLE — {label} · {clock} PT
     </span>
   );
 }
