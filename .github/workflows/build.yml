@@ -1,0 +1,54 @@
+name: Build
+
+# Catches the failure modes that have repeatedly bitten us only on Vercel:
+#   1. scripts/check-env.mjs aborting because .env.local is missing
+#      (CI/Vercel inject env via process.env, not a file).
+#   2. next build's tsc pass hitting a tsconfig include/exclude that's fine
+#      locally but breaks in a clean checkout.
+# Both surface here BEFORE the deploy hits Vercel, so PRs fail in GitHub
+# instead of failing on the deploy gate.
+#
+# Mirrors Vercel as closely as we can without paying for it: Node 20,
+# clean install via npm ci, VERCEL=1 set so check-env.mjs takes the
+# CI code path.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Cancel in-progress runs on the same ref when a new commit lands —
+# avoids burning Actions minutes on superseded commits.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck (root project)
+        run: npx tsc --noEmit
+
+      - name: Build (Vercel-equivalent env)
+        run: npm run build
+        env:
+          # Tells scripts/check-env.mjs to source from process.env instead
+          # of looking for .env.local.
+          VERCEL: "1"
+          # Required by check-env's BLOCK list. Real key lives in Vercel
+          # project settings; this placeholder only needs to be non-empty
+          # so the prebuild gate passes during CI.
+          NEXT_PUBLIC_MAPTILER_KEY: "ci-placeholder-not-deployed"
