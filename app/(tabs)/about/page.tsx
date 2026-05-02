@@ -98,6 +98,8 @@ export default async function AboutPage() {
 
       <PrivacyCallout />
 
+      <EmbedBadgeCallout />
+
       <Section eyebrow="Data sources">
         <p
           style={{
@@ -361,6 +363,84 @@ function Section({
         {eyebrow}
       </div>
       {children}
+    </section>
+  );
+}
+
+function EmbedBadgeCallout() {
+  const snippet =
+    '<a href="https://smokysignal.app">\n  <img src="https://smokysignal.app/api/badge.svg" alt="SmokySignal status">\n</a>';
+  return (
+    <section
+      style={{
+        background: SS_TOKENS.bg1,
+        border: `.5px solid ${SS_TOKENS.hairline}`,
+        borderRadius: 14,
+        padding: "14px 16px",
+      }}
+    >
+      <div className="ss-eyebrow" style={{ marginBottom: 8 }}>
+        Embed
+      </div>
+      <h3
+        style={{
+          fontSize: 16,
+          fontWeight: 700,
+          color: SS_TOKENS.fg0,
+          letterSpacing: "-.01em",
+          margin: 0,
+          marginBottom: 6,
+        }}
+      >
+        Drop the badge on your blog.
+      </h3>
+      <p
+        style={{
+          fontSize: 13,
+          lineHeight: 1.5,
+          color: SS_TOKENS.fg1,
+          margin: 0,
+          marginBottom: 10,
+        }}
+      >
+        Live <span className="ss-mono">SMOKEY UP</span> /{" "}
+        <span className="ss-mono">EYES UP</span> /{" "}
+        <span className="ss-mono">ALL CLEAR</span> badge. SVG, no JS,
+        edge-cached for ~30 seconds. Works in any HTML.
+      </p>
+      <pre
+        className="ss-mono"
+        style={{
+          background: SS_TOKENS.bg2,
+          border: `.5px solid ${SS_TOKENS.hairline}`,
+          borderRadius: 8,
+          padding: "10px 12px",
+          fontSize: 11,
+          color: SS_TOKENS.fg0,
+          overflowX: "auto",
+          margin: 0,
+          whiteSpace: "pre",
+        }}
+      >
+        {snippet}
+      </pre>
+      <p
+        style={{
+          fontSize: 12,
+          lineHeight: 1.5,
+          color: SS_TOKENS.fg2,
+          margin: 0,
+          marginTop: 8,
+        }}
+      >
+        Live preview:{" "}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/api/badge.svg"
+          alt="SmokySignal status"
+          style={{ verticalAlign: "middle" }}
+        />
+      </p>
     </section>
   );
 }
