@@ -101,6 +101,24 @@ for (const f of glob.sync(path.join(OUT, "a11y/**/*.json"))) {
   }
 }
 
+// Coherence — state-machine assertions. Always P1, never auto-fixable.
+for (const f of glob.sync(path.join(OUT, "coherence/*.json"))) {
+  const surface = path.basename(f, ".json");
+  if (surface === "snapshot") continue; // ground-truth dump, not a violation file
+  const j = JSON.parse(fs.readFileSync(f, "utf8"));
+  for (const v of j.violations ?? []) {
+    add({
+      severity: "P1",
+      type: "coherence",
+      title: v.bug ?? "coherence violation",
+      description: JSON.stringify(v),
+      surface: `coherence/${surface}`,
+      rawData: v,
+      autoFixable: false,
+    });
+  }
+}
+
 // Brand voice
 for (const f of glob.sync(path.join(OUT, "brand-voice/*.json"))) {
   const j = JSON.parse(fs.readFileSync(f, "utf8"));

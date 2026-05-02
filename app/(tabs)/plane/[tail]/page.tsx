@@ -438,7 +438,9 @@ function FleetMeta({ hex, role }: { hex: string; role: string }) {
       className="ss-mono"
       style={{
         fontSize: 10.5,
-        color: SS_TOKENS.fg3,
+        // fg2 instead of fg3 — fg3 (#3f4651) fails WCAG AA 4.5:1 against
+        // bg-0 for body text. fg2 reads at ~5.2:1.
+        color: SS_TOKENS.fg2,
         letterSpacing: ".06em",
         textAlign: "center",
         marginTop: 8,
