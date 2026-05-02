@@ -3,9 +3,10 @@
 // 7×24 heatmap of takeoff probability per (dow, hour) bucket. Tap a
 // cell to see the top contributing tails for that bucket.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { ForecastGrid, ForecastCell } from "@/lib/predictor";
+import { PT_TZ, getViewerTz, pacificNow } from "@/lib/time";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
@@ -16,6 +17,10 @@ export function ForecastGridView({ grid }: { grid: ForecastGrid }) {
   );
   const now = useMemo(() => pacificNow(), []);
   const [selected, setSelected] = useState<ForecastCell | null>(null);
+  const [viewerOutsidePT, setViewerOutsidePT] = useState(false);
+  useEffect(() => {
+    setViewerOutsidePT(getViewerTz() !== PT_TZ);
+  }, []);
 
   // Build rows: dow × 24 hours.
   const byDow: ForecastCell[][] = Array.from({ length: 7 }, () => []);
@@ -69,6 +74,21 @@ export function ForecastGridView({ grid }: { grid: ForecastGrid }) {
       </div>
 
       <CellDetail cell={selected} />
+
+      {viewerOutsidePT && (
+        <div
+          className="ss-mono"
+          style={{
+            fontSize: 10,
+            color: SS_TOKENS.fg2,
+            letterSpacing: ".04em",
+            textAlign: "center",
+            paddingTop: 4,
+          }}
+        >
+          Times shown in PT (where the bird flies).
+        </div>
+      )}
     </div>
   );
 }
@@ -221,36 +241,5 @@ function CellDetail({ cell }: { cell: ForecastCell | null }) {
 }
 
 function fmtHour(h: number): string {
-  if (h === 0) return "12 AM";
-  if (h < 12) return `${h} AM`;
-  if (h === 12) return "12 PM";
-  return `${h - 12} PM`;
-}
-
-function pacificNow(): { dow: number; hour: number } {
-  const fmt = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Los_Angeles",
-    hour: "numeric",
-    hour12: false,
-    weekday: "short",
-  });
-  const parts = fmt.formatToParts(new Date());
-  let hourStr: string | null = null;
-  let weekday: string | null = null;
-  for (const p of parts) {
-    if (p.type === "hour") hourStr = p.value;
-    if (p.type === "weekday") weekday = p.value;
-  }
-  const hour = Number(hourStr ?? 0) % 24;
-  const dowMap: Record<string, number> = {
-    Sun: 0,
-    Mon: 1,
-    Tue: 2,
-    Wed: 3,
-    Thu: 4,
-    Fri: 5,
-    Sat: 6,
-  };
-  const dow = weekday != null ? (dowMap[weekday] ?? 0) : 0;
-  return { hour, dow };
+  return `${String(h).padStart(2, "0")}:00`;
 }

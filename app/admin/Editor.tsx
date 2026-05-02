@@ -8,6 +8,7 @@ import type { AuditEntry, BackupInfo } from "@/lib/registry";
 import type { FlightSession } from "@/lib/flights";
 import { flightIdFromTs } from "@/lib/flights";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
+import { LocalTime } from "@/components/LocalTime";
 import {
   addTailAction,
   updateTailAction,
@@ -453,7 +454,9 @@ function FlightRow({
         style={{ textDecoration: "none", color: "inherit" }}
       >
         <div style={{ fontSize: 12.5, color: SS_TOKENS.fg0 }}>
-          {fmtDateTimeRange(flight.start_ts, flight.end_ts)}
+          <LocalTime ts={flight.start_ts} style="date-short" /> ·{" "}
+          <LocalTime ts={flight.start_ts} style="time" /> –{" "}
+          <LocalTime ts={flight.end_ts} style="time" />
         </div>
         <div
           className="ss-mono"
@@ -487,24 +490,6 @@ function FlightRow({
       <ShareLinkButton path={sharePath} label="Share" size="sm" />
     </div>
   );
-}
-
-function fmtDateTimeRange(startMs: number, endMs: number): string {
-  const start = new Date(startMs);
-  const end = new Date(endMs);
-  const dateStr = start.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
-  const startTime = start.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  const endTime = end.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${dateStr} · ${startTime} – ${endTime}`;
 }
 
 function fmtDuration(seconds: number): string {

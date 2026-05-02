@@ -8,7 +8,8 @@ import { getMostRecentFlightForTail, flightIdFromTs } from "@/lib/flights";
 import { SS_TOKENS } from "@/lib/tokens";
 import { StatusPill } from "@/components/StatusPill";
 import { Card } from "@/components/Card";
-import { fmtAgo, fmtAloft } from "@/lib/format";
+import { fmtAgo, fmtAgoTs, fmtAloft } from "@/lib/time";
+import { LocalTime } from "@/components/LocalTime";
 import type { Aircraft } from "@/lib/types";
 import type { RecentFlightForTail } from "@/lib/flights";
 import { BackLink } from "@/components/BackLink";
@@ -116,7 +117,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
               up
                 ? fmtAloft(live?.time_aloft_min)
                 : recentFlight
-                  ? `Last flew ${fmtRelativeShort(recentFlight.session.end_ts)}`
+                  ? `Last flew ${fmtAgoTs(recentFlight.session.end_ts)}`
                   : `last seen ${fmtAgo(live?.last_seen_min)}`
             }
             big
@@ -244,7 +245,7 @@ function KV({
   tooltip,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   tooltip?: React.ReactNode;
 }) {
   const card = (
@@ -385,12 +386,15 @@ function RecentTrackBlock({
             gap: 10,
           }}
         >
-          <KV label="FIRST" value={fmtClock(session.start_ts)} />
+          <KV
+            label="FIRST"
+            value={<LocalTime ts={session.start_ts} style="datetime" />}
+          />
           <KV
             label={inProgress ? "NOW" : "LAST"}
-            value={fmtClock(session.end_ts)}
+            value={<LocalTime ts={session.end_ts} style="datetime" />}
           />
-          <KV label="DURATION" value={fmtDuration(session.duration_s)} />
+          <KV label="DURATION" value={fmtSessionDuration(session.duration_s)} />
           <KV label="SAMPLES" value={String(session.sample_count)} />
           <KV
             label="MAX ALT"
@@ -402,7 +406,7 @@ function RecentTrackBlock({
           />
           <KV
             label="STATUS"
-            value={inProgress ? "IN PROGRESS" : fmtRelativeShort(session.end_ts)}
+            value={inProgress ? "IN PROGRESS" : fmtAgoTs(session.end_ts)}
           />
         </div>
         <div
@@ -420,31 +424,12 @@ function RecentTrackBlock({
   );
 }
 
-function fmtClock(ms: number): string {
-  return new Date(ms).toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-function fmtDuration(seconds: number): string {
+// "3h 12m" / "47m" — keeps the human-readable session-duration format
+// for the FIRST/LAST/DURATION KV row.
+function fmtSessionDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  return h > 0
-    ? `${h}h ${String(m).padStart(2, "0")}m`
-    : `${m}m`;
-}
-
-function fmtRelativeShort(tsMs: number): string {
-  const sec = Math.max(0, Math.floor((Date.now() - tsMs) / 1000));
-  if (sec < 60) return "just now";
-  const min = Math.floor(sec / 60);
-  if (min < 60) return `${min}m ago`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h ago`;
-  return `${Math.floor(hr / 24)}d ago`;
+  return h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m`;
 }
 
 function FleetMeta({ hex, role }: { hex: string; role: string }) {

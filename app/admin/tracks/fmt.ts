@@ -1,15 +1,13 @@
-// Display helpers shared between the tracks pages.
+// Display helpers shared between the tracks pages. Time-format helpers
+// take unix SECONDS (matching how TrackPoint stores ts); they wrap the
+// canonical lib/time helpers, which take milliseconds.
+
+import { fmtAgoTs, fmtDuration as fmtDurationMs, formatTs } from "@/lib/time";
 
 export function fmtAgoFromTs(tsSec: number | null | undefined): string | null {
   if (tsSec == null) return null;
-  const seconds = Math.max(0, Math.floor(Date.now() / 1000 - tsSec));
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hr ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  const ago = fmtAgoTs(tsSec * 1000);
+  return ago === "a while" ? null : ago;
 }
 
 /** YYYYMMDD → "Today" / "Yesterday" / "YYYY-MM-DD" (UTC-based key). */
@@ -30,28 +28,18 @@ export function utcDateKey(d: Date): string {
   return `${y}${m}${day}`;
 }
 
-/** Format a unix-seconds timestamp in viewer's local time. */
 export function fmtLocalTime(tsSec: number | null | undefined): string {
   if (tsSec == null) return "—";
-  return new Date(tsSec * 1000).toLocaleTimeString(undefined, {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+  return formatTs(tsSec * 1000, "time-sec");
 }
 
 export function fmtLocalDateTime(tsSec: number | null | undefined): string {
   if (tsSec == null) return "—";
-  return new Date(tsSec * 1000).toLocaleString();
+  return formatTs(tsSec * 1000, "datetime");
 }
 
 export function fmtDuration(spanSec: number): string {
-  const s = Math.max(0, Math.floor(spanSec));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  return fmtDurationMs(spanSec);
 }
 
 /** m/s → mph helper. KV stores spd in knots (we wrote ground_speed_kt) — */

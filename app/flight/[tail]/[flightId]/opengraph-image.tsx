@@ -3,10 +3,18 @@
 // Next.js ImageResponse overlays the tail/nickname/date/duration. If the
 // flight or MapTiler key is missing, falls back to a plain dark card so
 // share previews never 500.
+//
+// TZ NOTE: dates render in PT and are labelled "PT". OG images are
+// rendered once per flight share URL on the server and embedded in
+// chat/social previews where the viewer's tz is unknowable. PT is the
+// geography the flight actually occurred in — a friend in EDT seeing
+// the unfurl learns the local-PT clock time, which is what they'd
+// want for "when did this happen?" anyway.
 
 import { ImageResponse } from "next/og";
 import { getRegistry } from "@/lib/registry";
 import { getFlightById } from "@/lib/flights";
+import { fmtDurationHuman, formatTsPacific } from "@/lib/time";
 
 export const runtime = "nodejs";
 export const contentType = "image/png";
@@ -42,7 +50,7 @@ export default async function OGImage({ params }: Props) {
       : tail
     : tail;
   const subtitle = flight
-    ? `${fmtDate(flight.session.start_ts)} · ${fmtDuration(flight.session.duration_s)}`
+    ? `${formatTsPacific(flight.session.start_ts, "date-short")} PT · ${fmtDurationHuman(flight.session.duration_s)}`
     : "Flight track";
 
   return new ImageResponse(
@@ -180,17 +188,3 @@ function buildStaticMapUrl(
   return `https://api.maptiler.com/maps/streets-v2-dark/static/auto/1200x630.png?${path}&key=${key}`;
 }
 
-function fmtDate(tsMs: number): string {
-  return new Date(tsMs).toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function fmtDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  return h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m`;
-}

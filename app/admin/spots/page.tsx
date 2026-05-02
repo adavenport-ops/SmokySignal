@@ -7,6 +7,7 @@ import { listRecentSpots, type StoredSpot } from "@/lib/spots";
 import { SS_TOKENS } from "@/lib/tokens";
 import { LoginForm } from "../LoginForm";
 import { AdminHeader } from "../tracks/AdminHeader";
+import { LocalTime } from "@/components/LocalTime";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -101,7 +102,7 @@ export default async function AdminSpotsPage({
                         borderTop: `.5px solid ${SS_TOKENS.hairline}`,
                       }}
                     >
-                      <Td mono>{fmtLocal(s.ts)}</Td>
+                      <Td mono><LocalTime ts={s.ts} style="datetime" /></Td>
                       <Td mono>{s.lat.toFixed(4)}</Td>
                       <Td mono>{s.lon.toFixed(4)}</Td>
                       <Td>
@@ -133,10 +134,6 @@ function formatAirborne(spot: StoredSpot): string {
         : t.tail,
     )
     .join(", ");
-}
-
-function fmtLocal(tsMs: number): string {
-  return new Date(tsMs).toLocaleString();
 }
 
 function Empty() {

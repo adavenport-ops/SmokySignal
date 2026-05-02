@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { ActivityEntry, ActivityKind } from "@/lib/activity";
+import { fmtAgoTs } from "@/lib/time";
 
 const TABBAR_HEIGHT = 66;
 
@@ -144,7 +145,7 @@ function Row({ entry, first }: { entry: ActivityEntry; first: boolean }) {
           className="ss-mono"
           style={{ fontSize: 11, color: SS_TOKENS.fg2, marginTop: 2 }}
         >
-          {fmtRelative(entry.ts)}
+          {fmtAgoTs(entry.ts)}
         </div>
       </div>
       <span
@@ -272,13 +273,3 @@ function RadarPulse() {
   );
 }
 
-function fmtRelative(tsMs: number): string {
-  const seconds = Math.max(0, Math.floor((Date.now() - tsMs) / 1000));
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hr ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
