@@ -177,6 +177,23 @@ body {
   }
 }
 
+/* Multi-column grid for desktop sections that fan out well — currently
+   the /about tail registry. Mobile stays one column; ≥1280 px snaps to
+   two columns of equal width. Keep the gap aligned with the existing
+   18 px section gap. */
+.ss-grid-desktop-2 {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+@media (min-width: 1280px) {
+  .ss-grid-desktop-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+}
+
 /* Respect prefers-reduced-motion: kill the pulsers + transitions. */
 @media (prefers-reduced-motion: reduce) {
   *,
