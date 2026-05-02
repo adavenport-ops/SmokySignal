@@ -539,4 +539,51 @@ test.describe("p14 live-prod audit", () => {
       screenshot,
     });
   });
+
+  test("15. ?mock=eyes-up returns patrol airborne, no smokey (P20 4.1)", async ({
+    request,
+  }) => {
+    const r = await request.get("/api/aircraft?mock=eyes-up");
+    const ok = r.ok();
+    let evidence = `HTTP ${r.status()}`;
+    let pass = false;
+    if (ok) {
+      const data = (await r.json()) as { aircraft: Array<{ role: string; airborne: boolean }> };
+      const airborne = data.aircraft.filter((a) => a.airborne);
+      const smokeyUp = airborne.some((a) => a.role === "smokey");
+      const patrolOrUnknownUp = airborne.some(
+        (a) => a.role === "patrol" || a.role === "unknown",
+      );
+      pass = !smokeyUp && patrolOrUnknownUp;
+      evidence = `${airborne.length} airborne; smokey=${smokeyUp ? "yes" : "no"}; patrol/unknown=${patrolOrUnknownUp ? "yes" : "no"}`;
+    }
+    record({
+      claim:
+        "?mock=eyes-up forces a patrol/unknown-class plane airborne with no smokey-class — drives the EYES UP pill variant",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence,
+    });
+  });
+
+  test("16. ?mock=stale returns old fetched_at (P20 4.1)", async ({
+    request,
+  }) => {
+    const r = await request.get("/api/aircraft?mock=stale");
+    let evidence = `HTTP ${r.status()}`;
+    let pass = false;
+    if (r.ok()) {
+      const data = (await r.json()) as { fetched_at: number; source: string };
+      const ageMin = Math.floor((Date.now() - data.fetched_at) / 60_000);
+      pass = ageMin >= 15 && data.source === "mock";
+      evidence = `fetched_at=${ageMin}m ago, source=${data.source}`;
+    }
+    record({
+      claim:
+        "?mock=stale returns fetched_at >15min ago with source='mock' — flips FreshnessLabel amber",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence,
+    });
+  });
 });

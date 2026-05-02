@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSnapshot } from "@/lib/snapshot";
-import { isMockOn, mockAirborneSnapshot } from "@/lib/mock";
+import { applyMockState, getMockStateFromRequest } from "@/lib/mock-state";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   const snap = await getSnapshot();
-  const out = isMockOn(req) ? mockAirborneSnapshot(snap) : snap;
+  const out = applyMockState(snap, getMockStateFromRequest(req));
   return NextResponse.json(out, {
     headers: {
       // Browser won't cache; CDN can hold the same 10s the server does.

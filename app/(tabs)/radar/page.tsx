@@ -1,6 +1,6 @@
 import { RadarShell } from "@/components/RadarShell";
 import { getSnapshot } from "@/lib/snapshot";
-import { mockAirborneSnapshot } from "@/lib/mock";
+import { applyMockState, parseMockState } from "@/lib/mock-state";
 import { getLearningState } from "@/lib/learning";
 import { getFreshness } from "@/lib/freshness";
 
@@ -22,8 +22,9 @@ export default async function RadarPage({
     getLearningState(),
     getFreshness(),
   ]);
-  const mockOn = searchParams.mock === "up";
-  const initial = mockOn ? mockAirborneSnapshot(real) : real;
+  const mockState = parseMockState(searchParams.mock);
+  const mockOn = mockState !== null;
+  const initial = applyMockState(real, mockState);
   return (
     <RadarShell
       initial={initial}

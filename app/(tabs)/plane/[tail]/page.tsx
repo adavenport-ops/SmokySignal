@@ -3,7 +3,7 @@ import nextDynamic from "next/dynamic";
 import { fleetHex } from "@/lib/seed";
 import { getRegistry } from "@/lib/registry";
 import { getSnapshot } from "@/lib/snapshot";
-import { mockAirborneSnapshot } from "@/lib/mock";
+import { applyMockState, parseMockState } from "@/lib/mock-state";
 import { getMostRecentFlightForTail, flightIdFromTs } from "@/lib/flights";
 import { SS_TOKENS } from "@/lib/tokens";
 import { StatusPill } from "@/components/StatusPill";
@@ -58,7 +58,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
   const entry = fleet.find((f) => f.tail === tail);
   if (!entry) notFound();
   const recentFlight = await getMostRecentFlightForTail(tail, entry.nickname);
-  const snap = searchParams.mock === "up" ? mockAirborneSnapshot(real) : real;
+  const snap = applyMockState(real, parseMockState(searchParams.mock));
 
   const live = snap.aircraft.find((a) => a.tail === tail);
   const up = Boolean(live?.airborne);
