@@ -16,7 +16,6 @@ import type { HotZone } from "@/lib/hotzones";
 import type { LearningState } from "@/lib/learning";
 import {
   DEFAULT_RADAR_FILTER,
-  OPERATORS,
   RADAR_FILTER_CHANGE_EVENT,
   SMOKY_FILTER_ROLES,
   readRadarFilter,
@@ -27,6 +26,7 @@ import { REGION_CHANGE_EVENT, getRegion } from "@/lib/region-pref";
 import type { RegionId } from "@/lib/regions";
 import { Tooltip } from "./Tooltip";
 import { LearningPanel } from "./LearningPanel";
+import { FilterPanel } from "./FilterPanel";
 
 const VISIBLE_KEY = "ss_hotzones_visible";
 const SOURCE_ID = "hotzones";
@@ -50,6 +50,10 @@ function buildQueryString(f: Filter, regionId: RegionId): string {
   // filter without a config change.
   if (f.showMode === "smoky") p.set("roles", SMOKY_FILTER_ROLES.join(","));
   if (f.showMode === "operator" && f.operator) p.set("operator", f.operator);
+  // Multi-select role allow-list overrides the legacy showMode role
+  // shortcut when present. Server-side /api/hotzones already accepts
+  // a comma-separated `roles` value.
+  if (f.roles.length > 0) p.set("roles", f.roles.join(","));
   return p.toString();
 }
 
@@ -453,191 +457,6 @@ function pillStyle(color: string): React.CSSProperties {
     touchAction: "manipulation",
     WebkitTapHighlightColor: "transparent",
   };
-}
-
-function FilterPanel({
-  bottom,
-  filter,
-  onChange,
-  onClose,
-}: {
-  bottom: number;
-  filter: Filter;
-  onChange: (f: Filter) => void;
-  onClose: () => void;
-}) {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: 12,
-        bottom,
-        zIndex: 13,
-        width: 240,
-        padding: "12px 14px",
-        borderRadius: 14,
-        background: "rgba(11,13,16,0.92)",
-        border: `.5px solid ${SS_TOKENS.hairline2}`,
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
-        color: SS_TOKENS.fg0,
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <span
-          className="ss-mono"
-          style={{
-            fontSize: 11,
-            color: SS_TOKENS.fg2,
-            letterSpacing: ".1em",
-          }}
-        >
-          HOT ZONES
-        </span>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close filter panel"
-          style={{
-            background: "transparent",
-            border: 0,
-            color: SS_TOKENS.fg2,
-            cursor: "pointer",
-            fontSize: 16,
-            lineHeight: 1,
-            padding: 0,
-            touchAction: "manipulation",
-          }}
-        >
-          ×
-        </button>
-      </div>
-
-      <Group label="Show">
-        <Pill
-          active={filter.showMode === "all"}
-          onClick={() => onChange({ ...filter, showMode: "all" })}
-        >
-          All
-        </Pill>
-        <Pill
-          active={filter.showMode === "smoky"}
-          onClick={() => onChange({ ...filter, showMode: "smoky" })}
-        >
-          Smokey
-        </Pill>
-        <Pill
-          active={filter.showMode === "operator"}
-          onClick={() => onChange({ ...filter, showMode: "operator" })}
-        >
-          Operator
-        </Pill>
-      </Group>
-
-      {filter.showMode === "operator" && (
-        <select
-          value={filter.operator ?? "WSP"}
-          onChange={(e) => onChange({ ...filter, operator: e.target.value })}
-          className="ss-mono"
-          style={{
-            background: SS_TOKENS.bg2,
-            border: `.5px solid ${SS_TOKENS.hairline2}`,
-            color: SS_TOKENS.fg0,
-            fontSize: 12,
-            padding: "6px 8px",
-            borderRadius: 8,
-          }}
-        >
-          {OPERATORS.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </select>
-      )}
-
-      <Group label="Region">
-        <Pill
-          active={filter.region === "puget_sound"}
-          onClick={() => onChange({ ...filter, region: "puget_sound" })}
-        >
-          Puget Sound
-        </Pill>
-        <Pill
-          active={filter.region === "all"}
-          onClick={() => onChange({ ...filter, region: "all" })}
-        >
-          Statewide
-        </Pill>
-      </Group>
-    </div>
-  );
-}
-
-function Group({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <span
-        className="ss-mono"
-        style={{
-          fontSize: 9.5,
-          color: SS_TOKENS.fg2,
-          letterSpacing: ".1em",
-        }}
-      >
-        {label}
-      </span>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{children}</div>
-    </div>
-  );
-}
-
-function Pill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className="ss-mono"
-      style={{
-        padding: "5px 10px",
-        borderRadius: 999,
-        background: active ? SS_TOKENS.alert : "transparent",
-        border: `.5px solid ${active ? SS_TOKENS.alert : SS_TOKENS.hairline2}`,
-        color: active ? SS_TOKENS.bg0 : SS_TOKENS.fg1,
-        fontSize: 10.5,
-        letterSpacing: ".04em",
-        cursor: "pointer",
-        touchAction: "manipulation",
-        WebkitTapHighlightColor: "transparent",
-      }}
-    >
-      {children}
-    </button>
-  );
 }
 
 function toFeatureCollection(

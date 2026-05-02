@@ -12,10 +12,22 @@
 export type RadarFilterShowMode = "all" | "smoky" | "operator";
 export type RadarFilterRegion = "puget_sound" | "all";
 
+/** Role IDs the rider can multi-select. Mirrors lib/types.ts FleetRole. */
+export const FILTERABLE_ROLES = [
+  "smokey",
+  "patrol",
+  "sar",
+  "transport",
+  "unknown",
+] as const;
+export type FilterableRole = (typeof FILTERABLE_ROLES)[number];
+
 export type RadarFilter = {
   showMode: RadarFilterShowMode;
   operator: string | null;
   region: RadarFilterRegion;
+  /** Multi-select role allow-list. Empty = show all roles. */
+  roles: FilterableRole[];
 };
 
 export const RADAR_FILTER_KEY = "ss_hotzones_filter";
@@ -49,6 +61,7 @@ export const DEFAULT_RADAR_FILTER: RadarFilter = {
   showMode: "all",
   operator: "WSP",
   region: "puget_sound",
+  roles: [],
 };
 
 export function readRadarFilter(): RadarFilter {
@@ -68,6 +81,13 @@ export function readRadarFilter(): RadarFilter {
           ? parsed.operator
           : "WSP",
       region: parsed.region === "all" ? "all" : "puget_sound",
+      // roles is new in this shape; missing on prior persisted state →
+      // empty array (which means "show all", same behavior as before).
+      roles: Array.isArray(parsed.roles)
+        ? (parsed.roles.filter((r) =>
+            (FILTERABLE_ROLES as readonly string[]).includes(r as string),
+          ) as FilterableRole[])
+        : [],
     };
   } catch {
     return DEFAULT_RADAR_FILTER;
@@ -90,6 +110,17 @@ export function passesAircraftFilter(
   aircraft: { tail: string; operator: string; role?: string },
   f: RadarFilter,
 ): boolean {
+  // Multi-select role filter (new). Empty array = no role constraint.
+  if (f.roles.length > 0) {
+    if (
+      typeof aircraft.role !== "string" ||
+      !(f.roles as readonly string[]).includes(aircraft.role)
+    ) {
+      return false;
+    }
+  }
+  // Existing showMode predicate runs after roles. The two compose:
+  // role ∈ allow-list AND showMode passes.
   if (f.showMode === "all") return true;
   if (f.showMode === "smoky") {
     return (
