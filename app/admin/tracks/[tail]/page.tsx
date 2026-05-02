@@ -15,8 +15,8 @@ import { LoginForm } from "../../LoginForm";
 import { AdminHeader } from "../AdminHeader";
 import {
   humanDate,
-  fmtLocalTime,
-  fmtLocalDateTime,
+  fmtPtTime,
+  fmtPtDateTime,
   fmtDuration,
   ktToMph,
 } from "../fmt";
@@ -113,11 +113,11 @@ export default async function TailTracksPage({ params, searchParams }: Props) {
         <Stat label="DAYS WITH DATA" value={String(summary.daysWithData)} />
         <Stat
           label="FIRST SAMPLE"
-          value={fmtLocalDateTime(summary.firstSampleTs)}
+          value={fmtPtDateTime(summary.firstSampleTs)}
         />
         <Stat
           label="LAST SAMPLE"
-          value={fmtLocalDateTime(summary.lastSampleTs)}
+          value={fmtPtDateTime(summary.lastSampleTs)}
         />
       </Card>
 
@@ -153,9 +153,9 @@ export default async function TailTracksPage({ params, searchParams }: Props) {
                         marginTop: 2,
                       }}
                     >
-                      {b.samples.length} samples · {fmtLocalTime(first?.ts)}
+                      {b.samples.length} samples · {fmtPtTime(first?.ts)}
                       {" → "}
-                      {fmtLocalTime(last?.ts)} · {duration}
+                      {fmtPtTime(last?.ts)} · {duration}
                     </div>
                   </div>
                   {b.samples.length >= 2 && (
@@ -197,7 +197,7 @@ export default async function TailTracksPage({ params, searchParams }: Props) {
                     borderTop: `.5px solid ${SS_TOKENS.hairline}`,
                   }}
                 >
-                  <Td mono>{fmtLocalDateTime(p.ts)}</Td>
+                  <Td mono>{fmtPtDateTime(p.ts)}</Td>
                   <Td mono>{p.lat.toFixed(4)}</Td>
                   <Td mono>{p.lon.toFixed(4)}</Td>
                   <Td mono>{p.alt != null ? `${p.alt}'` : "—"}</Td>

@@ -12,9 +12,9 @@ import { LoginForm } from "../../../LoginForm";
 import { AdminHeader } from "../../AdminHeader";
 import {
   humanDate,
-  fmtLocalTime,
+  fmtPtTime,
   fmtDuration,
-  fmtLocalDateTime,
+  fmtPtDateTime,
   ktToMph,
 } from "../../fmt";
 

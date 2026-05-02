@@ -1,23 +1,14 @@
 // Canonical time-display formatter. One source of truth so per-page
 // helpers don't drift on tz, format, or 24-hour invariants.
 //
-// Defaults to the rider's browser tz. Pattern surfaces (forecast grid,
-// prediction windows) and OG images call formatTsPacific instead — they
-// describe PT-anchored aircraft patterns or render for unknown viewers.
+// SmokySignal's audience is Pacific-time only. Every displayed time is
+// rendered in PT; time-bearing styles get an explicit "PT" suffix so a
+// rider in any tz can read the value without guessing. Date-only styles
+// don't get the suffix — a date is a date.
 //
 // Brand voice (design/BRAND.md §3): 24-hour clock, mono numerics, no AM/PM.
 
 export const PT_TZ = "America/Los_Angeles";
-
-/** Browser tz, or PT on SSR (client re-renders correct it via LocalTime). */
-export function getViewerTz(): string {
-  if (typeof window === "undefined") return PT_TZ;
-  try {
-    return new Intl.DateTimeFormat().resolvedOptions().timeZone || PT_TZ;
-  } catch {
-    return PT_TZ;
-  }
-}
 
 export type FormatStyle =
   | "time"
@@ -29,63 +20,85 @@ export type FormatStyle =
   | "hour-min"
   | "iso-utc";
 
+const TIME_BEARING: ReadonlySet<FormatStyle> = new Set([
+  "time",
+  "time-sec",
+  "datetime",
+  "hour-min",
+]);
+
 export function formatTs(
   tsMs: number | null | undefined,
   style: FormatStyle,
-  opts?: { tz?: string },
 ): string {
   if (tsMs == null || Number.isNaN(tsMs)) return "—";
-  const tz = opts?.tz ?? getViewerTz();
   const d = new Date(tsMs);
+  const tz = PT_TZ;
+  let out: string;
   switch (style) {
     case "time":
     case "hour-min":
-      return d.toLocaleTimeString([], {
+      out = d.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
         timeZone: tz,
       });
+      break;
     case "time-sec":
-      return d.toLocaleTimeString([], {
+      out = d.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
         hour12: false,
         timeZone: tz,
       });
+      break;
     case "date":
       // sv-SE forces ISO-style YYYY-MM-DD regardless of viewer locale.
-      return d.toLocaleDateString("sv-SE", {
+      out = d.toLocaleDateString("sv-SE", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
         timeZone: tz,
       });
+      break;
     case "date-short":
-      return d.toLocaleDateString([], {
+      out = d.toLocaleDateString([], {
         month: "short",
         day: "numeric",
         timeZone: tz,
       });
+      break;
     case "date-weekday":
-      return d.toLocaleDateString([], {
+      out = d.toLocaleDateString([], {
         weekday: "long",
         timeZone: tz,
       });
+      break;
     case "datetime": {
-      const date = formatTs(tsMs, "date", opts);
-      const time = formatTs(tsMs, "time", opts);
-      return `${date} ${time}`;
+      const date = formatTs(tsMs, "date");
+      const time = d.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: tz,
+      });
+      return `${date} ${time} PT`;
     }
     case "iso-utc":
       return d.toISOString();
   }
+  return TIME_BEARING.has(style) ? `${out} PT` : out;
 }
 
-/** Force PT regardless of viewer. Forecast/prediction patterns + OG images. */
-export function formatTsPacific(tsMs: number, style: FormatStyle): string {
-  return formatTs(tsMs, style, { tz: PT_TZ });
+/** Same instant, no PT suffix. For composing custom strings (e.g. ranges). */
+export function formatTsBare(
+  tsMs: number | null | undefined,
+  style: FormatStyle,
+): string {
+  if (tsMs == null || Number.isNaN(tsMs)) return "—";
+  return formatTs(tsMs, style).replace(/\s+PT$/, "");
 }
 
 /**
@@ -137,26 +150,25 @@ export function fmtAgoTs(tsMs: number | null | undefined): string {
   return fmtAgo(Math.floor(sec / 60));
 }
 
-/** "Today" / "Yesterday" / weekday / short date — tz-aware. */
-export function fmtRelativeDay(tsMs: number, opts?: { tz?: string }): string {
-  const tz = opts?.tz ?? getViewerTz();
-  const target = new Date(tsMs);
-  const now = new Date();
+/** "Today" / "Yesterday" / weekday / short date — PT-anchored. */
+export function fmtRelativeDay(tsMs: number): string {
   const dayKey = (d: Date) =>
     d.toLocaleDateString("sv-SE", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-      timeZone: tz,
+      timeZone: PT_TZ,
     });
+  const target = new Date(tsMs);
+  const now = new Date();
   const targetDay = dayKey(target);
   const todayDay = dayKey(now);
   const yestDay = dayKey(new Date(now.getTime() - 86_400_000));
   if (targetDay === todayDay) return "Today";
   if (targetDay === yestDay) return "Yesterday";
   const daysApart = Math.abs(now.getTime() - target.getTime()) / 86_400_000;
-  if (daysApart < 7) return formatTs(tsMs, "date-weekday", opts);
-  return formatTs(tsMs, "date-short", opts);
+  if (daysApart < 7) return formatTs(tsMs, "date-weekday");
+  return formatTs(tsMs, "date-short");
 }
 
 /** "MM:SS" or "HH:MM:SS" — clock-style duration for precision contexts. */

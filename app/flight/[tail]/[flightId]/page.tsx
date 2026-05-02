@@ -11,8 +11,7 @@ import { fleetHex } from "@/lib/seed";
 import { getFlightById, parseFlightId } from "@/lib/flights";
 import { SS_TOKENS } from "@/lib/tokens";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
-import { LocalTime } from "@/components/LocalTime";
-import { fmtDurationHuman } from "@/lib/time";
+import { fmtDurationHuman, formatTs } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -154,8 +153,7 @@ export default async function FlightSharePage({ params }: Props) {
           alignSelf: "flex-start",
         }}
       >
-        Completed flight ·{" "}
-        <LocalTime ts={session.start_ts} style="date-short" /> ·{" "}
+        Completed flight · {formatTs(session.start_ts, "date-short")} ·{" "}
         {fmtDurationHuman(session.duration_s)}
       </div>
 
@@ -176,14 +174,8 @@ export default async function FlightSharePage({ params }: Props) {
             gap: 12,
           }}
         >
-          <KV
-            label="FIRST SEEN"
-            value={<LocalTime ts={session.start_ts} style="datetime" />}
-          />
-          <KV
-            label="LAST SEEN"
-            value={<LocalTime ts={session.end_ts} style="datetime" />}
-          />
+          <KV label="FIRST SEEN" value={formatTs(session.start_ts, "datetime")} />
+          <KV label="LAST SEEN" value={formatTs(session.end_ts, "datetime")} />
           <KV label="DURATION" value={fmtDurationHuman(session.duration_s)} />
           <KV label="SAMPLES" value={String(session.sample_count)} />
           <KV
@@ -276,7 +268,7 @@ function Missing({ tail }: { tail: string }) {
   );
 }
 
-function KV({ label, value }: { label: string; value: React.ReactNode }) {
+function KV({ label, value }: { label: string; value: string }) {
   return (
     <div
       style={{
