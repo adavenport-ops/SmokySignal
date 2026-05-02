@@ -155,20 +155,13 @@ user value visible at first paint.
 - **Status:** Live. Reads `meta:last_sample_ts`; `lib/tracks.ts`
   writes it on every snapshot.
 
-### N8. Region selector (Puget Sound / counties / All WA)
+### N8. Region selector (Puget Sound / counties / All WA) ✓ SHIPPED (P10 #28)
 - **Description:** Dropdown in `/radar` header letting riders pivot
   the map between Puget Sound (default), Pierce / Snohomish / Spokane
   counties, or All Washington. Localstorage-backed pref, no accounts.
   Map flies to the chosen region; heat-map data per-region filter is
   follow-up (needs `lib/hotzones.ts` extension).
-- **Why it matters:** Single biggest UX upgrade in P10. Riders
-  outside Puget Sound (Spokane in particular) couldn't see their
-  area until this shipped.
-- **Effort:** M
-- **Risk:** low.
-- **Brand tension:** none.
-- **Status:** in-flight as P10 PR #28 (gate failed on size, awaiting
-  review).
+- **Status:** Live. Spokane riders open to Spokane.
 
 ### N9. Auto-zoom radar to rider's location ✓ SHIPPED (P10 #25)
 - **Description:** First time geolocation resolves on `/radar`,
@@ -201,17 +194,14 @@ user value visible at first paint.
   (P1 a11y in the audit). Manifest itself was already valid.
 - **Status:** Live.
 
-### N13. Nashville geo-fence (hot-zones aggregator)
+### N13. Nashville geo-fence (hot-zones aggregator) ✓ SHIPPED (P10 #27)
 - **Description:** Tighten `inRegion()` bounding box from "whole-state"
   (45–49.5°N, -125 to -116°W) to Puget-Sound-tight (default 47.6,
   -122.3, 80nm). Envvar-overridable: `SS_REGION_LAT/LON/NM`. Audit
   found WSP Smokey 3 (N2446X) had ~1028 eastern-WA samples polluting
   the heatmap. Details: `/tmp/prompt10-nashville-investigation.json`.
-- **Effort:** XS (1 file, +21/-6).
-- **Risk:** low.
-- **Brand tension:** none.
-- **Status:** in-flight as P10 PR #27 (`lib/hotzones.ts` is
-  deny-listed for auto-merge — manual review required).
+- **Status:** Live. Tri-Cities deployments no longer leak into the
+  Puget Sound heatmap.
 
 ### N14. Historical context line on home ✓ SHIPPED (P9 #20)
 - **Description:** Mono caption under the Hero pill telling the
@@ -220,6 +210,55 @@ user value visible at first paint.
   weeks." / "usually up by now. running late tonight." / "quiet hour.
   usually clear."
 - **Status:** Live. Hides cleanly when predictor is still learning.
+
+### N15. Per-plane patrol heatmap on `/plane/[tail]` ✓ SHIPPED (P11 #33, #34)
+- **Description:** New "Where this plane patrols" card on the plane
+  detail page showing a 30-day heatmap of just that tail's recorded
+  positions. Auto-fits bounds to the plane's actual envelope (cap
+  zoom 11) so a Tri-Cities-deployed Smokey opens centered on
+  Tri-Cities, not Puget Sound. Server-side aggregator at
+  `lib/per-plane-heatmap.ts` + API at `/api/plane/[tail]/heatmap`
+  with 6h KV cache, lazy-filled.
+- **Status:** Live.
+
+### N16. Click-to-follow plane on `/radar` ✓ SHIPPED (P11 #30)
+- **Description:** Click an aircraft chevron and the map flies to
+  it + re-centers as the plane moves. 200 px screen-center threshold
+  prevents jitter on small orbit deltas. Popup shows tail/nickname
+  + "View detail" link to `/plane/[tail]`. Click empty map (or
+  manual pan/zoom) exits follow mode.
+- **Status:** Live.
+
+### N17. Unified operator/tail filter on `/radar` ✓ SHIPPED (P11 #36)
+- **Description:** Lifted the existing heat-zone filter (operator,
+  tail-set, region) into `lib/radar-filter.ts` and made it apply to
+  aircraft markers too — flipping "Smokey only" or "WSP only" in
+  the chevron now hides non-matching markers as well as non-matching
+  heat zones. CustomEvent fan-out keeps both layers in sync. Region
+  filter intentionally stays server-side (heat-aggregation only)
+  because rider-local marker visibility shouldn't depend on the
+  aggregation envelope.
+- **Status:** Live.
+
+### N18. Dashboard restoration + ProximityFlash ✓ SHIPPED (P11 #31, #32, #35)
+- **Description:** `/dash` is back in the tab bar (gauge icon,
+  between Radar and Activity). Speedometer card removed per the no-
+  speed-collection stance. NearestCard expanded to a top-3 list of
+  closest airborne planes (each row links to `/plane/[tail]`). New
+  ProximityFlash component renders an ambient amber radial pulse
+  whenever a smokey- or patrol-role bird is within 5 nm; transport
+  planes don't trigger it.
+- **Status:** Live.
+
+### N19. Rider-defined geofences (foundation) ✓ SHIPPED (P11 #37)
+- **Description:** New "+" button on `/radar` drops a 5 nm circular
+  geofence at the rider's current position (label prompt). Zones
+  render as dashed sky-tinted circles under the aircraft layer; tap
+  inside a zone (where no aircraft is) to remove it after a confirm
+  prompt. localStorage-only (`ss_user_zones`) — no accounts. Push-
+  notification integration (zone-entry alerts) deliberately deferred:
+  it requires server-side state and lands in a follow-up PR.
+- **Status:** Live for local rendering + manage. Push wiring queued.
 
 ## Tier 2 — Next (Q3 2026)
 
@@ -836,3 +875,11 @@ The autonomous prompts in `Prompts/` already encode the working pattern
     section.
   - Tightened MN5 wording to distinguish mainstream tech press from
     rider-community press (welcome).
+- 2026-05-01: Post-P11 update —
+  - Marked N8 (region selector) and N13 (Nashville geo-fence) as
+    ✓ SHIPPED — both cleared review during/after P11 kickoff.
+  - Added N15 (per-plane patrol heatmap), N16 (click-to-follow),
+    N17 (unified operator/tail filter — markers + heat), N18
+    (dashboard restoration + ProximityFlash), N19 (rider-defined
+    geofences foundation) — all shipped in P11. Push integration
+    for N19 deferred (requires server-side state).
