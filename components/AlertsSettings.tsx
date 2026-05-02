@@ -26,7 +26,14 @@ import {
 
 type LoadState = "loading" | "ready";
 
-export function AlertsSettings() {
+export type TailOption = {
+  tail: string;
+  nickname: string | null;
+  operator: string;
+  role: string;
+};
+
+export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] }) {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [supported, setSupported] = useState(true);
   const [contextOk, setContextOk] = useState<{
@@ -278,6 +285,111 @@ export function AlertsSettings() {
               title="All aircraft"
               body="Every wing in the air."
             />
+          </Section>
+
+          {/* Tails — optional allow-list. Empty = all tails (subject to other
+              filters). Each row toggles a tail in/out of prefs.tails. */}
+          <Section eyebrow="Tails">
+            <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: 0, lineHeight: 1.45 }}>
+              Pick specific tails to follow. Leave all unchecked to hear about
+              every bird that passes the tier filter.
+            </p>
+            <div
+              className="ss-mono"
+              style={{ fontSize: 10.5, color: SS_TOKENS.fg2, marginTop: 8, marginBottom: 6, letterSpacing: ".06em" }}
+            >
+              {!prefs.tails || prefs.tails.length === 0
+                ? "ALL TAILS"
+                : `${prefs.tails.length} TAIL${prefs.tails.length === 1 ? "" : "S"}`}
+            </div>
+            {registry.length === 0 ? (
+              <p style={{ fontSize: 12, color: SS_TOKENS.fg2, margin: 0 }}>
+                Registry unavailable.
+              </p>
+            ) : (
+              <div
+                role="group"
+                aria-label="Per-tail allow-list"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  border: `.5px solid ${SS_TOKENS.hairline}`,
+                  borderRadius: 8,
+                  overflow: "hidden",
+                }}
+              >
+                {registry.map((t, i) => {
+                  const checked =
+                    Array.isArray(prefs.tails) &&
+                    prefs.tails.includes(t.tail.toUpperCase());
+                  return (
+                    <label
+                      key={t.tail}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "8px 12px",
+                        borderBottom:
+                          i === registry.length - 1
+                            ? 0
+                            : `.5px solid ${SS_TOKENS.hairline}`,
+                        cursor: "pointer",
+                        background: checked ? SS_TOKENS.bg2 : "transparent",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          const upper = t.tail.toUpperCase();
+                          const current = Array.isArray(prefs.tails)
+                            ? prefs.tails
+                            : [];
+                          const next = e.target.checked
+                            ? Array.from(new Set([...current, upper]))
+                            : current.filter((x) => x !== upper);
+                          // Empty array → drop the field so dispatcher
+                          // sees "no constraint" cleanly.
+                          persistPrefs({
+                            tails: next.length > 0 ? next : undefined,
+                          });
+                        }}
+                        style={{ flexShrink: 0 }}
+                      />
+                      <span
+                        className="ss-mono"
+                        style={{ fontSize: 12, fontWeight: 600, minWidth: 60 }}
+                      >
+                        {t.tail}
+                      </span>
+                      {t.nickname && (
+                        <span
+                          style={{
+                            fontSize: 12,
+                            color: SS_TOKENS.fg1,
+                            fontStyle: "italic",
+                          }}
+                        >
+                          &ldquo;{t.nickname}&rdquo;
+                        </span>
+                      )}
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: SS_TOKENS.fg2,
+                          marginLeft: "auto",
+                          textTransform: "uppercase",
+                          letterSpacing: ".04em",
+                        }}
+                      >
+                        {t.role}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
           </Section>
 
           {/* Zones (placeholder — per-zone opt-in needs hot-zone load; today is 'any') */}

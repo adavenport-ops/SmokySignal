@@ -98,6 +98,7 @@ export async function dispatchTakeoff(
     const skip = shouldSkip(
       stored.prefs,
       args.role,
+      args.tail,
       args.lat,
       args.lon,
       aircraftZone,
@@ -150,12 +151,18 @@ function matchesUserZone(
 function shouldSkip(
   prefs: AlertPrefs,
   role: FleetRole,
+  tail: string,
   lat: number | null,
   lon: number | null,
   aircraftZone: string | null,
 ): boolean {
   // tier
   if (prefs.tier === "alert_only" && !ALERT_ROLES.has(role)) return true;
+  // tail allow-list — applied AFTER tier so a rider asking for "all
+  // tiers, only N305DK" still gets every transition for that tail.
+  if (Array.isArray(prefs.tails) && prefs.tails.length > 0) {
+    if (!prefs.tails.includes(tail.toUpperCase())) return true;
+  }
   // zone — predefined list AND/OR user-defined geofences. Any explicit
   // zone constraint imposes the gate; matching either kind passes it.
   // Empty constraints (no predefined + no user zones) means "any" — no gate.

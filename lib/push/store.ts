@@ -77,7 +77,23 @@ function mergePrefs(partial?: Partial<AlertPrefs>): AlertPrefs {
   };
   const userZones = sanitizeUserZones(partial.userZones);
   if (userZones !== undefined) merged.userZones = userZones;
+  const tails = sanitizeTails(partial.tails);
+  if (tails !== undefined) merged.tails = tails;
   return merged;
+}
+
+function sanitizeTails(v: unknown): string[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out: string[] = [];
+  for (const t of v) {
+    if (typeof t !== "string") continue;
+    const upper = t.trim().toUpperCase();
+    // Tail format is loosely "N" + 1-5 alphanumerics. Permissive — we
+    // intersect with the registry at dispatch time so noise is harmless.
+    if (/^N[0-9A-Z]{1,5}$/.test(upper)) out.push(upper);
+  }
+  // Cap at 32 tails per subscriber — generous given our ~16-tail registry.
+  return Array.from(new Set(out)).slice(0, 32);
 }
 
 function clampHour(v: unknown, fallback: number): number {
