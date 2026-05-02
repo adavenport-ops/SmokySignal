@@ -1,6 +1,7 @@
 import { AlertsSettings } from "@/components/AlertsSettings";
+import { ContrastSetting } from "@/components/ContrastSetting";
 import { TimeFormatSetting } from "@/components/TimeFormatSetting";
-import { getTimeFormatPref } from "@/lib/user-prefs";
+import { getContrastPref, getTimeFormatPref } from "@/lib/user-prefs";
 import { getRegistry } from "@/lib/registry";
 
 export const metadata = {
@@ -11,8 +12,9 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AlertsPage() {
-  const [timeFormat, registry] = await Promise.all([
+  const [timeFormat, contrast, registry] = await Promise.all([
     Promise.resolve(getTimeFormatPref()),
+    Promise.resolve(getContrastPref()),
     getRegistry(),
   ]);
   return (
@@ -28,11 +30,20 @@ export default async function AlertsPage() {
       <div
         style={{
           maxWidth: 460,
-          margin: "16px auto 80px",
+          margin: "16px auto 0",
           padding: "0 18px",
         }}
       >
         <TimeFormatSetting current={timeFormat} />
+      </div>
+      <div
+        style={{
+          maxWidth: 460,
+          margin: "16px auto 80px",
+          padding: "0 18px",
+        }}
+      >
+        <ContrastSetting current={contrast} />
       </div>
     </>
   );

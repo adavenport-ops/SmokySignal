@@ -26,6 +26,18 @@
   --ss-hairline-2: rgba(255, 255, 255, 0.10);
 }
 
+/* High-contrast variant — stays dark, lifts secondary text + hairline
+   opacity so meta-lines and dividers stay legible in glare or low-vision
+   conditions. Brand alert/clear/sky/warn semantic colors NOT changed —
+   they're the same hue everyone learns to recognize on the radar. */
+body[data-contrast="high"] {
+  --ss-fg1: #D0D5DD;
+  --ss-fg2: #B0B7C2;
+  --ss-fg3: #6B7380;
+  --ss-hairline: rgba(255, 255, 255, 0.14);
+  --ss-hairline-2: rgba(255, 255, 255, 0.22);
+}
+
 html,
 body {
   background: var(--ss-bg0);

@@ -18,3 +18,18 @@ export function getTimeFormatPref(): TimeFormat {
 export function isHour12(pref: TimeFormat): boolean {
   return pref === "12";
 }
+
+// Contrast variant. We do NOT ship light mode — high-contrast stays
+// dark, just lifts secondary text + hairline opacity so WCAG-AAA-leaning
+// riders (or daytime-glare conditions) read the meta lines and dividers
+// reliably. Stored via the same cookie pattern as TIME_FORMAT_COOKIE so
+// the SSR/CSR rendered HTML stays identical.
+export const CONTRAST_COOKIE = "ss_contrast";
+export type ContrastMode = "normal" | "high";
+export const DEFAULT_CONTRAST: ContrastMode = "normal";
+
+/** Read the rider's preferred contrast mode. Server Components only. */
+export function getContrastPref(): ContrastMode {
+  const v = cookies().get(CONTRAST_COOKIE)?.value;
+  return v === "high" ? "high" : DEFAULT_CONTRAST;
+}
