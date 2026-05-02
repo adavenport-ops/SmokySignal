@@ -24,7 +24,13 @@ const FALLBACK_LEARNING: LearningState = {
   stillLearning: true,
 };
 
-export function PredictionCard({ learning }: { learning?: LearningState }) {
+export function PredictionCard({
+  learning,
+  hour12 = false,
+}: {
+  learning?: LearningState;
+  hour12?: boolean;
+}) {
   const [data, setData] = useState<PredictorOutput | null>(null);
 
   useEffect(() => {
@@ -91,7 +97,7 @@ export function PredictionCard({ learning }: { learning?: LearningState }) {
             className="ss-mono"
             style={{ fontSize: 12, color: SS_TOKENS.fg1, marginTop: 4 }}
           >
-            {fmtPredictionTimeRange(top.window_start, top.window_end)}
+            {fmtPredictionTimeRange(top.window_start, top.window_end, hour12)}
           </div>
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -169,10 +175,14 @@ function fmtPredictionDayLabel(iso: string): string {
   return formatTs(ts, "date-weekday");
 }
 
-function fmtPredictionTimeRange(startIso: string, endIso: string): string {
+function fmtPredictionTimeRange(
+  startIso: string,
+  endIso: string,
+  hour12: boolean,
+): string {
   const start = new Date(startIso).getTime();
   const end = new Date(endIso).getTime();
-  return `${formatTsBare(start, "hour-min")} – ${formatTs(end, "hour-min")}`;
+  return `${formatTsBare(start, "hour-min", { hour12 })} – ${formatTs(end, "hour-min", { hour12 })}`;
 }
 
 function confidenceLabel(c: PredictionWindow["confidence_level"]): string {

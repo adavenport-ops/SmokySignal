@@ -13,6 +13,7 @@ import { SS_TOKENS } from "@/lib/tokens";
 import { LoginForm } from "./LoginForm";
 import { Editor } from "./Editor";
 import { Logo } from "@/components/brand/Logo";
+import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,8 @@ export default async function AdminPage({
       getRecentFlights(20),
     ]);
 
+  const hour12 = isHour12(getTimeFormatPref());
+
   return (
     <Editor
       registry={registry}
@@ -52,6 +55,7 @@ export default async function AdminPage({
       flags={{ speedWarningEnabled }}
       flights={flights}
       flash={{ error: searchParams.error, saved: searchParams.saved }}
+      hour12={hour12}
     />
   );
 }

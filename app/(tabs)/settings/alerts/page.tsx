@@ -1,4 +1,6 @@
 import { AlertsSettings } from "@/components/AlertsSettings";
+import { TimeFormatSetting } from "@/components/TimeFormatSetting";
+import { getTimeFormatPref } from "@/lib/user-prefs";
 
 export const metadata = {
   title: "Alerts",
@@ -8,5 +10,19 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default function AlertsPage() {
-  return <AlertsSettings />;
+  const timeFormat = getTimeFormatPref();
+  return (
+    <>
+      <AlertsSettings />
+      <div
+        style={{
+          maxWidth: 460,
+          margin: "16px auto 80px",
+          padding: "0 18px",
+        }}
+      >
+        <TimeFormatSetting current={timeFormat} />
+      </div>
+    </>
+  );
 }

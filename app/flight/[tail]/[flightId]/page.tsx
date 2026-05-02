@@ -12,6 +12,7 @@ import { getFlightById, parseFlightId } from "@/lib/flights";
 import { SS_TOKENS } from "@/lib/tokens";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { fmtDurationHuman, formatTs } from "@/lib/time";
+import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,7 @@ export default async function FlightSharePage({ params }: Props) {
   }
 
   const { session, points } = flight;
+  const hour12 = isHour12(getTimeFormatPref());
 
   return (
     <main
@@ -174,8 +176,8 @@ export default async function FlightSharePage({ params }: Props) {
             gap: 12,
           }}
         >
-          <KV label="FIRST SEEN" value={formatTs(session.start_ts, "datetime")} />
-          <KV label="LAST SEEN" value={formatTs(session.end_ts, "datetime")} />
+          <KV label="FIRST SEEN" value={formatTs(session.start_ts, "datetime", { hour12 })} />
+          <KV label="LAST SEEN" value={formatTs(session.end_ts, "datetime", { hour12 })} />
           <KV label="DURATION" value={fmtDurationHuman(session.duration_s)} />
           <KV label="SAMPLES" value={String(session.sample_count)} />
           <KV

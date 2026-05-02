@@ -10,7 +10,13 @@ import { pacificNow } from "@/lib/time";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
-export function ForecastGridView({ grid }: { grid: ForecastGrid }) {
+export function ForecastGridView({
+  grid,
+  hour12 = false,
+}: {
+  grid: ForecastGrid;
+  hour12?: boolean;
+}) {
   const maxProb = useMemo(
     () => Math.max(...grid.cells.map((c) => c.probability), 0.01),
     [grid.cells],
@@ -69,7 +75,7 @@ export function ForecastGridView({ grid }: { grid: ForecastGrid }) {
         </div>
       </div>
 
-      <CellDetail cell={selected} />
+      <CellDetail cell={selected} hour12={hour12} />
     </div>
   );
 }
@@ -142,7 +148,7 @@ function heatColor(p: number, max: number): string {
   return `rgba(245,184,64,${alpha.toFixed(3)})`;
 }
 
-function CellDetail({ cell }: { cell: ForecastCell | null }) {
+function CellDetail({ cell, hour12 }: { cell: ForecastCell | null; hour12: boolean }) {
   if (!cell) {
     return (
       <div
@@ -187,7 +193,7 @@ function CellDetail({ cell }: { cell: ForecastCell | null }) {
             letterSpacing: ".04em",
           }}
         >
-          {DAYS[cell.dow]} · {fmtHour(cell.hour)} PT
+          {DAYS[cell.dow]} · {fmtHour(cell.hour, hour12)} PT
         </span>
         <span
           className="ss-mono"
@@ -221,6 +227,10 @@ function CellDetail({ cell }: { cell: ForecastCell | null }) {
   );
 }
 
-function fmtHour(h: number): string {
-  return `${String(h).padStart(2, "0")}:00`;
+function fmtHour(h: number, hour12: boolean): string {
+  if (!hour12) return `${String(h).padStart(2, "0")}:00`;
+  if (h === 0) return "12:00 AM";
+  if (h < 12) return `${h}:00 AM`;
+  if (h === 12) return "12:00 PM";
+  return `${h - 12}:00 PM`;
 }
