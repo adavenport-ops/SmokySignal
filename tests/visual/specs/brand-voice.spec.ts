@@ -6,7 +6,17 @@ import * as path from "node:path";
 const ROOT = path.resolve(__dirname, "..");
 
 // Lifted from BRAND.md §3 voice rules + Prompt 4 banned-vocab list.
-const BANNED_PATTERNS: Array<{ pattern: RegExp; reason: string; allow?: RegExp }> = [
+//
+// The "emoji" matcher excludes a small set of glyphs that are part of the
+// SmokySignal design language and not actually emoji:
+//   ©          MapTiler / OpenStreetMap attribution
+//   ↗ ↘ ✦ ⚠   activity-feed kind icons (takeoff/landing/first-seen/squawk)
+//   ↑ ↓ →     directional arrow glyphs used in chrome
+// Adding allowed symbols here is preferred over weakening the regex so we
+// still catch genuine emoji in copy.
+const ALLOWED_SYMBOLS = /[©↗↘↑↓→✦⚠]/;
+
+const BANNED_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
   { pattern: /[\p{Extended_Pictographic}]/u, reason: "emoji forbidden in rider-facing copy" },
   { pattern: /!/, reason: "exclamation mark forbidden" },
   { pattern: /\bpolice\b/i, reason: 'use "WSP" or "agency", never "police"' },
@@ -43,6 +53,11 @@ for (const route of RIDER_ROUTES) {
       const re = new RegExp(pattern.source, flags);
       let m: RegExpExecArray | null;
       while ((m = re.exec(text)) !== null) {
+        // Skip allow-listed glyphs (©, design-language arrows, etc.).
+        if (ALLOWED_SYMBOLS.test(m[0])) {
+          if (m.index === re.lastIndex) re.lastIndex++;
+          continue;
+        }
         const context = text.slice(
           Math.max(0, m.index - 30),
           m.index + m[0].length + 30,
