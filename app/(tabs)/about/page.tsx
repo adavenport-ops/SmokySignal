@@ -52,6 +52,16 @@ export default async function AboutPage() {
       </header>
 
       <Section eyebrow="What this is">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: 18,
+            paddingTop: 8,
+          }}
+        >
+          <Logo size={80} wordmark />
+        </div>
         <p
           style={{
             fontSize: 22,
