@@ -10,6 +10,8 @@ import { computeStatus } from "@/lib/status";
 import { StatusPill } from "./StatusPill";
 import { SpottedButton } from "./SpottedButton";
 import { HotZoneLayer } from "./HotZoneLayer";
+import { UserZoneLayer } from "./UserZoneLayer";
+import { addUserZone } from "@/lib/user-zones";
 import { HelpIcon } from "./HelpIcon";
 import { Tooltip } from "./Tooltip";
 import { FreshnessLabel } from "./FreshnessLabel";
@@ -163,6 +165,11 @@ export function RadarShell({
         bottomBoost={airborne.length > 0 ? 130 : 0}
         learning={learning}
       />
+      <UserZoneLayer map={map} />
+      <AddZoneButton
+        rider={rider}
+        onAdded={(label) => flashToast(setToast, `Zone "${label}" added`)}
+      />
       <DistanceRingsToggle
         active={showRings}
         onToggle={() => setShowRings((v) => !v)}
@@ -259,6 +266,66 @@ function flashToast(
 ) {
   setter(message);
   setTimeout(() => setter(null), durationMs);
+}
+
+// "+" floating button — drops a 5nm geofence at the rider's current
+// position. Disabled until geolocation resolves so we never save a
+// zone at the default Puget Sound centroid by accident. Long-tap is
+// intentionally not used here since the radar map below already swallows
+// long-press gestures for chevron interactions.
+function AddZoneButton({
+  rider,
+  onAdded,
+}: {
+  rider: RiderPos | null;
+  onAdded: (label: string) => void;
+}) {
+  const disabled = !rider;
+  return (
+    <Tooltip side="right" content="Add a 5nm zone at your location">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => {
+          if (!rider) return;
+          const label =
+            window.prompt(
+              "Zone label (e.g. Home, Meeting point):",
+              "Zone",
+            )?.trim() || "Zone";
+          const z = addUserZone({
+            lat: rider.lat,
+            lon: rider.lon,
+            radiusNm: 5,
+            label,
+          });
+          onAdded(z.label);
+        }}
+        aria-label="Add geofence at your location"
+        style={{
+          position: "absolute",
+          top: 60,
+          left: 64,
+          width: 28,
+          height: 28,
+          borderRadius: "50%",
+          border: `.5px solid ${SS_TOKENS.hairline2}`,
+          background: "rgba(11,13,16,.7)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          color: disabled ? SS_TOKENS.fg2 : SS_TOKENS.fg0,
+          fontSize: 16,
+          fontWeight: 700,
+          lineHeight: 1,
+          opacity: disabled ? 0.5 : 1,
+          cursor: disabled ? "not-allowed" : "pointer",
+          zIndex: 10,
+        }}
+      >
+        +
+      </button>
+    </Tooltip>
+  );
 }
 
 function Toast({
