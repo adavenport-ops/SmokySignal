@@ -49,20 +49,29 @@ export async function GET(req: Request) {
   const { regionId, bbox } = resolveBbox(url);
   const tails = parseList(url.searchParams.get("tails"));
   const operator = url.searchParams.get("operator")?.trim() ?? null;
+  // "Smokey" filter resolves through here as ?roles=smokey,patrol — the
+  // registry lookup expands the role set to the current matching tails
+  // so the rider's filter follows fleet membership changes automatically.
+  const roles = parseList(url.searchParams.get("roles")).map((r) =>
+    r.toLowerCase(),
+  );
 
   const [allZones, lastRefresh] = await Promise.all([
     getHotZonesCached(),
     getLastHotZoneRefresh(),
   ]);
 
-  // Build effective tail set from operator if specified.
+  // Build effective tail set from operator + roles if specified.
   let allowedTails: Set<string> | null = null;
-  if (tails.length > 0 || operator) {
+  if (tails.length > 0 || operator || roles.length > 0) {
     allowedTails = new Set(tails);
-    if (operator) {
+    if (operator || roles.length > 0) {
       const registry = await getRegistry();
       for (const f of registry) {
-        if (f.operator === operator) allowedTails.add(f.tail);
+        if (operator && f.operator === operator) allowedTails.add(f.tail);
+        if (roles.length > 0 && roles.includes(String(f.role).toLowerCase())) {
+          allowedTails.add(f.tail);
+        }
       }
     }
   }
@@ -80,6 +89,7 @@ export async function GET(req: Request) {
       region_id: regionId,
       filter_tails: tails,
       filter_operator: operator,
+      filter_roles: roles,
       total_unfiltered: allZones.length,
     },
     {

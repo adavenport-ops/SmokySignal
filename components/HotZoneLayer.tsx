@@ -18,7 +18,7 @@ import {
   DEFAULT_RADAR_FILTER,
   OPERATORS,
   RADAR_FILTER_CHANGE_EVENT,
-  SMOKY_TAILS,
+  SMOKY_FILTER_ROLES,
   readRadarFilter,
   writeRadarFilter,
   type RadarFilter as Filter,
@@ -44,7 +44,11 @@ function buildQueryString(f: Filter, regionId: RegionId): string {
   // when both are present.
   p.set("region_id", regionId);
   p.set("region", f.region);
-  if (f.showMode === "smoky") p.set("tails", SMOKY_TAILS.join(","));
+  // "Smokey" filter is role-based now (smokey + patrol). Server resolves
+  // the role list to the matching tail set via the registry, so adding
+  // a new fixed-wing smokey to the registry automatically widens the
+  // filter without a config change.
+  if (f.showMode === "smoky") p.set("roles", SMOKY_FILTER_ROLES.join(","));
   if (f.showMode === "operator" && f.operator) p.set("operator", f.operator);
   return p.toString();
 }
