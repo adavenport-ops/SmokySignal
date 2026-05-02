@@ -18,6 +18,7 @@ import { Tooltip } from "./Tooltip";
 import { Logo } from "./brand/Logo";
 import { FreshnessLabel } from "./FreshnessLabel";
 import { ArmAlertsCallout } from "./ArmAlertsCallout";
+import { AlertsStateChip } from "./AlertsStateChip";
 
 // Hide the activity strip when the most recent event is older than this —
 // a stale "Guardian One up · 8 hours ago" looks more like a bug than a
@@ -149,6 +150,7 @@ export function Glanceable({
           >
             LIVE
           </span>
+          <AlertsStateChip />
         </div>
         <Tooltip
           side="bottom"
