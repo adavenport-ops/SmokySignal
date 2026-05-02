@@ -45,8 +45,10 @@ Audience: Puget Sound motorcyclists. Brand voice: dark theme, mono numerics,
 - `lib/hotzones.ts` — 30-day grid aggregate; geo-fenced via `SS_REGION_*` env vars
 - `lib/push/*` — VAPID push pipeline (subscribe / dispatcher / dedupe / quiet hours)
 - `lib/radar-filter.ts` — shared filter state (operator/tail/region) for /radar
-- `lib/user-zones.ts` — rider-defined geofences (localStorage)
-- `lib/user-prefs.ts` — cookie-backed display prefs (12/24-hour)
+- `lib/user-zones.ts` — rider-defined geofences (localStorage); managed at `/settings/zones`
+- `lib/user-prefs.ts` — cookie-backed display prefs (12/24-hour, normal/high contrast)
+- `lib/voice-mode.ts` — speechSynthesis readback toggle (foreground only)
+- `lib/proximity-alert.ts` — foreground proximity ping when alert-tier tail nearby
 - `app/(tabs)/` — main app routes (home, radar, dash, plane, settings, etc.)
 - `app/api/cron/` — scheduled refreshes (snapshot, hotzones, predictor)
 - `public/sw.js` — service worker (push-only, no caching)
@@ -54,11 +56,24 @@ Audience: Puget Sound motorcyclists. Brand voice: dark theme, mono numerics,
 ## Privacy posture
 
 - No accounts. Rider-side state lives in localStorage (zones, dismissals,
-  region pref) or cookies (time-format pref).
+  region pref, proximity threshold, voice mode) or cookies (time-format
+  pref, contrast pref).
 - The only server-side identifier is the push subscription endpoint —
   required by Web Push, treated as PII-equivalent in the schema.
 - Geolocation is browser-only, never persisted server-side.
 - Speed data: device reports it, we do not display or store it.
+
+## Operational notes
+
+- OpenSky historical backfill (`scripts/backfill.ts`) is **deprecated**
+  as of 2026-05-02 — the rate-limit window is exhausted on this cred
+  and adsb.fi has no historical equivalent. The 30-day track tank fills
+  forward via the live cron only. OpenSky is still used as a live
+  states-snapshot fallback in `lib/snapshot.ts`.
+- Vercel preview-scope env vars for VAPID + ADMIN_PASSCODE are
+  intentionally empty — `vercel env pull` cannot decrypt sensitive
+  vars from production. Generate fresh values manually if you need
+  push to work in preview deploys.
 
 ## Brand voice
 
