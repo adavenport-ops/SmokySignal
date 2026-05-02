@@ -23,6 +23,8 @@ import {
   writeRadarFilter,
   type RadarFilter as Filter,
 } from "@/lib/radar-filter";
+import { REGION_CHANGE_EVENT, getRegion } from "@/lib/region-pref";
+import type { RegionId } from "@/lib/regions";
 import { Tooltip } from "./Tooltip";
 import { LearningPanel } from "./LearningPanel";
 
@@ -34,8 +36,13 @@ const TABBAR_HEIGHT = 66;
 
 const DEFAULT_FILTER = DEFAULT_RADAR_FILTER;
 
-function buildQueryString(f: Filter): string {
+function buildQueryString(f: Filter, regionId: RegionId): string {
   const p = new URLSearchParams();
+  // region_id (rider's selector pref) takes precedence over the legacy
+  // chevron region toggle. The chevron toggle still informs the API via
+  // the `region` param for back-compat, but region_id wins server-side
+  // when both are present.
+  p.set("region_id", regionId);
   p.set("region", f.region);
   if (f.showMode === "smoky") p.set("tails", SMOKY_TAILS.join(","));
   if (f.showMode === "operator" && f.operator) p.set("operator", f.operator);
@@ -52,6 +59,7 @@ type Props = {
 export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
   const [enabled, setEnabled] = useState<boolean>(true);
   const [filter, setFilter] = useState<Filter>(DEFAULT_FILTER);
+  const [regionId, setRegionId] = useState<RegionId>("puget_sound");
   const [zones, setZones] = useState<HotZone[] | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   // Stable refs so the addLayerOnce closure (captured at attach time)
@@ -70,13 +78,20 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
     if (v === "0") setEnabled(false);
     else if (v === "1") setEnabled(true);
     setFilter(readRadarFilter());
+    setRegionId(getRegion());
     const onFilterChange = (e: Event) => {
       const detail = (e as CustomEvent<Filter>).detail;
       if (detail) setFilter(detail);
     };
+    const onRegionChange = (e: Event) => {
+      const detail = (e as CustomEvent<{ id: RegionId }>).detail;
+      setRegionId(detail?.id ?? getRegion());
+    };
     window.addEventListener(RADAR_FILTER_CHANGE_EVENT, onFilterChange);
+    window.addEventListener(REGION_CHANGE_EVENT, onRegionChange);
     return () => {
       window.removeEventListener(RADAR_FILTER_CHANGE_EVENT, onFilterChange);
+      window.removeEventListener(REGION_CHANGE_EVENT, onRegionChange);
     };
   }, []);
 
@@ -91,11 +106,11 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
     writeRadarFilter(filter);
   }, [filter]);
 
-  // Fetch (re-fetch when filter changes). Each request is small + edge-cached
-  // for 5 min so flipping filters is cheap.
+  // Fetch (re-fetch when filter or region pref changes). Each request is
+  // small + edge-cached for 5 min so flipping filters or region is cheap.
   useEffect(() => {
     let cancelled = false;
-    const qs = buildQueryString(filter);
+    const qs = buildQueryString(filter, regionId);
     (async () => {
       try {
         const r = await fetch(`/api/hotzones?${qs}`, { cache: "no-store" });
@@ -113,7 +128,7 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [filter]);
+  }, [filter, regionId]);
 
   // ── Effect A: add the source + heatmap layer once when the map is
   // ready. The previous version used map.once("idle", …), but `idle`

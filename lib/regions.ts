@@ -11,12 +11,24 @@ export type RegionId =
   | "spokane"
   | "all_wa";
 
+/** Bounding box for a region. `null` means unfiltered (whole-state view). */
+export type RegionBbox = {
+  latMin: number;
+  latMax: number;
+  lonMin: number;
+  lonMax: number;
+} | null;
+
 export type Region = {
   id: RegionId;
   label: string;
   centerLat: number;
   centerLon: number;
   zoomLevel: number;
+  /** BBox used by /api/hotzones to filter heat cells to this region.
+   *  Generous-but-bounded boxes — a Spokane rider should still see the
+   *  occasional Pullman or Cheney patrol, just not Puget Sound. */
+  bbox: RegionBbox;
 };
 
 export const REGIONS: Record<RegionId, Region> = {
@@ -26,6 +38,7 @@ export const REGIONS: Record<RegionId, Region> = {
     centerLat: 47.6,
     centerLon: -122.3,
     zoomLevel: 9,
+    bbox: { latMin: 46.5, latMax: 48.5, lonMin: -123.5, lonMax: -121.5 },
   },
   pierce: {
     id: "pierce",
@@ -33,6 +46,7 @@ export const REGIONS: Record<RegionId, Region> = {
     centerLat: 47.05,
     centerLon: -122.3,
     zoomLevel: 10,
+    bbox: { latMin: 46.7, latMax: 47.4, lonMin: -122.9, lonMax: -121.6 },
   },
   snohomish: {
     id: "snohomish",
@@ -40,6 +54,7 @@ export const REGIONS: Record<RegionId, Region> = {
     centerLat: 48.0,
     centerLon: -121.9,
     zoomLevel: 10,
+    bbox: { latMin: 47.65, latMax: 48.4, lonMin: -122.55, lonMax: -121.0 },
   },
   spokane: {
     id: "spokane",
@@ -47,6 +62,7 @@ export const REGIONS: Record<RegionId, Region> = {
     centerLat: 47.66,
     centerLon: -117.43,
     zoomLevel: 10,
+    bbox: { latMin: 47.2, latMax: 48.1, lonMin: -118.2, lonMax: -116.7 },
   },
   all_wa: {
     id: "all_wa",
@@ -54,6 +70,7 @@ export const REGIONS: Record<RegionId, Region> = {
     centerLat: 47.4,
     centerLon: -120.5,
     zoomLevel: 7,
+    bbox: null,
   },
 };
 

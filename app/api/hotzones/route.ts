@@ -5,21 +5,29 @@ import {
   type HotZone,
 } from "@/lib/hotzones";
 import { getRegistry } from "@/lib/registry";
+import { REGIONS, type RegionBbox, type RegionId } from "@/lib/regions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Rider-facing default region — Puget Sound bbox. Wider than the
-// hot-zone aggregate's defensive Pacific-NW envelope so we still see
-// Eastern WA enforcement when the user opts into the statewide view.
-const PUGET_SOUND = {
-  latMin: 46.5,
-  latMax: 48.5,
-  lonMin: -123.5,
-  lonMax: -121.5,
-} as const;
+// Resolve the rider-facing region selector → bbox. Accepts either the
+// new `region_id` query param (any RegionId from lib/regions.ts) or the
+// legacy `region` value ("puget_sound" | "all") for backward compat
+// with the chevron filter UI.
+function resolveBbox(url: URL): { regionId: RegionId; bbox: RegionBbox } {
+  const idParam = url.searchParams.get("region_id");
+  if (idParam && idParam in REGIONS) {
+    const id = idParam as RegionId;
+    return { regionId: id, bbox: REGIONS[id].bbox };
+  }
+  const legacy = url.searchParams.get("region");
+  if (legacy === "all") {
+    return { regionId: "all_wa", bbox: REGIONS.all_wa.bbox };
+  }
+  return { regionId: "puget_sound", bbox: REGIONS.puget_sound.bbox };
+}
 
-function inBbox(z: HotZone, b: typeof PUGET_SOUND): boolean {
+function inBbox(z: HotZone, b: NonNullable<RegionBbox>): boolean {
   return (
     z.lat >= b.latMin &&
     z.lat <= b.latMax &&
@@ -38,7 +46,7 @@ function parseList(raw: string | null): string[] {
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const region = url.searchParams.get("region") === "all" ? "all" : "puget_sound";
+  const { regionId, bbox } = resolveBbox(url);
   const tails = parseList(url.searchParams.get("tails"));
   const operator = url.searchParams.get("operator")?.trim() ?? null;
 
@@ -60,7 +68,7 @@ export async function GET(req: Request) {
   }
 
   const zones = allZones.filter((z) => {
-    if (region === "puget_sound" && !inBbox(z, PUGET_SOUND)) return false;
+    if (bbox && !inBbox(z, bbox)) return false;
     if (allowedTails && !z.tails.some((t) => allowedTails!.has(t))) return false;
     return true;
   });
@@ -69,7 +77,7 @@ export async function GET(req: Request) {
     {
       zones,
       last_refresh_ts: lastRefresh,
-      region,
+      region_id: regionId,
       filter_tails: tails,
       filter_operator: operator,
       total_unfiltered: allZones.length,
