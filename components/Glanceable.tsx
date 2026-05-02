@@ -103,15 +103,13 @@ export function Glanceable({
 
   return (
     <main
-      className="ss-hero-bg"
+      className="ss-hero-bg ss-page-narrow"
       style={{
         minHeight: "100dvh",
         padding: "12px 18px 100px",
         display: "flex",
         flexDirection: "column",
         gap: 16,
-        maxWidth: 460,
-        margin: "0 auto",
       }}
     >
       <HelpIcon />
