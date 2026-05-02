@@ -8,7 +8,6 @@ import maplibregl, {
   MapGeoJSONFeature,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useRouter } from "next/navigation";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { Aircraft, FleetRole } from "@/lib/types";
 import {
@@ -100,6 +99,12 @@ const EMPTY_SNAPSHOT: Snapshot = {
 
 const ANIM_MS = 1000;
 
+// Re-center the map on the followed plane only when it's drifted at least
+// this far (CSS px) from screen center — keeps the camera stable when the
+// plane is just orbiting near the middle of the viewport instead of
+// jittering on every snapshot.
+const FOLLOW_RECENTER_PX = 200;
+
 type RiderPos = { lat: number; lon: number };
 
 export default function RadarMap({
@@ -118,7 +123,6 @@ export default function RadarMap({
   regionId?: RegionId;
   onMapReady?: (map: MaplibreMap | null) => void;
 }) {
-  const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MaplibreMap | null>(null);
   const readyRef = useRef(false);
@@ -133,6 +137,12 @@ export default function RadarMap({
   // (the existing 5s loop), they don't change zoom.
   const didFirstRiderZoomRef = useRef<boolean>(false);
   const userInteractedAtRef = useRef<number>(0);
+  // Tail the map is currently "following" (click-to-follow). When set,
+  // applyAircraft re-centers on this plane each snapshot if it has
+  // drifted >FOLLOW_RECENTER_PX from screen center, and the rider
+  // auto-recenter loop is suppressed so the two don't fight.
+  const followedTailRef = useRef<string | null>(null);
+  const popupRef = useRef<maplibregl.Popup | null>(null);
   const onMapReadyRef = useRef(onMapReady);
   onMapReadyRef.current = onMapReady;
 
@@ -286,8 +296,16 @@ export default function RadarMap({
     map.on("load", onLoad);
 
     // Pause auto-recenter for 15s after any pan or zoom interaction.
-    const onUserInteract = () => {
+    // Distinguish true user gestures from programmatic flyTo/easeTo by the
+    // presence of `originalEvent` (only set for browser-driven events) —
+    // otherwise our own follow-mode flyTo would self-cancel.
+    const onUserInteract = (e?: { originalEvent?: unknown }) => {
       userInteractedAtRef.current = Date.now();
+      if (e?.originalEvent && followedTailRef.current) {
+        followedTailRef.current = null;
+        popupRef.current?.remove();
+        popupRef.current = null;
+      }
     };
     map.on("dragstart", onUserInteract);
     map.on("zoomstart", onUserInteract);
@@ -302,11 +320,56 @@ export default function RadarMap({
     const onClick = (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
       const feat = e.features?.[0];
       const tail = feat?.properties?.tail;
-      if (typeof tail === "string") router.push(`/plane/${tail}`);
+      if (typeof tail !== "string") return;
+      const pos = stateRef.current.toByTail.get(tail);
+      if (!pos) return;
+      followedTailRef.current = tail;
+      popupRef.current?.remove();
+      const meta = stateRef.current.metaByTail.get(tail);
+      const label = meta?.nickname ?? tail;
+      const popup = new maplibregl.Popup({
+        closeButton: true,
+        closeOnClick: false,
+        closeOnMove: false,
+        offset: 18,
+        className: "ss-plane-popup",
+      })
+        .setLngLat(pos)
+        .setHTML(
+          `<div style="font:600 12px/1.4 ui-monospace,Menlo,monospace;color:${SS_TOKENS.bg0}">` +
+            `<div>${label}</div>` +
+            `<a href="/plane/${tail}" style="color:${SS_TOKENS.sky};text-decoration:underline;font-weight:400">View detail</a>` +
+            `</div>`,
+        )
+        .addTo(map);
+      popup.on("close", () => {
+        if (followedTailRef.current === tail) {
+          followedTailRef.current = null;
+        }
+        if (popupRef.current === popup) popupRef.current = null;
+      });
+      popupRef.current = popup;
+      map.flyTo({
+        center: pos,
+        zoom: Math.max(map.getZoom(), 12),
+        duration: 600,
+      });
+    };
+    // Click on empty map (no aircraft hit) → exit follow mode.
+    const onMapClick = (e: MapMouseEvent) => {
+      if (!followedTailRef.current) return;
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ["aircraft"],
+      });
+      if (features.length > 0) return;
+      followedTailRef.current = null;
+      popupRef.current?.remove();
+      popupRef.current = null;
     };
     map.on("mouseenter", "aircraft", onMouseEnter);
     map.on("mouseleave", "aircraft", onMouseLeave);
     map.on("click", "aircraft", onClick);
+    map.on("click", onMapClick);
 
     return () => {
       readyRef.current = false;
@@ -318,6 +381,9 @@ export default function RadarMap({
       map.off("mouseenter", "aircraft", onMouseEnter);
       map.off("mouseleave", "aircraft", onMouseLeave);
       map.off("click", "aircraft", onClick);
+      map.off("click", onMapClick);
+      popupRef.current?.remove();
+      popupRef.current = null;
       onMapReadyRef.current?.(null);
       map.remove();
       mapRef.current = null;
@@ -387,11 +453,14 @@ export default function RadarMap({
   }, [regionId]);
 
   // Auto-recenter every 5s, paused for 15s after the user pans or zooms.
+  // Also paused while a plane is being followed — applyAircraft handles
+  // re-centering on the followed tail, and we don't want to fight it.
   useEffect(() => {
     if (!rider) return;
     const id = setInterval(() => {
       if (!readyRef.current || !mapRef.current) return;
       if (Date.now() - userInteractedAtRef.current < 15_000) return;
+      if (followedTailRef.current) return;
       const r = riderRef.current;
       if (!r) return;
       mapRef.current.easeTo({
@@ -525,6 +594,31 @@ export default function RadarMap({
       metaByTail: newMeta,
       startedAt: now,
     };
+
+    // Follow-mode recenter — once per snapshot, only when the followed plane
+    // has drifted >FOLLOW_RECENTER_PX from screen center. If the plane has
+    // dropped out of the snapshot (left the region, went offline), exit
+    // follow mode silently.
+    const followedTail = followedTailRef.current;
+    if (followedTail) {
+      const pos = newTo.get(followedTail);
+      if (pos) {
+        popupRef.current?.setLngLat(pos);
+        const screen = map.project(pos);
+        const canvas = map.getCanvas();
+        const cx = canvas.clientWidth / 2;
+        const cy = canvas.clientHeight / 2;
+        const dx = screen.x - cx;
+        const dy = screen.y - cy;
+        if (Math.hypot(dx, dy) > FOLLOW_RECENTER_PX) {
+          map.easeTo({ center: pos, duration: 600 });
+        }
+      } else {
+        followedTailRef.current = null;
+        popupRef.current?.remove();
+        popupRef.current = null;
+      }
+    }
 
     if (animRef.current) cancelAnimationFrame(animRef.current);
     const tick = () => {
