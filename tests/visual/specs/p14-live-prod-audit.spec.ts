@@ -401,4 +401,26 @@ test.describe("p14 live-prod audit", () => {
       screenshot,
     });
   });
+
+  test("11. learning panel reads 'the sky' not 'your sky' (P19 2.4)", async ({
+    page,
+  }) => {
+    await page.goto("/forecast", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1500);
+    const screenshot = await shot(page, "11-learning-panel-voice");
+    const html = (await page.content()).toUpperCase();
+    const hasOldCopy = html.includes("LEARNING YOUR SKY");
+    const hasNewCopy = html.includes("LEARNING THE SKY");
+    const pass = !hasOldCopy && hasNewCopy;
+    record({
+      claim:
+        'Learning panel eyebrow reads "LEARNING THE SKY" (not "YOUR SKY") to defuse the user-watching ambiguity',
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: pass
+        ? '"LEARNING THE SKY" rendered, "LEARNING YOUR SKY" absent'
+        : `hasOld=${hasOldCopy} hasNew=${hasNewCopy} — copy fix did not ship or panel not rendered`,
+      screenshot,
+    });
+  });
 });
