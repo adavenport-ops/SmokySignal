@@ -150,13 +150,48 @@ the persona, escalate to `--model claude-sonnet-4-6`.
 The current Haiku id is `claude-haiku-4-5`. Bump the `DEFAULT_MODEL` constant
 in `run-walk.ts` when a newer Haiku ships.
 
+## How this fits the continuous testing pipeline (P20)
+
+This script is the inner loop. The outer loops are:
+
+| Surface | Fires when | Output |
+|---|---|---|
+| `npm run verify-prod` | manual / pre-push | `/tmp/p14-audit/findings.json` + screenshots |
+| `.github/workflows/voice-gate.yml` | every PR | PR comment (P0 violations block merge) |
+| `.github/workflows/persona-walk-pr.yml` | every PR with rider-facing changes | PR comment with consensus + 14d artifact |
+| `.github/workflows/persona-walk-nightly.yml` | cron 04:00 PT | 90d artifact + auto-issues for new high-signal findings |
+| `tests/visual/personas/behavioral-walks.spec.ts` | runs alongside static walks | per-(persona,route) JSON action log |
+
+The `aggregate-consensus.ts` sibling reads any sweep dir produced by
+`run-walk.ts` and emits `consensus.md` via Sonnet. Both the per-PR
+workflow and the nightly workflow call it.
+
+`findings-to-issues.mjs` reads the nightly `findings.json` and opens
+GitHub issues for new high-signal items (≥3 personas, no duplicate
+title). Auto-labels by category.
+
+## Mock state machine
+
+Use `?mock=<state>` on rider-facing pages to drive deterministic UI
+states for QA:
+
+| Param | Effect |
+|---|---|
+| `?mock=up` | ≥1 smokey airborne |
+| `?mock=down` | All grounded |
+| `?mock=eyes-up` | Patrol/unknown airborne, no smokey |
+| `?mock=multiple` | 3 smokeys + 1 patrol airborne |
+| `?mock=stale` | Last sample 16 min ago (FreshnessLabel amber) |
+
+Source of truth: `lib/mock-state.ts`. Persona-walk specs use these
+states to exercise specific UI variants.
+
 ## What's deliberately not here yet
 
-- **CI / GitHub Action wiring** — Phase 3.
 - **iOS Simulator integration** — gated on the new Mac landing.
-- **Sonnet consensus pass invocation from this script** — Phase 4 lives in a
-  sibling aggregator script.
-- **Real-user feedback loop** into persona evolution — Phase 5.
+- **Visual regression / screenshot diff** — separate prompt.
+- **Performance budget tracking** — separate prompt.
+- **Real-user feedback loop** into persona evolution — separate prompt.
 
 ## Stack
 
