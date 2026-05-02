@@ -136,7 +136,7 @@ export function Glanceable({
             minWidth: 0,
           }}
         >
-          <Logo size={20} wordmark />
+          <Logo size={32} wordmark />
           <span
             className="ss-mono"
             style={{
