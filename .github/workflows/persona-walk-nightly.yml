@@ -107,3 +107,10 @@ jobs:
           name: persona-walk-${{ env.stamp }}
           path: tests/visual/out/persona-walks/${{ env.stamp }}
           retention-days: 90
+
+      - name: Open issues for new high-signal findings
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node .github/scripts/findings-to-issues.mjs \
+            --findings "tests/visual/out/persona-walks/$stamp/findings.json"
