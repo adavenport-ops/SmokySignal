@@ -159,7 +159,7 @@ export default async function AboutPage() {
           public ADS-B sightings cross-referenced with state and county fleet
           records. Tap any tail to see its detail page.
         </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div className="ss-grid-desktop-2">
           {fleet.map((f) => (
             <TailCard key={f.tail} entry={f} />
           ))}
