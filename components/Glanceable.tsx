@@ -417,8 +417,11 @@ function Others({ others }: { others: Aircraft[] }) {
       </div>
       <Card padded={false}>
         {others.map((p, i) => (
-          <div
+          <Link
             key={p.tail}
+            href={`/plane/${p.tail}`}
+            prefetch={false}
+            aria-label={`View ${p.nickname ?? p.tail} details`}
             style={{
               display: "flex",
               alignItems: "center",
@@ -428,6 +431,8 @@ function Others({ others }: { others: Aircraft[] }) {
                 i === others.length - 1
                   ? 0
                   : `.5px solid ${SS_TOKENS.hairline}`,
+              textDecoration: "none",
+              color: "inherit",
             }}
           >
             <PlaneIcon size={18} role={p.role} />
@@ -463,9 +468,31 @@ function Others({ others }: { others: Aircraft[] }) {
                 ? `${p.altitude_ft.toLocaleString()}′`
                 : "—"}
             </div>
-          </div>
+            <ChevronRight />
+          </Link>
         ))}
       </Card>
     </div>
+  );
+}
+
+// Right-pointing chevron icon used as the visual "tappable" affordance
+// on Also-up rows. Inline SVG so it ships in the initial HTML.
+function ChevronRight() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={SS_TOKENS.fg2}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      style={{ flexShrink: 0 }}
+    >
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
   );
 }
