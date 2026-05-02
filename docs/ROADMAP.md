@@ -21,6 +21,14 @@ Three principles drive every prioritization call:
 
 ## Where we are right now
 
+**P15 sweep (2026-05-02):** Shipped /zones (N20), high-contrast mode
+(NX1), voice readback (NX4), and deprecated the OpenSky historical
+backfill (N2 → not viable on adsb.fi). One PR (#59, /about tail
+registry 2-col grid) left open for aesthetic review of the
+multi-column desktop direction.
+
+
+
 Built and shipped: home glanceable, radar with hot-zone heatmap, weekly
 forecast grid, activity feed, plane-detail with flight playback, public
 flight-share pages with OG images, learning-state UI for the 30-day
@@ -73,21 +81,23 @@ user value visible at first paint.
   threshold).
 - **Status:** queued behind N1a.
 
-### N2. adsb.fi historical backfill
-- **Description:** OpenSky's historical-tracks endpoint is broken (was the
-  source of `scripts/backfill.ts`). adsb.fi has equivalent track history
-  via their `/v2/aircraft/track` and `/v2/aircraft/history`. Port the
-  backfill script.
-- **Why it matters:** Without backfill the 30-day learning window can only
-  fill from live cron data going forward. New tails added to the registry
-  get a deploy-day "first sample" instead of their actual history. Hot
-  zones recover from gaps slowly.
-- **Effort:** S
-- **Risk:** low — replaces broken code, no new UX.
-- **Brand tension:** none.
-- **Dependencies:** adsb.fi historical API access (free for non-commercial,
-  attribution required — already in our footer).
-- **Status:** ready to write a prompt.
+### N2. adsb.fi historical backfill ✗ DEPRECATED (P15 #58)
+- **Investigation result:** adsb.fi is a real-time ADS-B aggregator and
+  does **not** expose a historical equivalent of OpenSky's
+  `/flights/aircraft` or `/tracks/all`. Path A (port the script) was
+  not viable.
+- **Decision:** Deprecate `scripts/backfill.ts` with a banner gate
+  (`--force-opensky` to bypass). The 30-day track tank now fills
+  forward via the live cron (`/api/cron/refresh-snapshot` @ 60s, 35-day
+  TTL on `tracks:{tail}:{YYYYMMDD}`).
+- **Acceptable consequence:** New tails added to the registry get a
+  deploy-day "first sample" instead of their actual history. Hot zones
+  for new tails take ~30 days to fully populate. Existing tails are
+  unaffected (they have ~30 days of cron-built history already).
+- **Future option:** If a paid historical provider becomes acceptable
+  (FlightAware, ADSBexchange paid tier), revisit by writing a new
+  fetcher. The deprecation banner doesn't block re-enabling OpenSky
+  if the rate-limit window resets.
 
 ### N3. FAA registration deep-link on `/plane/[tail]` ✓ SHIPPED (P9 #16)
 - **Description:** Add a small "FAA registry →" mono link next to the
@@ -260,29 +270,28 @@ user value visible at first paint.
   it requires server-side state and lands in a follow-up PR.
 - **Status:** Live for local rendering + manage. Push wiring queued.
 
+### N20. /zones management page ✓ SHIPPED (P15 #55)
+- **Description:** `/settings/zones` — list, edit (label + radius
+  slider), remove, and "Add zone at my location" button. Falls back to
+  Puget Sound center if GPS denied. Linked from `/settings/alerts`
+  Zones section.
+- **Status:** Live.
+
 ## Tier 2 — Next (Q3 2026)
 
 Bigger pieces. Effort up to M. Acceptable brand tension after explicit
 tradeoff conversation. New infra OK if it's commodity.
 
-### NX1. High-contrast accessibility mode (NOT light mode)
-- **Description:** A dedicated AA+/AAA contrast pref (toggle on
-  `/settings/alerts`, mirrors the time-format toggle) that bumps every
-  grey to its accessible variant and pushes the alert amber to a
-  higher-contrast hue. The page stays dark — it's a contrast-only
-  intensifier. The cookie-backed pattern from `lib/user-prefs.ts` is the
-  template; nothing new architecturally.
-- **Why it matters:** Some riders need higher contrast (low vision, motion
-  glasses, sun glare). Brand voice is dark-only on purpose, but
-  "accessible-dark" is not the same trade as "light mode." See the
-  light-mode tradeoff section below for the full conversation.
-- **Effort:** M — every color-using component needs the pref threaded
-  through, similar in scope to the time-format work.
-- **Risk:** low — additive, can ship behind a flag.
-- **Brand tension:** minor — the brand says "dark," and this stays dark.
-- **Dependencies:** depends on N5 (contrast cleanup) so the baseline is
-  already clean.
-- **Status:** queued behind N5.
+### NX1. High-contrast accessibility mode (NOT light mode) ✓ SHIPPED (P15 #56)
+- **Description:** Toggle on `/settings/alerts` — Normal | High. Stays
+  dark either way. High lifts `--ss-fg1/2/3` and `--ss-hairline/-2`
+  opacity so meta-lines and dividers stay legible in glare or low-vision
+  conditions. Brand semantic colors (alert/clear/sky/warn) NOT changed.
+- **Implementation:** Cookie-backed (`ss_contrast`) via the same pattern
+  as `ss_time_format`. `app/layout.tsx` reads the cookie server-side
+  and sets `<body data-contrast="high">`. CSS overrides in
+  `app/globals.css`. No client JS. Default `normal` (no behavior change
+  for existing riders).
 
 ### NX2. Wind / cloud-cover overlay on `/radar`
 - **Description:** A toggleable layer on the radar map showing current
@@ -322,20 +331,20 @@ tradeoff conversation. New infra OK if it's commodity.
   function with the cert).
 - **Status:** depends on Alex's appetite for the cert + cost.
 
-### NX4. Voice-only mode (Web Speech API)
-- **Description:** A toggle in `/settings/alerts` that, when enabled, has
-  push notifications also speak aloud via the device's TTS. "Smokey is up.
-  I-5 northbound at Tukwila. 1,800 feet." For in-helmet use with a Bluetooth
-  headset.
-- **Why it matters:** Riders with helmet comms don't always have a free
-  hand to glance. Audio is the right channel.
-- **Effort:** S
-- **Risk:** low — Web Speech API is well-supported; iOS Safari requires
-  a user-gesture priming, which the existing push opt-in flow can handle.
-- **Brand tension:** none — the voice is exactly the same copy already
-  approved for push.
-- **Dependencies:** push pipeline (already shipped).
-- **Status:** ready to write a prompt.
+### NX4. Voice readback (Web Speech API) ✓ SHIPPED (P15 #57)
+- **Description:** Toggle in `/settings/alerts` — when on, alerts speak
+  via `speechSynthesis` while the page is open. Foreground proximity
+  alerts speak directly; background pushes (tab open) speak via SW
+  → page postMessage bridge.
+- **Limitation:** Closed-tab background pushes do **not** speak —
+  `speechSynthesis` requires an open page. Acknowledged in copy + code.
+  Realistic helmet-audio use case keeps `/radar` or `/dash` visible.
+- **iOS gesture priming:** First opt-in calls `speakAlert("Voice
+  readback on.")` to satisfy iOS Safari's user-gesture requirement
+  before subsequent `speak()` calls work.
+- **Brand voice:** push dispatcher already produces laconic +
+  mono-numerical copy (no exclamation marks); `speakAlert` does NOT
+  transform.
 
 ### NX5. Embeddable status badge for third-party sites ✓ SHIPPED (P9 #17)
 - **Description:** Same `/api/badge.svg` we already serve, but documented +
