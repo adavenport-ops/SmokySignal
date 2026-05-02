@@ -10,6 +10,7 @@ import { haversineNm } from "@/lib/geo";
 import { StatusPill } from "./StatusPill";
 import { Card } from "./Card";
 import { AlertsOptInCard } from "./AlertsOptInCard";
+import { ProximityFlash } from "./ProximityFlash";
 import type { Aircraft, Snapshot } from "@/lib/types";
 import type { ActivityEntry } from "@/lib/activity";
 
@@ -113,6 +114,14 @@ export function DashShell({ initial, initialActivity, mockOn = false }: Props) {
       <ActivityFeed entries={activity} />
 
       <AlertsOptInCard />
+
+      <ProximityFlash
+        active={
+          nearest != null &&
+          nearest.distanceNm <= NEAR_NM &&
+          (nearest.plane.role === "smokey" || nearest.plane.role === "patrol")
+        }
+      />
     </main>
   );
 }
