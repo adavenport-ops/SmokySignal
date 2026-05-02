@@ -99,11 +99,15 @@ const EMPTY_SNAPSHOT: Snapshot = {
 
 const ANIM_MS = 1000;
 
-// Re-center the map on the followed plane only when it's drifted at least
-// this far (CSS px) from screen center — keeps the camera stable when the
-// plane is just orbiting near the middle of the viewport instead of
-// jittering on every snapshot.
+// Re-center the map on the followed plane when EITHER:
+//   (a) absolute screen distance from center exceeds FOLLOW_RECENTER_PX, OR
+//   (b) the plane is within FOLLOW_EDGE_MARGIN of any viewport edge.
+// (a) catches a plane orbiting wide across the screen; (b) catches a
+// plane creeping toward an edge slowly. Without (b), a plane drifting
+// roughly toward a corner could approach the edge without ever crossing
+// the absolute-distance threshold.
 const FOLLOW_RECENTER_PX = 200;
+const FOLLOW_EDGE_MARGIN_RATIO = 0.2;
 
 type RiderPos = { lat: number; lon: number };
 
@@ -595,10 +599,10 @@ export default function RadarMap({
       startedAt: now,
     };
 
-    // Follow-mode recenter — once per snapshot, only when the followed plane
-    // has drifted >FOLLOW_RECENTER_PX from screen center. If the plane has
-    // dropped out of the snapshot (left the region, went offline), exit
-    // follow mode silently.
+    // Follow-mode recenter — once per snapshot, when the plane has drifted
+    // either >FOLLOW_RECENTER_PX from center OR within FOLLOW_EDGE_MARGIN
+    // of any viewport edge. If the plane has dropped out of the snapshot
+    // (left the region, went offline), exit follow mode silently.
     const followedTail = followedTailRef.current;
     if (followedTail) {
       const pos = newTo.get(followedTail);
@@ -606,11 +610,21 @@ export default function RadarMap({
         popupRef.current?.setLngLat(pos);
         const screen = map.project(pos);
         const canvas = map.getCanvas();
-        const cx = canvas.clientWidth / 2;
-        const cy = canvas.clientHeight / 2;
+        const w = canvas.clientWidth;
+        const h = canvas.clientHeight;
+        const cx = w / 2;
+        const cy = h / 2;
         const dx = screen.x - cx;
         const dy = screen.y - cy;
-        if (Math.hypot(dx, dy) > FOLLOW_RECENTER_PX) {
+        const farFromCenter = Math.hypot(dx, dy) > FOLLOW_RECENTER_PX;
+        const edgeMarginX = w * FOLLOW_EDGE_MARGIN_RATIO;
+        const edgeMarginY = h * FOLLOW_EDGE_MARGIN_RATIO;
+        const nearEdge =
+          screen.x < edgeMarginX ||
+          screen.x > w - edgeMarginX ||
+          screen.y < edgeMarginY ||
+          screen.y > h - edgeMarginY;
+        if (farFromCenter || nearEdge) {
           map.easeTo({ center: pos, duration: 600 });
         }
       } else {
