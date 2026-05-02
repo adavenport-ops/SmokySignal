@@ -6,7 +6,9 @@ import { useAircraft } from "@/lib/hooks/useAircraft";
 import { useRiderPos } from "@/lib/hooks/useRiderPos";
 import { SS_TOKENS } from "@/lib/tokens";
 import { SMOKY_TAIL } from "@/lib/seed";
-import { haversineNm } from "@/lib/geo";
+import { DEFAULT_SPEED_LIMIT_MPH, haversineNm } from "@/lib/geo";
+import { evaluateWarning } from "@/lib/speed-warning";
+import type { HotZone } from "@/lib/hotzones";
 import { StatusPill } from "./StatusPill";
 import { Card } from "./Card";
 import { AlertsOptInCard } from "./AlertsOptInCard";
@@ -57,6 +59,65 @@ export function DashShell({ initial, initialActivity, mockOn = false }: Props) {
     return ranked.slice(0, NEAREST_LIST_LIMIT);
   }, [pos, airborne]);
   const nearest = nearestList[0] ?? null;
+
+  // N1a dry-run logging: fetch hot zones once on mount, then on each
+  // rider geolocation tick + airborne refresh, evaluate the warning
+  // condition and POST positives to /api/dryrun-warnings. No UI surface
+  // — that's N1b, gated on this data accumulating.
+  const [hotZones, setHotZones] = useState<HotZone[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/hotzones")
+      .then((r) => (r.ok ? r.json() : { zones: [] }))
+      .then((data) => {
+        if (cancelled) return;
+        const zones = Array.isArray(data?.zones) ? data.zones : [];
+        setHotZones(zones as HotZone[]);
+      })
+      .catch(() => {
+        // best-effort; absent zones just means evaluateWarning returns
+        // wouldFire=false (no zone match)
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  // m/s → mph
+  const MPS_TO_MPH = 2.236936;
+  useEffect(() => {
+    if (!pos) return;
+    if (pos.speedMps == null || pos.speedMps < 0) return;
+    if (hotZones.length === 0 && airborne.length === 0) return;
+    const result = evaluateWarning({
+      riderLat: pos.lat,
+      riderLon: pos.lon,
+      riderSpeedMph: pos.speedMps * MPS_TO_MPH,
+      postedLimitMph: DEFAULT_SPEED_LIMIT_MPH,
+      hotZones,
+      airborneAircraft: airborne,
+    });
+    if (!result.wouldFire) return;
+    const nearestTail = nearestList[0]?.plane.tail ?? null;
+    console.log("[dryrun]", result.reason);
+    void fetch("/api/dryrun-warnings", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        ts: Date.now(),
+        riderLat: pos.lat,
+        riderLon: pos.lon,
+        riderSpeedMph: pos.speedMps * MPS_TO_MPH,
+        postedLimitMph: DEFAULT_SPEED_LIMIT_MPH,
+        riderOverLimitBy: result.riderOverLimitBy,
+        nearestZoneMi: result.nearestZoneMi,
+        nearestBirdMi: result.nearestBirdMi,
+        nearestTail,
+        reason: result.reason,
+      }),
+    }).catch(() => {
+      // best-effort; transient network errors don't matter for dry-run
+    });
+  }, [pos, hotZones, airborne, nearestList]);
 
   // Poll /api/activity every 10s.
   useEffect(() => {
