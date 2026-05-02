@@ -5,6 +5,9 @@ import { ForecastGridView } from "@/components/ForecastGridView";
 import { LearningPanel } from "@/components/LearningPanel";
 import { getLearningState } from "@/lib/learning";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
+import { getSnapshot } from "@/lib/snapshot";
+import { getRegistry } from "@/lib/registry";
+import { computeStatus } from "@/lib/status";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -15,10 +18,14 @@ export const metadata = {
 const FORECAST_LEARNING_EVENT_FLOOR = 30;
 
 export default async function ForecastPage() {
-  const [grid, learning] = await Promise.all([
+  const [grid, learning, snap, fleet] = await Promise.all([
     getForecastGrid(),
     getLearningState(),
+    getSnapshot(),
+    getRegistry(),
   ]);
+  const fleetMap = new Map(fleet.map((f) => [f.tail, f]));
+  const liveStatus = computeStatus(snap, fleetMap);
   const showLearning =
     learning.stillLearning ||
     grid.total_events < FORECAST_LEARNING_EVENT_FLOOR;
@@ -54,6 +61,64 @@ export default async function ForecastPage() {
           ← Home
         </Link>
       </header>
+
+      {liveStatus.kind === "alert" && (
+        <Link
+          href="/radar"
+          aria-label={`Live now: ${liveStatus.pill}. Open radar.`}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 10,
+            background: SS_TOKENS.bg1,
+            border: `1px solid ${SS_TOKENS.alert}`,
+            borderRadius: 12,
+            padding: "10px 14px",
+            textDecoration: "none",
+            color: "inherit",
+          }}
+        >
+          <span
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              minWidth: 0,
+            }}
+          >
+            <span
+              className="ss-mono ss-eyebrow"
+              style={{ color: SS_TOKENS.alert }}
+            >
+              LIVE NOW
+            </span>
+            <span
+              className="ss-mono"
+              style={{
+                fontSize: 14,
+                fontWeight: 700,
+                color: SS_TOKENS.fg0,
+                letterSpacing: ".02em",
+              }}
+            >
+              {liveStatus.pill}
+              {liveStatus.pillSub ? ` · ${liveStatus.pillSub}` : ""}
+            </span>
+          </span>
+          <span
+            className="ss-mono"
+            style={{
+              fontSize: 11,
+              color: SS_TOKENS.fg1,
+              letterSpacing: ".06em",
+              flexShrink: 0,
+            }}
+          >
+            SEE /RADAR →
+          </span>
+        </Link>
+      )}
 
       <section style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <h1
