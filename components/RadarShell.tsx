@@ -13,6 +13,9 @@ import { HotZoneLayer } from "./HotZoneLayer";
 import { HelpIcon } from "./HelpIcon";
 import { Tooltip } from "./Tooltip";
 import { FreshnessLabel } from "./FreshnessLabel";
+import { RegionSelector } from "./RegionSelector";
+import { REGION_CHANGE_EVENT, getRegion } from "@/lib/region-pref";
+import type { RegionId } from "@/lib/regions";
 import type { Aircraft, FleetEntry, Snapshot } from "@/lib/types";
 import type { LearningState } from "@/lib/learning";
 
@@ -69,10 +72,18 @@ export function RadarShell({
   const [toast, setToast] = useState<string | null>(null);
   const [map, setMap] = useState<MaplibreMap | null>(null);
   const [showRings, setShowRings] = useState(false);
-  // Hydrate the rings pref from localStorage on mount.
+  const [regionId, setRegionId] = useState<RegionId>("puget_sound");
+  // Hydrate the rings pref + region from localStorage on mount.
   useEffect(() => {
     if (typeof window === "undefined") return;
     setShowRings(window.localStorage.getItem("ss_distance_rings_visible") === "1");
+    setRegionId(getRegion());
+    const onChange = (e: Event) => {
+      const detail = (e as CustomEvent<{ id: RegionId }>).detail;
+      setRegionId(detail?.id ?? getRegion());
+    };
+    window.addEventListener(REGION_CHANGE_EVENT, onChange);
+    return () => window.removeEventListener(REGION_CHANGE_EVENT, onChange);
   }, []);
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -113,6 +124,7 @@ export function RadarShell({
         aircraft={airborne}
         rider={rider}
         showDistanceRings={showRings}
+        regionId={regionId}
         onMapReady={setMap}
       />
       <HotZoneLayer
@@ -158,24 +170,27 @@ export function RadarShell({
           big
           tooltip={pillTooltip}
         />
-        <Tooltip
-          side="bottom"
-          align="end"
-          content="How many of our 16 tracked tails are up right now."
-        >
-          <span
-            className="ss-mono"
-            tabIndex={0}
-            style={{
-              fontSize: 10.5,
-              color: counterColor,
-              letterSpacing: ".06em",
-              cursor: "help",
-            }}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <RegionSelector />
+          <Tooltip
+            side="bottom"
+            align="end"
+            content="How many of our 16 tracked tails are up right now."
           >
-            {airborne.length}/{total} UP
-          </span>
-        </Tooltip>
+            <span
+              className="ss-mono"
+              tabIndex={0}
+              style={{
+                fontSize: 10.5,
+                color: counterColor,
+                letterSpacing: ".06em",
+                cursor: "help",
+              }}
+            >
+              {airborne.length}/{total} UP
+            </span>
+          </Tooltip>
+        </div>
       </header>
 
       <CompassN />
