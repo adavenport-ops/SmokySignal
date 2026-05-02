@@ -13,6 +13,19 @@ Audience: Puget Sound motorcyclists. Brand voice: dark theme, mono numerics,
 
 ## Verification habits
 
+- **"Shipped" means observable on https://smokysignal.app, not green CI.**
+  Build-pass + tests-pass is necessary but not sufficient. Conditional
+  renders, async race conditions, and feature-flag gates have shipped
+  green and stayed dead in prod (e.g. ArmAlertsCallout PR #39 returned
+  null while waiting on a SW promise that never resolved on first
+  visit). Before claiming a PR ships a feature, capture screenshot or
+  DOM evidence from prod after the Vercel auto-deploy completes.
+- `npm run verify-prod` runs the canonical live-prod audit
+  (`tests/visual/specs/p14-live-prod-audit.spec.ts`) against
+  smokysignal.app and writes findings + screenshots to
+  `/tmp/p14-audit/`. Add new claims to that spec when you ship a
+  user-visible feature, so the next audit catches regressions
+  automatically.
 - Run `npm run build` before pushing — CI mirrors it.
 - Type-check via `npx tsc --noEmit` for fast feedback during edits.
 - For UI changes, manually exercise the page in dev — type checks don't
