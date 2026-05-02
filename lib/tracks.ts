@@ -11,6 +11,7 @@
 import { getRedis } from "./cache";
 import { recordFirstSampleIfMissing } from "./learning";
 import { recordLastSample } from "./freshness";
+import { trackKey, trackScanPattern } from "./storage-keys";
 import type { Snapshot } from "./types";
 
 export type TrackPoint = {
@@ -58,7 +59,7 @@ export async function logTracks(snap: Snapshot): Promise<void> {
   await recordLastSample(snap.fetched_at);
 
   const writes = points.map(async (a) => {
-    const key = `tracks:${a.tail}:${date}`;
+    const key = trackKey(a.tail, date);
     const point: TrackPoint = {
       lat: a.lat as number,
       lon: a.lon as number,
@@ -86,7 +87,7 @@ export async function listTrackKeys(tail: string): Promise<string[]> {
   let cursor: string | number = 0;
   do {
     const result = (await redis.scan(cursor, {
-      match: `tracks:${tail}:*`,
+      match: trackScanPattern(tail),
       count: 100,
     })) as [string | number, string[]];
     for (const k of result[1]) {
@@ -105,7 +106,7 @@ export async function getTracksForDay(
 ): Promise<TrackPoint[]> {
   const redis = await getRedis();
   if (!redis) return [];
-  const key = `tracks:${tail}:${date}`;
+  const key = trackKey(tail, date);
   let raw: unknown[] = [];
   try {
     raw = (await redis.lrange(key, 0, -1)) as unknown[];
@@ -150,7 +151,7 @@ export async function getTrackSummary(tail: string): Promise<TrackSummary> {
   let total = 0;
   for (const date of dates) {
     try {
-      const len = (await redis.llen(`tracks:${tail}:${date}`)) as number;
+      const len = (await redis.llen(trackKey(tail, date))) as number;
       total += typeof len === "number" ? len : 0;
     } catch {
       /* skip */
@@ -159,8 +160,8 @@ export async function getTrackSummary(tail: string): Promise<TrackSummary> {
 
   const newest = dates[0]!;
   const oldest = dates[dates.length - 1]!;
-  const lastRaw = (await redis.lrange(`tracks:${tail}:${newest}`, -1, -1)) as unknown[];
-  const firstRaw = (await redis.lrange(`tracks:${tail}:${oldest}`, 0, 0)) as unknown[];
+  const lastRaw = (await redis.lrange(trackKey(tail, newest), -1, -1)) as unknown[];
+  const firstRaw = (await redis.lrange(trackKey(tail, oldest), 0, 0)) as unknown[];
   const last = safeParse(lastRaw[0]);
   const first = safeParse(firstRaw[0]);
 

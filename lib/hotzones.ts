@@ -13,6 +13,7 @@
 import { getRedis } from "./cache";
 import { getRegistry } from "./registry";
 import { listTrackKeys, getTracksForDay } from "./tracks";
+import { hotzonesCurrentKey, hotzonesLastRefreshKey } from "./storage-keys";
 
 // ~0.5 nm per cell at 47°N — roughly the granularity at which patrol
 // orbit patterns become visible without disappearing into the noise of
@@ -53,8 +54,8 @@ function inRegion(lat: number, lon: number): boolean {
   );
 }
 
-const CURRENT_KEY = "hotzones:current";
-const LAST_REFRESH_KEY = "hotzones:last_refresh_ts";
+const CURRENT_KEY = hotzonesCurrentKey();
+const LAST_REFRESH_KEY = hotzonesLastRefreshKey();
 const TTL_SECONDS = 25 * 60 * 60;
 
 /**
