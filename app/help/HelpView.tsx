@@ -116,7 +116,9 @@ export function HelpMarkdown({ source }: { source: string }) {
                 style={
                   isAnchor
                     ? {
-                        color: SS_TOKENS.fg3,
+                        // fg2 not fg3 — anchor "#" link is body text on
+                        // hover and needs WCAG AA contrast (4.5:1).
+                        color: SS_TOKENS.fg2,
                         textDecoration: "none",
                         marginLeft: 8,
                         opacity: 0,
