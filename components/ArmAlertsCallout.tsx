@@ -35,42 +35,38 @@ export function ArmAlertsCallout() {
     }
     let cancelled = false;
 
-    // Compute the dismiss-aware "available" state up front so we can
-    // fall back to it without re-reading localStorage from the timeout.
+    // Compute the dismiss-aware "available" state up front and render
+    // it IMMEDIATELY. Previously we waited on navigator.serviceWorker
+    // .ready before showing anything, which left first-visit riders
+    // staring at a missing CTA — verify-prod's 2000ms read-back
+    // window beat the 2500ms SW timeout, and even within Playwright
+    // the SW often takes 3–5s to register on a cold visit. The CTA
+    // is purely a pointer at /settings/alerts; rendering it before
+    // we know the rider's subscription state is harmless because the
+    // settings page is the source of truth either way.
+    //
+    // If the SW reveals the rider is actually armed, we hide the CTA
+    // afterward (one-tick flicker is acceptable; missing the CTA is
+    // not).
     const dismissedAt = Number(
       window.localStorage.getItem(DISMISS_KEY) ?? "0",
     );
     const recentlyDismissed = Date.now() - dismissedAt < DISMISS_MS;
     const availableState: State = { kind: "available", recentlyDismissed };
-
-    // Race the SW-ready / subscription check against a 2.5s timeout.
-    // Without this, a slow or hung serviceWorker.ready promise leaves
-    // the component stuck in "loading" forever — no CTA ever renders.
-    // First-visit prod traces showed this happening on iOS PWAs and
-    // chromium contexts where the SW had not yet completed registration.
-    const SW_TIMEOUT_MS = 2500;
-    const timeoutId = window.setTimeout(() => {
-      if (cancelled) return;
-      // Use the functional setter so we don't clobber a real "armed"
-      // result that arrived in the same tick.
-      setState((prev) => (prev.kind === "loading" ? availableState : prev));
-    }, SW_TIMEOUT_MS);
+    setState(availableState);
 
     navigator.serviceWorker.ready
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => {
         if (cancelled) return;
-        window.clearTimeout(timeoutId);
-        setState(sub ? { kind: "armed" } : availableState);
+        if (sub) setState({ kind: "armed" });
+        // else leave availableState in place
       })
       .catch(() => {
-        if (cancelled) return;
-        window.clearTimeout(timeoutId);
-        setState(availableState);
+        // already showing availableState — nothing to do
       });
     return () => {
       cancelled = true;
-      window.clearTimeout(timeoutId);
     };
   }, []);
 
