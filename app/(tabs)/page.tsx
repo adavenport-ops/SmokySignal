@@ -5,6 +5,7 @@ import { getRecentActivity } from "@/lib/activity";
 import { getLearningState } from "@/lib/learning";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 import { getHistoricalContext } from "@/lib/historical-context";
+import { getFreshness } from "@/lib/freshness";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +16,11 @@ export default async function Page({
 }: {
   searchParams: SP;
 }) {
-  const [real, activity, learning] = await Promise.all([
+  const [real, activity, learning, freshness] = await Promise.all([
     getSnapshot(),
     getRecentActivity(1),
     getLearningState(),
+    getFreshness(),
   ]);
   const mockOn = searchParams.mock === "up";
   const initial = mockOn ? mockAirborneSnapshot(real) : real;
@@ -34,6 +36,7 @@ export default async function Page({
       learning={learning}
       hour12={hour12}
       contextLine={context?.copy ?? null}
+      lastSampleMs={freshness.lastSampleMs}
     />
   );
 }

@@ -16,6 +16,7 @@ import { PredictionCard } from "./PredictionCard";
 import { HelpIcon } from "./HelpIcon";
 import { Tooltip } from "./Tooltip";
 import { Logo } from "./brand/Logo";
+import { FreshnessLabel } from "./FreshnessLabel";
 
 // Hide the activity strip when the most recent event is older than this —
 // a stale "Guardian One up · 8 hours ago" looks more like a bug than a
@@ -32,6 +33,9 @@ type Props = {
    *  ("usually up at this hour. 67% of weeks."). Server computes,
    *  passes the string in. null = hide. */
   contextLine?: string | null;
+  /** ms-since-epoch of the most recent track sample. null = no
+   *  meta:last_sample_ts in KV yet (renders "UNKNOWN"). */
+  lastSampleMs?: number | null;
 };
 
 export function Glanceable({
@@ -41,6 +45,7 @@ export function Glanceable({
   learning,
   hour12 = false,
   contextLine = null,
+  lastSampleMs = null,
 }: Props) {
   const snap = useAircraft(initial, mockOn);
   const [updatedAgo, setUpdatedAgo] = useState<number>(0);
@@ -199,6 +204,10 @@ export function Glanceable({
       {others.length > 0 && <Others others={others} />}
 
       <PredictionCard learning={learning} hour12={hour12} />
+
+      <div style={{ marginTop: 4, paddingLeft: 4 }}>
+        <FreshnessLabel lastSampleMs={lastSampleMs} />
+      </div>
 
       <Footer />
     </main>
