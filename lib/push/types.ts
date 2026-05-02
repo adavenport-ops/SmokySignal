@@ -33,6 +33,13 @@ export type AlertPrefs = {
    * makes the takeoff eligible for that subscriber.
    */
   userZones?: UserZoneSpec[];
+  /**
+   * Optional per-tail allow-list. When present + non-empty, the dispatcher
+   * only fires for takeoffs of these specific tails (after tier filter).
+   * Empty / undefined = no tail restriction. Useful for riders who only
+   * care about a specific Smokey.
+   */
+  tails?: string[];
   /** Rider-local hour at which quiet hours START (24-hour, 0-23). */
   quiet_start_h: number;
   /** Rider-local hour at which quiet hours END (24-hour, 0-23). */

@@ -1,6 +1,7 @@
 import { AlertsSettings } from "@/components/AlertsSettings";
 import { TimeFormatSetting } from "@/components/TimeFormatSetting";
 import { getTimeFormatPref } from "@/lib/user-prefs";
+import { getRegistry } from "@/lib/registry";
 
 export const metadata = {
   title: "Alerts",
@@ -9,11 +10,21 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default function AlertsPage() {
-  const timeFormat = getTimeFormatPref();
+export default async function AlertsPage() {
+  const [timeFormat, registry] = await Promise.all([
+    Promise.resolve(getTimeFormatPref()),
+    getRegistry(),
+  ]);
   return (
     <>
-      <AlertsSettings />
+      <AlertsSettings
+        tails={registry.map((f) => ({
+          tail: f.tail,
+          nickname: f.nickname,
+          operator: f.operator,
+          role: f.role,
+        }))}
+      />
       <div
         style={{
           maxWidth: 460,
