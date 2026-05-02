@@ -1,4 +1,4 @@
-// Canonical "Learning your sky" panel — three variants of the same
+// Canonical "Learning the sky" panel — three variants of the same
 // content. Used wherever a surface depends on hot-zone or forecast data
 // that's still being collected. Single component so the copy + day
 // counter never disagree across home, radar, and forecast.
@@ -38,8 +38,8 @@ export function LearningPanel({
   const day = state.daysElapsed;
   const cap = LEARNING_THRESHOLD_DAYS;
   const eyebrow = state.stillLearning
-    ? `LEARNING YOUR SKY · DAY ${day} OF ${cap}`
-    : `LEARNING YOUR SKY · ${cap}+ DAYS IN`;
+    ? `LEARNING THE SKY · DAY ${day} OF ${cap}`
+    : `LEARNING THE SKY · ${cap}+ DAYS IN`;
 
   if (variant === "banner") {
     return (
