@@ -3,22 +3,26 @@
 // Operator tool — runs from a residential IP so it doesn't pay the
 // Vercel→OpenSky latency tax.
 //
-// New (P3-BACKFILL-SMART): the default flow now pre-scans existing KV
-// keys to identify which (tail, date) pairs are missing, prints a
-// planning table, and only fetches flights for tails+dates that are
-// actually missing. Re-running after a partial-success run wastes
-// almost no OpenSky quota.
+// ─── DEPRECATED (2026-05-02) ────────────────────────────────────────
+// OpenSky's research API rate-limit window is now exhausted on the
+// SmokySignal credentials and adsb.fi (the live snapshot source) does
+// not expose a historical /flights/aircraft or /tracks/all equivalent
+// — they aggregate live ADS-B only.
+//
+// Going forward, the 30-day track tank fills FORWARD via the live
+// /api/cron/refresh-snapshot every 60s. Pre-deploy historical data
+// is no longer recoverable.
+//
+// This script is kept for the case where OpenSky access returns
+// (rate-limit window resets, paid tier, alternate provider). Run with
+// --force-opensky to bypass the deprecation banner. The --force flag
+// alone (refetch existing KV keys) does NOT bypass the banner.
 //
 // Usage:
-//   npm run backfill                       # pre-scan, prompt, fetch missing
-//   npm run backfill:dry                   # pre-scan + planning table only
-//   npm run backfill:resume                # pre-scan + fetch (no prompt)
-//   npm run backfill -- --tails N305DK,N422CT
-//   npm run backfill -- --since 7d
-//   npm run backfill -- --force            # ignore pre-scan, refetch all
-//
-// Idempotent across runs by default — daily KV keys with prior data
-// are skipped unless --force is passed.
+//   npm run backfill -- --force-opensky    # acknowledge deprecation, run
+//   npm run backfill:dry                   # planning table only (allowed)
+//   npm run backfill                       # prints banner + exits
+// ────────────────────────────────────────────────────────────────────
 
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
@@ -63,6 +67,7 @@ type Args = {
   dry: boolean;
   force: boolean;
   yes: boolean;
+  forceOpensky: boolean;
 };
 
 function parseArgs(): Args {
@@ -74,6 +79,7 @@ function parseArgs(): Args {
   let dry = false;
   let force = false;
   let yes = false;
+  let forceOpensky = false;
 
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -111,6 +117,8 @@ function parseArgs(): Args {
       // unless paired with --yes for non-interactive use.
     } else if (a === "--yes" || a === "-y") {
       yes = true;
+    } else if (a === "--force-opensky") {
+      forceOpensky = true;
     } else if (a === "--help" || a === "-h") {
       printHelp();
       process.exit(0);
@@ -123,7 +131,7 @@ function parseArgs(): Args {
   const beginUnix = beginUnixOverride ?? endUnix - days * DAY_SEC;
   if (beginUnix >= endUnix) die("--since: window has zero duration");
 
-  return { beginUnix, endUnix, windowLabel, tails, dry, force, yes };
+  return { beginUnix, endUnix, windowLabel, tails, dry, force, yes, forceOpensky };
 }
 
 function parseSince(raw: string): { beginUnix: number; label: string } {
@@ -157,8 +165,13 @@ Options:
   --dry                 print the planning table and exit (no fetches)
   --force               ignore pre-scan; refetch + overwrite all dates
   --resume              explicit alias of default behavior
+  --force-opensky       acknowledge OpenSky deprecation banner and run
   -y, --yes             skip the [y/N] confirmation prompt
-  -h, --help            show this help`);
+  -h, --help            show this help
+
+DEPRECATED: OpenSky's historical window is exhausted on this cred,
+and adsb.fi has no historical equivalent. The 30-day track tank fills
+forward via the live cron. --force-opensky bypasses the banner.`);
 }
 
 function die(msg: string): never {
@@ -517,6 +530,21 @@ type SummaryRow = {
 async function main() {
   const args = parseArgs();
   const t0 = Date.now();
+
+  // Deprecation gate. The OpenSky historical window is exhausted on
+  // SmokySignal's credentials, and adsb.fi (the live snapshot source)
+  // does not expose a historical equivalent. The 30-day track tank
+  // fills FORWARD from /api/cron/refresh-snapshot. --dry is allowed
+  // for inspecting the planning table; an actual run requires
+  // --force-opensky to acknowledge the deprecation.
+  if (!args.dry && !args.forceOpensky) {
+    console.log(`${C.bold}${C.yellow}backfill is deprecated (2026-05-02).${C.reset}`);
+    console.log(`  OpenSky rate-limit window exhausted; adsb.fi has no historical API.`);
+    console.log(`  The 30-day track tank fills forward via the live cron only.`);
+    console.log(`  Pass ${C.cyan}--force-opensky${C.reset} to bypass if OpenSky access has returned.`);
+    console.log(`  ${C.dim}--dry is allowed without the flag (planning table only).${C.reset}`);
+    process.exit(2);
+  }
 
   if (!process.env.OPENSKY_CLIENT_ID || !process.env.OPENSKY_CLIENT_SECRET) {
     die("OPENSKY_CLIENT_ID and OPENSKY_CLIENT_SECRET must be set");
