@@ -31,6 +31,14 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   applicationName: "SmokySignal",
   manifest: "/manifest.json",
+  // iOS PWA standalone-mode flags. Without these the home-screen install
+  // launches in a degraded "kinda-Safari" shell — wrong status bar, no
+  // app-icon label fallback, brand voice broken on first paint.
+  appleWebApp: {
+    capable: true,
+    title: "SmokySignal",
+    statusBarStyle: "black-translucent",
+  },
   icons: {
     icon: [
       { url: "/icons/favicon.svg", type: "image/svg+xml" },

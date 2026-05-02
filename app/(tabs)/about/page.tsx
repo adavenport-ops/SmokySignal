@@ -410,6 +410,10 @@ function EmbedBadgeCallout() {
       </p>
       <pre
         className="ss-mono"
+        // tabIndex=0 so the horizontally-scrollable region is reachable
+        // by keyboard. axe scrollable-region-focusable rule.
+        tabIndex={0}
+        aria-label="SmokySignal embed badge HTML snippet"
         style={{
           background: SS_TOKENS.bg2,
           border: `.5px solid ${SS_TOKENS.hairline}`,
