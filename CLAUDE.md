@@ -49,6 +49,9 @@ Audience: Puget Sound motorcyclists. Brand voice: dark theme, mono numerics,
 - `lib/user-prefs.ts` — cookie-backed display prefs (12/24-hour, normal/high contrast)
 - `lib/voice-mode.ts` — speechSynthesis readback toggle (foreground only)
 - `lib/proximity-alert.ts` — foreground proximity ping when alert-tier tail nearby
+- `lib/speed-warning.ts` — pure `evaluateWarning()` for N1a dryrun pipeline
+- `lib/storage-keys.ts` — canonical KV key formatter (NX7 foundation; route all `tracks:*`/`spots:*`/`hotzones:*`/`flights:*` through this)
+- `components/FilterPanel.tsx` — radar filter UI (extracted from HotZoneLayer P16); multi-select roles supported
 - `app/(tabs)/` — main app routes (home, radar, dash, plane, settings, etc.)
 - `app/api/cron/` — scheduled refreshes (snapshot, hotzones, predictor)
 - `public/sw.js` — service worker (push-only, no caching)
@@ -74,6 +77,15 @@ Audience: Puget Sound motorcyclists. Brand voice: dark theme, mono numerics,
   intentionally empty — `vercel env pull` cannot decrypt sensitive
   vars from production. Generate fresh values manually if you need
   push to work in preview deploys.
+- KV key construction: route through `lib/storage-keys.ts` (`trackKey()`,
+  `spotKey()`, `hotzonesCurrentKey()`, etc.) instead of inlining
+  string literals like `\`tracks:\${tail}:\${date}\``. The default-region
+  shape is byte-for-byte identical to the prior literals; the
+  formatter is the only knob for future regional namespacing.
+- ArmAlertsCallout returns null on iOS Safari (Notification API
+  absent) — that's correct behavior; the IOSInstallPrompt handles
+  riders in that path. The verify-prod assertion #9 was updated in
+  P16 to recognize either rendered surface as a pass.
 
 ## Brand voice
 

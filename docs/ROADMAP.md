@@ -27,6 +27,17 @@ backfill (N2 → not viable on adsb.fi). One PR (#59, /about tail
 registry 2-col grid) left open for aesthetic review of the
 multi-column desktop direction.
 
+**P16 sweep (2026-05-02):** Fixed the Arm-alerts CTA first-visit
+regression (PR #61 — render synchronously instead of waiting on SW),
+shipped N1a speed-warning DRY-RUN logging (#63), shipped NX7
+federation namespace prep (#62 — `lib/storage-keys.ts`), shipped
+FilterPanel multi-select Roles section (#64). NX2 (weather overlay)
+and NX8 (time-scrubber) deferred to focused prompts (substantial
+work, design decisions needed). Verify-prod assertion #9 fixed to
+recognize iOS Safari's correct null-render path (component hides
+because Notification API is absent — IOSInstallPrompt covers riders
+in that context).
+
 
 
 Built and shipped: home glanceable, radar with hot-zone heatmap, weekly
@@ -50,23 +61,18 @@ needle vs which ones risk pulling it off-brand or out of scope.
 Side-project-sized work. Effort XS or S, no major brand tension, concrete
 user value visible at first paint.
 
-### N1a. Speed-warning DRY-RUN logging
-- **Description:** Wire the speed-warning trigger logic without surfacing
-  any UI. When the rider's speed exceeds the limit AND inside an active
-  hot zone AND a tracked plane is airborne within 5nm, fire a
-  `console.log` (and optionally a fetch to `/api/spot` with a `dry-run=1`
-  flag) so we can collect data on how often the trigger would fire and
-  on what cadence — without false-alarming any rider.
-- **Why it matters:** The threshold calculus is brand-critical. False
-  alarms on cruise-control are worse than no warnings. Dry-run gives us
-  a week of trigger-rate data before we surface anything user-visible.
-- **Effort:** S
-- **Risk:** low — no UI, no notifications, just instrumented logging.
-- **Brand tension:** none.
-- **Dependencies:** posted-speed-limit data source + hot-zone
-  proximity helper (neither currently exist; both must be designed
-  first). DEFERRED in P9.
-- **Status:** blocked on dependencies; needs a focused-session prompt.
+### N1a. Speed-warning DRY-RUN logging ✓ SHIPPED (P16 #63)
+- **Description:** `lib/speed-warning.ts` exposes `evaluateWarning()`,
+  a pure function that returns `wouldFire` + the three distance/over-
+  limit metrics. DashShell runs it on every rider geolocation tick
+  and POSTs positives to `/api/dryrun-warnings`. Admin viewer at
+  `/admin/dryrun-warnings`.
+- **Trigger condition:** all three of (a) over the limit by > 2 mph,
+  (b) inside a hot zone (≤ 0.5 nm from cell center), (c) tracked
+  alert-tier plane airborne ≤ 5 nm of the rider.
+- **Storage:** `dryrun-warnings:{YYYYMMDD}` Redis list, 7-day TTL.
+- **Status:** Live. Data accumulation begins now; N1b unblocks after
+  5–7 days of samples.
 
 ### N1b. Speed-warning UI surface
 - **Description:** Once N1a's data confirms the trigger threshold is
@@ -78,8 +84,8 @@ user value visible at first paint.
 - **Risk:** med — brand-critical UX.
 - **Brand tension:** none — `warn` is reserved.
 - **Dependencies:** N1a (need 5–7 days of dry-run data to set the
-  threshold).
-- **Status:** queued behind N1a.
+  threshold). N1a SHIPPED 2026-05-02 — eligible to ship around 2026-05-09.
+- **Status:** ready to write a prompt once N1a data accumulates.
 
 ### N2. adsb.fi historical backfill ✗ DEPRECATED (P15 #58)
 - **Investigation result:** adsb.fi is a real-time ADS-B aggregator and
@@ -373,21 +379,19 @@ tradeoff conversation. New infra OK if it's commodity.
 - **Dependencies:** none.
 - **Status:** ready to write a prompt.
 
-### NX7. Federation-ready namespace prep
-- **Description:** Refactor the codebase to make region (`puget_sound`,
-  `bay_area`, `phoenix`, etc) a first-class concept in storage keys + URL
-  routing. Doesn't ship a second region — just makes adding one a config
-  change instead of a refactor. See Tier 3 federation for the rest of the
-  story.
-- **Why it matters:** If we ever want to franchise the codebase, we want
-  the foundation laid before there's traffic to migrate.
-- **Effort:** M — touches every storage key (`tracks:*`, `spots:*`,
-  `hotzones:*`, `flights:*`) and the cron schedules.
-- **Risk:** med — schema migration of existing KV data needs care.
-- **Brand tension:** none.
-- **Dependencies:** none.
-- **Status:** decide whether federation is real ambition (T3) before
-  taking this on.
+### NX7. Federation-ready namespace prep ✓ FOUNDATION SHIPPED (P16 #62)
+- **Description:** `lib/storage-keys.ts` is now the canonical KV key
+  formatter. `tracks:*`, `spots:*`, `hotzones:*`, `flights:*` keys all
+  route through it. For `DEFAULT_REGION = 'puget-sound'` the formatter
+  returns byte-for-byte identical key shapes to the prior literals —
+  zero migration of existing data. For non-default regions a
+  `{region}:` prefix is prepended.
+- **What's left for actual Bay Area expansion:** per-region runtime
+  selection (currently hardcoded to default), cron-config per region,
+  per-region env vars (`SS_REGION_LAT/LON/NM` set today is single-
+  region). L6 Bay Area expansion is now ~3 days of config work
+  instead of ~3 weeks of refactoring.
+- **Status:** Foundation live; expansion remains an L6 decision.
 
 ### NX8. Time-scrubber for historical playback on `/radar`
 - **Description:** Promoted from L7 → NX. A scrub bar at the bottom
