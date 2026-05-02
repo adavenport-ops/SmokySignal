@@ -37,6 +37,36 @@ Full setup: see `HOW_TO_HAND_OFF.md` §2.5.
 
 ---
 
+## Working with this codebase
+
+```bash
+# First-time setup (per the section above)
+npm install && npx vercel link && npm run env:pull && npm run dev
+
+# Common tasks
+npm run build                # production build (predev env-check runs first)
+npx tsc --noEmit             # strict TypeScript check
+
+# Visual + functional + a11y + coherence audit (~5 min)
+cd tests/visual && SS_VISUAL_BASE_URL=https://smokysignal.app npm test
+node scripts/categorize-bugs.mjs
+node scripts/build-report.mjs
+open out/report.html
+
+# Historical track backfill (rate-limit-aware, idempotent, prompt before fetching)
+npm run backfill                       # pre-scan + fetch missing
+npm run backfill:dry                   # pre-scan + planning table only
+npm run backfill -- --tails N305DK,N305RC,N2446X
+npm run backfill -- --since 7d
+```
+
+The product roadmap lives in `docs/ROADMAP.md` with explicit Now / Next /
+Later / Maybe-Never tiering and the rationale for each item. Brand voice
+rules (hard) live in `design/BRAND.md`. Both docs are load-bearing — read
+once at the start of any meaningful contribution.
+
+---
+
 ## Fidelity
 
 **High-fidelity** for visuals, layout, copy, and interaction logic. Final colors, typography, spacing, component composition, and state behavior are all locked. Pixel-match the designs.
