@@ -178,17 +178,43 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
               visibility: enabledRef.current ? "visible" : "none",
             },
             paint: {
+              // log10(count) so a 100-sample cell isn't 100x as bright
+              // as a 1-sample cell. count=1 → weight 0.2, count=10 → 0.6,
+              // count=100 → 1.0. Diminishing returns past that.
               "heatmap-weight": [
                 "interpolate",
                 ["linear"],
-                ["get", "count"],
-                1,
+                ["log10", ["max", ["get", "count"], 1]],
+                0,
                 0.2,
-                20,
+                2,
                 1,
               ],
-              "heatmap-intensity": 1,
-              "heatmap-radius": 32,
+              // Pull intensity DOWN at low zoom so the regional view
+              // reads as a heatmap, not a region-wide alert.
+              "heatmap-intensity": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                7,
+                0.6,
+                11,
+                1,
+              ],
+              // Smaller radius at low zoom so cells don't merge into
+              // a continuous blob across all of Puget Sound.
+              "heatmap-radius": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                7,
+                14,
+                11,
+                28,
+              ],
+              // Dialed-back opacity stops — same hue progression as before
+              // but the top stop is 0.65 instead of 0.78, so dense areas
+              // remain readable instead of going solid red.
               "heatmap-color": [
                 "interpolate",
                 ["linear"],
@@ -196,15 +222,15 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
                 0,
                 "rgba(0,0,0,0)",
                 0.05,
-                "rgba(245,184,64,0.18)",
-                0.3,
-                "rgba(245,184,64,0.55)",
+                "rgba(245,184,64,0.15)",
+                0.35,
+                "rgba(245,184,64,0.45)",
                 0.7,
-                "rgba(245,140,40,0.70)",
+                "rgba(245,140,40,0.55)",
                 1.0,
-                "rgba(220,38,38,0.78)",
+                "rgba(220,38,38,0.65)",
               ],
-              "heatmap-opacity": 0.85,
+              "heatmap-opacity": 0.7,
             },
           },
           beforeId,
