@@ -8,8 +8,7 @@ import { getMostRecentFlightForTail, flightIdFromTs } from "@/lib/flights";
 import { SS_TOKENS } from "@/lib/tokens";
 import { StatusPill } from "@/components/StatusPill";
 import { Card } from "@/components/Card";
-import { fmtAgo, fmtAgoTs, fmtAloft } from "@/lib/time";
-import { LocalTime } from "@/components/LocalTime";
+import { fmtAgo, fmtAgoTs, fmtAloft, formatTs } from "@/lib/time";
 import type { Aircraft } from "@/lib/types";
 import type { RecentFlightForTail } from "@/lib/flights";
 import { BackLink } from "@/components/BackLink";
@@ -386,13 +385,10 @@ function RecentTrackBlock({
             gap: 10,
           }}
         >
-          <KV
-            label="FIRST"
-            value={<LocalTime ts={session.start_ts} style="datetime" />}
-          />
+          <KV label="FIRST" value={formatTs(session.start_ts, "datetime")} />
           <KV
             label={inProgress ? "NOW" : "LAST"}
-            value={<LocalTime ts={session.end_ts} style="datetime" />}
+            value={formatTs(session.end_ts, "datetime")}
           />
           <KV label="DURATION" value={fmtSessionDuration(session.duration_s)} />
           <KV label="SAMPLES" value={String(session.sample_count)} />

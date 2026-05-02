@@ -14,7 +14,7 @@
 import { ImageResponse } from "next/og";
 import { getRegistry } from "@/lib/registry";
 import { getFlightById } from "@/lib/flights";
-import { fmtDurationHuman, formatTsPacific } from "@/lib/time";
+import { fmtDurationHuman, formatTs } from "@/lib/time";
 
 export const runtime = "nodejs";
 export const contentType = "image/png";
@@ -50,7 +50,7 @@ export default async function OGImage({ params }: Props) {
       : tail
     : tail;
   const subtitle = flight
-    ? `${formatTsPacific(flight.session.start_ts, "date-short")} PT · ${fmtDurationHuman(flight.session.duration_s)}`
+    ? `${formatTs(flight.session.start_ts, "date-short")} PT · ${fmtDurationHuman(flight.session.duration_s)}`
     : "Flight track";
 
   return new ImageResponse(

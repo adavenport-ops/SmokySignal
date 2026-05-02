@@ -28,12 +28,12 @@ export function utcDateKey(d: Date): string {
   return `${y}${m}${day}`;
 }
 
-export function fmtLocalTime(tsSec: number | null | undefined): string {
+export function fmtPtTime(tsSec: number | null | undefined): string {
   if (tsSec == null) return "—";
   return formatTs(tsSec * 1000, "time-sec");
 }
 
-export function fmtLocalDateTime(tsSec: number | null | undefined): string {
+export function fmtPtDateTime(tsSec: number | null | undefined): string {
   if (tsSec == null) return "—";
   return formatTs(tsSec * 1000, "datetime");
 }

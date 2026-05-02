@@ -8,7 +8,7 @@ import type { AuditEntry, BackupInfo } from "@/lib/registry";
 import type { FlightSession } from "@/lib/flights";
 import { flightIdFromTs } from "@/lib/flights";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
-import { LocalTime } from "@/components/LocalTime";
+import { formatTs, formatTsBare } from "@/lib/time";
 import {
   addTailAction,
   updateTailAction,
@@ -454,9 +454,9 @@ function FlightRow({
         style={{ textDecoration: "none", color: "inherit" }}
       >
         <div style={{ fontSize: 12.5, color: SS_TOKENS.fg0 }}>
-          <LocalTime ts={flight.start_ts} style="date-short" /> ·{" "}
-          <LocalTime ts={flight.start_ts} style="time" /> –{" "}
-          <LocalTime ts={flight.end_ts} style="time" />
+          {formatTs(flight.start_ts, "date-short")} ·{" "}
+          {formatTsBare(flight.start_ts, "time")} –{" "}
+          {formatTs(flight.end_ts, "time")}
         </div>
         <div
           className="ss-mono"

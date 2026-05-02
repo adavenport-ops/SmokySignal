@@ -12,7 +12,7 @@ import { LearningPanel } from "./LearningPanel";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { PredictorOutput, PredictionWindow } from "@/lib/predictor";
 import { LEARNING_THRESHOLD_DAYS, type LearningState } from "@/lib/learning";
-import { PT_TZ, formatTsPacific, getViewerTz } from "@/lib/time";
+import { formatTs, formatTsBare } from "@/lib/time";
 
 const MIN_TOTAL_EVENTS_FOR_PREDICTION = 10;
 
@@ -26,9 +26,6 @@ const FALLBACK_LEARNING: LearningState = {
 
 export function PredictionCard({ learning }: { learning?: LearningState }) {
   const [data, setData] = useState<PredictorOutput | null>(null);
-  // Tracked client-side so we only show the "times shown in PT" footnote
-  // for riders whose browser actually resolves to a non-PT zone.
-  const [viewerOutsidePT, setViewerOutsidePT] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,10 +42,6 @@ export function PredictionCard({ learning }: { learning?: LearningState }) {
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  useEffect(() => {
-    setViewerOutsidePT(getViewerTz() !== PT_TZ);
   }, []);
 
   // While loading, render nothing — avoids a flash of the "still learning"
@@ -158,25 +151,12 @@ export function PredictionCard({ learning }: { learning?: LearningState }) {
           View weekly forecast →
         </Link>
       </div>
-      {viewerOutsidePT && (
-        <div
-          className="ss-mono"
-          style={{
-            fontSize: 10,
-            color: SS_TOKENS.fg2,
-            marginTop: 8,
-            letterSpacing: ".04em",
-          }}
-        >
-          Times shown in PT (where the bird flies).
-        </div>
-      )}
     </Card>
   );
 }
 
 function ptDayKey(tsMs: number): string {
-  return formatTsPacific(tsMs, "date");
+  return formatTs(tsMs, "date");
 }
 
 function fmtPredictionDayLabel(iso: string): string {
@@ -186,13 +166,13 @@ function fmtPredictionDayLabel(iso: string): string {
   const tomorrow = ptDayKey(Date.now() + 86_400_000);
   if (target === today) return "Today";
   if (target === tomorrow) return "Tomorrow";
-  return formatTsPacific(ts, "date-weekday");
+  return formatTs(ts, "date-weekday");
 }
 
 function fmtPredictionTimeRange(startIso: string, endIso: string): string {
   const start = new Date(startIso).getTime();
   const end = new Date(endIso).getTime();
-  return `${formatTsPacific(start, "hour-min")} – ${formatTsPacific(end, "hour-min")} PT`;
+  return `${formatTsBare(start, "hour-min")} – ${formatTs(end, "hour-min")}`;
 }
 
 function confidenceLabel(c: PredictionWindow["confidence_level"]): string {

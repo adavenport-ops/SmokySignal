@@ -3,10 +3,10 @@
 // 7×24 heatmap of takeoff probability per (dow, hour) bucket. Tap a
 // cell to see the top contributing tails for that bucket.
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { ForecastGrid, ForecastCell } from "@/lib/predictor";
-import { PT_TZ, getViewerTz, pacificNow } from "@/lib/time";
+import { pacificNow } from "@/lib/time";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
@@ -17,10 +17,6 @@ export function ForecastGridView({ grid }: { grid: ForecastGrid }) {
   );
   const now = useMemo(() => pacificNow(), []);
   const [selected, setSelected] = useState<ForecastCell | null>(null);
-  const [viewerOutsidePT, setViewerOutsidePT] = useState(false);
-  useEffect(() => {
-    setViewerOutsidePT(getViewerTz() !== PT_TZ);
-  }, []);
 
   // Build rows: dow × 24 hours.
   const byDow: ForecastCell[][] = Array.from({ length: 7 }, () => []);
@@ -74,21 +70,6 @@ export function ForecastGridView({ grid }: { grid: ForecastGrid }) {
       </div>
 
       <CellDetail cell={selected} />
-
-      {viewerOutsidePT && (
-        <div
-          className="ss-mono"
-          style={{
-            fontSize: 10,
-            color: SS_TOKENS.fg2,
-            letterSpacing: ".04em",
-            textAlign: "center",
-            paddingTop: 4,
-          }}
-        >
-          Times shown in PT (where the bird flies).
-        </div>
-      )}
     </div>
   );
 }
