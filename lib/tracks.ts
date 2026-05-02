@@ -10,6 +10,7 @@
 
 import { getRedis } from "./cache";
 import { recordFirstSampleIfMissing } from "./learning";
+import { recordLastSample } from "./freshness";
 import type { Snapshot } from "./types";
 
 export type TrackPoint = {
@@ -51,6 +52,10 @@ export async function logTracks(snap: Snapshot): Promise<void> {
   if (points.length > 0) {
     await recordFirstSampleIfMissing(new Date(snap.fetched_at));
   }
+  // Always update the freshness pointer so /radar + / can flip the LAST
+  // SAMPLE label amber when this cron silently dies. Best-effort; never
+  // throws.
+  await recordLastSample(snap.fetched_at);
 
   const writes = points.map(async (a) => {
     const key = `tracks:${a.tail}:${date}`;

@@ -12,6 +12,7 @@ import { SpottedButton } from "./SpottedButton";
 import { HotZoneLayer } from "./HotZoneLayer";
 import { HelpIcon } from "./HelpIcon";
 import { Tooltip } from "./Tooltip";
+import { FreshnessLabel } from "./FreshnessLabel";
 import type { Aircraft, FleetEntry, Snapshot } from "@/lib/types";
 import type { LearningState } from "@/lib/learning";
 
@@ -36,9 +37,16 @@ type Props = {
   initial: Snapshot;
   mockOn?: boolean;
   learning?: LearningState;
+  /** ms-since-epoch of the most recent track sample. null = unknown. */
+  lastSampleMs?: number | null;
 };
 
-export function RadarShell({ initial, mockOn = false, learning }: Props) {
+export function RadarShell({
+  initial,
+  mockOn = false,
+  learning,
+  lastSampleMs = null,
+}: Props) {
   const snap = useAircraft(initial, mockOn);
   const fleetMap = useMemo(
     () => new Map<string, FleetEntry>(snap.aircraft.map((a) => [a.tail, a])),
@@ -145,6 +153,23 @@ export function RadarShell({ initial, mockOn = false, learning }: Props) {
       </header>
 
       <CompassN />
+
+      <div
+        style={{
+          position: "absolute",
+          top: 60,
+          left: 12,
+          padding: "4px 8px",
+          borderRadius: 6,
+          background: "rgba(11,13,16,0.7)",
+          border: `.5px solid ${SS_TOKENS.hairline}`,
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          zIndex: 10,
+        }}
+      >
+        <FreshnessLabel lastSampleMs={lastSampleMs} />
+      </div>
 
       {airborne.length > 0 && <Carousel airborne={airborne} />}
 
