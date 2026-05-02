@@ -9,7 +9,7 @@
   --ss-bg3: #1E2229;
   --ss-fg0: #F2F4F7;
   --ss-fg1: #A8AEB8;
-  --ss-fg2: #6B7380;
+  --ss-fg2: #82899A;
   --ss-fg3: #3f4651;
   /* SEMANTIC: speed-enforcement plane up. Matches the icon files in
      Design/ — alert orange is amber #f5b840, not BRAND.md's #FF7A1A.
@@ -79,6 +79,25 @@ body {
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes ss-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ss-spin {
+  animation: ss-spin 14s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-spin {
+    animation: none;
   }
 }
 

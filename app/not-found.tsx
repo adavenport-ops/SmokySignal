@@ -24,10 +24,8 @@ export default function NotFound() {
     >
       <div
         aria-hidden
-        style={{
-          color: SS_TOKENS.fg3,
-          animation: "ss-spin 14s linear infinite",
-        }}
+        className="ss-spin"
+        style={{ color: SS_TOKENS.fg3 }}
       >
         <Logo size={96} mono />
       </div>
@@ -80,18 +78,6 @@ export default function NotFound() {
         <NavBtn href="/radar">Radar</NavBtn>
         <NavBtn href="/activity">Activity</NavBtn>
       </nav>
-
-      <style>{`
-        @keyframes ss-spin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          [aria-hidden="true"][class*="ss-spin"], [aria-hidden="true"] {
-            animation: none !important;
-          }
-        }
-      `}</style>
     </main>
   );
 }

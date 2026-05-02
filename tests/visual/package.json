@@ -1,0 +1,17 @@
+{
+  "name": "smokysignal-visual-qa",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "report": "node scripts/build-report.mjs",
+    "categorize": "node scripts/categorize-bugs.mjs",
+    "autofix": "node scripts/autofix.mjs",
+    "ios": "node scripts/ios-simulator.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
+    "@playwright/test": "^1.59.1",
+    "glob": "^13.0.6",
+    "lighthouse": "^12.8.2"
+  }
+}

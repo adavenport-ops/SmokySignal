@@ -52,12 +52,14 @@ export function LoginForm({
       >
         {next && <input type="hidden" name="next" value={next} />}
         <label
+          htmlFor="admin-passcode"
           className="ss-mono"
           style={{ fontSize: 10.5, color: SS_TOKENS.fg2, letterSpacing: ".08em" }}
         >
           PASSCODE
         </label>
         <input
+          id="admin-passcode"
           name="passcode"
           type="password"
           autoFocus
