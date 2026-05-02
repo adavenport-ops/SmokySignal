@@ -451,4 +451,57 @@ test.describe("p14 live-prod audit", () => {
       screenshot,
     });
   });
+
+  test("13a. home FreshnessLabel includes PT clock (P19 2.1)", async ({
+    page,
+  }) => {
+    await page.goto("/", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1500);
+    const screenshot = await shot(page, "13a-home-freshness-pt");
+    const body = await page.locator("main").innerText();
+    // Pattern: "LAST SAMPLE — JUST NOW · 15:37 PT" or "LAST SAMPLE — 12m AGO · 15:25 PT"
+    const hasFreshnessPt =
+      /LAST SAMPLE\s+—\s+(JUST NOW|\d+m AGO)\s+·\s+\d{2}:\d{2}\s+PT/i.test(
+        body,
+      );
+    const hasUnknown = /LAST SAMPLE\s+—\s+UNKNOWN/i.test(body);
+    const pass = hasFreshnessPt || hasUnknown;
+    record({
+      claim:
+        "Home 'LAST SAMPLE' footer carries explicit 'HH:MM PT' so out-of-region readers don't have to infer the reference frame",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: pass
+        ? hasFreshnessPt
+          ? "PT clock format present in FreshnessLabel"
+          : "UNKNOWN state (no live sample) — accepted"
+        : "FreshnessLabel rendered without 'HH:MM PT' suffix",
+      screenshot,
+    });
+  });
+
+  test("13b. /activity rows include PT clock (P19 2.1)", async ({ page }) => {
+    await page.goto("/activity", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1500);
+    const screenshot = await shot(page, "13b-activity-pt-clock");
+    const body = await page.locator("main").innerText();
+    // Pattern: "12m ago · 15:42 PT" or "just now · 15:42 PT"
+    const hasActivityPt =
+      /(\d+[mhd]\s+ago|just now)\s+·\s+\d{2}:\d{2}\s+PT/i.test(body);
+    // Empty state acceptable (no rows yet)
+    const isEmpty = /Watching the sky/i.test(body);
+    const pass = hasActivityPt || isEmpty;
+    record({
+      claim:
+        "/activity row metadata pairs relative ('12m ago') with absolute PT ('15:42 PT') so the journalist persona can cite times",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: pass
+        ? hasActivityPt
+          ? "row metadata includes 'HH:MM PT'"
+          : "empty state — accepted"
+        : "activity rows render relative time only, no PT clock",
+      screenshot,
+    });
+  });
 });

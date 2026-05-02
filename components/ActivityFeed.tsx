@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { ActivityEntry, ActivityKind } from "@/lib/activity";
-import { fmtAgoTs } from "@/lib/time";
+import { fmtAgoTs, formatTsBare } from "@/lib/time";
 
 const TABBAR_HEIGHT = 66;
 
@@ -144,7 +144,7 @@ function Row({ entry, first }: { entry: ActivityEntry; first: boolean }) {
           className="ss-mono"
           style={{ fontSize: 11, color: SS_TOKENS.fg2, marginTop: 2 }}
         >
-          {fmtAgoTs(entry.ts)}
+          {fmtAgoTs(entry.ts)} · {formatTsBare(entry.ts, "hour-min")} PT
         </div>
       </div>
       <span
