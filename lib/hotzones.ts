@@ -22,12 +22,27 @@ export const HOTZONE_DAYS_BACK = 30;
 // Defensive Pacific-NW envelope. Anything outside is data-quality
 // noise — old ADS-B records under a recycled N-number, hex collision
 // from a different aircraft using the same Mode-S code, etc. Live
-// snapshots from /api/aircraft already region-filter so this only
-// matters for the historical backfill path.
-const REGION_LAT_MIN = 45.0;
-const REGION_LAT_MAX = 49.5;
-const REGION_LON_MIN = -125.0;
-const REGION_LON_MAX = -116.0;
+// Bounding box around the configured region centroid. WSP fixed-wing
+// fleet operates statewide — without this filter, a Smokey 3 deployment
+// to Tri-Cities (46.3°N, -119.4°W) lands ~1000 samples in the Puget
+// Sound heatmap. (Audit 2026-05-02 found exactly this pattern.)
+//
+// Envvar-overridable so the operator can re-aim without a deploy.
+// Defaults: 47.6°N / -122.3°W / 80nm — Puget Sound.
+//
+// The bounds were previously the whole-state box (45–49.5°N, -125 to
+// -116°W) which let Tri-Cities through. The tighter default + envvar
+// hatch is the right shape for a region-selector future (Phase 3).
+const REGION_LAT = Number(process.env.SS_REGION_LAT ?? 47.6);
+const REGION_LON = Number(process.env.SS_REGION_LON ?? -122.3);
+const REGION_NM = Number(process.env.SS_REGION_NM ?? 80);
+// 1° latitude ≈ 60nm everywhere; 1° longitude ≈ 41nm at 47°N.
+const LAT_DEG = REGION_NM / 60;
+const LON_DEG = REGION_NM / 41;
+const REGION_LAT_MIN = REGION_LAT - LAT_DEG;
+const REGION_LAT_MAX = REGION_LAT + LAT_DEG;
+const REGION_LON_MIN = REGION_LON - LON_DEG;
+const REGION_LON_MAX = REGION_LON + LON_DEG;
 
 function inRegion(lat: number, lon: number): boolean {
   return (
