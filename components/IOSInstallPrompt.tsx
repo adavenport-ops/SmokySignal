@@ -1,16 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SS_TOKENS } from "@/lib/tokens";
+import { isPushSupported } from "@/lib/push/client";
 
 const STORAGE_KEY = "ss_install_dismissed";
+const POST_INSTALL_DISMISS_KEY = "ss_post_install_dismissed";
+const FIRST_STANDALONE_KEY = "ss_first_standalone_visit";
+const PULSE_KEYFRAME_ID = "ss-arm-alerts-pulse";
 const DISMISS_DAYS = 30;
 const TABBAR_HEIGHT = 66;
 // Routes whose layout includes the bottom tab bar — banner sits above it.
 const TABBAR_PATHS = new Set(["/", "/radar", "/dash"]);
 
 type Standalone = Navigator & { standalone?: boolean };
+type Mode = "hidden" | "pre-install" | "post-install";
 
 function isIOSSafari(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -29,9 +35,9 @@ function isStandalone(): boolean {
   return Boolean((navigator as Standalone).standalone);
 }
 
-function isDismissed(): boolean {
+function isDismissed(key: string): boolean {
   if (typeof window === "undefined") return false;
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+  const raw = window.localStorage.getItem(key);
   if (!raw) return false;
   const ts = Number(raw);
   if (!Number.isFinite(ts)) return false;
@@ -39,29 +45,76 @@ function isDismissed(): boolean {
   return ageMs < DISMISS_DAYS * 24 * 60 * 60 * 1000;
 }
 
+function ensurePulseKeyframes() {
+  if (typeof document === "undefined") return;
+  if (document.getElementById(PULSE_KEYFRAME_ID)) return;
+  const style = document.createElement("style");
+  style.id = PULSE_KEYFRAME_ID;
+  style.textContent = `@keyframes ss-arm-alerts-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,159,28,.55); }
+    50% { box-shadow: 0 0 0 6px rgba(255,159,28,0); }
+  }`;
+  document.head.appendChild(style);
+}
+
 export function IOSInstallPrompt() {
   const pathname = usePathname();
-  const [show, setShow] = useState(false);
+  const [mode, setMode] = useState<Mode>("hidden");
+  const [pulse, setPulse] = useState(false);
 
   useEffect(() => {
     if (!isIOSSafari()) return;
-    if (isStandalone()) return;
-    if (isDismissed()) return;
-    setShow(true);
+    const standalone = isStandalone();
+    if (!standalone) {
+      if (!isDismissed(STORAGE_KEY)) setMode("pre-install");
+      return;
+    }
+    // Standalone PWA — only show the step-3 prompt if we know push is
+    // supported and the rider hasn't armed yet, and they haven't already
+    // dismissed this branch.
+    if (!isPushSupported()) return;
+    if (isDismissed(POST_INSTALL_DISMISS_KEY)) return;
+    let cancelled = false;
+    navigator.serviceWorker.ready
+      .then((reg) => reg.pushManager.getSubscription())
+      .then((sub) => {
+        if (cancelled || sub) return;
+        // One-time pulse on the first standalone visit so the rider
+        // notices the deep-link, then never again.
+        const firstSeen = window.localStorage.getItem(FIRST_STANDALONE_KEY);
+        if (!firstSeen) {
+          window.localStorage.setItem(
+            FIRST_STANDALONE_KEY,
+            String(Date.now()),
+          );
+          setPulse(true);
+        }
+        setMode("post-install");
+      })
+      .catch(() => {
+        if (!cancelled) setMode("post-install");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  if (!show) return null;
+  useEffect(() => {
+    if (pulse) ensurePulseKeyframes();
+  }, [pulse]);
 
-  const dismiss = () => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, String(Date.now()));
-    }
-    setShow(false);
-  };
+  if (mode === "hidden") return null;
 
-  // Sit above the tab bar on (tabs) pages, at the viewport bottom elsewhere.
   const onTabs = pathname != null && TABBAR_PATHS.has(pathname);
   const bottomOffset = onTabs ? TABBAR_HEIGHT : 0;
+  const dismissKey =
+    mode === "pre-install" ? STORAGE_KEY : POST_INSTALL_DISMISS_KEY;
+  const dismiss = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(dismissKey, String(Date.now()));
+    }
+    setMode("hidden");
+  };
 
   return (
     <div
@@ -82,20 +135,12 @@ export function IOSInstallPrompt() {
         gap: 12,
       }}
     >
-      <div style={{ flex: 1, fontSize: 12.5, lineHeight: 1.45, color: SS_TOKENS.fg0 }}>
-        Install SmokySignal — tap <ShareIcon /> then &ldquo;Add to Home Screen&rdquo;
-        <span
-          className="ss-mono"
-          style={{
-            display: "block",
-            marginTop: 4,
-            fontSize: 10.5,
-            color: SS_TOKENS.fg2,
-            letterSpacing: ".04em",
-          }}
-        >
-          Add to Home Screen → Open SmokySignal → arm alerts.
-        </span>
+      <div style={{ flex: 1, fontSize: 12.5, lineHeight: 1.5, color: SS_TOKENS.fg0 }}>
+        {mode === "pre-install" ? (
+          <PreInstallCopy />
+        ) : (
+          <PostInstallCopy pulse={pulse} />
+        )}
       </div>
       <button
         type="button"
@@ -119,6 +164,64 @@ export function IOSInstallPrompt() {
         <XIcon />
       </button>
     </div>
+  );
+}
+
+function PreInstallCopy() {
+  return (
+    <>
+      <div className="ss-eyebrow" style={{ marginBottom: 4 }}>
+        OPT IN · CHANNEL 19
+      </div>
+      <div style={{ fontWeight: 700, marginBottom: 6 }}>
+        Two steps for iOS push.
+      </div>
+      <ol
+        style={{
+          margin: 0,
+          paddingLeft: 18,
+          fontSize: 11.5,
+          color: SS_TOKENS.fg1,
+          lineHeight: 1.55,
+        }}
+      >
+        <li>
+          Tap <ShareIcon /> →{" "}
+          <span style={{ color: SS_TOKENS.alert }}>Add to Home Screen</span>
+        </li>
+        <li>Open SmokySignal from your home screen</li>
+        <li>Tap the “Arm alerts” button</li>
+      </ol>
+    </>
+  );
+}
+
+function PostInstallCopy({ pulse }: { pulse: boolean }) {
+  return (
+    <>
+      <div className="ss-eyebrow" style={{ marginBottom: 4 }}>
+        STEP 3 · ARM ALERTS
+      </div>
+      <div style={{ fontSize: 12.5, color: SS_TOKENS.fg1, marginBottom: 8 }}>
+        You&rsquo;re in the app. One more tap for push notifications.
+      </div>
+      <Link
+        href="/settings/alerts"
+        style={{
+          display: "inline-block",
+          background: SS_TOKENS.alert,
+          color: SS_TOKENS.bg0,
+          padding: "6px 12px",
+          borderRadius: 8,
+          fontSize: 12.5,
+          fontWeight: 600,
+          textDecoration: "none",
+          animation: pulse ? "ss-arm-alerts-pulse 1.6s ease-out 3" : undefined,
+        }}
+      >
+        Arm alerts
+      </Link>
+    </>
   );
 }
 
