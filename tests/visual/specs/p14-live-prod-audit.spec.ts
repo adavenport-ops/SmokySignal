@@ -423,4 +423,32 @@ test.describe("p14 live-prod audit", () => {
       screenshot,
     });
   });
+
+  test("12. /plane/[tail] no duplicate 'Last seen' (P19 2.2)", async ({
+    page,
+  }) => {
+    await page.goto("/plane/N305DK", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1500);
+    const screenshot = await shot(page, "12-plane-last-seen-dedupe");
+    const body = await page.locator("main").innerText();
+    // The persona finding: "Last seen a while" appeared in both the
+    // header status pill and the Currently card. Post-fix, the two
+    // surfaces use distinct labels:
+    //   - StatusPill sub: "Last flew" or "Last contact" or "No recent contact"
+    //   - GroundedNote:   "Last position broadcast" or "Awaiting next position broadcast"
+    // The exact "Last seen a while" string must not appear at all.
+    const hasLastSeenAWhile = /last seen.*a while|a while.*last seen/i.test(body);
+    const lastSeenCount = (body.match(/last seen/gi) ?? []).length;
+    const pass = !hasLastSeenAWhile && lastSeenCount === 0;
+    record({
+      claim:
+        '/plane/[tail] uses distinct labels for the header pill ("Last flew"/"Last contact") vs Currently card ("Last position broadcast")',
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: pass
+        ? '"last seen" string absent; pill and card carry distinct labels'
+        : `"last seen" appeared ${lastSeenCount}x; legacy duplicate may have regressed`,
+      screenshot,
+    });
+  });
 });

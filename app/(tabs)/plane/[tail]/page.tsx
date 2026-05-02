@@ -129,13 +129,15 @@ export default async function PlanePage({ params, searchParams }: Props) {
                 ? fmtAloft(live?.time_aloft_min)
                 : recentFlight
                   ? `Last flew ${fmtAgoTs(recentFlight.session.end_ts)}`
-                  : `last seen ${fmtAgo(live?.last_seen_min)}`
+                  : live?.last_seen_min != null
+                    ? `Last contact ${fmtAgo(live.last_seen_min)}`
+                    : "No recent contact"
             }
             big
             tooltip={
               up
                 ? "Live state from latest ADS-B observation."
-                : "Some helicopters fly with intermittent transponder coverage; 'last seen' isn't always 'last flew'."
+                : "Some helicopters fly with intermittent transponder coverage; 'last contact' (most recent ADS-B trace) isn't always 'last flew' (most recent completed flight session)."
             }
           />
           <Tooltip content={roleTooltip(entry.role)}>
@@ -252,17 +254,24 @@ function LiveDataBlock({
 }
 
 function GroundedNote({ live }: { live: Aircraft | undefined }) {
+  const lastSeen = live?.last_seen_min;
   return (
     <Card>
       <div className="ss-eyebrow" style={{ marginBottom: 6 }}>
         Currently
       </div>
       <div style={{ fontSize: 14, color: SS_TOKENS.fg1 }}>
-        On the ground. Last seen{" "}
-        <span className="ss-mono" style={{ color: SS_TOKENS.fg0 }}>
-          {fmtAgo(live?.last_seen_min)}
-        </span>{" "}
-        back.
+        {lastSeen != null ? (
+          <>
+            On the ground. Last position broadcast{" "}
+            <span className="ss-mono" style={{ color: SS_TOKENS.fg0 }}>
+              {fmtAgo(lastSeen)}
+            </span>{" "}
+            back.
+          </>
+        ) : (
+          "On the ground. Awaiting next position broadcast."
+        )}
       </div>
     </Card>
   );
