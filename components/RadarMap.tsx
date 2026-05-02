@@ -20,6 +20,30 @@ import {
 const PUGET_SOUND: [number, number] = [-122.3, 47.6];
 const DEFAULT_ZOOM = 9;
 
+// 1 nautical mile in degrees latitude (constant). Longitude varies with
+// latitude — use cos(lat) to scale per-ring.
+const NM_PER_DEG_LAT = 1 / 60;
+const RING_SEGMENTS = 64;
+
+function nmToDegLat(nm: number): number {
+  return nm * NM_PER_DEG_LAT;
+}
+
+function circleRingCoords(
+  centerLat: number,
+  centerLon: number,
+  radiusNm: number,
+): Array<[number, number]> {
+  const dLat = nmToDegLat(radiusNm);
+  const dLon = dLat / Math.max(0.01, Math.cos((centerLat * Math.PI) / 180));
+  const out: Array<[number, number]> = [];
+  for (let i = 0; i <= RING_SEGMENTS; i++) {
+    const theta = (i / RING_SEGMENTS) * 2 * Math.PI;
+    out.push([centerLon + dLon * Math.sin(theta), centerLat + dLat * Math.cos(theta)]);
+  }
+  return out;
+}
+
 // Aircraft glyphs are role-keyed images in MapLibre's image atlas. We
 // load one per role at map-init and the symbol layer's icon-image
 // expression picks the right one per feature via properties.icon.
@@ -76,10 +100,12 @@ type RiderPos = { lat: number; lon: number };
 export default function RadarMap({
   aircraft,
   rider,
+  showDistanceRings = false,
   onMapReady,
 }: {
   aircraft: Aircraft[];
   rider: RiderPos | null;
+  showDistanceRings?: boolean;
   onMapReady?: (map: MaplibreMap | null) => void;
 }) {
   const router = useRouter();
@@ -91,6 +117,7 @@ export default function RadarMap({
   const stateRef = useRef<Snapshot>(EMPTY_SNAPSHOT);
   const aircraftRef = useRef<Aircraft[]>(aircraft);
   const riderRef = useRef<RiderPos | null>(rider);
+  const showDistanceRingsRef = useRef<boolean>(showDistanceRings);
   const userInteractedAtRef = useRef<number>(0);
   const onMapReadyRef = useRef(onMapReady);
   onMapReadyRef.current = onMapReady;
@@ -142,7 +169,55 @@ export default function RadarMap({
         map.addImage(key, roleImgs[i]!);
       });
 
-      // Rider — under aircraft so chevrons stay visually on top.
+      // Distance rings — sit beneath the rider so the dot stays on top.
+      // Toggleable via showDistanceRings prop; visibility flips without
+      // tearing the layer down.
+      map.addSource("distance-rings", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+      map.addLayer({
+        id: "distance-rings",
+        type: "line",
+        source: "distance-rings",
+        layout: {
+          visibility: showDistanceRingsRef.current ? "visible" : "none",
+        },
+        paint: {
+          "line-color": SS_TOKENS.fg2,
+          "line-opacity": 0.4,
+          "line-width": 0.75,
+          "line-dasharray": [4, 4],
+        },
+      });
+      // Tiny mono labels at the top of each ring ("5nm" / "10nm" / "15nm")
+      // sit on a separate symbol layer so we can keep the line layer pure.
+      map.addLayer({
+        id: "distance-rings-labels",
+        type: "symbol",
+        source: "distance-rings",
+        layout: {
+          visibility: showDistanceRingsRef.current ? "visible" : "none",
+          "text-field": ["get", "label"],
+          "text-size": 9,
+          "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+          "text-offset": [0, -0.6],
+          "text-anchor": "bottom",
+          "text-allow-overlap": false,
+        },
+        paint: {
+          "text-color": SS_TOKENS.fg2,
+          "text-opacity": 0.8,
+          "text-halo-color": SS_TOKENS.bg0,
+          "text-halo-width": 1.5,
+        },
+        // Only render labels for the line vertices we tag — the polygon
+        // outlines have no `label` property so they're skipped.
+        filter: ["has", "label"],
+      });
+
+      // Rider — under aircraft so chevrons stay visually on top, but ABOVE
+      // distance rings so the dot stays visually anchored.
       map.addSource("rider", {
         type: "geojson",
         data: { type: "FeatureCollection", features: [] },
@@ -180,6 +255,7 @@ export default function RadarMap({
       readyRef.current = true;
       applyAircraft(aircraftRef.current);
       applyRider(riderRef.current);
+      applyDistanceRings(riderRef.current);
       startPulse();
       onMapReadyRef.current?.(map);
     };
@@ -228,8 +304,25 @@ export default function RadarMap({
   // Apply rider position when it updates from the geolocation watch.
   useEffect(() => {
     riderRef.current = rider;
-    if (readyRef.current) applyRider(rider);
+    if (readyRef.current) {
+      applyRider(rider);
+      applyDistanceRings(rider);
+    }
   }, [rider]);
+
+  // Toggle ring visibility without rebuilding the layer.
+  useEffect(() => {
+    showDistanceRingsRef.current = showDistanceRings;
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    const v = showDistanceRings ? "visible" : "none";
+    try {
+      map.setLayoutProperty("distance-rings", "visibility", v);
+      map.setLayoutProperty("distance-rings-labels", "visibility", v);
+    } catch {
+      /* layer not yet attached */
+    }
+  }, [showDistanceRings]);
 
   // Auto-recenter every 5s, paused for 15s after the user pans or zooms.
   useEffect(() => {
@@ -262,6 +355,37 @@ export default function RadarMap({
       pulseRef.current = requestAnimationFrame(tick);
     };
     pulseRef.current = requestAnimationFrame(tick);
+  }
+
+  function applyDistanceRings(pos: RiderPos | null) {
+    const map = mapRef.current;
+    if (!map) return;
+    const source = map.getSource("distance-rings") as GeoJSONSource | undefined;
+    if (!source) return;
+    if (!pos) {
+      source.setData({ type: "FeatureCollection", features: [] });
+      return;
+    }
+    const RINGS_NM = [5, 10, 15] as const;
+    const features: GeoJSON.Feature[] = [];
+    for (const nm of RINGS_NM) {
+      features.push({
+        type: "Feature",
+        geometry: {
+          type: "LineString",
+          coordinates: circleRingCoords(pos.lat, pos.lon, nm),
+        },
+        properties: {},
+      });
+      // Label at the top (north) edge of each ring.
+      const labelLat = pos.lat + nmToDegLat(nm);
+      features.push({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [pos.lon, labelLat] },
+        properties: { label: `${nm}nm` },
+      });
+    }
+    source.setData({ type: "FeatureCollection", features });
   }
 
   function applyRider(pos: RiderPos | null) {
