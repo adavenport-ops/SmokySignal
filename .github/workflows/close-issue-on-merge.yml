@@ -1,0 +1,41 @@
+name: Close issue on merge
+
+# When a PR with "Closes #N" merges, GitHub's native behavior already
+# closes the issue. This workflow adds a tracing comment so the auto-fix
+# loop is observable from the issue thread alone — useful for the QA
+# dashboard's throughput stats.
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  comment-on-issue:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Find linked issues + comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          # Match closes/fixes/resolves #N (case-insensitive).
+          MATCHES=$(printf '%s\n%s\n' "$PR_TITLE" "$PR_BODY" \
+            | grep -oiE '(closes|fixes|resolves)[[:space:]]+#[0-9]+' \
+            | grep -oE '#[0-9]+' \
+            | sed 's/#//' \
+            | sort -u)
+          if [ -z "$MATCHES" ]; then
+            echo "No Closes #N references — nothing to do."
+            exit 0
+          fi
+          for N in $MATCHES; do
+            echo "Commenting on #$N"
+            gh issue comment "$N" --body "Auto-fixed and merged via PR #${PR_NUMBER}." || true
+          done
