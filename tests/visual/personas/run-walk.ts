@@ -29,11 +29,35 @@
 
 import { Stagehand } from "@browserbasehq/stagehand";
 import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/**
+ * For low-vision-rider only: load the latest axe-core violations for the
+ * route from `tests/visual/out/a11y/chromium-desktop/<routeName>.json`
+ * (written by tests/visual/specs/a11y.spec.ts) and format as a prompt
+ * appendix. The persona file calls this out as the grounding source.
+ */
+function axeContext(personaId: string, routeName: string): string {
+  if (personaId !== "low-vision-rider") return "";
+  const p = path.resolve(__dirname, "..", "out", "a11y", "chromium-desktop", `${routeName}.json`);
+  if (!existsSync(p)) return "";
+  try {
+    const data = JSON.parse(readFileSync(p, "utf8"));
+    const v = data.violations ?? [];
+    if (v.length === 0) return "\n\n<axe>\nNo axe-core violations recorded for this route.\n</axe>";
+    const lines = v.slice(0, 12).map((x: any) =>
+      `- ${x.id} (${x.impact ?? "n/a"}): ${(x.help ?? "").slice(0, 80)} — ${x.nodes?.length ?? 0} node(s)`,
+    );
+    return `\n\n<axe>\nLatest axe-core violations (chromium-desktop):\n${lines.join("\n")}\n</axe>`;
+  } catch {
+    return "";
+  }
+}
 
 const ROUTES = [
   { name: "home", path: "/" },
@@ -154,6 +178,8 @@ const SYSTEM_PROMPT =
 
 function buildUserPrompt(
   persona: string,
+  personaId: string,
+  routeName: string,
   screenshotPath: string,
   dom: string,
   url: string,
@@ -162,6 +188,7 @@ function buildUserPrompt(
   const screenshotLine = forCli
     ? `Read the screenshot at: ${screenshotPath}\n(Use the Read tool to load it.)`
     : `Screenshot is attached above.`;
+  const axe = axeContext(personaId, routeName);
   return `<persona>
 ${persona}
 </persona>
@@ -174,13 +201,15 @@ DOM excerpt (first 8KB, scripts stripped):
 
 <dom>
 ${dom}
-</dom>
+</dom>${axe}
 
 In your voice — the persona's voice — walk through what you see on this page. What catches your eye? What makes sense? What feels off? What would you want changed? Maximum 200 words. Stay IN VOICE.`;
 }
 
 async function reviewViaSdk(
   persona: string,
+  personaId: string,
+  routeName: string,
   screenshotPath: string,
   dom: string,
   url: string,
@@ -189,7 +218,7 @@ async function reviewViaSdk(
   const { default: Anthropic } = await import("@anthropic-ai/sdk");
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
   const screenshotB64 = (await fs.readFile(screenshotPath)).toString("base64");
-  const userText = buildUserPrompt(persona, screenshotPath, dom, url, false);
+  const userText = buildUserPrompt(persona, personaId, routeName, screenshotPath, dom, url, false);
   const start = Date.now();
   const resp = await client.messages.create({
     model,
@@ -224,12 +253,14 @@ async function reviewViaSdk(
 
 function reviewViaCli(
   persona: string,
+  personaId: string,
+  routeName: string,
   screenshotPath: string,
   dom: string,
   url: string,
   model: string,
 ): ReviewResult {
-  const fullPrompt = `${SYSTEM_PROMPT}\n\n${buildUserPrompt(persona, screenshotPath, dom, url, true)}`;
+  const fullPrompt = `${SYSTEM_PROMPT}\n\n${buildUserPrompt(persona, personaId, routeName, screenshotPath, dom, url, true)}`;
   const args = [
     "-p",
     "--model",
@@ -261,15 +292,17 @@ function reviewViaCli(
 
 async function review(
   persona: string,
+  personaId: string,
+  routeName: string,
   screenshotPath: string,
   dom: string,
   url: string,
   model: string,
 ): Promise<ReviewResult> {
   if (process.env.ANTHROPIC_API_KEY) {
-    return reviewViaSdk(persona, screenshotPath, dom, url, model);
+    return reviewViaSdk(persona, personaId, routeName, screenshotPath, dom, url, model);
   }
-  return reviewViaCli(persona, screenshotPath, dom, url, model);
+  return reviewViaCli(persona, personaId, routeName, screenshotPath, dom, url, model);
 }
 
 async function main() {
@@ -334,7 +367,7 @@ async function main() {
     let body: string;
     if (!args.noReview) {
       try {
-        const r = await review(persona, cap.screenshotPath, cap.dom, cap.url, args.model);
+        const r = await review(persona, args.persona!, route.name, cap.screenshotPath, cap.dom, cap.url, args.model);
         totalReviewMs += r.ms;
         totalIn += r.inputTokens ?? 0;
         totalOut += r.outputTokens ?? 0;

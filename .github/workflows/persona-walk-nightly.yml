@@ -57,7 +57,7 @@ jobs:
           else
             FLAGS=""
           fi
-          for p in sport-bike-rider weekend-driver skeptic out-of-tz-onlooker operator lurker local-journalist off-duty-trooper; do
+          for p in sport-bike-rider weekend-driver skeptic out-of-tz-onlooker operator lurker local-journalist off-duty-trooper low-vision-rider; do
             echo "=== persona: $p ==="
             npx tsx personas/run-walk.ts \
               --persona "$p" \

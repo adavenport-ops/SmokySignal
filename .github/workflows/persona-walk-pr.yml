@@ -1,8 +1,10 @@
 name: Persona walk on PR
 
-# Per-PR persona-walk against the Vercel preview deploy. 3 personas
-# (sport-bike-rider, skeptic, lurker) × routes inferred from the PR's
-# changed files. Posts a single comment with consensus findings.
+# Per-PR persona-walk against the Vercel preview deploy. 4 personas
+# (sport-bike-rider, skeptic, lurker, low-vision-rider) × routes inferred
+# from the PR's changed files. Posts a single comment with consensus
+# findings. low-vision-rider's prompt is augmented with axe-core findings
+# when the a11y artifact is available (P21).
 #
 # Auth path (one of):
 #   - CLAUDE_CODE_OAUTH_TOKEN — generate locally with `claude setup-token`,
@@ -102,7 +104,7 @@ jobs:
           fi
           STAMP="pr-${{ github.event.pull_request.number }}-$(date +%s)"
           echo "stamp=$STAMP" >> "$GITHUB_ENV"
-          for p in sport-bike-rider skeptic lurker; do
+          for p in sport-bike-rider skeptic lurker low-vision-rider; do
             echo "=== persona: $p ==="
             npx tsx personas/run-walk.ts \
               --persona "$p" \
@@ -145,7 +147,7 @@ jobs:
           script: |
             const fs = require('fs');
             const p = `tests/visual/out/persona-walks/${process.env.stamp}/consensus.md`;
-            const head = `## Persona walk on Vercel preview\n\n**Preview:** ${process.env.PREVIEW}\n**Routes:** \`${process.env.ROUTES}\`\n**Personas:** sport-bike-rider, skeptic, lurker\n\n---\n\n`;
+            const head = `## Persona walk on Vercel preview\n\n**Preview:** ${process.env.PREVIEW}\n**Routes:** \`${process.env.ROUTES}\`\n**Personas:** sport-bike-rider, skeptic, lurker, low-vision-rider\n\n---\n\n`;
             const tail = `\n\n_Full sweep + screenshots: workflow artifacts._`;
             const body = head + (fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : '_consensus.md missing._') + tail;
             await github.rest.issues.createComment({
