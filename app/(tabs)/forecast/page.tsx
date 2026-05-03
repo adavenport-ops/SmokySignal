@@ -8,6 +8,12 @@ import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 import { getSnapshot } from "@/lib/snapshot";
 import { getRegistry } from "@/lib/registry";
 import { computeStatus } from "@/lib/status";
+import {
+  applyMockForecastGrid,
+  applyMockLearning,
+  applyMockState,
+  parseMockState,
+} from "@/lib/mock-state";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -17,13 +23,23 @@ export const metadata = {
 
 const FORECAST_LEARNING_EVENT_FLOOR = 30;
 
-export default async function ForecastPage() {
-  const [grid, learning, snap, fleet] = await Promise.all([
+type SP = { mock?: string };
+
+export default async function ForecastPage({
+  searchParams,
+}: {
+  searchParams: SP;
+}) {
+  const mockState = parseMockState(searchParams.mock);
+  const [realGrid, realLearning, realSnap, fleet] = await Promise.all([
     getForecastGrid(),
     getLearningState(),
     getSnapshot(),
     getRegistry(),
   ]);
+  const grid = applyMockForecastGrid(realGrid, mockState);
+  const learning = applyMockLearning(realLearning, mockState);
+  const snap = applyMockState(realSnap, mockState);
   const fleetMap = new Map(fleet.map((f) => [f.tail, f]));
   const liveStatus = computeStatus(snap, fleetMap);
   const showLearning =
