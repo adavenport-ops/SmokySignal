@@ -48,6 +48,7 @@ function requireAdmin() {
 const VALID_NEXT_TARGETS: Record<string, string> = {
   tracks: "/admin/tracks",
   spots: "/admin/spots",
+  qa: "/qa-dashboard",
 };
 
 export async function authenticateAction(formData: FormData) {

@@ -633,6 +633,37 @@ test.describe("p14 live-prod audit", () => {
     });
   });
 
+  test("20. /qa-dashboard exists + admin-gated (P22 4)", async ({ page }) => {
+    await page.goto("/qa-dashboard", { waitUntil: "networkidle" });
+    await page.waitForTimeout(800);
+    const screenshot = await shot(page, "20-qa-dashboard-gate");
+    const url = page.url();
+    const body = (await page.locator("body").innerText()).slice(0, 600);
+    // Three valid surfaces:
+    //  (a) ADMIN_PASSCODE not configured → friendly message
+    //  (b) Not authed → redirect to /admin?next=qa
+    //  (c) Authed → dashboard renders (won't happen from prod audit
+    //      without a session)
+    const passcodeMissing = /ADMIN_PASSCODE/.test(body);
+    const redirectedToAdmin = /\/admin/.test(url) && /next=qa/.test(url);
+    const dashboardRendered = /QA dashboard/.test(body) && /Mac Mini heartbeat/.test(body);
+    const pass = passcodeMissing || redirectedToAdmin || dashboardRendered;
+    record({
+      claim:
+        "/qa-dashboard responds (admin-gated): redirects to /admin?next=qa, shows ADMIN_PASSCODE-missing surface, or renders the dashboard",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: passcodeMissing
+        ? "passcode-missing surface rendered"
+        : redirectedToAdmin
+          ? `redirected to ${url}`
+          : dashboardRendered
+            ? "dashboard rendered (admin session present)"
+            : `unexpected response: url=${url} body-prefix="${body.slice(0, 120)}"`,
+      screenshot,
+    });
+  });
+
   test("19. /api/health surfaces last_heartbeat fields (P22 5)", async ({
     request,
   }) => {
