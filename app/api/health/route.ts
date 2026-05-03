@@ -94,6 +94,7 @@ export async function GET() {
     opensky_credits_remaining,
     snap,
     last_airborne_ts,
+    last_heartbeat_ts,
   ] = await Promise.all([
     pingKv(),
     pingUrl(adsbfiUrl),
@@ -101,6 +102,7 @@ export async function GET() {
     getOpenskyCreditsRemaining(),
     peekHealthSnapshot(),
     getLastAirborneTs(),
+    cacheGet<number>("meta:last_heartbeat"),
   ]);
 
   // Counts derived from the cached snapshot. live_seen_count = total
@@ -120,6 +122,18 @@ export async function GET() {
   // adsb.fi is the only path that must work for the app to be useful;
   // OpenSky is a fallback. KV is optional (in-memory fallback exists).
   const ok = adsbfi === "ok";
+  // CI heartbeat — written by .github/workflows/heartbeat.yml hourly.
+  // Surfaced here so the nightly persona-walk workflow can detect Mac
+  // Mini outages and verify-prod can assert freshness.
+  const last_heartbeat_age_s =
+    typeof last_heartbeat_ts === "number" && Number.isFinite(last_heartbeat_ts)
+      ? Math.max(0, Math.floor(Date.now() / 1000 - last_heartbeat_ts))
+      : null;
+  const last_heartbeat_iso =
+    typeof last_heartbeat_ts === "number" && Number.isFinite(last_heartbeat_ts)
+      ? new Date(last_heartbeat_ts * 1000).toISOString()
+      : null;
+
   return NextResponse.json({
     ok,
     kv,
@@ -130,6 +144,8 @@ export async function GET() {
     last_airborne_ts: last_airborne_ts
       ? new Date(last_airborne_ts).toISOString()
       : null,
+    last_heartbeat_iso,
+    last_heartbeat_age_s,
     opensky: openskyResult.status,
     ...(openskyResult.error ? { opensky_error: openskyResult.error } : {}),
     opensky_credits_remaining,
