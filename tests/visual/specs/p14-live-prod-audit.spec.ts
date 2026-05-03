@@ -586,4 +586,50 @@ test.describe("p14 live-prod audit", () => {
       evidence,
     });
   });
+
+  test("17. ?mock=learning shows the learning panel on /forecast (P21 2.1)", async ({
+    page,
+  }) => {
+    await page.goto("/forecast?mock=learning", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1500);
+    const screenshot = await shot(page, "17-forecast-mock-learning");
+    const html = (await page.content()).toUpperCase();
+    const hasLearning = html.includes("LEARNING THE SKY");
+    const hasDay0 = /DAY 0 OF 30/.test(html);
+    const pass = hasLearning && hasDay0;
+    record({
+      claim:
+        "?mock=learning forces /forecast into Day 0 of 30 — learning panel visible",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: pass
+        ? '"LEARNING THE SKY" + "DAY 0 OF 30" both rendered'
+        : `learning=${hasLearning} day0=${hasDay0}`,
+      screenshot,
+    });
+  });
+
+  test("18. ?mock=full-data hides the learning panel on /forecast (P21 2.2)", async ({
+    page,
+  }) => {
+    await page.goto("/forecast?mock=full-data", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1500);
+    const screenshot = await shot(page, "18-forecast-mock-full-data");
+    const html = (await page.content()).toUpperCase();
+    // In full-data state, the synthesized grid has plenty of events and
+    // learning.stillLearning is false → LearningPanel renders nothing
+    // (showLearning gate fails) and the eyebrow is absent.
+    const hasLearning = html.includes("LEARNING THE SKY");
+    const pass = !hasLearning;
+    record({
+      claim:
+        "?mock=full-data hides the LearningPanel on /forecast — predictor confident, no learning eyebrow",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: pass
+        ? "learning panel absent (eyebrow not rendered)"
+        : "learning panel still rendered with full-data — gate didn't trip",
+      screenshot,
+    });
+  });
 });
