@@ -119,12 +119,20 @@ export function IOSInstallPrompt() {
   return (
     <div
       role="dialog"
+      // pointer-events: none on the wrapper so the prompt doesn't intercept
+      // taps meant for the map / filter button on /radar. Interactive children
+      // opt back in via pointerEvents: "auto". Instruction text stays
+      // visible (the wrapper is still painted) but isn't tappable — taps on
+      // text fall through to the radar layer underneath. The X button + the
+      // post-install "Arm alerts" link are the only tap targets inside the
+      // prompt. Fixes verify-prod #10 (hot-zones filter click intercept).
       style={{
         position: "fixed",
         left: 0,
         right: 0,
         bottom: bottomOffset,
         zIndex: 40,
+        pointerEvents: "none",
         padding: "12px 14px calc(12px + env(safe-area-inset-bottom))",
         background: SS_TOKENS.bg1,
         borderTop: `.5px solid ${SS_TOKENS.hairline}`,
@@ -159,6 +167,7 @@ export function IOSInstallPrompt() {
           justifyContent: "center",
           flexShrink: 0,
           padding: 0,
+          pointerEvents: "auto",
         }}
       >
         <XIcon />
@@ -217,6 +226,7 @@ function PostInstallCopy({ pulse }: { pulse: boolean }) {
           fontWeight: 600,
           textDecoration: "none",
           animation: pulse ? "ss-arm-alerts-pulse 1.6s ease-out 3" : undefined,
+          pointerEvents: "auto",
         }}
       >
         Arm alerts
