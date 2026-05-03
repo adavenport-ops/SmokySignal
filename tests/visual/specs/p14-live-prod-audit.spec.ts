@@ -632,4 +632,42 @@ test.describe("p14 live-prod audit", () => {
       screenshot,
     });
   });
+
+  test("19. /api/health surfaces last_heartbeat fields (P22 5)", async ({
+    request,
+  }) => {
+    const r = await request.get("/api/health");
+    let evidence = `HTTP ${r.status()}`;
+    let pass = false;
+    let category: Finding["category"] = "confirmed_bug";
+    if (r.ok()) {
+      const data = (await r.json()) as {
+        last_heartbeat_iso: string | null;
+        last_heartbeat_age_s: number | null;
+      };
+      const fieldsPresent =
+        "last_heartbeat_iso" in data && "last_heartbeat_age_s" in data;
+      const fresh =
+        typeof data.last_heartbeat_age_s === "number" &&
+        data.last_heartbeat_age_s < 5400;
+      pass = fieldsPresent;
+      category = fieldsPresent
+        ? fresh
+          ? "working_as_designed"
+          : "indeterminate"
+        : "confirmed_bug";
+      evidence = fieldsPresent
+        ? data.last_heartbeat_iso == null
+          ? "fields present; heartbeat not yet written (workflow has not fired)"
+          : `heartbeat ${data.last_heartbeat_age_s}s old (${data.last_heartbeat_iso})`
+        : "expected fields missing from /api/health response";
+    }
+    record({
+      claim:
+        "/api/health surfaces last_heartbeat_iso + last_heartbeat_age_s — Mac Mini heartbeat freshness",
+      category,
+      pass,
+      evidence,
+    });
+  });
 });

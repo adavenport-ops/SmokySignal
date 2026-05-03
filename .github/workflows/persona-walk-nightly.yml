@@ -114,3 +114,23 @@ jobs:
         run: |
           node .github/scripts/findings-to-issues.mjs \
             --findings "tests/visual/out/persona-walks/$stamp/findings.json"
+
+      - name: Check Mac Mini heartbeat staleness
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          AGE=$(curl -fsS https://smokysignal.app/api/health | jq -r '.last_heartbeat_age_s // "null"')
+          echo "heartbeat age: $AGE seconds"
+          # 5400 = 90 minutes
+          if [ "$AGE" = "null" ] || [ "$AGE" -gt 5400 ]; then
+            EXISTING=$(gh issue list --label infra-alert --state open --search "Mac Mini heartbeat" --json number --jq 'length')
+            if [ "$EXISTING" = "0" ]; then
+              gh issue create \
+                --title "infra-alert: Mac Mini heartbeat stale (${AGE}s)" \
+                --body "Latest heartbeat in KV is ${AGE} seconds old (threshold: 5400 = 90 min). The hourly heartbeat workflow may have stopped firing, or the KV write is failing. Check: .github/workflows/heartbeat.yml schedule, KV_REST_API_URL/KV_REST_API_TOKEN secrets, /api/health endpoint." \
+                --label infra-alert
+              echo "opened infra-alert issue"
+            else
+              echo "existing infra-alert issue still open — skipping create"
+            fi
+          fi
