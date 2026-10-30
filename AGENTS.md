@@ -1,4 +1,6 @@
-# SmokySignal — Claude Code Guidance
+# SmokySignal — AGENTS.md
+
+> Canonical operating context for any agent working on SmokySignal. Brain surface at `~/Brain/01-Projects/smokysignal/AGENTS.md`. Voice rules at `~/Dev/SmokySignal/design/BRAND.md` §3 (trucker-CB nostalgia, laconic, no emoji, no exclamation marks, "Smokey" with the e for the bird/agency, "SmokySignal" without for the product).
 
 Real-time tracker for Washington State Patrol speed-enforcement aircraft.
 Audience: Puget Sound motorcyclists. Brand voice: dark theme, mono numerics,
