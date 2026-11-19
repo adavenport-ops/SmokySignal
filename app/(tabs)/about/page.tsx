@@ -83,6 +83,9 @@ export default async function AboutPage() {
         <HubLink href="/program" label="What's flying: agencies, airframes, how it works">
           What&rsquo;s flying
         </HubLink>
+        <HubLink href="/circling" label="What's circling: aircraft working a pattern right now">
+          What&rsquo;s circling
+        </HubLink>
         <HubLink href="/settings/alerts" label="Settings">
           Settings
         </HubLink>
