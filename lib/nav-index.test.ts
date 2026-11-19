@@ -84,6 +84,8 @@ test("discord lands on /relay, embed and widget on /embed/help, calendar on the 
   assert.strictEqual(top("rss"), "/feed.xml");
   assert.strictEqual(top("handlebar"), "/glance");
   assert.strictEqual(top("replay"), "/radar?h=1");
+  assert.strictEqual(top("blog"), "/blog");
+  assert.strictEqual(top("changelog"), "/blog");
 });
 
 test("tails match by tail number, any case", () => {
@@ -140,10 +142,15 @@ test("towns go to /seen at that place", () => {
 
 test("settings anchors: contrast, palette, time format, speed warning, zones", () => {
   assert.strictEqual(top("contrast"), "/settings/alerts#contrast");
-  assert.strictEqual(top("palette"), "/settings/alerts#contrast");
+  assert.strictEqual(top("palette"), "/settings#map-palette");
+  assert.strictEqual(top("map colors"), "/settings#map-palette");
+  assert.strictEqual(top("colorblind"), "/settings#map-palette");
   assert.strictEqual(top("time format"), "/settings/alerts#time-format");
   assert.strictEqual(top("24-hour"), "/settings/alerts#time-format");
-  assert.strictEqual(top("speed warning"), "/settings/alerts#proximity");
+  for (const q of ["speed warning", "ease off", "speeding", "speed limit", "over the limit"]) {
+    assert.strictEqual(top(q), "/settings#speed-warning", q);
+  }
+  assert.strictEqual(top("proximity"), "/settings/alerts#proximity");
   assert.strictEqual(top("geofence"), "/settings/zones");
 });
 

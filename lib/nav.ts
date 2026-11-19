@@ -32,6 +32,7 @@ export type NavIcon =
   | "glance"
   | "board"
   | "program"
+  | "blog"
   | "help"
   | "legal"
   | "settings";
@@ -291,6 +292,14 @@ export function navSections(nowMs: number = Date.now()): NavSection[] {
           keywords: ["about", "program", "flir", "how it works", "agencies", "wsp", "ads-b"],
         },
         {
+          id: "blog",
+          label: "Blog",
+          blurb: "What shipped, and when the bird flew each week",
+          href: "/blog",
+          icon: "blog",
+          keywords: ["blog", "news", "posts", "changelog", "updates", "weekly", "what's new"],
+        },
+        {
           id: "help",
           label: "Help",
           blurb: "Questions riders ask",
@@ -384,6 +393,7 @@ const DAY_MS = 86_400_000;
  * purpose: add a row when a feature ships, and it ages out on its own.
  */
 export const SHIPPED: ReadonlyArray<{ id: string; date: string; pr: number }> = [
+  { id: "blog", date: "2026-11-18", pr: 170 },
   { id: "flights", date: "2026-11-18", pr: 165 },
   { id: "aircraft", date: "2026-11-18", pr: 165 },
   { id: "seen", date: "2026-11-18", pr: 164 },

@@ -50,6 +50,7 @@ export const TABS: Tab[] = [
       "/wrap",
       "/relay",
       "/legal",
+      "/blog",
     ],
   },
 ];

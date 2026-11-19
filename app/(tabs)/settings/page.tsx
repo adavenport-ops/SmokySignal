@@ -119,7 +119,8 @@ export default function SettingsHub() {
       <section aria-label="Display" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <span className="ss-eyebrow">Screen</span>
         <ScreenAwakeToggle variant="row" />
-        <span className="ss-eyebrow" style={{ marginTop: 8 }}>
+        {/* id: the search palette's "palette" / "map colors" entry lands here. */}
+        <span id="map-palette" className="ss-eyebrow" style={{ marginTop: 8 }}>
           Map
         </span>
         <PaletteSetting />

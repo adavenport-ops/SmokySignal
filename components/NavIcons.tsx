@@ -165,6 +165,12 @@ const PATHS: Record<NavIconName | "search" | "chevron-left" | "chevron-right" | 
       <path d="M12 8h.01" />
     </>
   ),
+  blog: (
+    <>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </>
+  ),
   help: (
     <>
       <circle cx="12" cy="12" r="9" />

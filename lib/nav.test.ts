@@ -46,7 +46,7 @@ test("each section carries the pages the owner asked for, in order", () => {
     "/feed.xml",
   ]);
   assert.deepStrictEqual(byId.modes, ["/glance", "/board"]);
-  assert.deepStrictEqual(byId.about, ["/program", "/help", "/legal", "/settings"]);
+  assert.deepStrictEqual(byId.about, ["/program", "/blog", "/help", "/legal", "/settings"]);
 });
 
 test("ids are unique and every label is free of emoji and exclamation marks", () => {
@@ -91,6 +91,8 @@ test("active route: nested routes light their parent", () => {
   assert.strictEqual(activeNavId("/wrap/2025"), "wrap");
   assert.strictEqual(activeNavId("/relay/manage"), "relay");
   assert.strictEqual(activeNavId("/embed"), "embed");
+  assert.strictEqual(activeNavId("/blog"), "blog");
+  assert.strictEqual(activeNavId("/blog/launch"), "blog");
 });
 
 test("active route: longest prefix wins, so /settings/* splits Alerts from Settings", () => {

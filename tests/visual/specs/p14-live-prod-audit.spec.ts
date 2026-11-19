@@ -3066,6 +3066,9 @@ test.describe("p14 live-prod audit · full navigation", () => {
   });
 
   test("82. the sidebar and the More sheet render no text below 12px", async ({ browser }) => {
+    // Four page loads; /radar keeps the network busy (live polls, 3D), so
+    // wait for DOM + a settle instead of networkidle.
+    test.setTimeout(120_000);
     const results: Record<string, { min: number; text: string | null }> = {};
     const desk = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const phone = await browser.newContext({
@@ -3077,8 +3080,8 @@ test.describe("p14 live-prod audit · full navigation", () => {
     try {
       const d = await desk.newPage();
       for (const path of ["/", "/radar", "/plane/N305DK"]) {
-        await d.goto(path, { waitUntil: "networkidle" });
-        await d.waitForTimeout(1000);
+        await d.goto(path, { waitUntil: "domcontentloaded" });
+        await d.waitForTimeout(2500);
         results[`1440 ${path}`] = await d.evaluate(() => {
           let min = Infinity;
           let text: string | null = null;
@@ -3101,8 +3104,8 @@ test.describe("p14 live-prod audit · full navigation", () => {
         });
       }
       const p = await phone.newPage();
-      await p.goto("/about", { waitUntil: "networkidle" });
-      await p.waitForTimeout(1000);
+      await p.goto("/about", { waitUntil: "domcontentloaded" });
+      await p.waitForTimeout(2000);
       results["390 /about"] = await minFontSize(p);
       const pass = Object.values(results).every((r) => r.min >= 12);
       record({

@@ -73,17 +73,44 @@ export function pageEntries(nowMs: number = Date.now()): SearchEntry[] {
 
 /**
  * Settings that live on a section of a page. The anchors are the section
- * ids on /settings/alerts (components/AlertsSettings.tsx and the display
+ * ids on /settings (Display → Map palette, Riding → Speed warning) and
+ * /settings/alerts (components/AlertsSettings.tsx and the display
  * settings below it).
  */
 export const SETTING_ENTRIES: ReadonlyArray<SearchEntry> = [
   {
+    id: "setting:map-palette",
+    kind: "setting",
+    title: "Map palette",
+    subtitle: "Colors for the radar heat and tracks",
+    href: "/settings#map-palette",
+    keywords: ["palette", "map colors", "map colours", "colors", "colours", "color scheme", "heat colors", "colorblind", "theme"],
+  },
+  {
     id: "setting:contrast",
     kind: "setting",
-    title: "Contrast and colors",
+    title: "Contrast",
     subtitle: "Normal or high contrast, still dark",
     href: "/settings/alerts#contrast",
-    keywords: ["contrast", "high contrast", "palette", "colors", "colours", "theme", "glare", "sun", "legibility"],
+    keywords: ["contrast", "high contrast", "glare", "sun", "legibility", "readability"],
+  },
+  {
+    id: "setting:speed-warning",
+    kind: "setting",
+    title: "Speed warning",
+    subtitle: "Ease-off nudge when the bird is near and you're over",
+    href: "/settings#speed-warning",
+    keywords: [
+      "speed warning",
+      "ease off",
+      "speeding",
+      "over the limit",
+      "speed limit",
+      "speedometer",
+      "slow down warning",
+      "how fast",
+      "mph",
+    ],
   },
   {
     id: "setting:time-format",
@@ -110,12 +137,12 @@ export const SETTING_ENTRIES: ReadonlyArray<SearchEntry> = [
     keywords: ["zones", "geofence", "home", "work", "circle", "my roads"],
   },
   {
-    id: "setting:speed-warning",
+    id: "setting:proximity",
     kind: "setting",
-    title: "Speed warning",
-    subtitle: "Ease off and the proximity ping, on the radar",
+    title: "Proximity ping",
+    subtitle: "A ping when a Smokey tail comes within range",
     href: "/settings/alerts#proximity",
-    keywords: ["speed warning", "ease off", "speeding", "over the limit", "proximity", "nearby", "distance"],
+    keywords: ["proximity", "nearby", "distance", "radius", "close"],
   },
   {
     id: "setting:voice",
