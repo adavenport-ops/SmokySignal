@@ -57,6 +57,14 @@ export default async function CirclingPage() {
           flies it, what it is, which road it is over, and for how long.
         </p>
         <CoverageNote area={digest.coverage.weakest?.name ?? null} />
+        <Link
+          href="/seen"
+          className={`ss-mono ${styles.linkRow}`}
+          style={{ fontSize: 13, color: SS_TOKENS.fg0, justifyContent: "flex-start" }}
+          data-testid="circling-seen-link"
+        >
+          Already gone? Check what flew over →
+        </Link>
       </section>
 
       <div className={styles.cols}>

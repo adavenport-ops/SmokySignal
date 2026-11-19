@@ -276,6 +276,22 @@ export default async function ProgramPage() {
           over Puget Sound, what they fly, and how aerial speed enforcement
           works in Washington. Plain terms, no jargon past the glossary.
         </P>
+        <Link
+          href="/seen"
+          className="ss-mono"
+          data-testid="program-seen-link"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            minHeight: 48,
+            marginTop: 4,
+            fontSize: 13,
+            color: SS_TOKENS.fg0,
+            textDecoration: "none",
+          }}
+        >
+          Already gone? Check what flew over →
+        </Link>
       </section>
 
       <Section eyebrow="Who flies" title="Agencies in the registry">
@@ -392,7 +408,7 @@ export default async function ProgramPage() {
         <Unknowns />
       </Section>
 
-      <Section eyebrow="The signal" title="ADS-B is public">
+      <Section id="coverage" eyebrow="The signal" title="ADS-B is public">
         <P>
           Most aircraft broadcast their position, altitude, and speed about
           once a second over a radio system called ADS-B. It&rsquo;s
@@ -596,16 +612,18 @@ function Tentative() {
 }
 
 function Section({
+  id,
   eyebrow,
   title,
   children,
 }: {
+  id?: string;
   eyebrow: string;
   title: string;
   children: React.ReactNode;
 }) {
   return (
-    <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <section id={id} style={{ display: "flex", flexDirection: "column", gap: 10, scrollMarginTop: 16 }}>
       <div className="ss-eyebrow">{eyebrow}</div>
       <h2
         style={{

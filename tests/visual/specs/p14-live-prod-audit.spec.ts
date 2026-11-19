@@ -2036,6 +2036,59 @@ test.describe("p14 live-prod audit", () => {
       screenshot,
     });
   });
+
+  test("57. /api/seen finds Smokey 4 over Fife on 2026-11-17 and /seen renders (Was that the plane I saw?)", async ({
+    page,
+    request,
+  }) => {
+    // Known flight from /api/history?from=2026-11-17&to=2026-11-17: N305DK
+    // (Smokey 4) worked I-5 over Fife around 15:20-15:30 PT, session
+    // 20261117T2248. Tracks are permanent since 2026-11-18, so this stays true.
+    const api =
+      "/api/seen?lat=47.24&lon=-122.36&t=2026-11-17T23%3A30%3A00Z&window_min=30&radius_nm=4.34";
+    const r = await request.get(api);
+    const cc = r.headers()["cache-control"] ?? "";
+    const body = r.ok() ? await r.json().catch(() => null) : null;
+    const tails: string[] = (body?.aircraft ?? []).map((a: { tail: string }) => a.tail);
+    const hit = (body?.aircraft ?? []).find((a: { tail: string }) => a.tail === "N305DK");
+    const apiOk =
+      r.ok() &&
+      tails.includes("N305DK") &&
+      body?.data?.status === "ok" &&
+      /s-maxage=300/.test(cc) &&
+      typeof hit?.closest?.distance_mi === "number" &&
+      /^\/flight\/N305DK\/\d{8}T\d{4}$/.test(hit?.flight?.href ?? "");
+
+    await page.goto("/seen?place=Fife&lat=47.24&lon=-122.36&date=2026-11-17&time=15:30&w=30&r=5", {
+      waitUntil: "domcontentloaded",
+    });
+    await page
+      .waitForFunction(
+        () => {
+          const s = document.querySelector('[data-testid="seen-results"]')?.getAttribute("data-state");
+          return s === "results" || s === "empty" || s === "error";
+        },
+        undefined,
+        { timeout: 20_000 },
+      )
+      .catch(() => {});
+    const h1 = (await page.locator("h1").first().innerText().catch(() => "")).trim();
+    const state = await page.locator('[data-testid="seen-results"]').getAttribute("data-state").catch(() => null);
+    const card = await page.locator('[data-testid="seen-card"][data-tail="N305DK"]').count();
+    const map = await page.locator('[data-testid="seen-map"]').count();
+    const og = await page.locator('meta[property="og:image"]').getAttribute("content").catch(() => null);
+    const screenshot = await shot(page, "57-seen");
+    const pageOk = /Was that the plane I saw\?/.test(h1) && state === "results" && card > 0 && map > 0 && /\/seen\/og\?/.test(og ?? "");
+    const pass = apiOk && pageOk;
+    record({
+      claim:
+        "/api/seen (Fife, 2026-11-17 15:30 PT ±30 min, 5 mi) returns N305DK with a flight link and s-maxage 300; /seen renders the card with a map and its own og:image",
+      category: pass ? "working_as_designed" : r.status() === 404 ? "unshipped" : "confirmed_bug",
+      pass,
+      evidence: `api HTTP ${r.status()} cc="${cc}" tails=${tails.join(",") || "none"} flight=${hit?.flight?.href ?? "none"} · page h1="${h1}" state=${state} card=${card} map=${map} og=${og ?? "none"}`,
+      screenshot,
+    });
+  });
 });
 
 // 3D flight view needs a WebGL2 context. Headless Chromium only exposes one

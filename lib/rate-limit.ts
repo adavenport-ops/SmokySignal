@@ -31,7 +31,8 @@ export type RateLimitBucket =
   | "relay-manage"
   | "bots-telegram"
   | "admin-login"
-  | "history";
+  | "history"
+  | "seen";
 
 type Duration = `${number} ${"s" | "m"}`;
 
@@ -60,6 +61,8 @@ export const RATE_LIMITS: Record<RateLimitBucket, BucketConfig> = {
   // Read endpoint, but each miss can fan out to thousands of KV reads.
   // CDN-cached hits never reach the limiter.
   history: { limit: 30, window: "1 m", failClosed: false },
+  // /api/seen: a two-day read across every registry tail per miss.
+  seen: { limit: 20, window: "1 m", failClosed: false },
 };
 
 export const RATE_LIMIT_PREFIX = "ratelimit";

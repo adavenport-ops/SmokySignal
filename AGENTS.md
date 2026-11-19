@@ -88,6 +88,7 @@ waiting for a live event.
 - `lib/radar-filter.ts` — shared filter state (operator/tail/region) for /radar
 - `lib/mission.ts` — mission taxonomy (police = Smokey, federal_le, sar, wildfire, medevac, survey, transport, unknown), legacy role mapper, `countsAsSmokey()` (mutual aid only in WA airspace). Labels in `lib/role-display.ts`
 - `lib/circling.ts` (+ `circling-server.ts`) — /circling and /api/circling: airborne tails working a pattern now, plain-language line, mission label. `lib/road.ts` — /road/[id] pass filter (~2 nm of a corridor) and summaries. `lib/coverage.ts` — lost-contact drop-outs into hot-zone cells for /api/coverage and `<CoverageNote/>`. `lib/history-digest.ts` reads 30 days of tracks once (5 min cache) for roads + coverage
+- `lib/seen-view.ts` (client-safe contract, PT time, URL state, copy) + `lib/seen-core.ts` (validation, UTC-day split, closest approach, fold) + `lib/seen.ts` (IO) — /seen "Was that the plane I saw?" and `GET /api/seen`. Rider point rounded to 2 decimals client-side, never logged or stored; non-canonical queries 308 to the rounded URL; share card at `/seen/og`
 - `lib/registry-migrate.ts` + `/api/admin/migrate-taxonomy` — KV registry v3→v4 migration (GET = dry run, POST = apply, admin cookie)
 - `lib/user-zones.ts` — rider-defined geofences (localStorage); managed at `/settings/zones`
 - `lib/user-prefs.ts` — cookie-backed display prefs (12/24-hour, normal/high contrast)
