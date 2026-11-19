@@ -9,7 +9,7 @@
 //     validation existed are cleaned on their next write instead of
 //     failing the whole update.
 
-import type { AlertPrefs, AlertTier, UserZoneSpec } from "./types";
+import { DEFAULT_PREFS, type AlertPrefs, type AlertTier, type UserZoneSpec } from "./types";
 
 // ─── Endpoint allow-list ─────────────────────────────────────────────
 //
@@ -37,21 +37,38 @@ export function isAllowedPushHost(hostname: string): boolean {
   return PUSH_HOST_SUFFIXES.some((suffix) => host.endsWith(`.${suffix}`));
 }
 
-export function isAllowedPushEndpoint(endpoint: unknown): endpoint is string {
-  if (typeof endpoint !== "string") return false;
-  if (endpoint.length === 0 || endpoint.length > MAX_ENDPOINT_CHARS) return false;
+/**
+ * Returns the WHATWG-normalized endpoint (`new URL(endpoint).href`) when it
+ * is an allowed push-service URL, else null. The normalized form is what we
+ * store and send, so web-push (which re-parses with the legacy url.parse)
+ * never sees a string the two parsers could read differently.
+ */
+export function normalizePushEndpoint(endpoint: unknown): string | null {
+  if (typeof endpoint !== "string") return null;
+  if (endpoint.length === 0 || endpoint.length > MAX_ENDPOINT_CHARS) return null;
+  // Browsers emit plain serialized URLs. Backslashes and percent-escapes in
+  // the authority only show up in parser-confusion attempts, so refuse them
+  // outright rather than trusting one parser's interpretation.
+  if (endpoint.includes("\\")) return null;
+  const authority = /^https:\/\/([^/?#]*)/i.exec(endpoint);
+  if (!authority || (authority[1] ?? "").includes("%")) return null;
   let url: URL;
   try {
     url = new URL(endpoint);
   } catch {
-    return false;
+    return null;
   }
-  if (url.protocol !== "https:") return false;
-  if (url.username || url.password) return false;
+  if (url.protocol !== "https:") return null;
+  if (url.username || url.password) return null;
   // Push services listen on the default port. A custom port is never a
   // legitimate subscription and would let a caller aim at another service.
-  if (url.port !== "" && url.port !== "443") return false;
-  return isAllowedPushHost(url.hostname);
+  if (url.port !== "" && url.port !== "443") return null;
+  if (!isAllowedPushHost(url.hostname)) return null;
+  return url.href;
+}
+
+export function isAllowedPushEndpoint(endpoint: unknown): endpoint is string {
+  return normalizePushEndpoint(endpoint) !== null;
 }
 
 // ─── Subscription keys ───────────────────────────────────────────────
@@ -91,12 +108,13 @@ export type StoredPushSubscription = {
 export function parsePushSubscription(v: unknown): StoredPushSubscription | null {
   if (!v || typeof v !== "object") return null;
   const o = v as Record<string, unknown>;
-  if (!isAllowedPushEndpoint(o.endpoint)) return null;
+  const endpoint = normalizePushEndpoint(o.endpoint);
+  if (!endpoint) return null;
   if (!o.keys || typeof o.keys !== "object") return null;
   const k = o.keys as Record<string, unknown>;
   if (!isBase64Url(k.p256dh, P256DH_MIN, P256DH_MAX)) return null;
   if (!isBase64Url(k.auth, AUTH_MIN, AUTH_MAX)) return null;
-  return { endpoint: o.endpoint, keys: { p256dh: k.p256dh, auth: k.auth } };
+  return { endpoint, keys: { p256dh: k.p256dh, auth: k.auth } };
 }
 
 // ─── Prefs primitives ────────────────────────────────────────────────
@@ -244,9 +262,9 @@ export function validatePrefsInput(v: unknown): PrefsValidation {
   }
 
   if (p.tz !== undefined) {
-    const tz = validateTz(p.tz);
-    if (!tz) return { ok: false, error: "invalid_tz" };
-    out.tz = tz;
+    // An unrecognized zone (older browser ICU data, odd alias) shouldn't
+    // block arming alerts; fall back to the default rider zone instead.
+    out.tz = validateTz(p.tz) ?? DEFAULT_PREFS.tz;
   }
 
   return { ok: true, prefs: out };

@@ -40,6 +40,15 @@ export {
 const SUB_PREFIX = "push:sub:";
 const SUBS_INDEX = "push:subs";
 const SUB_TTL_SECONDS = 90 * 24 * 60 * 60;
+/** Ceiling on push:subs. New signups above it get a 503. */
+export const MAX_SUBSCRIPTIONS = 5000;
+
+export class SubscriberCapError extends Error {
+  constructor() {
+    super("subscriber cap reached");
+    this.name = "SubscriberCapError";
+  }
+}
 
 export function subscriptionId(sub: { endpoint?: string | null }): string {
   if (!sub.endpoint) throw new Error("subscription endpoint missing");
@@ -118,6 +127,15 @@ export async function saveSubscription(
   const redis = await getRedis();
   if (!redis) throw new Error("KV not configured");
   const id = subscriptionId(sub);
+  // Bound the fan-out set. Re-subscribing an existing endpoint is always
+  // allowed; only brand-new endpoints are refused once the set is full.
+  // Check-then-add isn't atomic, so the cap can overshoot by a few under
+  // concurrent signups; it is a ceiling against floods, not an exact quota.
+  const isMember = await redis.sismember(SUBS_INDEX, id);
+  if (!isMember) {
+    const count = await redis.scard(SUBS_INDEX);
+    if (count >= MAX_SUBSCRIPTIONS) throw new SubscriberCapError();
+  }
   const prefs = mergePrefs(prefsPartial);
   const stored: StoredSubscription = {
     id,

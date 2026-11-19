@@ -14,6 +14,7 @@ import {
   validateTz,
   MAX_USER_ZONES,
 } from "./validate";
+import { DEFAULT_PREFS } from "./types";
 
 // 65-byte P-256 point and 16-byte auth secret, base64url, as browsers emit.
 const P256DH = Buffer.alloc(65, 4).toString("base64url");
@@ -56,6 +57,20 @@ test("endpoint allow-list: rejects other hosts, http, and suffix tricks", () => 
     "not a url",
     "",
     `https://fcm.googleapis.com/${"a".repeat(3000)}`,
+    // trailing dot: a different DNS name to the exact-match set
+    "https://fcm.googleapis.com./fcm/send/x",
+    "https://web.push.apple.com./x",
+    // IPv6 literals
+    "https://[::1]/x",
+    "https://[2001:db8::1]/fcm/send/x",
+    "https://[::ffff:169.254.169.254]/x",
+    // backslash: WHATWG reads it as "/", legacy url.parse may not
+    "https://evil.com\\@fcm.googleapis.com/x",
+    "https://fcm.googleapis.com\\.evil.com/x",
+    // percent-escapes in the authority
+    "https://fcm%2egoogleapis.com/x",
+    "https://fcm.googleapis.com%2eevil.com/x",
+    "https://evil.com%2f@fcm.googleapis.com/x",
   ]) {
     assert.equal(isAllowedPushEndpoint(ep), false, ep);
   }
@@ -77,6 +92,14 @@ test("parsePushSubscription: keeps only endpoint + keys", () => {
     endpoint: "https://fcm.googleapis.com/fcm/send/x",
     keys: { p256dh: P256DH, auth: AUTH },
   });
+});
+
+test("parsePushSubscription: stores the normalized new URL(endpoint).href", () => {
+  const parsed = parsePushSubscription(sub("https://FCM.googleapis.com:443/fcm/send/a/../x"));
+  assert.equal(parsed?.endpoint, "https://fcm.googleapis.com/fcm/send/x");
+  // Path escapes are fine (only the authority is restricted) and normalize.
+  const dotted = parsePushSubscription(sub("https://fcm.googleapis.com/fcm/send/%2e%2e/x"));
+  assert.equal(dotted?.endpoint, "https://fcm.googleapis.com/fcm/x");
 });
 
 test("parsePushSubscription: rejects off-list endpoints and bad keys", () => {
@@ -141,10 +164,18 @@ test("validatePrefsInput: accepts a normal client payload and drops unknown keys
   });
 });
 
-test("validatePrefsInput: rejects bad tz, tier, hours, and non-object", () => {
+test("validatePrefsInput: unrecognized tz falls back to the default instead of failing", () => {
+  for (const tz of ["Mars/Olympus_Mons", "A".repeat(100), 42, ""]) {
+    assert.deepStrictEqual(
+      validatePrefsInput({ tz }),
+      { ok: true, prefs: { tz: DEFAULT_PREFS.tz } },
+      String(tz),
+    );
+  }
+});
+
+test("validatePrefsInput: rejects bad tier, hours, and non-object", () => {
   for (const [input, error] of [
-    [{ tz: "Mars/Olympus_Mons" }, "invalid_tz"],
-    [{ tz: "A".repeat(100) }, "invalid_tz"],
     [{ tier: "everything" }, "invalid_tier"],
     [{ quiet_start_h: 24 }, "invalid_quiet_start_h"],
     [{ quiet_end_h: 1.5 }, "invalid_quiet_end_h"],

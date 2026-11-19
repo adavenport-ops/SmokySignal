@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { saveSubscription } from "@/lib/push/store";
+import { SubscriberCapError, saveSubscription } from "@/lib/push/store";
 import { parsePushSubscription, validatePrefsInput } from "@/lib/push/validate";
 
 export const runtime = "nodejs";
@@ -31,6 +31,10 @@ export async function POST(req: Request) {
     const id = await saveSubscription(sub, prefs.prefs);
     return NextResponse.json({ ok: true, id });
   } catch (e) {
+    if (e instanceof SubscriberCapError) {
+      console.warn("[push/subscribe] subscriber cap reached");
+      return NextResponse.json({ error: "at_capacity" }, { status: 503 });
+    }
     console.warn("[push/subscribe] save failed:", e);
     return NextResponse.json({ error: "save_failed" }, { status: 500 });
   }
