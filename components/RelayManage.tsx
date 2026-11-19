@@ -252,7 +252,7 @@ export function RelayManage() {
             data-testid="relay-state"
             style={{
               flexShrink: 0,
-              fontSize: 11,
+              fontSize: 12,
               letterSpacing: ".08em",
               padding: "5px 10px",
               borderRadius: 999,

@@ -106,14 +106,33 @@ export default async function PlanePage({ params, searchParams }: Props) {
           gap: 8,
         }}
       >
-        <BackLink />
-        {recentFlight && (
-          <ShareLinkButton
-            path={`/flight/${entry.tail}/${flightIdFromTs(recentFlight.session.start_ts)}`}
-            label="Share flight"
-            size="sm"
-          />
-        )}
+        <BackLink href="/flights" label="Flights" />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <a
+            href="#flight-history"
+            className="ss-mono"
+            data-testid="flight-history-link"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              minHeight: 44,
+              padding: "0 4px",
+              fontSize: 12,
+              color: SS_TOKENS.fg1,
+              textDecoration: "underline",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Flight history ↓
+          </a>
+          {recentFlight && (
+            <ShareLinkButton
+              path={`/flight/${entry.tail}/${flightIdFromTs(recentFlight.session.start_ts)}`}
+              label="Share flight"
+              size="sm"
+            />
+          )}
+        </div>
       </div>
 
       <header>
@@ -229,7 +248,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
       <Logbook tail={entry.tail} nickname={entry.nickname} hour12={hour12} />
 
       {/* Flight history: kept as its own block (see components/PlaneHistory.tsx). */}
-      <section aria-label="Flight history" data-testid="flight-history-section">
+      <section id="flight-history" aria-label="Flight history" data-testid="flight-history-section">
         <Card padded={false}>
           <div style={{ padding: "12px 14px 10px" }}>
             <div className="ss-eyebrow">Flight history</div>

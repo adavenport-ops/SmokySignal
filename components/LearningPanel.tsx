@@ -59,13 +59,13 @@ export function LearningPanel({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
           <span
             className="ss-mono"
-            style={{ fontSize: 9.5, letterSpacing: ".1em", color: SS_TOKENS.fg2 }}
+            style={{ fontSize: 12, letterSpacing: ".1em", color: SS_TOKENS.fg1 }}
           >
             {eyebrow}
           </span>
           <span
             className="ss-mono"
-            style={{ fontSize: 10.5, color: SS_TOKENS.fg1 }}
+            style={{ fontSize: 12, color: SS_TOKENS.fg1 }}
           >
             {progressLabel(state)}
           </span>
@@ -83,9 +83,9 @@ export function LearningPanel({
       <div
         className="ss-mono"
         style={{
-          fontSize: 9.5,
+          fontSize: 12,
           letterSpacing: ".1em",
-          color: SS_TOKENS.fg2,
+          color: SS_TOKENS.fg1,
           marginBottom: 8,
         }}
       >

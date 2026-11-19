@@ -24,6 +24,7 @@ import { ArmAlertsCallout } from "./ArmAlertsCallout";
 import { AlertsStateChip } from "./AlertsStateChip";
 import { IOSInstallPrompt } from "./IOSInstallPrompt";
 import { HomeMiniMap } from "./HomeMiniMap";
+import { ScreenAwakeToggle } from "./ScreenAwake";
 
 // Hide the activity strip when the most recent event is older than this —
 // a stale "Guardian One up · 8 hours ago" looks more like a bug than a
@@ -133,10 +134,9 @@ export function Glanceable({
 
   return (
     <main
-      // ss-type-floor lifts any sub-12px text from shared components to
-      // the 12px floor (sun legibility); ss-home-page widens the column
-      // into the two-column console at >= 1280px.
-      className="ss-hero-bg ss-page-narrow ss-home-page ss-type-floor"
+      // ss-home-page widens the column into the two-column console at
+      // >= 1280px.
+      className="ss-hero-bg ss-page-narrow ss-home-page"
       style={{
         minHeight: "100dvh",
         // Tab bar + safe-area clearance comes from .ss-tabs-shell in the
@@ -211,6 +211,7 @@ export function Glanceable({
                 : `UPDATED ${updatedAgo}s · ${describeSource(snap.source).label}`}
             </span>
           </Tooltip>
+          <ScreenAwakeToggle variant="icon" />
           <HelpIcon variant="inline" />
         </div>
       </header>
@@ -218,6 +219,8 @@ export function Glanceable({
       <div className="ss-home-grid">
         <div className="ss-home-col">
           <Hero status={status} />
+
+          <QuickLinks />
 
           {contextLine && (
             <p
@@ -300,7 +303,7 @@ function Footer() {
       </a>
       <br />
       <Link href="/about" style={FOOTER_LINK}>
-        About
+        More
       </Link>
       {" · "}
       <Link href="/legal" style={FOOTER_LINK}>
@@ -325,13 +328,61 @@ const FOOTER_LINK: React.CSSProperties = {
   lineHeight: 1,
 };
 
+// Four doors under the hero to the pages riders look for and could not
+// find from Home: what's circling now, what flew over earlier, their
+// road, and the forecast. 2x2 on phones, one row of four from 520px
+// (.ss-home-quick in app/globals.css).
+const QUICK_LINKS = [
+  { href: "/circling", label: "What\u2019s circling" },
+  { href: "/seen", label: "What flew over?" },
+  { href: "/road", label: "Your road" },
+  { href: "/forecast", label: "Forecast" },
+] as const;
+
+function QuickLinks() {
+  return (
+    <nav
+      aria-label="Shortcuts"
+      data-testid="home-quick-links"
+      className="ss-home-quick"
+    >
+      {QUICK_LINKS.map((l) => (
+        <Link
+          key={l.href}
+          href={l.href}
+          prefetch={false}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+            minHeight: TAP_MIN,
+            padding: "6px 8px",
+            borderRadius: 10,
+            background: SS_TOKENS.bg1,
+            border: `.5px solid ${SS_TOKENS.hairline}`,
+            color: SS_TOKENS.fg0,
+            fontSize: 13,
+            fontWeight: 600,
+            lineHeight: 1.2,
+            textDecoration: "none",
+            touchAction: "manipulation",
+          }}
+        >
+          {l.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
 function ActivityStrip({ latest }: { latest: ActivityEntry }) {
   // Orange dot only for a takeoff (a bird going up). Landings and other
   // events are history, not "Smokey is up".
   const upEvent = latest.kind === "takeoff";
   return (
     <Link
-      href="/activity"
+      href="/flights?tab=recent"
       prefetch={false}
       style={{
         display: "flex",

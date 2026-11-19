@@ -30,6 +30,7 @@ import {
   applyMockState,
   parseMockState,
 } from "@/lib/mock-state";
+import { BackLink } from "@/components/BackLink";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -113,48 +114,15 @@ export default async function ForecastPage({
   const daysWord = days === 1 ? "day" : "days";
   const hour12 = isHour12(getTimeFormatPref());
   return (
-    <main
-      className="ss-forecast-main"
-      style={{
-        minHeight: "100dvh",
-        // 180 px bottom clears tab bar + iOS install prompt overlay.
-        padding: "12px 18px 180px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 18,
-        margin: "0 auto",
-        minWidth: 0,
-      }}
-    >
+    <main className="ss-page">
       <style>{`
-        .ss-forecast-main { max-width: 720px; }
         .ss-forecast-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         @media (min-width: 768px) {
           .ss-forecast-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         }
-        @media (min-width: 1100px) {
-          .ss-forecast-main { max-width: 1040px; }
-        }
       `}</style>
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginTop: 4,
-          paddingRight: 48,
-          gap: 12,
-        }}
-      >
-        <span className="ss-eyebrow">SmokySignal · Forecast</span>
-        <Link
-          href="/"
-          className="ss-mono"
-          style={{ fontSize: 11, color: SS_TOKENS.fg1, textDecoration: "none" }}
-        >
-          ← Home
-        </Link>
-      </header>
+      <BackLink />
+      <span className="ss-eyebrow">SmokySignal · Forecast</span>
 
       {liveStatus.kind === "alert" && (
         <Link
@@ -203,7 +171,7 @@ export default async function ForecastPage({
           <span
             className="ss-mono"
             style={{
-              fontSize: 11,
+              fontSize: 12,
               color: SS_TOKENS.fg1,
               letterSpacing: ".06em",
               flexShrink: 0,

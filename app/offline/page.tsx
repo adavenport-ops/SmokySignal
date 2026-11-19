@@ -33,8 +33,8 @@ export default function OfflinePage() {
         <span
           className="ss-mono"
           style={{
-            fontSize: 10.5,
-            color: SS_TOKENS.fg2,
+            fontSize: 12,
+            color: SS_TOKENS.fg1,
             letterSpacing: ".14em",
             textTransform: "uppercase",
           }}

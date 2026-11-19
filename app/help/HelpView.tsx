@@ -258,7 +258,7 @@ export function HelpScrollTopButton() {
         background: "rgba(11,13,16,0.85)",
         border: `.5px solid ${SS_TOKENS.hairline2}`,
         color: SS_TOKENS.fg1,
-        fontSize: 11,
+        fontSize: 12,
         letterSpacing: ".06em",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",

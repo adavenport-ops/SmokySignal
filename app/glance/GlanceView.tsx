@@ -194,8 +194,8 @@ export function GlanceView({ initialSnapshot, serverNow, mock }: Props) {
       aria-label="Smokey status at a glance"
     >
       <div className={s.bar}>
-        <Link href="/" className={`${s.exit} ss-mono`} aria-label="Exit glance mode">
-          EXIT
+        <Link href="/" className={`${s.exit} ss-mono`} aria-label="Leave handlebar mode, back to SmokySignal" data-testid="escape-link">
+          ← SmokySignal
         </Link>
         <span className={`${s.clock} ss-mono`} data-glance-clock suppressHydrationWarning>
           {clock}

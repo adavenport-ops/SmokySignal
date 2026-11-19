@@ -54,8 +54,9 @@
   padding: 0 4px;
   color: var(--g-dim);
   font-size: 12px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.06em;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .clock {
@@ -108,7 +109,7 @@
 }
 
 .label {
-  font-size: clamp(11px, 3vw, 16px);
+  font-size: clamp(12px, 3vw, 16px);
   letter-spacing: 0.16em;
   color: var(--g-dim);
   text-transform: uppercase;
@@ -143,7 +144,7 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  font-size: clamp(11px, 3vw, 15px);
+  font-size: clamp(12px, 3vw, 15px);
   letter-spacing: 0.1em;
   color: var(--g-dim);
   text-transform: uppercase;

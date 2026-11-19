@@ -43,6 +43,11 @@ export function isWrapYear(year: number, nowMs: number): boolean {
   return Number.isInteger(year) && year >= FIRST_WRAP_YEAR && year <= current;
 }
 
+/** The season the hub and the stats/data cards point at: this PT year. */
+export function currentWrapYear(nowMs: number): number {
+  return Math.max(FIRST_WRAP_YEAR, Number(ptParts(nowMs).date.slice(0, 4)));
+}
+
 function addDays(isoDate: string, n: number): string {
   const [y, m, d] = isoDate.split("-").map(Number) as [number, number, number];
   return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);

@@ -63,7 +63,7 @@ const ROUTES = [
   { name: "home", path: "/" },
   { name: "radar", path: "/radar" },
   { name: "forecast", path: "/forecast" },
-  { name: "activity", path: "/activity" },
+  { name: "flights", path: "/flights?tab=recent" },
   { name: "about", path: "/about" },
   { name: "legal", path: "/legal" },
   { name: "help", path: "/help" },

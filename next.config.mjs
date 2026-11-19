@@ -86,6 +86,12 @@ const nextConfig = {
   // redirects keep already-installed PWAs from breaking.
   async redirects() {
     return [
+      // Navigation pass: /dash and /activity merged into /flights.
+      // Next passes the incoming query through, so /dash?mock=up lands
+      // on /flights?tab=now&mock=up. Not permanent, so browsers don't
+      // pin the redirect if the IA moves again.
+      { source: "/dash", destination: "/flights?tab=now", permanent: false },
+      { source: "/activity", destination: "/flights?tab=recent", permanent: false },
       {
         source: "/manifest.webmanifest",
         destination: "/manifest.json",

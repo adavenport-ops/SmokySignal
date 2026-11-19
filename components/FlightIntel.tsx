@@ -62,7 +62,7 @@ export function FlightIntel({
             </li>
           ))}
           {orbits.length > MAX_PATTERN_LINES && (
-            <li className="ss-mono" style={{ fontSize: 11, color: SS_TOKENS.fg2 }}>
+            <li className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
               +{orbits.length - MAX_PATTERN_LINES} more
             </li>
           )}

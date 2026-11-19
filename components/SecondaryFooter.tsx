@@ -19,7 +19,7 @@ import { SS_TOKENS } from "@/lib/tokens";
 
 const LINKS = [
   { href: "/", label: "Home" },
-  { href: "/about", label: "About" },
+  { href: "/about", label: "More" },
   { href: "/help", label: "Help" },
   { href: "/legal", label: "Legal" },
 ] as const;

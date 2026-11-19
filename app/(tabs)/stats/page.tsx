@@ -10,6 +10,9 @@ import {
 } from "@/lib/rollup-core";
 import { formatTs, fmtDurationHuman } from "@/lib/time";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
+import { BackLink } from "@/components/BackLink";
+import { ScrollX } from "@/components/ScrollX";
+import { SeasonWrapCard } from "@/components/SeasonWrapCard";
 
 // Cookies (time-format pref, flags in the tabs layout) make the route
 // dynamic; the KV reads behind it are cached for 5 minutes instead.
@@ -46,46 +49,9 @@ export default async function StatsPage() {
   const empty = !stats || stats.days_on_record === 0;
 
   return (
-    <main
-      style={{
-        minHeight: "100dvh",
-        // 180 px bottom clears tab bar + iOS install prompt overlay.
-        padding: "12px 18px 180px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 22,
-        maxWidth: 720,
-        margin: "0 auto",
-      }}
-    >
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginTop: 4,
-          paddingRight: 48,
-          gap: 12,
-        }}
-      >
-        <span className="ss-eyebrow">SmokySignal · Stats</span>
-        <Link
-          href="/about"
-          className="ss-mono"
-          style={{
-            fontSize: 11,
-            color: SS_TOKENS.fg1,
-            textDecoration: "none",
-            display: "inline-flex",
-            alignItems: "center",
-            minHeight: 44,
-            padding: "0 8px",
-            margin: "-12px -8px",
-          }}
-        >
-          ← About
-        </Link>
-      </header>
+    <main className="ss-page" style={{ gap: 22 }}>
+      <BackLink />
+      <span className="ss-eyebrow">SmokySignal · Stats</span>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <h1
@@ -107,7 +73,7 @@ export default async function StatsPage() {
         <p
           className="ss-mono"
           data-testid="stats-span"
-          style={{ fontSize: 11, color: SS_TOKENS.fg2, letterSpacing: ".04em", margin: 0 }}
+          style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".04em", margin: 0 }}
         >
           {empty
             ? "0 days of data"
@@ -116,6 +82,8 @@ export default async function StatsPage() {
       </section>
 
       {empty ? <EmptyState /> : <StatsBody stats={stats!} hour12={hour12} />}
+
+      <SeasonWrapCard />
     </main>
   );
 }
@@ -226,7 +194,7 @@ function Tile({ label, value, sub }: { label: string; value: string; sub: string
       </span>
       <span
         className="ss-mono"
-        style={{ fontSize: 11, color: SS_TOKENS.fg1, letterSpacing: ".02em", overflowWrap: "anywhere" }}
+        style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".02em", overflowWrap: "anywhere" }}
       >
         {sub}
       </span>
@@ -264,7 +232,7 @@ function WeeklyBars({ stats }: { stats: StatsSummary }) {
               gap: 10,
             }}
           >
-            <span className="ss-mono" style={{ fontSize: 11, color: SS_TOKENS.fg1 }}>
+            <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
               {w.week_start.slice(5)}
               {w.partial ? "*" : ""}
             </span>
@@ -296,7 +264,7 @@ function WeeklyBars({ stats }: { stats: StatsSummary }) {
           </div>
         ))}
       </div>
-      <p className="ss-mono" style={{ fontSize: 10.5, color: SS_TOKENS.fg2, margin: "6px 0 0" }}>
+      <p className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1, margin: "6px 0 0" }}>
         * partial week
       </p>
     </section>
@@ -324,11 +292,7 @@ function WeekGrid({ grid, hour12, days }: { grid: number[][]; hour12: boolean; d
         title="Hour × weekday · minutes aloft"
         note="Every logged minute of flight, stacked by Pacific hour and weekday. Brighter cell, more time up."
       />
-      <div
-        tabIndex={0}
-        aria-label="Hour by weekday grid of minutes aloft"
-        style={{ overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}
-      >
+      <ScrollX label="Hour by weekday grid of minutes aloft" testId="stats-grid-scroll">
         <div
           role="img"
           aria-label={summary}
@@ -345,8 +309,8 @@ function WeekGrid({ grid, hour12, days }: { grid: number[][]; hour12: boolean; d
               key={h}
               className="ss-mono"
               style={{
-                fontSize: 8.5,
-                color: SS_TOKENS.fg2,
+                fontSize: 12,
+                color: SS_TOKENS.fg1,
                 textAlign: "center",
                 padding: "0 1px 4px",
               }}
@@ -358,8 +322,8 @@ function WeekGrid({ grid, hour12, days }: { grid: number[][]; hour12: boolean; d
             <GridRow key={dow} dow={dow} row={row} max={max} />
           ))}
         </div>
-      </div>
-      <p className="ss-mono" style={{ fontSize: 11, color: SS_TOKENS.fg1, margin: "8px 0 0" }}>
+      </ScrollX>
+      <p className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1, margin: "8px 0 0" }}>
         {summary}
       </p>
     </section>
@@ -372,8 +336,8 @@ function GridRow({ dow, row, max }: { dow: number; row: number[]; max: number })
       <div
         className="ss-mono"
         style={{
-          fontSize: 10,
-          color: SS_TOKENS.fg2,
+          fontSize: 12,
+          color: SS_TOKENS.fg1,
           letterSpacing: ".06em",
           paddingRight: 6,
           alignSelf: "center",
@@ -436,7 +400,7 @@ function TailTable({ rows }: { rows: TailStat[] }) {
                     {r.tail}
                   </Link>
                   {r.nickname && (
-                    <span style={{ display: "block", fontSize: 11, color: SS_TOKENS.fg1 }}>
+                    <span style={{ display: "block", fontSize: 12, color: SS_TOKENS.fg1 }}>
                       {r.nickname}
                     </span>
                   )}
@@ -464,7 +428,7 @@ function Th({ children, align }: { children: React.ReactNode; align: "left" | "r
       className="ss-mono"
       style={{
         textAlign: align,
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 600,
         letterSpacing: ".08em",
         textTransform: "uppercase",

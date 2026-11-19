@@ -1,6 +1,7 @@
 // /glance: single-screen, huge-type, read-only status for a phone on a
 // handlebar mount. Lives outside (tabs) like /board: no tab bar, no nav,
-// nothing to tap but a small exit. See content/help.md ("Glance mode")
+// nothing to tap but a small "← SmokySignal" escape. See content/help.md
+// ("Handlebar mode")
 // for the set-it-before-you-ride note.
 //
 //   /glance            live
@@ -14,7 +15,7 @@ import { GlanceView } from "./GlanceView";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Glance",
+  title: "Handlebar mode",
   description:
     "Huge-type Smokey status for a handlebar mount. Up or down, nearest bird, Pacific 24-hour clock.",
   robots: { index: false, follow: false },

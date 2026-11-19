@@ -54,7 +54,7 @@ export function ForecastMissionFilter({ selected }: { selected: Mission[] }) {
     >
       <span
         className="ss-mono"
-        style={{ fontSize: 9.5, color: SS_TOKENS.fg2, letterSpacing: ".1em" }}
+        style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".1em" }}
       >
         MISSIONS · SAME AS /RADAR
       </span>
@@ -98,7 +98,7 @@ function Chip({
         background: active ? SS_TOKENS.alert : "transparent",
         border: `.5px solid ${active ? SS_TOKENS.alert : SS_TOKENS.hairline2}`,
         color: active ? SS_TOKENS.bg0 : SS_TOKENS.fg1,
-        fontSize: 10.5,
+        fontSize: 12,
         letterSpacing: ".04em",
         cursor: "pointer",
         touchAction: "manipulation",

@@ -13,14 +13,14 @@
 
 import { readFileSync } from "node:fs";
 
-const ALL_ROUTES = ["home", "radar", "forecast", "activity", "about", "legal", "help", "plane-N305DK"];
+const ALL_ROUTES = ["home", "radar", "forecast", "flights", "about", "legal", "help", "plane-N305DK"];
 
 // Tab-to-route-name lookup. The "name" field is what run-walk.ts expects
 // in --routes (matches tests/visual/personas/run-walk.ts ROUTES).
 const TAB_TO_NAME = new Map([
   ["radar", "radar"],
   ["forecast", "forecast"],
-  ["activity", "activity"],
+  ["flights", "flights"],
   ["about", "about"],
   ["legal", "legal"],
   ["help", "help"],

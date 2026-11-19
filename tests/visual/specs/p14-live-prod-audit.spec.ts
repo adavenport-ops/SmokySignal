@@ -489,8 +489,8 @@ test.describe("p14 live-prod audit", () => {
     });
   });
 
-  test("13b. /activity rows include PT clock (P19 2.1)", async ({ page }) => {
-    await page.goto("/activity", { waitUntil: "networkidle" });
+  test("13b. /flights Recent rows include PT clock (P19 2.1)", async ({ page }) => {
+    await page.goto("/flights?tab=recent", { waitUntil: "networkidle" });
     await page.waitForTimeout(1500);
     const screenshot = await shot(page, "13b-activity-pt-clock");
     const body = await page.locator("main").innerText();
@@ -502,7 +502,7 @@ test.describe("p14 live-prod audit", () => {
     const pass = hasActivityPt || isEmpty;
     record({
       claim:
-        "/activity row metadata pairs relative ('12m ago') with absolute PT ('15:42 PT') so the journalist persona can cite times",
+        "/flights?tab=recent row metadata pairs relative ('12m ago') with absolute PT ('15:42 PT') so the journalist persona can cite times",
       category: pass ? "working_as_designed" : "confirmed_bug",
       pass,
       evidence: pass
@@ -1124,7 +1124,7 @@ test.describe("p14 live-prod audit", () => {
     const screenshot = await shot(page, "22-program");
     const body = await page.locator("body").innerText();
     const checks = {
-      heading: /What.s flying\./.test(body),
+      heading: /The program\./.test(body),
       notAffiliated: /Not affiliated with WSP/i.test(body),
       unknowns: /We don.t know\./.test(body),
       flir: /forward-looking infrared/i.test(body),
@@ -1234,10 +1234,11 @@ test.describe("p14 live-prod audit", () => {
     expect(pass).toBe(true);
   });
 
-  test("34. /about groups the registry by mission; CBP is not labelled SMOKEY", async ({
+  test("34. /aircraft groups the registry by mission; CBP is not labelled SMOKEY", async ({
     page,
   }) => {
-    await page.goto("/about", { waitUntil: "networkidle" });
+    // The registry moved off the /about hub to /aircraft (navigation pass).
+    await page.goto("/aircraft", { waitUntil: "networkidle" });
     const screenshot = await shot(page, "34-about-missions");
     const groups = await page.locator("section[data-mission]").evaluateAll((els) =>
       els.map((e) => e.getAttribute("data-mission")),
@@ -1261,7 +1262,7 @@ test.describe("p14 live-prod audit", () => {
       hasConfidence;
     record({
       claim:
-        "/about registry is grouped by mission (Smokey first), each tail shows a confirmed/tentative badge and a source link, and CBP N1977G reads FEDERAL, not SMOKEY",
+        "/aircraft registry is grouped by mission (Smokey first), each tail shows a confirmed/tentative badge and a source link, and CBP N1977G reads FEDERAL, not SMOKEY",
       category: pass ? "working_as_designed" : "unshipped",
       pass,
       evidence: `groups=${JSON.stringify(groups)} cbpInFederal=${cbpGroup} cbpNotSmokey=${cbpNotSmokey} sources=${hasSources} confidence=${hasConfidence}`,
@@ -1635,7 +1636,7 @@ test.describe("p14 live-prod audit", () => {
     const screenshot = await shot(page, "40-relay");
     const body = await page.locator("body").innerText();
     const checks = {
-      heading: /Relay\./.test(body),
+      heading: /Discord and webhooks\./.test(body),
       urlField: (await page.locator('input[name="url"]').count()) > 0,
       armButton: (await page.getByRole("button", { name: "Arm relay" }).count()) > 0,
       missionsDefault: /Default is Smokey only/.test(body),
@@ -1867,7 +1868,7 @@ test.describe("p14 live-prod audit", () => {
     const body = await page.locator("main").innerText();
     const checks = {
       status: r?.status() === 200,
-      heading: /The open ledger\./.test(body),
+      heading: /Data and CSV\./.test(body),
       license: /ODbL 1\.0/.test(body),
       start: /2026-10-16/.test(body),
       csvLink: (await page.locator('a[href="/data/flight-hours.csv"]').count()) > 0,
@@ -2220,6 +2221,145 @@ test.describe("p14 live-prod audit · 3D flight view", () => {
       });
     } finally {
       await ownBrowser?.close();
+    }
+  });
+});
+
+// ---------------------------------------------------------------------
+// Navigation pass: five tabs, one Flights page, the desktop rail on
+// every tabbed route (radar included), and the 12px floor on the hub
+// and Flights. Each test records a finding like the rest of the audit.
+// ---------------------------------------------------------------------
+
+/** Smallest computed font-size among visible text-bearing elements. */
+async function minFontSize(page: Page): Promise<{ min: number; text: string | null }> {
+  return page.evaluate(() => {
+    let min = Infinity;
+    let text: string | null = null;
+    for (const el of document.querySelectorAll("body *")) {
+      const hasText = [...el.childNodes].some(
+        (c) => c.nodeType === Node.TEXT_NODE && (c.textContent ?? "").trim(),
+      );
+      if (!hasText) continue;
+      if (el.closest(".maplibregl-map, script, style, noscript, [aria-hidden='true'] svg")) continue;
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) continue;
+      const cs = getComputedStyle(el);
+      if (cs.visibility === "hidden" || cs.display === "none" || cs.opacity === "0") continue;
+      // Visually hidden helpers (skip link, sr-only) are 1px boxes or off-screen.
+      if (r.width <= 1 || r.height <= 1 || r.bottom < 0) continue;
+      const fs = parseFloat(cs.fontSize);
+      if (fs < min) {
+        min = fs;
+        text = (el.textContent ?? "").trim().slice(0, 40);
+      }
+    }
+    return { min, text };
+  });
+}
+
+test.describe("p14 live-prod audit · navigation", () => {
+  test("58. the tab bar has exactly 5 items: Home, Radar, Flights, Alerts, More", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    const items = page.locator('nav[aria-label="Main"] > a, nav[aria-label="Main"] > button');
+    const labels = (await items.allInnerTexts()).map((t) => t.trim());
+    const hrefs = await page
+      .locator('nav[aria-label="Main"] > a')
+      .evaluateAll((els) => els.map((e) => e.getAttribute("href")));
+    const noToggle = (await page.locator('nav[aria-label="Main"] button').count()) === 0;
+    const pass =
+      labels.length === 5 &&
+      JSON.stringify(labels) === JSON.stringify(["Home", "Radar", "Flights", "Alerts", "More"]) &&
+      JSON.stringify(hrefs) === JSON.stringify(["/", "/radar", "/flights", "/settings/alerts", "/about"]) &&
+      noToggle;
+    record({
+      claim: "Tab bar has exactly 5 links (Home, Radar, Flights, Alerts, More) and no toggle in it",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `labels=${JSON.stringify(labels)} hrefs=${JSON.stringify(hrefs)} noToggle=${noToggle}`,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("59. /dash and /activity redirect to /flights, keeping ?mock", async ({ page, request }) => {
+    const dash = await request.get("/dash?mock=up", { maxRedirects: 0 });
+    const act = await request.get("/activity", { maxRedirects: 0 });
+    const dashLoc = dash.headers()["location"] ?? "";
+    const actLoc = act.headers()["location"] ?? "";
+    await page.goto("/dash?mock=up", { waitUntil: "domcontentloaded" });
+    const landed = new URL(page.url());
+    const segmented = await page.locator('[data-testid="flights-tabs"] a').count();
+    const pass =
+      [307, 308].includes(dash.status()) &&
+      [307, 308].includes(act.status()) &&
+      landed.pathname === "/flights" &&
+      landed.searchParams.get("tab") === "now" &&
+      landed.searchParams.get("mock") === "up" &&
+      /\/flights\?.*tab=recent/.test(actLoc) &&
+      segmented === 2;
+    record({
+      claim: "/dash redirects to /flights?tab=now (mock kept), /activity to /flights?tab=recent; Flights shows the Now/Recent switch",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `dash ${dash.status()} -> ${dashLoc} · activity ${act.status()} -> ${actLoc} · landed ${landed.pathname}${landed.search} · segments=${segmented}`,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("60. the desktop rail is present on /radar at 1440 and the map clears it", async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const page = await ctx.newPage();
+    try {
+      await page.goto("/radar", { waitUntil: "domcontentloaded" });
+      await page.waitForTimeout(2500);
+      const screenshot = await shot(page, "60-radar-rail-1440");
+      const rail = await page.locator('nav[aria-label="Main"]').boundingBox();
+      const map = await page.locator(".ss-radar-page > main").boundingBox();
+      const pass =
+        rail != null &&
+        map != null &&
+        rail.x === 0 &&
+        rail.height >= 800 &&
+        rail.width < 200 &&
+        map.x >= rail.width - 1;
+      record({
+        claim: "Desktop rail renders on /radar (left, full height) and the radar map starts right of it",
+        category: pass ? "working_as_designed" : "unshipped",
+        pass,
+        evidence: `rail=${JSON.stringify(rail)} map=${JSON.stringify(map)}`,
+        screenshot,
+      });
+      expect(pass).toBe(true);
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test("61. /about and /flights render no text below 12px at 390 wide", async ({ browser }) => {
+    const ctx = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 3,
+      isMobile: true,
+      hasTouch: true,
+    });
+    const page = await ctx.newPage();
+    const results: Record<string, { min: number; text: string | null }> = {};
+    try {
+      for (const path of ["/about", "/flights?tab=now", "/flights?tab=recent"]) {
+        await page.goto(path, { waitUntil: "networkidle" });
+        await page.waitForTimeout(1000);
+        results[path] = await minFontSize(page);
+      }
+      const pass = Object.values(results).every((r) => r.min >= 12);
+      record({
+        claim: "/about (More) and both /flights tabs render no text below the 12px floor at 390px",
+        category: pass ? "working_as_designed" : "polish_needed",
+        pass,
+        evidence: JSON.stringify(results),
+      });
+      expect(pass).toBe(true);
+    } finally {
+      await ctx.close();
     }
   });
 });

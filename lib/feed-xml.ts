@@ -117,7 +117,7 @@ export function buildAtom(items: readonly FeedItem[], meta: FeedMeta): string {
     `  <subtitle>${escapeXml(meta.subtitle)}</subtitle>`,
     `  <id>${escapeXml(meta.selfUrl)}</id>`,
     `  <link rel="self" type="application/atom+xml" href="${escapeXml(meta.selfUrl)}"/>`,
-    `  <link rel="alternate" type="text/html" href="${escapeXml(meta.siteUrl)}/activity"/>`,
+    `  <link rel="alternate" type="text/html" href="${escapeXml(meta.siteUrl)}/flights?tab=recent"/>`,
     `  <updated>${updated}</updated>`,
     `  <author><name>SmokySignal</name></author>`,
     `  <icon>${escapeXml(meta.siteUrl)}/icons/favicon-96.png</icon>`,
