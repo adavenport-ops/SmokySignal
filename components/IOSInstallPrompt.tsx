@@ -1,36 +1,24 @@
 "use client";
 
+// iOS Safari "Add to Home Screen" card. iOS only delivers web push to an
+// installed PWA, so riders on iPhone need this before Arm alerts can
+// work. It used to be a fixed bar pinned above the tab bar on every
+// route (~80px over the radar controls and the home hero). It is now an
+// inline, dismissible card rendered in the home page flow only, so it
+// can never cover /radar.
+//
+// Once the rider is in the installed app, ArmAlertsCallout takes over
+// (push is supported there), so this card only handles the pre-install
+// step.
+
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { SS_TOKENS } from "@/lib/tokens";
-import { isPushSupported } from "@/lib/push/client";
 
 const STORAGE_KEY = "ss_install_dismissed";
-const POST_INSTALL_DISMISS_KEY = "ss_post_install_dismissed";
-const FIRST_STANDALONE_KEY = "ss_first_standalone_visit";
-const PULSE_KEYFRAME_ID = "ss-arm-alerts-pulse";
 const DISMISS_DAYS = 30;
-const TABBAR_HEIGHT = 66;
-
-/**
- * True when the current pathname is rendered inside the (tabs) layout
- * (which always mounts the bottom TabBar). Without this offset the
- * install prompt overlapped the tab bar on /forecast, /activity,
- * /about, /legal, /plane/*, /settings/* — every tabbed route except
- * the original three. The literal list mirrors the directories under
- * `app/(tabs)/` so any new tab route lands here too.
- */
-function isTabbedPath(pathname: string | null): boolean {
-  if (!pathname) return false;
-  if (pathname === "/") return true;
-  return /^\/(radar|dash|forecast|activity|about|legal|plane|settings)(\/|$)/.test(
-    pathname,
-  );
-}
+const DISMISS_MS = DISMISS_DAYS * 24 * 60 * 60 * 1000;
 
 type Standalone = Navigator & { standalone?: boolean };
-type Mode = "hidden" | "pre-install" | "post-install";
 
 function isIOSSafari(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -49,168 +37,85 @@ function isStandalone(): boolean {
   return Boolean((navigator as Standalone).standalone);
 }
 
-function isDismissed(key: string): boolean {
-  if (typeof window === "undefined") return false;
-  const raw = window.localStorage.getItem(key);
-  if (!raw) return false;
-  const ts = Number(raw);
-  if (!Number.isFinite(ts)) return false;
-  const ageMs = Date.now() - ts;
-  return ageMs < DISMISS_DAYS * 24 * 60 * 60 * 1000;
+function readDismissed(): boolean {
+  try {
+    const ts = Number(window.localStorage.getItem(STORAGE_KEY) ?? "0");
+    return Number.isFinite(ts) && ts > 0 && Date.now() - ts < DISMISS_MS;
+  } catch {
+    return false;
+  }
 }
 
-function ensurePulseKeyframes() {
-  if (typeof document === "undefined") return;
-  if (document.getElementById(PULSE_KEYFRAME_ID)) return;
-  const style = document.createElement("style");
-  style.id = PULSE_KEYFRAME_ID;
-  style.textContent = `@keyframes ss-arm-alerts-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(255,159,28,.55); }
-    50% { box-shadow: 0 0 0 6px rgba(255,159,28,0); }
-  }`;
-  document.head.appendChild(style);
+function writeDismissed(): void {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, String(Date.now()));
+  } catch {
+    // storage blocked: the card stays hidden for this page view only
+  }
+}
+
+/** True on iOS Safari outside the installed app (the card's audience). */
+export function needsIOSInstall(): boolean {
+  return isIOSSafari() && !isStandalone();
 }
 
 export function IOSInstallPrompt() {
-  const pathname = usePathname();
-  const [mode, setMode] = useState<Mode>("hidden");
-  const [pulse, setPulse] = useState(false);
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (!isIOSSafari()) return;
-    const standalone = isStandalone();
-    if (!standalone) {
-      if (!isDismissed(STORAGE_KEY)) setMode("pre-install");
-      return;
-    }
-    // Standalone PWA — only show the step-3 prompt if we know push is
-    // supported and the rider hasn't armed yet, and they haven't already
-    // dismissed this branch.
-    if (!isPushSupported()) return;
-    if (isDismissed(POST_INSTALL_DISMISS_KEY)) return;
-    let cancelled = false;
-    navigator.serviceWorker.ready
-      .then((reg) => reg.pushManager.getSubscription())
-      .then((sub) => {
-        if (cancelled || sub) return;
-        // One-time pulse on the first standalone visit so the rider
-        // notices the deep-link, then never again.
-        const firstSeen = window.localStorage.getItem(FIRST_STANDALONE_KEY);
-        if (!firstSeen) {
-          window.localStorage.setItem(
-            FIRST_STANDALONE_KEY,
-            String(Date.now()),
-          );
-          setPulse(true);
-        }
-        setMode("post-install");
-      })
-      .catch(() => {
-        if (!cancelled) setMode("post-install");
-      });
-    return () => {
-      cancelled = true;
-    };
+    if (needsIOSInstall() && !readDismissed()) setShow(true);
   }, []);
 
-  useEffect(() => {
-    if (pulse) ensurePulseKeyframes();
-  }, [pulse]);
-
-  // Publish prompt height as a CSS variable on <html> so other fixed-
-  // position components on /radar (HotZoneLayer's HOT ZONES / FLIGHT
-  // PATHS pills, the trail status badge) can offset above the prompt
-  // and not be hidden by it. Empty / 0 when the prompt isn't rendering.
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    const visible = mode !== "hidden";
-    // Approximate height — actual height varies slightly with safe-area
-    // inset and the post-install variant which is shorter. 80 px is the
-    // pre-install variant baseline post-PROMPT_23 compression.
-    const value = visible ? "80px" : "0px";
-    document.documentElement.style.setProperty(
-      "--ss-install-prompt-h",
-      value,
-    );
-    return () => {
-      document.documentElement.style.setProperty(
-        "--ss-install-prompt-h",
-        "0px",
-      );
-    };
-  }, [mode]);
-
-  if (mode === "hidden") return null;
-
-  const onTabs = isTabbedPath(pathname);
-  const bottomOffset = onTabs ? TABBAR_HEIGHT : 0;
-  const dismissKey =
-    mode === "pre-install" ? STORAGE_KEY : POST_INSTALL_DISMISS_KEY;
-  const dismiss = () => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(dismissKey, String(Date.now()));
-    }
-    setMode("hidden");
-  };
+  if (!show) return null;
 
   return (
-    <div
-      role="dialog"
-      // pointer-events: none on the wrapper so the prompt doesn't intercept
-      // taps meant for the map / filter button on /radar. Interactive children
-      // opt back in via pointerEvents: "auto". Instruction text stays
-      // visible (the wrapper is still painted) but isn't tappable — taps on
-      // text fall through to the radar layer underneath. The X button + the
-      // post-install "Arm alerts" link are the only tap targets inside the
-      // prompt. Fixes verify-prod #10 (hot-zones filter click intercept).
+    <section
+      aria-label="Install SmokySignal for push alerts"
       style={{
-        position: "fixed",
-        left: 0,
-        right: 0,
-        bottom: bottomOffset,
-        zIndex: 40,
-        pointerEvents: "none",
-        // Tighter vertical padding (was 12px → 8px) so the prompt
-        // takes less map / hero real estate on /radar and /. Also
-        // tighter horizontal padding on the X-button side because
-        // the button itself now carries 44 px hit area.
-        padding: "8px 4px 8px 14px",
-        paddingBottom: "calc(8px + env(safe-area-inset-bottom))",
         background: SS_TOKENS.bg1,
-        borderTop: `.5px solid ${SS_TOKENS.hairline}`,
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
+        border: `.5px solid ${SS_TOKENS.hairline2}`,
+        borderRadius: 14,
+        padding: "12px 4px 12px 16px",
         display: "flex",
         alignItems: "center",
         gap: 8,
       }}
     >
-      <div style={{ flex: 1, fontSize: 12.5, lineHeight: 1.45, color: SS_TOKENS.fg0 }}>
-        {mode === "pre-install" ? (
-          <PreInstallCopy />
-        ) : (
-          <PostInstallCopy pulse={pulse} />
-        )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="ss-eyebrow" style={{ marginBottom: 4 }}>
+          Alerts on iPhone
+        </div>
+        <div
+          style={{
+            fontSize: 14,
+            lineHeight: 1.45,
+            color: SS_TOKENS.fg0,
+          }}
+        >
+          Tap <ShareIcon /> then{" "}
+          <strong style={{ fontWeight: 700 }}>Add to Home Screen</strong>.
+          Open the icon and arm alerts.
+        </div>
       </div>
-      {/* 44×44 hit area (a11y minimum) wraps a 28×28 visual circle so
-          the rider hits the dismiss target even with gloves on. */}
       <button
         type="button"
-        onClick={dismiss}
-        aria-label="Dismiss install prompt"
+        onClick={() => {
+          writeDismissed();
+          setShow(false);
+        }}
+        aria-label="Dismiss install tip"
         style={{
-          width: 44,
-          height: 44,
+          width: 48,
+          height: 48,
           background: "transparent",
           border: 0,
-          color: SS_TOKENS.fg2,
+          color: SS_TOKENS.fg1,
           cursor: "pointer",
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
           flexShrink: 0,
           padding: 0,
-          pointerEvents: "auto",
           touchAction: "manipulation",
           WebkitTapHighlightColor: "transparent",
         }}
@@ -218,8 +123,8 @@ export function IOSInstallPrompt() {
         <span
           aria-hidden
           style={{
-            width: 28,
-            height: 28,
+            width: 32,
+            height: 32,
             borderRadius: "50%",
             border: `.5px solid ${SS_TOKENS.hairline2}`,
             display: "inline-flex",
@@ -230,72 +135,24 @@ export function IOSInstallPrompt() {
           <XIcon />
         </span>
       </button>
-    </div>
-  );
-}
-
-function PreInstallCopy() {
-  // Compressed two-line variant of the prior 5-line block — the prompt
-  // sat over ~40 % of /radar's vertical space and dominated /'s hero
-  // on first visit. Same 3-step intent (share → Add to Home Screen →
-  // Arm alerts), one tighter line.
-  return (
-    <>
-      <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 2 }}>
-        iOS push: 2 steps
-      </div>
-      <div style={{ fontSize: 11.5, color: SS_TOKENS.fg1, lineHeight: 1.45 }}>
-        Tap <ShareIcon /> →{" "}
-        <span style={{ color: SS_TOKENS.alert }}>Add to Home Screen</span>,
-        then open from your home screen and arm alerts.
-      </div>
-    </>
-  );
-}
-
-function PostInstallCopy({ pulse }: { pulse: boolean }) {
-  return (
-    <>
-      <div className="ss-eyebrow" style={{ marginBottom: 4 }}>
-        STEP 3 · ARM ALERTS
-      </div>
-      <div style={{ fontSize: 12.5, color: SS_TOKENS.fg1, marginBottom: 8 }}>
-        You&rsquo;re in the app. One more tap for push notifications.
-      </div>
-      <Link
-        href="/settings/alerts"
-        style={{
-          display: "inline-block",
-          background: SS_TOKENS.alert,
-          color: SS_TOKENS.bg0,
-          padding: "6px 12px",
-          borderRadius: 8,
-          fontSize: 12.5,
-          fontWeight: 600,
-          textDecoration: "none",
-          animation: pulse ? "ss-arm-alerts-pulse 1.6s ease-out 3" : undefined,
-          pointerEvents: "auto",
-        }}
-      >
-        Arm alerts
-      </Link>
-    </>
+    </section>
   );
 }
 
 function ShareIcon() {
   return (
     <svg
-      width="14"
-      height="14"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
-      style={{ verticalAlign: "-2px", margin: "0 2px" }}
-      aria-hidden
+      style={{ display: "inline-block", verticalAlign: "-3px", margin: "0 2px" }}
+      aria-label="Share"
+      role="img"
     >
       <path d="M12 3 v12" />
       <path d="m7 8 5-5 5 5" />

@@ -90,9 +90,10 @@ export default async function StatsPage() {
       <section style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <h1
           style={{
-            fontSize: 24,
-            fontWeight: 700,
-            letterSpacing: "-.02em",
+            fontSize: 28,
+            fontWeight: 800,
+            letterSpacing: "-.03em",
+            lineHeight: 1.1,
             color: SS_TOKENS.fg0,
             margin: 0,
           }}

@@ -13,14 +13,15 @@ export function HelpIcon({
   variant = "fixed",
   ariaLabel = "Help and documentation",
 }: {
-  /** "fixed" floats next to the wake-lock button; "inline" sits in flow. */
+  /** "fixed" floats top-right (radar); "inline" sits in a header row. The
+   *  wake-lock toggle moved into the TabBar, so the corner is free. */
   variant?: "fixed" | "inline";
   ariaLabel?: string;
 }) {
   const fixedStyle: React.CSSProperties = {
     position: "fixed",
     top: 6,
-    right: 50,
+    right: 6,
     zIndex: 30,
     width: 44,
     height: 44,

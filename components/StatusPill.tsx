@@ -40,7 +40,7 @@ export function StatusPill({
         borderRadius: 999,
         background: bg,
         border: `.5px solid ${c}55`,
-        fontSize: big ? 12 : 11,
+        fontSize: big ? 13 : 12,
         fontWeight: 600,
         color: c,
         letterSpacing: ".02em",

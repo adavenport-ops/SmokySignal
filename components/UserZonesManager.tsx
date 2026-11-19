@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { SS_TOKENS } from "@/lib/tokens";
+import { SS_TOKENS, TAP_MIN, TAP_PREFERRED, TYPE } from "@/lib/tokens";
 import {
   addUserZone,
   readUserZones,
@@ -52,10 +52,9 @@ export function UserZonesManager() {
     <div
       style={{
         maxWidth: 460,
-        // Bottom margin clears tab bar (66) + iOS install prompt
-        // overlay (~80) + breathing room. Was 80; bumped so the last
-        // zone card isn't hidden behind the prompt.
-        margin: "16px auto 180px",
+        // Tab bar + safe-area clearance comes from .ss-tabs-shell in the
+        // (tabs) layout; the install prompt no longer floats over pages.
+        margin: "16px auto 24px",
         padding: "0 18px",
         display: "flex",
         flexDirection: "column",
@@ -63,32 +62,24 @@ export function UserZonesManager() {
       }}
     >
       <header>
-        <div
-          className="ss-mono"
-          style={{
-            fontSize: 9.5,
-            color: SS_TOKENS.fg2,
-            letterSpacing: ".12em",
-            textTransform: "uppercase",
-            marginBottom: 6,
-          }}
-        >
+        <div className="ss-eyebrow" style={{ marginBottom: 6 }}>
           Settings · Zones
         </div>
         <h1
           style={{
-            fontSize: 22,
-            fontWeight: 700,
+            fontSize: TYPE.title,
+            fontWeight: 800,
             color: SS_TOKENS.fg0,
             margin: 0,
-            letterSpacing: "-.01em",
+            letterSpacing: "-.03em",
+            lineHeight: 1.1,
           }}
         >
           Your zones
         </h1>
         <p
           style={{
-            fontSize: 13,
+            fontSize: TYPE.body,
             color: SS_TOKENS.fg1,
             lineHeight: 1.5,
             marginTop: 8,
@@ -104,15 +95,18 @@ export function UserZonesManager() {
         type="button"
         onClick={onAdd}
         style={{
-          padding: "12px 14px",
+          // Neutral primary: orange is reserved for "Smokey is up".
+          minHeight: TAP_PREFERRED,
+          padding: "0 14px",
           borderRadius: 12,
-          border: `.5px solid ${SS_TOKENS.alert}`,
-          background: SS_TOKENS.alertDim,
-          color: SS_TOKENS.alert,
+          border: 0,
+          background: SS_TOKENS.cta,
+          color: SS_TOKENS.ctaInk,
           cursor: "pointer",
-          fontSize: 14,
-          fontWeight: 600,
+          fontSize: 15,
+          fontWeight: 700,
           letterSpacing: "-.005em",
+          touchAction: "manipulation",
         }}
       >
         Add zone at my location
@@ -126,12 +120,12 @@ export function UserZonesManager() {
             borderRadius: 14,
             padding: "20px 18px",
             color: SS_TOKENS.fg1,
-            fontSize: 13,
+            fontSize: TYPE.body,
             lineHeight: 1.5,
           }}
         >
-          No zones yet. Tap the button above to drop a 5nm circle at your
-          current location, or visit /radar to drop one with a long-press.
+          No zones yet. Drop a 5 nm circle where you stand. Out on the
+          road, the + on the radar drops one wherever you are.
         </div>
       )}
 
@@ -149,10 +143,13 @@ export function UserZonesManager() {
       <Link
         href="/settings/alerts"
         style={{
+          display: "inline-flex",
+          alignItems: "center",
+          alignSelf: "flex-start",
+          minHeight: TAP_MIN,
           color: SS_TOKENS.fg1,
-          fontSize: 13,
+          fontSize: TYPE.body,
           textDecoration: "none",
-          padding: "8px 0",
         }}
       >
         ← Alerts settings
@@ -198,49 +195,37 @@ function ZoneCard({
     >
       {editing ? (
         <>
-          <label
-            className="ss-mono"
-            style={{
-              fontSize: 9.5,
-              color: SS_TOKENS.fg2,
-              letterSpacing: ".12em",
-              textTransform: "uppercase",
-            }}
-          >
+          <label className="ss-eyebrow" htmlFor={`zone-label-${zone.id}`}>
             Label
           </label>
           <input
+            id={`zone-label-${zone.id}`}
             type="text"
             value={label}
             maxLength={40}
             onChange={(e) => setLabel(e.target.value)}
             style={{
+              minHeight: TAP_MIN,
               padding: "10px 12px",
               borderRadius: 10,
               border: `.5px solid ${SS_TOKENS.hairline2}`,
               background: SS_TOKENS.bg2,
               color: SS_TOKENS.fg0,
-              fontSize: 14,
+              // 16px stops iOS Safari zooming the page on focus.
+              fontSize: 16,
             }}
           />
-          <label
-            className="ss-mono"
-            style={{
-              fontSize: 9.5,
-              color: SS_TOKENS.fg2,
-              letterSpacing: ".12em",
-              textTransform: "uppercase",
-            }}
-          >
-            Radius {radius.toFixed(0)}nm
+          <label className="ss-eyebrow" htmlFor={`zone-radius-${zone.id}`}>
+            Radius <span className="ss-mono">{radius.toFixed(0)} nm</span>
           </label>
           <input
+            id={`zone-radius-${zone.id}`}
             type="range"
             min={MIN_RADIUS_NM}
             max={MAX_RADIUS_NM}
             value={radius}
             onChange={(e) => setRadius(Number(e.target.value))}
-            style={{ accentColor: SS_TOKENS.alert }}
+            style={{ accentColor: SS_TOKENS.fg0, minHeight: TAP_MIN }}
           />
           <div style={{ display: "flex", gap: 8 }}>
             <button
@@ -283,18 +268,18 @@ function ZoneCard({
             <div
               className="ss-mono"
               style={{
-                fontSize: 12,
+                fontSize: 13,
                 color: SS_TOKENS.fg1,
               }}
             >
-              {zone.radiusNm.toFixed(0)}nm
+              {zone.radiusNm.toFixed(0)} nm
             </div>
           </div>
           <div
             className="ss-mono"
             style={{
-              fontSize: 11,
-              color: SS_TOKENS.fg2,
+              fontSize: 12,
+              color: SS_TOKENS.fg1,
               letterSpacing: ".04em",
             }}
           >
@@ -337,25 +322,27 @@ function nextLabel(existing: UserZone[]): string {
 
 const primaryBtn: React.CSSProperties = {
   flex: 1,
-  padding: "10px 14px",
+  minHeight: TAP_PREFERRED,
+  padding: "0 14px",
   borderRadius: 10,
-  border: `.5px solid ${SS_TOKENS.alert}`,
-  background: SS_TOKENS.alertDim,
-  color: SS_TOKENS.alert,
+  border: 0,
+  background: SS_TOKENS.cta,
+  color: SS_TOKENS.ctaInk,
   cursor: "pointer",
-  fontSize: 13,
-  fontWeight: 600,
+  fontSize: TYPE.body,
+  fontWeight: 700,
 };
 
 const ghostBtn: React.CSSProperties = {
   flex: 1,
-  padding: "10px 14px",
+  minHeight: TAP_PREFERRED,
+  padding: "0 14px",
   borderRadius: 10,
   border: `.5px solid ${SS_TOKENS.hairline2}`,
   background: SS_TOKENS.bg2,
   color: SS_TOKENS.fg0,
   cursor: "pointer",
-  fontSize: 13,
+  fontSize: TYPE.body,
   fontWeight: 500,
 };
 

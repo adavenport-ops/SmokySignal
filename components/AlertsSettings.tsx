@@ -9,7 +9,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { SS_TOKENS } from "@/lib/tokens";
+import { SS_TOKENS, TAP_MIN, TAP_PREFERRED, TYPE } from "@/lib/tokens";
+import { currentBlockedAlertsHelp, hasTappedArm, markArmTapped } from "@/lib/alerts-ux";
 import {
   getCurrentSubscriptionId,
   getPushPermission,
@@ -68,6 +69,11 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
   const [proximityNm, setProximityNm] = useState<number>(DEFAULT_PROXIMITY_NM);
   const [voiceOn, setVoiceOn] = useState<boolean>(false);
   const [voiceSupported, setVoiceSupported] = useState<boolean>(true);
+  // Blocked-permission copy only appears after the rider taps Arm.
+  const [armTapped, setArmTapped] = useState<boolean>(false);
+  useEffect(() => {
+    setArmTapped(hasTappedArm());
+  }, []);
   // Hydrate proximity prefs from localStorage on mount.
   useEffect(() => {
     setProximityOn(isProximityEnabled());
@@ -101,6 +107,8 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
   }, []);
 
   const onArm = useCallback(async () => {
+    markArmTapped();
+    setArmTapped(true);
     setBusy(true);
     const r = await subscribePush(prefs);
     setBusy(false);
@@ -109,7 +117,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
       setSubId(r.id);
       flash("10-4. We'll keep you posted.");
     } else if (r.reason === "denied") {
-      flash("Browser blocked alerts. Update permission in your settings.");
+      flash(currentBlockedAlertsHelp());
     } else if (r.reason === "vapid_missing") {
       flash("Push isn't configured on this build. Try the live site.");
     } else if (r.reason === "unsupported") {
@@ -164,27 +172,29 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
 
   const missionKey = missions.join(",");
   const statusBadge = useMemo<{ label: string; color: string; bg: string }>(() => {
-    if (!subId) return { label: "OFF", color: SS_TOKENS.fg2, bg: SS_TOKENS.bg2 };
+    // Armed reads as a confirmation (clear green), not as "Smokey is up".
+    if (!subId) return { label: "OFF", color: SS_TOKENS.fg1, bg: SS_TOKENS.bg2 };
     const list = missionKey.split(",");
     if (list.length === MISSIONS.length)
-      return { label: "ALL", color: SS_TOKENS.alert, bg: SS_TOKENS.alertDim };
+      return { label: "ALL", color: SS_TOKENS.clear, bg: SS_TOKENS.clearDim };
     if (list.length === 1 && isAlertMission(list[0] ?? ""))
-      return { label: "SMOKEY ONLY", color: SS_TOKENS.alert, bg: SS_TOKENS.alertDim };
+      return { label: "SMOKEY ONLY", color: SS_TOKENS.clear, bg: SS_TOKENS.clearDim };
     return {
       label: `${list.length} CLASSES`,
-      color: SS_TOKENS.alert,
-      bg: SS_TOKENS.alertDim,
+      color: SS_TOKENS.clear,
+      bg: SS_TOKENS.clearDim,
     };
   }, [subId, missionKey]);
 
   return (
     <main
       style={{
-        minHeight: "100dvh",
-        // 180 px bottom clears tab bar (66) + iOS install prompt
-        // overlay (~80) + breathing room. Without this the contrast
-        // + time-format cards hid behind the fixed prompt on iOS.
-        padding: "12px 18px 180px",
+        // No 100dvh min-height: the time-format, contrast and region
+        // cards render after this <main>, and a full-viewport main left
+        // a screen of dead space above them on short states.
+        // Tab bar + safe-area clearance comes from .ss-tabs-shell in
+        // the (tabs) layout; the install prompt no longer floats.
+        padding: "12px 18px 2px",
         maxWidth: 460,
         margin: "0 auto",
         display: "flex",
@@ -205,7 +215,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
           href="/"
           className="ss-mono"
           style={{
-            fontSize: 11,
+            fontSize: 13,
             color: SS_TOKENS.fg1,
             textDecoration: "none",
             display: "inline-flex",
@@ -221,7 +231,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
 
       <h1
         style={{
-          fontSize: 28,
+          fontSize: TYPE.title,
           fontWeight: 800,
           letterSpacing: "-.03em",
           lineHeight: 1.1,
@@ -234,7 +244,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
 
       {loadState === "loading" ? (
         <Card>
-          <p style={{ color: SS_TOKENS.fg2, fontSize: 13 }}>Checking…</p>
+          <p style={{ color: SS_TOKENS.fg1, fontSize: 13 }}>Checking…</p>
         </Card>
       ) : !supported ? (
         <UnsupportedCard />
@@ -253,16 +263,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
               }}
             >
               <div>
-                <div
-                  className="ss-mono"
-                  style={{
-                    fontSize: 9.5,
-                    letterSpacing: ".12em",
-                    color: SS_TOKENS.fg2,
-                  }}
-                >
-                  STATUS
-                </div>
+                <div className="ss-eyebrow">Status</div>
                 <div
                   className="ss-mono"
                   style={{
@@ -270,7 +271,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                     marginTop: 6,
                     padding: "3px 10px",
                     borderRadius: 999,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: 700,
                     letterSpacing: ".1em",
                     color: statusBadge.color,
@@ -285,30 +286,34 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                     style={{
                       marginTop: 10,
                       fontSize: 13,
-                      color: SS_TOKENS.fg2,
+                      color: SS_TOKENS.fg1,
                       lineHeight: 1.45,
                     }}
                   >
-                    Quiet skies. No alerts armed.
+                    No alerts armed.
                   </p>
                 )}
               </div>
               <button
                 type="button"
                 onClick={subId ? onDisarm : onArm}
-                disabled={busy || permission === "denied"}
+                // Stays tappable when the browser has denied permission:
+                // the tap is what reveals the platform-specific unblock
+                // steps below.
+                disabled={busy}
                 style={{
-                  padding: "10px 16px",
+                  minHeight: TAP_PREFERRED,
+                  padding: "0 18px",
                   borderRadius: 999,
-                  border: 0,
-                  background: subId ? SS_TOKENS.bg2 : SS_TOKENS.alert,
-                  color: subId ? SS_TOKENS.fg1 : SS_TOKENS.bg0,
+                  border: subId ? `.5px solid ${SS_TOKENS.hairline2}` : 0,
+                  background: subId ? SS_TOKENS.bg2 : SS_TOKENS.cta,
+                  color: subId ? SS_TOKENS.fg0 : SS_TOKENS.ctaInk,
                   fontFamily: "var(--font-inter)",
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: 700,
                   letterSpacing: ".02em",
-                  cursor: busy || permission === "denied" ? "default" : "pointer",
-                  opacity: busy || permission === "denied" ? 0.6 : 1,
+                  cursor: busy ? "default" : "pointer",
+                  opacity: busy ? 0.6 : 1,
                   touchAction: "manipulation",
                   WebkitTapHighlightColor: "transparent",
                 }}
@@ -317,17 +322,18 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
               </button>
             </div>
 
-            {permission === "denied" && (
+            {permission === "denied" && armTapped && (
               <p
+                role="note"
                 style={{
                   marginTop: 12,
-                  fontSize: 12.5,
-                  color: SS_TOKENS.danger,
+                  marginBottom: 0,
+                  fontSize: 13,
+                  color: SS_TOKENS.fg0,
                   lineHeight: 1.45,
                 }}
               >
-                Your browser blocked alerts. Open Safari → Settings →
-                SmokySignal to fix.
+                {currentBlockedAlertsHelp()}
               </p>
             )}
           </Card>
@@ -364,14 +370,14 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
             </p>
             <div
               className="ss-mono"
-              style={{ fontSize: 10.5, color: SS_TOKENS.fg2, marginTop: 8, marginBottom: 6, letterSpacing: ".06em" }}
+              style={{ fontSize: 12, color: SS_TOKENS.fg1, marginTop: 8, marginBottom: 6, letterSpacing: ".06em" }}
             >
               {!prefs.tails || prefs.tails.length === 0
                 ? "ALL TAILS"
                 : `${prefs.tails.length} TAIL${prefs.tails.length === 1 ? "" : "S"}`}
             </div>
             {registry.length === 0 ? (
-              <p style={{ fontSize: 12, color: SS_TOKENS.fg2, margin: 0 }}>
+              <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: 0 }}>
                 Registry unavailable.
               </p>
             ) : (
@@ -397,7 +403,8 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                         display: "flex",
                         alignItems: "center",
                         gap: 10,
-                        padding: "8px 12px",
+                        minHeight: TAP_MIN,
+                        padding: "6px 12px",
                         borderBottom:
                           i === registry.length - 1
                             ? 0
@@ -423,11 +430,11 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                             tails: next.length > 0 ? next : undefined,
                           });
                         }}
-                        style={{ flexShrink: 0 }}
+                        style={{ flexShrink: 0, width: 20, height: 20 }}
                       />
                       <span
                         className="ss-mono"
-                        style={{ fontSize: 12, fontWeight: 600, minWidth: 60 }}
+                        style={{ fontSize: 13, fontWeight: 600, minWidth: 64 }}
                       >
                         {t.tail}
                       </span>
@@ -444,8 +451,8 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                       )}
                       <span
                         style={{
-                          fontSize: 11,
-                          color: SS_TOKENS.fg2,
+                          fontSize: 12,
+                          color: SS_TOKENS.fg1,
                           marginLeft: "auto",
                           textTransform: "uppercase",
                           letterSpacing: ".04em",
@@ -463,12 +470,12 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
           {/* Zones (placeholder — per-zone opt-in needs hot-zone load; today is 'any') */}
           <Section eyebrow="Zones">
             <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: 0, lineHeight: 1.45 }}>
-              Pings fire for any corridor. Per-zone filters land once your
-              local hot-zones have settled in.
+              For now, pings cover every corridor. Zone-only pings come
+              once we&rsquo;ve watched your stretch of sky long enough.
             </p>
             <div
               className="ss-mono"
-              style={{ fontSize: 10.5, color: SS_TOKENS.fg2, marginTop: 8, letterSpacing: ".06em" }}
+              style={{ fontSize: 12, color: SS_TOKENS.fg1, marginTop: 8, letterSpacing: ".06em" }}
             >
               {prefs.zones === "any"
                 ? "ANY ZONE"
@@ -477,11 +484,17 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
             <Link
               href="/settings/zones"
               style={{
-                display: "inline-block",
-                marginTop: 10,
-                color: SS_TOKENS.alert,
-                fontSize: 13,
-                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                alignSelf: "flex-start",
+                minHeight: TAP_MIN,
+                marginTop: 2,
+                color: SS_TOKENS.fg0,
+                fontSize: 14,
+                fontWeight: 600,
+                textDecoration: "underline",
+                textDecorationColor: SS_TOKENS.hairline2,
+                textUnderlineOffset: 4,
               }}
             >
               Manage your zones →
@@ -505,6 +518,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
+                  minHeight: TAP_MIN,
                   cursor: "pointer",
                 }}
               >
@@ -517,7 +531,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                     setProximityEnabled(next);
                   }}
                 />
-                <span className="ss-mono" style={{ fontSize: 12, letterSpacing: ".04em" }}>
+                <span className="ss-mono" style={{ fontSize: 13, letterSpacing: ".04em" }}>
                   ENABLED
                 </span>
               </label>
@@ -537,7 +551,8 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                 disabled={!proximityOn}
                 aria-label="Proximity threshold in nautical miles"
                 style={{
-                  width: 56,
+                  width: 64,
+                  minHeight: TAP_MIN,
                   padding: "6px 8px",
                   background: SS_TOKENS.bg2,
                   border: `.5px solid ${SS_TOKENS.hairline2}`,
@@ -549,7 +564,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                   opacity: proximityOn ? 1 : 0.5,
                 }}
               />
-              <span className="ss-mono" style={{ fontSize: 11, color: SS_TOKENS.fg2 }}>
+              <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
                 NM
               </span>
             </div>
@@ -572,6 +587,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
+                  minHeight: TAP_MIN,
                   cursor: voiceSupported ? "pointer" : "not-allowed",
                   opacity: voiceSupported ? 1 : 0.5,
                 }}
@@ -589,14 +605,14 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                     if (next) speakAlert("Voice readback on.");
                   }}
                 />
-                <span className="ss-mono" style={{ fontSize: 12, letterSpacing: ".04em" }}>
+                <span className="ss-mono" style={{ fontSize: 13, letterSpacing: ".04em" }}>
                   ENABLED
                 </span>
               </label>
               {!voiceSupported && (
                 <span
                   className="ss-mono"
-                  style={{ fontSize: 11, color: SS_TOKENS.fg2 }}
+                  style={{ fontSize: 12, color: SS_TOKENS.fg1 }}
                 >
                   UNSUPPORTED
                 </span>
@@ -611,22 +627,22 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                 value={prefs.quiet_start_h}
                 onChange={(h) => persistPrefs({ quiet_start_h: h })}
               />
-              <span className="ss-mono" style={{ color: SS_TOKENS.fg2, fontSize: 12 }}>
+              <span className="ss-mono" style={{ color: SS_TOKENS.fg1, fontSize: 13 }}>
                 →
               </span>
               <HourInput
                 value={prefs.quiet_end_h}
                 onChange={(h) => persistPrefs({ quiet_end_h: h })}
               />
-              <span className="ss-mono" style={{ color: SS_TOKENS.fg2, fontSize: 11 }}>
+              <span className="ss-mono" style={{ color: SS_TOKENS.fg1, fontSize: 12 }}>
                 {prefs.tz}
               </span>
             </div>
             <p
               style={{
                 marginTop: 10,
-                fontSize: 12,
-                color: SS_TOKENS.fg2,
+                fontSize: 13,
+                color: SS_TOKENS.fg1,
                 lineHeight: 1.45,
               }}
             >
@@ -641,13 +657,15 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
               onClick={onTest}
               disabled={permission !== "granted"}
               style={{
-                padding: "8px 14px",
+                alignSelf: "flex-start",
+                minHeight: TAP_MIN,
+                padding: "0 16px",
                 borderRadius: 999,
                 border: `.5px solid ${SS_TOKENS.hairline2}`,
                 background: SS_TOKENS.bg2,
                 color: SS_TOKENS.fg0,
                 fontFamily: "var(--font-mono)",
-                fontSize: 12,
+                fontSize: 13,
                 letterSpacing: ".04em",
                 cursor: permission === "granted" ? "pointer" : "default",
                 opacity: permission === "granted" ? 1 : 0.5,
@@ -669,7 +687,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
             position: "fixed",
             left: "50%",
             transform: "translateX(-50%)",
-            bottom: 84,
+            bottom: "calc(var(--ss-tabbar-h) + env(safe-area-inset-bottom) + 18px)",
             padding: "10px 14px",
             borderRadius: 999,
             background: "rgba(11,13,16,0.92)",
@@ -699,16 +717,7 @@ function Section({
 }) {
   return (
     <Card>
-      <div
-        className="ss-mono"
-        style={{
-          fontSize: 9.5,
-          color: SS_TOKENS.fg2,
-          letterSpacing: ".12em",
-          textTransform: "uppercase",
-          marginBottom: 12,
-        }}
-      >
+      <div className="ss-eyebrow" style={{ marginBottom: 12 }}>
         {eyebrow}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -751,10 +760,14 @@ function RadioCard({
       aria-pressed={active}
       style={{
         textAlign: "left",
+        minHeight: TAP_PREFERRED,
         padding: "10px 12px",
         borderRadius: 10,
-        background: active ? SS_TOKENS.alertDim : SS_TOKENS.bg2,
-        border: `.5px solid ${active ? `${SS_TOKENS.alert}66` : SS_TOKENS.hairline2}`,
+        // Selected = neutral bright outline; orange is reserved for "up".
+        background: active ? SS_TOKENS.bg2 : SS_TOKENS.bg1,
+        border: active
+          ? `1px solid ${SS_TOKENS.fg0}`
+          : `.5px solid ${SS_TOKENS.hairline2}`,
         color: SS_TOKENS.fg0,
         cursor: "pointer",
         touchAction: "manipulation",
@@ -764,10 +777,10 @@ function RadioCard({
         gap: 3,
       }}
     >
-      <span style={{ fontSize: 13.5, fontWeight: 700, color: SS_TOKENS.fg0 }}>
+      <span style={{ fontSize: TYPE.body, fontWeight: 700, color: SS_TOKENS.fg0 }}>
         {title}
       </span>
-      <span style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>{body}</span>
+      <span style={{ fontSize: 13, color: SS_TOKENS.fg1 }}>{body}</span>
     </button>
   );
 }
@@ -794,7 +807,8 @@ function HourInput({
       }}
       className="ss-mono"
       style={{
-        width: 56,
+        width: 64,
+        minHeight: TAP_MIN,
         padding: "6px 8px",
         borderRadius: 8,
         background: SS_TOKENS.bg2,
@@ -825,16 +839,8 @@ function IosNotPwaCard({
 }) {
   return (
     <Card>
-      <div
-        className="ss-mono"
-        style={{
-          fontSize: 9.5,
-          color: SS_TOKENS.fg2,
-          letterSpacing: ".12em",
-          marginBottom: 8,
-        }}
-      >
-        ON IPHONE
+      <div className="ss-eyebrow" style={{ marginBottom: 8 }}>
+        On iPhone
       </div>
       <p style={{ fontSize: 14, color: SS_TOKENS.fg0, margin: 0, lineHeight: 1.5 }}>
         {reason === "ios-too-old"

@@ -21,9 +21,9 @@ type WakeLockNavigator = Navigator & {
 
 /**
  * Keeps the screen awake while the user is on the rider-facing screens.
- * Mounted by app/(tabs)/layout.tsx so /admin and /about are unaffected.
+ * Mounted by TabBar, so it only exists on (tabs) routes.
  *
- * Renders a small moon-icon toggle top-right. Filled moon-with-slash
+ * Renders as a moon toggle inside the TabBar. Filled moon-with-slash
  * (MoonOff) = lock is held / screen won't sleep. Outline moon = lock
  * released / screen will sleep. Tap toggles; choice persists in
  * localStorage. Wake-lock-unsupported browsers render nothing.
@@ -43,8 +43,11 @@ export function ScreenAwake() {
       return;
     }
     setSupported(true);
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === PREF_OFF) setEnabled(false);
+    try {
+      if (window.localStorage.getItem(STORAGE_KEY) === PREF_OFF) setEnabled(false);
+    } catch {
+      // storage blocked: default to on
+    }
   }, []);
 
   const release = useCallback(async () => {
@@ -105,25 +108,31 @@ export function ScreenAwake() {
     setEnabled((prev) => {
       const next = !prev;
       if (typeof window !== "undefined") {
-        window.localStorage.setItem(STORAGE_KEY, next ? PREF_ON : PREF_OFF);
+        try {
+          window.localStorage.setItem(STORAGE_KEY, next ? PREF_ON : PREF_OFF);
+        } catch {
+          // storage blocked: preference lasts for this page only
+        }
       }
       return next;
     });
   };
 
   // Lit = wake lock is currently held. Unlit = preference disabled or
-  // tab hidden so the browser released it.
+  // tab hidden so the browser released it. Lit is neutral fg0, not
+  // orange: alert is reserved for "Smokey is up".
   const lit = enabled && active;
-  const color = lit ? SS_TOKENS.alert : SS_TOKENS.fg1;
 
+  // Renders as a tab-bar item (mounted inside TabBar) instead of a
+  // fixed top-right button. The old floating moon sat on top of page
+  // headers and "Back" links on every route.
   return (
     <Tooltip
-      side="bottom"
-      align="end"
+      side="top"
       content={
         lit
-          ? "Wake lock on — your phone won't sleep while SmokySignal is open."
-          : "Wake lock off — phone sleeps normally. Tap to enable."
+          ? "Screen stays awake while SmokySignal is open. Tap to let it sleep."
+          : "Screen sleeps normally. Tap to keep it awake."
       }
     >
       <button
@@ -131,47 +140,15 @@ export function ScreenAwake() {
         onClick={onToggle}
         aria-pressed={enabled}
         aria-label={
-          enabled ? "Keep screen awake (currently on)" : "Allow screen to sleep (currently off)"
+          enabled ? "Keep screen awake (currently on)" : "Keep screen awake (currently off)"
         }
-        style={{
-          position: "fixed",
-          top: 6,
-          right: 6,
-          zIndex: 30,
-          width: 44,
-          height: 44,
-          padding: 6,
-          borderRadius: "50%",
-          background: "transparent",
-          border: 0,
-          color,
-          cursor: "pointer",
-          touchAction: "manipulation",
-          WebkitTapHighlightColor: "transparent",
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          transition: "color 200ms",
-        }}
+        className="ss-tabbar-item"
+        style={{ color: lit ? SS_TOKENS.fg0 : SS_TOKENS.fg1 }}
       >
-        <span
-          aria-hidden
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            background: lit ? "rgba(245,184,64,0.12)" : "rgba(11,13,16,0.55)",
-            border: `.5px solid ${lit ? `${SS_TOKENS.alert}55` : SS_TOKENS.hairline}`,
-            backdropFilter: "blur(6px)",
-            WebkitBackdropFilter: "blur(6px)",
-            transition: "background 200ms, border-color 200ms",
-          }}
-        >
+        <span style={{ display: "flex", lineHeight: 1 }}>
           <MoonStateIcon lit={lit} />
         </span>
+        <span className="ss-tabbar-label">Awake</span>
       </button>
     </Tooltip>
   );
@@ -183,8 +160,8 @@ export function ScreenAwake() {
 function MoonStateIcon({ lit }: { lit: boolean }) {
   return (
     <svg
-      width="18"
-      height="18"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill={lit ? "currentColor" : "none"}
       stroke="currentColor"

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SS_TOKENS } from "@/lib/tokens";
+import { SS_TOKENS, TYPE } from "@/lib/tokens";
 
 export const metadata = {
   title: "Settings",
@@ -28,7 +28,7 @@ export default function SettingsHub() {
     <main
       style={{
         minHeight: "100dvh",
-        padding: "12px 18px 180px",
+        padding: "12px 18px 24px",
         maxWidth: 460,
         margin: "0 auto",
         display: "flex",
@@ -48,9 +48,10 @@ export default function SettingsHub() {
         <span className="ss-eyebrow">SmokySignal · Settings</span>
         <h1
           style={{
-            fontSize: 26,
-            fontWeight: 700,
-            letterSpacing: "-.02em",
+            fontSize: TYPE.title,
+            fontWeight: 800,
+            letterSpacing: "-.03em",
+            lineHeight: 1.1,
             margin: 0,
             color: SS_TOKENS.fg0,
           }}
@@ -90,7 +91,7 @@ export default function SettingsHub() {
           >
             <div
               className="ss-eyebrow"
-              style={{ marginBottom: 6, color: SS_TOKENS.fg2 }}
+              style={{ marginBottom: 6 }}
             >
               {link.eyebrow}
             </div>

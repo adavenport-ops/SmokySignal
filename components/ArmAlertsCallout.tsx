@@ -1,14 +1,25 @@
 "use client";
 
 // Visible "Arm alerts" call-to-action for the home page. Self-hides when
-// it isn't relevant: armed already, browser blocked, push unsupported,
-// or the rider dismissed it within the last 14 days. The settings page
-// is one tap away — the CTA exists purely to point riders at it.
+// it isn't relevant: armed already, push unsupported, iOS Safari before
+// Add to Home Screen (IOSInstallPrompt owns that step), or the rider
+// dismissed it within the last 14 days. The settings page is one tap
+// away; the CTA exists purely to point riders at it.
+//
+// "Blocked" only shows after the rider has tapped Arm on this device
+// (lib/alerts-ux.ts). A browser that starts with notifications denied
+// gets the ordinary opt-in card, not an error the rider never caused.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { SS_TOKENS } from "@/lib/tokens";
+import { SS_TOKENS, TAP_PREFERRED } from "@/lib/tokens";
 import { isPushSupported, getPushPermission } from "@/lib/push/client";
+import {
+  currentBlockedAlertsHelp,
+  hasTappedArm,
+  markArmTapped,
+} from "@/lib/alerts-ux";
+import { needsIOSInstall } from "./IOSInstallPrompt";
 
 const DISMISS_KEY = "ss_arm_alerts_dismissed_at";
 const DISMISS_DAYS = 14;
@@ -16,78 +27,80 @@ const DISMISS_MS = DISMISS_DAYS * 24 * 60 * 60 * 1000;
 
 type State =
   | { kind: "loading" }
-  | { kind: "unsupported" }
-  | { kind: "denied" }
+  | { kind: "hidden" }
+  | { kind: "blocked"; help: string }
   | { kind: "armed" }
   | { kind: "available"; recentlyDismissed: boolean };
+
+function readDismissedRecently(): boolean {
+  try {
+    const at = Number(window.localStorage.getItem(DISMISS_KEY) ?? "0");
+    return Number.isFinite(at) && Date.now() - at < DISMISS_MS;
+  } catch {
+    return false;
+  }
+}
+
+function writeDismissed(): void {
+  try {
+    window.localStorage.setItem(DISMISS_KEY, String(Date.now()));
+  } catch {
+    // storage blocked: hidden for this page view only
+  }
+}
 
 export function ArmAlertsCallout() {
   const [state, setState] = useState<State>({ kind: "loading" });
 
   useEffect(() => {
-    if (!isPushSupported()) {
-      setState({ kind: "unsupported" });
+    if (needsIOSInstall() || !isPushSupported()) {
+      setState({ kind: "hidden" });
       return;
     }
-    if (getPushPermission() === "denied") {
-      setState({ kind: "denied" });
+    if (getPushPermission() === "denied" && hasTappedArm()) {
+      setState({ kind: "blocked", help: currentBlockedAlertsHelp() });
       return;
     }
     let cancelled = false;
 
-    // Compute the dismiss-aware "available" state up front and render
-    // it IMMEDIATELY. Previously we waited on navigator.serviceWorker
-    // .ready before showing anything, which left first-visit riders
-    // staring at a missing CTA — verify-prod's 2000ms read-back
-    // window beat the 2500ms SW timeout, and even within Playwright
-    // the SW often takes 3–5s to register on a cold visit. The CTA
-    // is purely a pointer at /settings/alerts; rendering it before
-    // we know the rider's subscription state is harmless because the
-    // settings page is the source of truth either way.
-    //
-    // If the SW reveals the rider is actually armed, we hide the CTA
-    // afterward (one-tick flicker is acceptable; missing the CTA is
-    // not).
-    const dismissedAt = Number(
-      window.localStorage.getItem(DISMISS_KEY) ?? "0",
-    );
-    const recentlyDismissed = Date.now() - dismissedAt < DISMISS_MS;
-    const availableState: State = { kind: "available", recentlyDismissed };
-    setState(availableState);
+    // Render the dismiss-aware "available" state IMMEDIATELY. Waiting on
+    // navigator.serviceWorker.ready first left first-visit riders with
+    // no CTA at all (PR #39). If the SW then reveals the rider is armed,
+    // hide afterward; a one-tick flicker beats a missing CTA.
+    setState({ kind: "available", recentlyDismissed: readDismissedRecently() });
 
     navigator.serviceWorker.ready
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => {
-        if (cancelled) return;
-        if (sub) setState({ kind: "armed" });
-        // else leave availableState in place
+        if (!cancelled && sub) setState({ kind: "armed" });
       })
       .catch(() => {
-        // already showing availableState — nothing to do
+        // already showing the available state
       });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  if (state.kind === "loading" || state.kind === "unsupported") return null;
+  if (state.kind === "loading" || state.kind === "hidden") return null;
   // Armed state has its own indicator (AlertsStateChip); don't double up.
   if (state.kind === "armed") return null;
 
-  if (state.kind === "denied") {
+  if (state.kind === "blocked") {
     return (
       <div
-        className="ss-mono"
+        role="note"
         style={{
-          fontSize: 11,
-          color: SS_TOKENS.fg2,
-          padding: "8px 12px",
-          border: `.5px solid ${SS_TOKENS.hairline}`,
-          borderRadius: 8,
-          letterSpacing: ".04em",
+          fontSize: 13,
+          lineHeight: 1.45,
+          color: SS_TOKENS.fg1,
+          padding: "12px 14px",
+          background: SS_TOKENS.bg1,
+          border: `.5px solid ${SS_TOKENS.hairline2}`,
+          borderRadius: 12,
         }}
       >
-        Browser blocked alerts. Open Safari → Settings → SmokySignal to unblock.
+        {state.help}
       </div>
     );
   }
@@ -95,21 +108,23 @@ export function ArmAlertsCallout() {
   if (state.recentlyDismissed) return null;
 
   return (
-    <div
+    <section
+      aria-label="Push alerts"
       style={{
         background: SS_TOKENS.bg1,
-        border: `.5px solid ${SS_TOKENS.alert}`,
-        borderRadius: 12,
-        padding: 14,
+        border: `.5px solid ${SS_TOKENS.hairline2}`,
+        borderRadius: 14,
+        padding: "12px 8px 12px 16px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: 12,
+        gap: 8,
+        flexWrap: "wrap",
       }}
     >
-      <div style={{ minWidth: 0 }}>
+      <div style={{ minWidth: 0, flex: "1 1 160px" }}>
         <div className="ss-eyebrow" style={{ marginBottom: 4 }}>
-          OPT IN
+          Opt in
         </div>
         <div
           style={{
@@ -122,16 +137,20 @@ export function ArmAlertsCallout() {
           Get a ping when Smokey&rsquo;s up.
         </div>
       </div>
-      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+      <div style={{ display: "flex", gap: 4, flexShrink: 0, alignItems: "center" }}>
         <Link
           href="/settings/alerts"
+          onClick={() => markArmTapped()}
           style={{
-            background: SS_TOKENS.alert,
-            color: SS_TOKENS.bg0,
-            padding: "8px 14px",
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 600,
+            display: "inline-flex",
+            alignItems: "center",
+            minHeight: TAP_PREFERRED,
+            background: SS_TOKENS.cta,
+            color: SS_TOKENS.ctaInk,
+            padding: "0 16px",
+            borderRadius: 10,
+            fontSize: 14,
+            fontWeight: 700,
             textDecoration: "none",
             whiteSpace: "nowrap",
           }}
@@ -141,22 +160,25 @@ export function ArmAlertsCallout() {
         <button
           type="button"
           onClick={() => {
-            window.localStorage.setItem(DISMISS_KEY, String(Date.now()));
+            writeDismissed();
             setState({ kind: "available", recentlyDismissed: true });
           }}
           aria-label="Dismiss for 14 days"
           style={{
             background: "none",
             border: "none",
-            color: SS_TOKENS.fg2,
-            fontSize: 12,
+            color: SS_TOKENS.fg1,
+            fontSize: 13,
             cursor: "pointer",
-            padding: "8px 6px",
+            minHeight: TAP_PREFERRED,
+            minWidth: TAP_PREFERRED,
+            padding: "0 10px",
+            touchAction: "manipulation",
           }}
         >
           Not now
         </button>
       </div>
-    </div>
+    </section>
   );
 }

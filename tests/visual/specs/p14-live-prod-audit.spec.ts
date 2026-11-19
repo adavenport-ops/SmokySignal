@@ -5,7 +5,7 @@
 //   --project=chromium-mobile  (rider context)
 //   --project=chromium-desktop (desktop responsiveness)
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, devices, type Page } from "@playwright/test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -336,7 +336,9 @@ test.describe("p14 live-prod audit", () => {
       .locator('a[href="/settings/alerts"]:has-text("Arm")')
       .count();
     const blockedText = await page
-      .locator(':has-text("Browser blocked alerts")')
+      // "Alerts are blocked" is the platform-aware copy (lib/alerts-ux.ts),
+      // shown only after the rider has tapped Arm on this device.
+      .locator(':has-text("Browser blocked alerts"), :has-text("Alerts are blocked")')
       .count();
     // Look for the IOSInstallPrompt's distinctive "Add to Home Screen"
     // step copy. Robust to quote-character variants.
@@ -1263,6 +1265,139 @@ test.describe("p14 live-prod audit", () => {
       category: pass ? "working_as_designed" : "unshipped",
       pass,
       evidence: `groups=${JSON.stringify(groups)} cbpInFederal=${cbpGroup} cbpNotSmokey=${cbpNotSmokey} sources=${hasSources} confidence=${hasConfidence}`,
+      screenshot,
+    });
+  });
+
+  test("35. no fixed install bar overlaps /radar controls on iPhone (design pass)", async ({
+    browser,
+    baseURL,
+  }) => {
+    // iPhone Safari UA, not installed: the old fixed "iOS push: 2 steps"
+    // bar rendered here and sat over the radar's bottom controls. The
+    // install tip is now an inline card on home only.
+    const ctx = await browser.newContext({
+      ...devices["iPhone 15 Pro"],
+      baseURL,
+    });
+    const page = await ctx.newPage();
+    await page.goto("/radar?mock=up", { waitUntil: "networkidle" });
+    await page.waitForTimeout(2500);
+    const screenshot = await shot(page, "35-radar-no-install-bar");
+    const result = await page.evaluate(() => {
+      const fixedInstall = [...document.querySelectorAll("body *")].filter(
+        (el) => {
+          const cs = getComputedStyle(el);
+          if (cs.position !== "fixed") return false;
+          const t = (el as HTMLElement).innerText ?? "";
+          return /Add to Home Screen|iOS push/i.test(t);
+        },
+      ).length;
+      // Every visible radar control must be the topmost element at its
+      // own centre point (nothing fixed painted over it).
+      const controls = [
+        ...document.querySelectorAll<HTMLElement>("main button, main select"),
+      ].filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && r.bottom <= window.innerHeight;
+      });
+      const covered: string[] = [];
+      for (const el of controls) {
+        const r = el.getBoundingClientRect();
+        const top = document.elementFromPoint(
+          r.left + r.width / 2,
+          r.top + r.height / 2,
+        );
+        if (top && !el.contains(top) && !top.contains(el)) {
+          const coverFixed = (() => {
+            let n: Element | null = top;
+            while (n) {
+              if (getComputedStyle(n).position === "fixed") return n;
+              n = n.parentElement;
+            }
+            return null;
+          })();
+          const coverText = (coverFixed as HTMLElement | null)?.innerText ?? "";
+          if (coverFixed && /Add to Home Screen|iOS push/i.test(coverText)) {
+            covered.push(el.getAttribute("aria-label") ?? el.innerText.slice(0, 30));
+          }
+        }
+      }
+      return { fixedInstall, controls: controls.length, covered };
+    });
+    const pass = result.fixedInstall === 0 && result.covered.length === 0;
+    record({
+      claim:
+        "No fixed install bar on /radar; no radar control is covered by an install prompt (iPhone UA)",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: `fixedInstallEls=${result.fixedInstall} controlsChecked=${result.controls} covered=${JSON.stringify(result.covered)}`,
+      screenshot,
+    });
+    await ctx.close();
+  });
+
+  test("36. up-state hero uses alert orange #FF7A1A (design pass)", async ({
+    page,
+  }) => {
+    await page.goto("/?mock=up", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1500);
+    const screenshot = await shot(page, "36-home-up-hero-orange");
+    const color = await page
+      .locator('[data-testid="hero-headline"], main section h1')
+      .first()
+      .evaluate((el) => getComputedStyle(el).color)
+      .catch(() => "missing");
+    // #FF7A1A = rgb(255, 122, 26). The old amber was rgb(245, 184, 64).
+    const pass = color.replace(/\s+/g, "") === "rgb(255,122,26)";
+    record({
+      claim: "Up-state hero headline renders in --alert #FF7A1A (orange means only 'Smokey is up')",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: `hero color=${color}`,
+      screenshot,
+    });
+  });
+
+  test("37. home minimum rendered font size >= 12px (design pass)", async ({
+    page,
+  }) => {
+    const results: Record<string, { min: number; text: string | null }> = {};
+    for (const mock of ["up", "down"]) {
+      await page.goto(`/?mock=${mock}`, { waitUntil: "networkidle" });
+      await page.waitForTimeout(2000);
+      results[mock] = await page.evaluate(() => {
+        let min = Infinity;
+        let text: string | null = null;
+        const scope = document.querySelectorAll("main *, nav *");
+        for (const el of scope) {
+          const hasText = [...el.childNodes].some(
+            (c) => c.nodeType === Node.TEXT_NODE && (c.textContent ?? "").trim(),
+          );
+          if (!hasText) continue;
+          const r = el.getBoundingClientRect();
+          if (!r.width || !r.height) continue;
+          const cs = getComputedStyle(el);
+          if (cs.visibility === "hidden" || cs.display === "none") continue;
+          // Skip text painted inside a map canvas container (MapLibre
+          // attribution), which the page does not style.
+          if (el.closest(".maplibregl-map")) continue;
+          const fs = parseFloat(cs.fontSize);
+          if (fs < min) {
+            min = fs;
+            text = (el.textContent ?? "").trim().slice(0, 40);
+          }
+        }
+        return { min, text };
+      });
+    }
+    const screenshot = await shot(page, "37-home-type-floor");
+    const pass = Object.values(results).every((r) => r.min >= 12);
+    record({
+      claim: "Home (up + down) renders no text below the 12px type floor",
+      category: pass ? "working_as_designed" : "polish_needed",
+      pass,
+      evidence: JSON.stringify(results),
       screenshot,
     });
   });

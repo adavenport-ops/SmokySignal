@@ -72,8 +72,8 @@ export function ResetPreferencesButton() {
         <div
           className="ss-mono"
           style={{
-            fontSize: 9.5,
-            color: SS_TOKENS.fg2,
+            fontSize: 12,
+            color: SS_TOKENS.fg1,
             letterSpacing: ".12em",
             textTransform: "uppercase",
             marginBottom: 6,

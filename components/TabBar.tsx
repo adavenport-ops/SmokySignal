@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SS_TOKENS } from "@/lib/tokens";
+import { ScreenAwake } from "./ScreenAwake";
 import type { ReactNode } from "react";
 
 const TABS: { id: string; label: string; href: string; icon: ReactNode }[] = [
@@ -15,24 +15,16 @@ const TABS: { id: string; label: string; href: string; icon: ReactNode }[] = [
 
 export function TabBar() {
   const pathname = usePathname();
+  // The radar map is position:fixed edge to edge and lays its controls
+  // out against the bottom bar, so /radar keeps the bottom bar on
+  // desktop too. Every other route gets the left rail at >= 1024px.
+  // Layout lives in app/globals.css (.ss-tabbar, .ss-tabbar[data-rail]).
+  const rail = pathname !== "/radar";
   return (
     <nav
       aria-label="Main"
-      style={{
-        position: "fixed",
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: "flex",
-        justifyContent: "space-around",
-        padding: "10px 8px 28px",
-        background:
-          "linear-gradient(to top, rgba(11,13,16,.96) 70%, rgba(11,13,16,0))",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderTop: `.5px solid ${SS_TOKENS.hairline}`,
-        zIndex: 50,
-      }}
+      className="ss-tabbar"
+      data-rail={rail ? "true" : "false"}
     >
       {TABS.map((t) => {
         const active = isActive(pathname, t.href);
@@ -42,35 +34,15 @@ export function TabBar() {
             href={t.href}
             prefetch
             aria-current={active ? "page" : undefined}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 3,
-              padding: "6px 10px",
-              minWidth: 56,
-              minHeight: 44,
-              color: active ? SS_TOKENS.fg0 : SS_TOKENS.fg2,
-              textDecoration: "none",
-              touchAction: "manipulation",
-              WebkitTapHighlightColor: "transparent",
-            }}
+            className="ss-tabbar-item"
           >
-            <span style={{ fontSize: 18, lineHeight: 1, display: "flex" }}>
-              {t.icon}
-            </span>
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 600,
-                letterSpacing: ".02em",
-              }}
-            >
-              {t.label}
-            </span>
+            <span style={{ lineHeight: 1, display: "flex" }}>{t.icon}</span>
+            <span className="ss-tabbar-label">{t.label}</span>
           </Link>
         );
       })}
+      <span className="ss-tabbar-spacer" aria-hidden />
+      <ScreenAwake />
     </nav>
   );
 }
@@ -84,8 +56,8 @@ function isActive(pathname: string, href: string): boolean {
 function HomeIcon() {
   return (
     <svg
-      width="18"
-      height="18"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -103,8 +75,8 @@ function HomeIcon() {
 function ActivityIcon() {
   return (
     <svg
-      width="18"
-      height="18"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -126,8 +98,8 @@ function ActivityIcon() {
 function InfoIcon() {
   return (
     <svg
-      width="18"
-      height="18"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -146,8 +118,8 @@ function InfoIcon() {
 function DashIcon() {
   return (
     <svg
-      width="18"
-      height="18"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -165,8 +137,8 @@ function DashIcon() {
 function RadarIcon() {
   return (
     <svg
-      width="18"
-      height="18"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

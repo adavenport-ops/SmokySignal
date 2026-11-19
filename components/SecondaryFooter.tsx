@@ -4,9 +4,9 @@
 // /help, /legal without typing a URL. Renders in normal flow as a
 // sibling of the page <main>, so it scrolls with content and appears
 // just above the TabBar overlay when the rider reaches the bottom of
-// the page. Each rider page already reserves 180 px bottom padding
-// (post-PROMPT_23) to clear the TabBar + iOS install prompt overlay,
-// so this footer slots in cleanly above that region.
+// the page. The (tabs) layout wraps pages + this footer in .ss-tabs-shell, which
+// reserves the tab bar + safe-area below it, so the footer is never
+// clipped by the bar.
 //
 // Hidden on /radar specifically — RadarShell uses `position: fixed;
 // inset: 0` for the map, so a flow-positioned footer would render
@@ -46,8 +46,8 @@ export function SecondaryFooter() {
           href={href}
           className="ss-mono"
           style={{
-            color: SS_TOKENS.fg2,
-            fontSize: 11,
+            color: SS_TOKENS.fg1,
+            fontSize: 12,
             letterSpacing: ".08em",
             textDecoration: "none",
             textTransform: "uppercase",

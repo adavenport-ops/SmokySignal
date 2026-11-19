@@ -261,10 +261,10 @@ export default async function ProgramPage() {
       <section>
         <h1
           style={{
-            fontSize: 34,
+            fontSize: 28,
             fontWeight: 800,
-            letterSpacing: "-.04em",
-            lineHeight: 1.05,
+            letterSpacing: "-.03em",
+            lineHeight: 1.1,
             color: SS_TOKENS.fg0,
             margin: "0 0 12px",
           }}

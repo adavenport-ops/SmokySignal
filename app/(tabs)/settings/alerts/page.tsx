@@ -44,7 +44,7 @@ export default async function AlertsPage() {
       <div style={SECTION_WRAP}>
         <RegionSetting />
       </div>
-      <div style={{ ...SECTION_WRAP, marginBottom: 80 }}>
+      <div style={SECTION_WRAP}>
         <ResetPreferencesButton />
       </div>
     </>

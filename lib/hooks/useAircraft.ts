@@ -3,7 +3,7 @@
 // - Polls every 10s
 // - Pauses while document.visibilityState === "hidden"
 // - Refetches immediately on visibilitychange → visible (catch up after backgrounding)
-// - Honors `mockOn` so /?mock=up and /radar?mock=up share the demo state
+// - Honors `mockOn`: polls with the same ?mock=<state> as the page URL
 
 import { useEffect, useState } from "react";
 import type { Snapshot } from "@/lib/types";
@@ -15,7 +15,15 @@ export function useAircraft(initial: Snapshot, mockOn = false): Snapshot {
 
   useEffect(() => {
     let cancelled = false;
-    const url = mockOn ? "/api/aircraft?mock=up" : "/api/aircraft";
+    // Poll the SAME mock state the page was rendered with. Hard-coding
+    // mock=up flipped /?mock=down (and eyes-up, stale, ...) to "Smokey's
+    // up" on the first poll.
+    const mockParam = mockOn
+      ? new URLSearchParams(window.location.search).get("mock") ?? "up"
+      : null;
+    const url = mockParam
+      ? `/api/aircraft?mock=${encodeURIComponent(mockParam)}`
+      : "/api/aircraft";
 
     const fetchSnap = async () => {
       if (document.visibilityState === "hidden") return;
