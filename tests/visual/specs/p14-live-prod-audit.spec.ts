@@ -1723,4 +1723,31 @@ test.describe("p14 live-prod audit", () => {
       evidence: `statuses=${statuses.join(",")} errors=${errors.join(",")}`,
     });
   });
+
+  test("48. bot interaction routes exist: unsigned POST is 401 (or 503 not configured), never 500 (bots)", async ({
+    request,
+  }) => {
+    const routes = ["/api/telegram/webhook", "/api/discord/interactions"];
+    const results: Array<{ route: string; status: number; body: string }> = [];
+    for (const route of routes) {
+      const r = await request.post(route, {
+        data: { type: 1 },
+        headers: { "content-type": "application/json" },
+      });
+      const body = (await r.text()).slice(0, 120);
+      results.push({ route, status: r.status(), body });
+    }
+    // 503 only counts when it is the env gate, not a crashed function.
+    const pass = results.every(
+      (x) => x.status === 401 || (x.status === 503 && /not_configured/.test(x.body)),
+    );
+    record({
+      claim:
+        "POST /api/telegram/webhook and /api/discord/interactions without a signature answer 401 (or 503 not_configured while the bot env vars are unset), never 404 or 500",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: JSON.stringify(results),
+    });
+    expect(pass).toBe(true);
+  });
 });

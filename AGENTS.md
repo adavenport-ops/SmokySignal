@@ -93,6 +93,7 @@ waiting for a live event.
 - `lib/voice-mode.ts` — speechSynthesis readback toggle (foreground only)
 - `lib/proximity-alert.ts` — foreground proximity ping when alert-tier tail nearby
 - `lib/speed-warning.ts` — pure `evaluateWarning()` for N1a dryrun pipeline
+- `lib/bots/*` — Telegram DM alerts (read aloud in-car), Discord `/smokey`, Bluesky autopost. Env-gated, 503 `not_configured` until set; `dispatchBots()` rides the push `waitUntil` in `lib/activity.ts`. Setup: `docs/bots.md`
 - `lib/storage-keys.ts` — canonical KV key formatter (NX7 foundation; route all `tracks:*`/`spots:*`/`hotzones:*`/`flights:*` through this)
 - `components/FilterPanel.tsx` — radar filter UI (extracted from HotZoneLayer P16); multi-select roles supported
 - `app/(tabs)/` — main app routes (home, radar, dash, plane, settings, etc.)
@@ -107,6 +108,9 @@ waiting for a live event.
   pref, contrast pref).
 - The only server-side identifier is the push subscription endpoint —
   required by Web Push, treated as PII-equivalent in the schema.
+- Telegram bot: chat id + filters only, keyed by a hash of the chat id
+  (raw id inside the record). PII-equivalent, same footing as a push
+  endpoint. `/stop` deletes it.
 - Geolocation is browser-only, never persisted server-side.
 - Speed data: device reports it, we do not display or store it.
 
