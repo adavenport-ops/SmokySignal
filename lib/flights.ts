@@ -18,7 +18,7 @@ const CACHE_TTL_SECONDS = 30;
 
 const LOOKBACK_DAYS = 7;
 // Two samples more than 5 minutes apart belong to different flights.
-const SESSION_GAP_MS = 5 * 60 * 1000;
+export const SESSION_GAP_MS = 5 * 60 * 1000;
 // Filter out sessions with fewer than this many samples (noise / scratches).
 const MIN_SAMPLES = 3;
 
@@ -47,7 +47,7 @@ function utcDateKey(d: Date): string {
  * uninterrupted run (gap > 5 min splits sessions). Sessions shorter than
  * MIN_SAMPLES samples are dropped as noise.
  */
-function sessionsFromDay(
+export function sessionsFromDay(
   entry: FleetEntry,
   date: string,
   samples: TrackPoint[],

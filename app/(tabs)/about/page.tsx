@@ -70,6 +70,9 @@ export default async function AboutPage() {
         <HubLink href="/forecast" label="Weekly forecast">
           Forecast
         </HubLink>
+        <HubLink href="/stats" label="Flight stats: how the bird flew">
+          Stats
+        </HubLink>
         <HubLink href="/help" label="Help and FAQ">
           Help
         </HubLink>
@@ -388,7 +391,7 @@ function OriginGlyph({ rotate }: { rotate: number }) {
 }
 
 // Hub-style chip linking to one of the secondary rider routes
-// (Settings, Forecast, Help, Legal). The TabBar holds the five
+// (Settings, Forecast, Stats, Help, Legal). The TabBar holds the five
 // primary surfaces; About becomes the hub for everything else.
 // 44 px hit area meets WCAG AA target-size.
 function HubLink({

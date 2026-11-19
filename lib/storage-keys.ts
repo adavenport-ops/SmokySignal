@@ -101,3 +101,15 @@ export const DRYRUN_WARNINGS_PREFIX = "dryrun-warnings:";
 export function dryrunWarningsKey(date: string): string {
   return `${DRYRUN_WARNINGS_PREFIX}${date}`;
 }
+
+// ─── rollup:* ────────────────────────────────────────────────────────
+// Permanent daily flight rollup. Written by /api/cron/rollup with NO TTL:
+// this is the only history that outlives the 35-day tracks:* window.
+// rollup:daily:{YYYYMMDD} → JSON DailyRollup (lib/rollup-core.ts)
+// rollup:index            → sorted set of YYYYMMDD members, score = Number(YYYYMMDD)
+export function rollupDailyKey(date: string, region?: Region): string {
+  return `${regionPrefix(region)}rollup:daily:${date}`;
+}
+export function rollupIndexKey(region?: Region): string {
+  return `${regionPrefix(region)}rollup:index`;
+}
