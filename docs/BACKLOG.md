@@ -178,4 +178,4 @@ _Nothing picked yet._
 ## Shipped
 
 <!-- The weekly job prepends one line per shipped item: - YYYY-MM-DD · B0x · Title · #PR -->
-- 2026-11-19 · B09 · Neighbourhood pages · #181
+- 2026-11-19 · B09 · Neighbourhood pages · #183

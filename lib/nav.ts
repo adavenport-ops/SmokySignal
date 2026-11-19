@@ -410,7 +410,7 @@ const DAY_MS = 86_400_000;
  * purpose: add a row when a feature ships, and it ages out on its own.
  */
 export const SHIPPED: ReadonlyArray<{ id: string; date: string; pr: number }> = [
-  { id: "towns", date: "2026-11-19", pr: 181 },
+  { id: "towns", date: "2026-11-19", pr: 183 },
   { id: "blog", date: "2026-11-18", pr: 170 },
   { id: "flights", date: "2026-11-18", pr: 165 },
   { id: "aircraft", date: "2026-11-18", pr: 165 },
