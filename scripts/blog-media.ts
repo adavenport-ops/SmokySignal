@@ -26,7 +26,7 @@
 // Needs: playwright (resolved from NODE_PATH or node_modules; it never
 // downloads browsers), Chromium at SS_CHROMIUM_EXECUTABLE_PATH or the
 // newest ~/Library/Caches/ms-playwright/chromium_headless_shell-*, sharp
-// and ffmpeg-static (devDependencies).
+// and ffmpeg-static (optionalDependencies, so a failed binary download never breaks a Vercel build).
 
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import fs from "node:fs";
