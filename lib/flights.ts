@@ -211,7 +211,15 @@ export function parseFlightId(
   return { dateKey: `${y}${mo}${d}`, tsMs };
 }
 
-const FLIGHT_LOOKUP_TOLERANCE_MS = 30_000;
+/**
+ * flightIdFromTs truncates to the minute, so a session that started at
+ * 00:32:45 gets id "...T0032". Match on the minute bucket, not on a
+ * ±30s window around the truncated stamp (which missed any session that
+ * started in the back half of its minute).
+ */
+export function sessionMatchesFlightId(startTsMs: number, flightTsMs: number): boolean {
+  return Math.floor(startTsMs / 60_000) * 60_000 === flightTsMs;
+}
 
 /**
  * Look up a single flight session by its public flightId. Returns the
@@ -234,9 +242,7 @@ export async function getFlightById(
     dateKey,
     samples,
   );
-  const match = sessions.find(
-    (s) => Math.abs(s.start_ts - tsMs) <= FLIGHT_LOOKUP_TOLERANCE_MS,
-  );
+  const match = sessions.find((s) => sessionMatchesFlightId(s.start_ts, tsMs));
   if (!match) return null;
   const points = pointsForSession(samples, match);
   return {
