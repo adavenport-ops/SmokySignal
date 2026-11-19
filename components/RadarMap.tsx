@@ -168,7 +168,8 @@ export default function RadarMap(props: RadarMapProps) {
           style={{
             position: "absolute",
             inset: 0,
-            paddingTop: props.insets.top,
+            // Clear the floating + and LAYERS buttons at the top left.
+            paddingTop: props.insets.top + 96,
             paddingBottom: props.insets.bottom,
             paddingLeft: Math.min(props.insets.left, 24),
             paddingRight: Math.min(props.insets.right, 24),
