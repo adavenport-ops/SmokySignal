@@ -7,6 +7,11 @@
 //   - localStorage persistence for both visibility and filter
 //   - re-fetching /api/hotzones whenever the filter changes
 //
+// The grid is statewide-plus and never clipped to the rider's region
+// (the region picker only moves the camera). Paint is zoom-adaptive via
+// lib/radar-zoom.ts so the heat stays readable from state zoom to
+// corridor zoom.
+//
 // Layer is added BELOW the "aircraft" symbol layer so chevrons stay on top.
 
 import { useEffect, useRef, useState } from "react";
@@ -22,8 +27,13 @@ import {
   writeRadarFilter,
   type RadarFilter as Filter,
 } from "@/lib/radar-filter";
-import { REGION_CHANGE_EVENT, getRegion } from "@/lib/region-pref";
-import { DEFAULT_REGION, REGIONS, type RegionId } from "@/lib/regions";
+import {
+  HEAT_INTENSITY_STOPS,
+  HEAT_OPACITY_STOPS,
+  HEAT_RADIUS_STOPS,
+  zoomInterpolate,
+} from "@/lib/radar-zoom";
+import { extentOfPoints } from "@/lib/radar-view";
 import { Tooltip } from "./Tooltip";
 import { LearningPanel } from "./LearningPanel";
 import { FilterPanel } from "./FilterPanel";
@@ -35,14 +45,17 @@ const LAYER_ID = "hotzones-heat";
 const AIRCRAFT_LAYER_ID = "aircraft";
 const TABBAR_HEIGHT = 66;
 export const LAYER_VISIBILITY_CHANGE_EVENT = "ss-radar-layer-visibility-change";
+/** Broadcast by the heat and route layers when their data lands, with
+ *  detail `{ source, bounds }`. RadarShell unions the bounds so the
+ *  "Everything" camera preset frames all loaded data. */
+export const RADAR_DATA_EXTENT_EVENT = "ss-radar-data-extent";
 
 const DEFAULT_FILTER = DEFAULT_RADAR_FILTER;
 
-function buildQueryString(f: Filter, regionId: RegionId): string {
+function buildQueryString(f: Filter): string {
   const p = new URLSearchParams();
-  // The rider's region selector is the only region signal — the
-  // FilterPanel's redundant Region group retired in P16.3.
-  p.set("region_id", regionId);
+  // No region_id: the grid is statewide-plus and the region picker only
+  // moves the camera.
   // Categories expand to the underlying FleetRole list via
   // bucketsToRoles. Server-side /api/hotzones takes comma-separated
   // `roles`, registry-resolves them to the tail set, and intersects
@@ -70,7 +83,6 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
   const [enabled, setEnabled] = useState<boolean>(true);
   const [flightPathsEnabled, setFlightPathsEnabled] = useState<boolean>(true);
   const [filter, setFilter] = useState<Filter>(DEFAULT_FILTER);
-  const [regionId, setRegionId] = useState<RegionId>(DEFAULT_REGION);
   const [zones, setZones] = useState<HotZone[] | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   // Stable refs so the addLayerOnce closure (captured at attach time)
@@ -92,14 +104,9 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
     if (fp === "0") setFlightPathsEnabled(false);
     else if (fp === "1") setFlightPathsEnabled(true);
     setFilter(readRadarFilter());
-    setRegionId(getRegion());
     const onFilterChange = (e: Event) => {
       const detail = (e as CustomEvent<Filter>).detail;
       if (detail) setFilter(detail);
-    };
-    const onRegionChange = (e: Event) => {
-      const detail = (e as CustomEvent<{ id: RegionId }>).detail;
-      setRegionId(detail?.id ?? getRegion());
     };
     // Layer-visibility change broadcast lets the in-panel Layers row
     // reflect changes from the bottom-left buttons (and vice versa).
@@ -113,11 +120,9 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
         setFlightPathsEnabled(detail.enabled);
     };
     window.addEventListener(RADAR_FILTER_CHANGE_EVENT, onFilterChange);
-    window.addEventListener(REGION_CHANGE_EVENT, onRegionChange);
     window.addEventListener(LAYER_VISIBILITY_CHANGE_EVENT, onLayerVisChange);
     return () => {
       window.removeEventListener(RADAR_FILTER_CHANGE_EVENT, onFilterChange);
-      window.removeEventListener(REGION_CHANGE_EVENT, onRegionChange);
       window.removeEventListener(
         LAYER_VISIBILITY_CHANGE_EVENT,
         onLayerVisChange,
@@ -184,11 +189,12 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
     writeRadarFilter(filter);
   }, [filter]);
 
-  // Fetch (re-fetch when filter or region pref changes). Each request is
-  // small + edge-cached for 5 min so flipping filters or region is cheap.
+  // Fetch (re-fetch when the filter changes). Each request is small +
+  // edge-cached for 5 min so flipping filters is cheap. A region pick
+  // never refetches: it only moves the camera.
   useEffect(() => {
     let cancelled = false;
-    const qs = buildQueryString(filter, regionId);
+    const qs = buildQueryString(filter);
     (async () => {
       try {
         const r = await fetch(`/api/hotzones?${qs}`, { cache: "no-store" });
@@ -198,6 +204,16 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
           const list = Array.isArray(d.zones) ? d.zones : [];
           console.log("[HZ] fetch ok, count=", list.length);
           setZones(list);
+          window.dispatchEvent(
+            new CustomEvent(RADAR_DATA_EXTENT_EVENT, {
+              detail: {
+                source: "hotzones",
+                bounds: extentOfPoints(
+                  list.map((z) => [z.lon, z.lat] as const),
+                ),
+              },
+            }),
+          );
         }
       } catch (e) {
         console.warn("[HZ] fetch threw:", e);
@@ -206,7 +222,7 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [filter, regionId]);
+  }, [filter]);
 
   // ── Effect A: add the source + heatmap layer once when the map is
   // ready. The previous version used map.once("idle", …), but `idle`
@@ -259,45 +275,13 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
               // Intensity ramps from regional-overview (low) to
               // city-zoom (high). Carrying it past z11 means cells stay
               // bright when the rider zooms in to a corridor.
-              "heatmap-intensity": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                6,
-                0.4,
-                9,
-                0.7,
-                12,
-                1.0,
-                15,
-                1.1,
-                18,
-                1.2,
-              ],
-              // Radius must exceed cell spacing at every zoom for cells
-              // to overlap and blur smoothly. Cell spacing at 47°N is
-              // ~97 px at z14, ~195 px at z15 — the prior ramp (110 px
-              // at z15, 240 px at z18) undershot, leaving discrete
-              // grid pattern visible exactly where riders zoom in to
-              // study corridors. New stops are aggressive past z12 so
-              // adjacent cells blur at every level.
-              "heatmap-radius": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                6,
-                12,
-                9,
-                30,
-                12,
-                70,
-                14,
-                140,
-                15,
-                200,
-                18,
-                400,
-              ],
+              // Intensity, radius and opacity ramp by zoom
+              // (lib/radar-zoom.ts). Zoomed out, intensity drops so
+              // thousands of stacked cells read as regional glow with
+              // only true hot spots at the top of the ramp; past z12
+              // the radius outruns cell spacing so the grid never shows.
+              "heatmap-intensity": zoomInterpolate(HEAT_INTENSITY_STOPS),
+              "heatmap-radius": zoomInterpolate(HEAT_RADIUS_STOPS),
               // Same hue progression — amber at low density, deep red
               // at peak — with the top stop dialed back to 0.65 so even
               // dense corridors remain map-readable rather than going
@@ -318,20 +302,9 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
                 "rgba(220,38,38,0.65)",
               ],
               // Drop opacity at deep zoom so dense corridors don't go
-              // opaque — the polyline overlay (FlightPathLayer.tsx)
-              // sits beneath the heat and stays visible through the
-              // softened density.
-              "heatmap-opacity": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                6,
-                0.7,
-                12,
-                0.65,
-                16,
-                0.5,
-              ],
+              // opaque; the polyline overlay (FlightPathLayer.tsx) sits
+              // beneath the heat and stays visible through it.
+              "heatmap-opacity": zoomInterpolate(HEAT_OPACITY_STOPS),
             },
           },
           beforeId,
@@ -436,9 +409,9 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
   // Three variants:
   //   "learning"     — global state: not enough days observed yet. Shows
   //                    the universal LearningPanel.
-  //   "region-empty" — this region's bbox has no track data, but the
+  //   "region-empty" — no track data anywhere in the envelope, but the
   //                    global window is past learning. Filter is at
-  //                    defaults — the region itself is genuinely quiet.
+  //                    defaults, so the sky is genuinely quiet.
   //   "filter"       — rider's filter narrowed the slice to nothing;
   //                    widening the operator/category brings zones back.
   const filterAtDefaults =
@@ -452,7 +425,6 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
       : filterAtDefaults
         ? "region-empty"
         : "filter";
-  const regionLabel = REGIONS[regionId]?.label ?? "this region";
 
   return (
     <>
@@ -500,7 +472,7 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
               marginBottom: 4,
             }}
           >
-            QUIET SKIES IN {regionLabel.toUpperCase()}
+            QUIET SKIES
           </div>
           <div style={{ fontSize: 12, lineHeight: 1.45, color: SS_TOKENS.fg1 }}>
             Watching for the next 30 days. Hot zones build up here as planes
@@ -530,7 +502,7 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
             letterSpacing: ".04em",
           }}
         >
-          No hot zones in your filter — try widening the operator or region.
+          No hot zones in your filter. Try widening the operator or category.
         </div>
       )}
       <div

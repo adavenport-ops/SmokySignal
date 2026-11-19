@@ -1,42 +1,20 @@
 import { NextResponse } from "next/server";
-import {
-  getHotZonesCached,
-  getLastHotZoneRefresh,
-  type HotZone,
-} from "@/lib/hotzones";
+import { getHotZonesCached, getLastHotZoneRefresh } from "@/lib/hotzones";
 import { getRegistry } from "@/lib/registry";
-import { REGIONS, type RegionBbox, type RegionId } from "@/lib/regions";
+import { REGIONS, type RegionId } from "@/lib/regions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Resolve the rider-facing region selector → bbox. Accepts the
-// `region_id` query param (any RegionId from lib/regions.ts) and falls
-// back to All Washington — matches lib/regions.ts:DEFAULT_REGION so
-// a malformed query renders the same scope as a fresh-install client.
-function resolveBbox(url: URL): { regionId: RegionId; bbox: RegionBbox } {
+// The grid is statewide-plus (lib/hotzones.ts TRACKING_ENVELOPE) and is
+// returned unclipped. The /radar region picker is a camera control, so
+// `region_id` no longer narrows the cells. It is still accepted (old
+// clients and bookmarks send it) and echoed back, but ignored for
+// filtering. The legacy "?region=all" alias is accepted the same way.
+function echoRegionId(url: URL): RegionId | null {
   const idParam = url.searchParams.get("region_id");
-  if (idParam && Object.hasOwn(REGIONS, idParam)) {
-    const id = idParam as RegionId;
-    return { regionId: id, bbox: REGIONS[id].bbox };
-  }
-  // Legacy "?region=all" alias from the pre-P16.3 chevron filter still
-  // resolves to all_wa explicitly for back-compat with anything that
-  // bookmarked the old shape.
-  const legacy = url.searchParams.get("region");
-  if (legacy === "all") {
-    return { regionId: "all_wa", bbox: REGIONS.all_wa.bbox };
-  }
-  return { regionId: "all_wa", bbox: REGIONS.all_wa.bbox };
-}
-
-function inBbox(z: HotZone, b: NonNullable<RegionBbox>): boolean {
-  return (
-    z.lat >= b.latMin &&
-    z.lat <= b.latMax &&
-    z.lon >= b.lonMin &&
-    z.lon <= b.lonMax
-  );
+  if (idParam && Object.hasOwn(REGIONS, idParam)) return idParam as RegionId;
+  return null;
 }
 
 function parseList(raw: string | null): string[] {
@@ -59,7 +37,7 @@ function parseListCaseSensitive(raw: string | null): string[] {
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const { regionId, bbox } = resolveBbox(url);
+  const regionId = echoRegionId(url);
   const tails = parseList(url.searchParams.get("tails"));
   // Operator now accepts a comma-separated list. A single-operator query
   // (?operator=WSP) still works — parses as a one-element list.
@@ -94,7 +72,6 @@ export async function GET(req: Request) {
   }
 
   const zones = allZones.filter((z) => {
-    if (bbox && !inBbox(z, bbox)) return false;
     if (allowedTails && !z.tails.some((t) => allowedTails!.has(t))) return false;
     return true;
   });
@@ -104,6 +81,7 @@ export async function GET(req: Request) {
       zones,
       last_refresh_ts: lastRefresh,
       region_id: regionId,
+      region_clipped: false,
       filter_tails: tails,
       filter_operator: operators.length > 0 ? operators.join(",") : null,
       filter_operators: operators,

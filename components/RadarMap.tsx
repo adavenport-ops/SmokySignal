@@ -15,10 +15,18 @@ import {
   glyphRoleFor,
   type GlyphRole,
 } from "@/lib/brand/aircraft-glyphs";
-import { REGIONS, type RegionId } from "@/lib/regions";
+import {
+  boundsForView,
+  fitPadding,
+  toLngLatBounds,
+  type Bounds,
+  type Padding,
+  type RadarViewId,
+} from "@/lib/radar-view";
 
-const PUGET_SOUND: [number, number] = [-122.3, 47.6];
-const DEFAULT_ZOOM = 9;
+// Camera ease when the rider picks a region. Short: it is a jump, not
+// a tour.
+const VIEW_FIT_MS = 700;
 // Street-level zoom used the first time the rider's geolocation resolves
 // — opens the map on the rider's actual neighborhood instead of the
 // whole Puget Sound region.
@@ -115,16 +123,29 @@ export default function RadarMap({
   aircraft,
   rider,
   showDistanceRings = false,
-  regionId,
+  viewId,
+  fitNonce = 0,
+  dataExtent = null,
+  insets,
+  onLeaveView,
   onMapReady,
 }: {
   aircraft: Aircraft[];
   rider: RiderPos | null;
   showDistanceRings?: boolean;
-  /** Pivots the map view between Puget Sound / counties / All-WA.
-   *  When undefined or "puget_sound", no flyTo — preserves the
-   *  existing rider-zoom + auto-recenter behavior. */
-  regionId?: RegionId;
+  /** Camera preset (lib/radar-view.ts). The map opens fitted to it and
+   *  fits again whenever it or `fitNonce` changes. Camera only: it
+   *  never filters the heat or route layers. */
+  viewId: RadarViewId;
+  /** Bumped on every region pick so re-picking the same view refits. */
+  fitNonce?: number;
+  /** Union of loaded heat + route extents, framed by "everything". */
+  dataExtent?: Bounds | null;
+  /** Screen space the overlays cover (header, pill row, tab bar). */
+  insets: Padding;
+  /** Fired when the camera moves off the picked view (rider gesture,
+   *  rider auto-zoom, auto-recenter, follow-a-plane). */
+  onLeaveView?: () => void;
   onMapReady?: (map: MaplibreMap | null) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -149,6 +170,62 @@ export default function RadarMap({
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const onMapReadyRef = useRef(onMapReady);
   onMapReadyRef.current = onMapReady;
+  const onLeaveViewRef = useRef(onLeaveView);
+  onLeaveViewRef.current = onLeaveView;
+  const viewIdRef = useRef<RadarViewId>(viewId);
+  viewIdRef.current = viewId;
+  const insetsRef = useRef<Padding>(insets);
+  insetsRef.current = insets;
+  const dataExtentRef = useRef<Bounds | null>(dataExtent);
+  dataExtentRef.current = dataExtent;
+  // True while the camera still shows the picked view. Cleared by any
+  // move we did not make via fitView.
+  const onViewRef = useRef(true);
+  // Set once the rider picks a region this session. Suspends the
+  // rider auto-zoom and the 5 s auto-recenter, which would otherwise
+  // drag the camera off the view they just asked for.
+  const viewLockedRef = useRef(false);
+
+  const leaveView = () => {
+    if (!onViewRef.current) return;
+    onViewRef.current = false;
+    containerRef.current?.setAttribute("data-view", "custom");
+    onLeaveViewRef.current?.();
+  };
+
+  const currentPadding = (): Padding => {
+    const el = containerRef.current;
+    const w = el?.clientWidth ?? 0;
+    const h = el?.clientHeight ?? 0;
+    // The iOS install prompt overlays the bottom of the map; its height
+    // is published as a CSS var (0 when hidden).
+    let prompt = 0;
+    try {
+      prompt =
+        parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue(
+            "--ss-install-prompt-h",
+          ),
+        ) || 0;
+    } catch {
+      prompt = 0;
+    }
+    const i = insetsRef.current;
+    return fitPadding(w, h, { ...i, bottom: i.bottom + prompt });
+  };
+
+  const fitView = (duration: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    const b = boundsForView(viewIdRef.current, dataExtentRef.current);
+    onViewRef.current = true;
+    containerRef.current?.setAttribute("data-view", viewIdRef.current);
+    map.fitBounds(toLngLatBounds(b), {
+      padding: currentPadding(),
+      duration,
+      essential: true,
+    });
+  };
 
   // Mount the map once.
   useEffect(() => {
@@ -169,14 +246,19 @@ export default function RadarMap({
       return;
     }
 
+    // Open already fitted to the rider's saved view (Puget Sound for a
+    // first visit) so there is no fly-in on load.
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${key}`,
-      center: PUGET_SOUND,
-      zoom: DEFAULT_ZOOM,
+      bounds: toLngLatBounds(
+        boundsForView(viewIdRef.current, dataExtentRef.current),
+      ),
+      fitBoundsOptions: { padding: currentPadding() },
       attributionControl: { compact: true },
     });
     mapRef.current = map;
+    containerRef.current.setAttribute("data-view", viewIdRef.current);
 
     const onLoad = async () => {
       // Load all four role glyphs in parallel + the rider dot. The map's
@@ -331,8 +413,13 @@ export default function RadarMap({
       applyDistanceRings(riderRef.current);
       // Map mounted with rider already known (geolocation resolved
       // before MapLibre finished loading) — do the one-time zoom now.
-      if (riderRef.current && !didFirstRiderZoomRef.current) {
+      if (
+        riderRef.current &&
+        !didFirstRiderZoomRef.current &&
+        !viewLockedRef.current
+      ) {
         didFirstRiderZoomRef.current = true;
+        leaveView();
         map.flyTo({
           center: [riderRef.current.lon, riderRef.current.lat],
           zoom: RIDER_ZOOM,
@@ -350,6 +437,9 @@ export default function RadarMap({
     // otherwise our own follow-mode flyTo would self-cancel.
     const onUserInteract = (e?: { originalEvent?: unknown }) => {
       userInteractedAtRef.current = Date.now();
+      // A real gesture (drag, pinch, wheel) moves the camera off the
+      // picked view: the picker reads "Custom" until the next pick.
+      if (e?.originalEvent) leaveView();
       if (e?.originalEvent && followedTailRef.current) {
         followedTailRef.current = null;
         popupRef.current?.remove();
@@ -358,6 +448,26 @@ export default function RadarMap({
     };
     map.on("dragstart", onUserInteract);
     map.on("zoomstart", onUserInteract);
+    map.on("rotatestart", onUserInteract);
+    map.on("pitchstart", onUserInteract);
+    // Scroll-wheel zoom runs inside MapLibre's render frame, so its
+    // zoomstart carries no originalEvent. The map's own wheel event
+    // does, and is the reliable "rider zoomed" signal for a mouse.
+    const onWheel = () => leaveView();
+    map.on("wheel", onWheel);
+
+    // Expose the live camera as data attributes for QA and the prod
+    // audit (tests/visual/specs/p14-live-prod-audit.spec.ts). Read-only
+    // numbers, no map handle on window.
+    const onMoveEnd = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const c = map.getCenter();
+      el.setAttribute("data-center", `${c.lng.toFixed(4)},${c.lat.toFixed(4)}`);
+      el.setAttribute("data-zoom", map.getZoom().toFixed(2));
+    };
+    map.on("moveend", onMoveEnd);
+    onMoveEnd();
 
     // Cursor + click on chevrons.
     const onMouseEnter = () => {
@@ -408,6 +518,7 @@ export default function RadarMap({
         if (popupRef.current === popup) popupRef.current = null;
       });
       popupRef.current = popup;
+      leaveView();
       map.flyTo({
         center: pos,
         zoom: Math.max(map.getZoom(), 12),
@@ -437,6 +548,10 @@ export default function RadarMap({
       map.off("load", onLoad);
       map.off("dragstart", onUserInteract);
       map.off("zoomstart", onUserInteract);
+      map.off("rotatestart", onUserInteract);
+      map.off("pitchstart", onUserInteract);
+      map.off("wheel", onWheel);
+      map.off("moveend", onMoveEnd);
       map.off("mouseenter", "aircraft", onMouseEnter);
       map.off("mouseleave", "aircraft", onMouseLeave);
       map.off("click", "aircraft", onClick);
@@ -462,8 +577,12 @@ export default function RadarMap({
       if (rider && !didFirstRiderZoomRef.current && mapRef.current) {
         didFirstRiderZoomRef.current = true;
         // Skip the auto-zoom if the user has already manually panned
-        // or zoomed (they meant it).
-        if (Date.now() - userInteractedAtRef.current >= 15_000) {
+        // or zoomed, or picked a region (they meant it).
+        if (
+          Date.now() - userInteractedAtRef.current >= 15_000 &&
+          !viewLockedRef.current
+        ) {
+          leaveView();
           mapRef.current.flyTo({
             center: [rider.lon, rider.lat],
             zoom: RIDER_ZOOM,
@@ -488,28 +607,33 @@ export default function RadarMap({
     }
   }, [showDistanceRings]);
 
-  // When the rider changes region (Puget Sound → Spokane etc), fly the
-  // map to the region's centroid + default zoom. Skipped on initial
-  // mount where regionId starts at "puget_sound" — that's the existing
-  // default and a flyTo would feel like a flicker.
-  const lastRegionRef = useRef<RegionId | undefined>(regionId);
+  // Region pick (or re-pick of the same view, via fitNonce): ease the
+  // camera to the view's box. The first run is skipped because the map
+  // was created already fitted to the initial view.
+  const lastFitKeyRef = useRef<string>(`${viewId}:${fitNonce}`);
   useEffect(() => {
-    if (!regionId || regionId === lastRegionRef.current) return;
-    lastRegionRef.current = regionId;
-    const map = mapRef.current;
-    if (!map || !readyRef.current) return;
-    const r = REGIONS[regionId];
-    if (!r) return;
-    map.flyTo({
-      center: [r.centerLon, r.centerLat],
-      zoom: r.zoomLevel,
-      duration: 800,
-    });
-    // Mark that the user "interacted" so the auto-recenter loop pauses
-    // for 15s — otherwise the next 5s tick would yank them back to
-    // their geolocation and undo the region pivot.
-    userInteractedAtRef.current = Date.now();
-  }, [regionId]);
+    const key = `${viewId}:${fitNonce}`;
+    if (key === lastFitKeyRef.current) return;
+    lastFitKeyRef.current = key;
+    if (!mapRef.current || !readyRef.current) return;
+    viewLockedRef.current = true;
+    followedTailRef.current = null;
+    popupRef.current?.remove();
+    popupRef.current = null;
+    fitView(VIEW_FIT_MS);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewId, fitNonce]);
+
+  // "Everything" frames the data, which lands after the map opens.
+  // Refit when the extent grows, but only while the camera is still on
+  // that view (never yank a rider who has since panned away).
+  useEffect(() => {
+    if (viewIdRef.current !== "everything") return;
+    if (!onViewRef.current) return;
+    if (!mapRef.current || !readyRef.current) return;
+    fitView(400);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataExtent]);
 
   // Auto-recenter every 5s, paused for 15s after the user pans or zooms.
   // Also paused while a plane is being followed — applyAircraft handles
@@ -520,8 +644,10 @@ export default function RadarMap({
       if (!readyRef.current || !mapRef.current) return;
       if (Date.now() - userInteractedAtRef.current < 15_000) return;
       if (followedTailRef.current) return;
+      if (viewLockedRef.current) return;
       const r = riderRef.current;
       if (!r) return;
+      leaveView();
       mapRef.current.easeTo({
         center: [r.lon, r.lat],
         duration: 800,

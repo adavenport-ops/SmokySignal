@@ -10,8 +10,14 @@
 // in-panel + bottom-left controls stay in sync.
 //
 // Source: /api/flight-paths returns one GeoJSON LineString per tail-day
-// with ≥ 5 points, filtered by region bbox + operator/role allow-list.
-// Edge-cached for 5 min so flipping filters is cheap.
+// with ≥ 5 points across the whole tracking envelope (WA plus the OR /
+// ID border areas), filtered only by the operator/role allow-list. The
+// region picker is camera-only, so routes never refetch on a region
+// change. Edge-cached for 5 min so flipping filters is cheap.
+//
+// Paint is zoom-adaptive (lib/radar-zoom.ts): hairline, low-opacity
+// threads at state zoom so the "where they fly" pattern reads at a
+// glance, the original corridor detail from z12 up.
 
 import { useEffect, useRef, useState } from "react";
 import type { Map as MaplibreMap, GeoJSONSource } from "maplibre-gl";
@@ -23,11 +29,16 @@ import {
   readRadarFilter,
   type RadarFilter as Filter,
 } from "@/lib/radar-filter";
-import { REGION_CHANGE_EVENT, getRegion } from "@/lib/region-pref";
-import { DEFAULT_REGION, type RegionId } from "@/lib/regions";
+import {
+  ROUTE_OPACITY_STOPS,
+  ROUTE_WIDTH_STOPS,
+  zoomInterpolate,
+} from "@/lib/radar-zoom";
+import { extentOfPoints } from "@/lib/radar-view";
 import {
   FLIGHT_PATHS_VISIBLE_KEY,
   LAYER_VISIBILITY_CHANGE_EVENT,
+  RADAR_DATA_EXTENT_EVENT,
 } from "./HotZoneLayer";
 
 const VISIBLE_KEY = FLIGHT_PATHS_VISIBLE_KEY;
@@ -36,9 +47,8 @@ const LAYER_ID = "flight-paths-line";
 const HEATMAP_LAYER_ID = "hotzones-heat";
 const AIRCRAFT_LAYER_ID = "aircraft";
 
-function buildQueryString(f: Filter, regionId: RegionId): string {
+function buildQueryString(f: Filter): string {
   const p = new URLSearchParams();
-  p.set("region_id", regionId);
   if (f.buckets.length > 0) {
     p.set("roles", bucketsToRoles(f.buckets).join(","));
   }
@@ -58,28 +68,22 @@ type Props = {
 export function FlightPathLayer({ map }: Props) {
   const [enabled, setEnabled] = useState<boolean>(true);
   const [filter, setFilter] = useState<Filter>(DEFAULT_RADAR_FILTER);
-  const [regionId, setRegionId] = useState<RegionId>(DEFAULT_REGION);
   const [features, setFeatures] = useState<GeoJSON.Feature[] | null>(null);
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
 
   // Mirror persisted state + cross-component change events same as
-  // HotZoneLayer — both layers respond identically to filter / region
-  // / visibility changes.
+  // HotZoneLayer — both layers respond identically to filter and
+  // visibility changes.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const v = window.localStorage.getItem(VISIBLE_KEY);
     if (v === "0") setEnabled(false);
     else if (v === "1") setEnabled(true);
     setFilter(readRadarFilter());
-    setRegionId(getRegion());
     const onFilterChange = (e: Event) => {
       const detail = (e as CustomEvent<Filter>).detail;
       if (detail) setFilter(detail);
-    };
-    const onRegionChange = (e: Event) => {
-      const detail = (e as CustomEvent<{ id: RegionId }>).detail;
-      setRegionId(detail?.id ?? getRegion());
     };
     // Same-tab broadcast from HotZoneLayer's toggleFlightPaths — sync
     // visibility instantly when the rider taps the bottom-left pill or
@@ -97,12 +101,10 @@ export function FlightPathLayer({ map }: Props) {
       }
     };
     window.addEventListener(RADAR_FILTER_CHANGE_EVENT, onFilterChange);
-    window.addEventListener(REGION_CHANGE_EVENT, onRegionChange);
     window.addEventListener(LAYER_VISIBILITY_CHANGE_EVENT, onLayerVisChange);
     window.addEventListener("storage", onStorage);
     return () => {
       window.removeEventListener(RADAR_FILTER_CHANGE_EVENT, onFilterChange);
-      window.removeEventListener(REGION_CHANGE_EVENT, onRegionChange);
       window.removeEventListener(
         LAYER_VISIBILITY_CHANGE_EVENT,
         onLayerVisChange,
@@ -111,10 +113,10 @@ export function FlightPathLayer({ map }: Props) {
     };
   }, []);
 
-  // Fetch the polyline FeatureCollection on filter / region change.
+  // Fetch the polyline FeatureCollection on filter change.
   useEffect(() => {
     let cancelled = false;
-    const qs = buildQueryString(filter, regionId);
+    const qs = buildQueryString(filter);
     (async () => {
       try {
         const r = await fetch(`/api/flight-paths?${qs}`, {
@@ -123,7 +125,14 @@ export function FlightPathLayer({ map }: Props) {
         if (!r.ok) return;
         const d = (await r.json()) as { features?: GeoJSON.Feature[] };
         if (cancelled) return;
-        setFeatures(Array.isArray(d.features) ? d.features : []);
+        const list = Array.isArray(d.features) ? d.features : [];
+        setFeatures(list);
+        // Let the radar's "Everything" view frame all routes.
+        window.dispatchEvent(
+          new CustomEvent(RADAR_DATA_EXTENT_EVENT, {
+            detail: { source: "flight-paths", bounds: routeExtent(list) },
+          }),
+        );
       } catch {
         // best-effort
       }
@@ -131,7 +140,7 @@ export function FlightPathLayer({ map }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [filter, regionId]);
+  }, [filter]);
 
   // Add the source + layer once the map is ready. Same retry-on-data
   // pattern as HotZoneLayer because MapLibre's isStyleLoaded() is
@@ -145,6 +154,10 @@ export function FlightPathLayer({ map }: Props) {
         map.addSource(SOURCE_ID, {
           type: "geojson",
           data: { type: "FeatureCollection", features: [] },
+          // Per-zoom Douglas-Peucker in the tile worker (default 0.375).
+          // A touch more keeps the statewide view cheap to draw; lines
+          // are hairlines there, so the loss is invisible.
+          tolerance: 0.6,
         });
         // Z-order: insert below the hot-zone heatmap so heat sits on
         // top of the threads. If the heatmap hasn't attached yet
@@ -169,32 +182,8 @@ export function FlightPathLayer({ map }: Props) {
             },
             paint: {
               "line-color": SS_TOKENS.alert,
-              "line-width": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                8,
-                0.5,
-                12,
-                1.2,
-                15,
-                1.8,
-                18,
-                2.5,
-              ],
-              "line-opacity": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                8,
-                0.1,
-                12,
-                0.14,
-                15,
-                0.18,
-                18,
-                0.2,
-              ],
+              "line-width": zoomInterpolate(ROUTE_WIDTH_STOPS),
+              "line-opacity": zoomInterpolate(ROUTE_OPACITY_STOPS),
             },
           },
           beforeId,
@@ -261,4 +250,19 @@ export function FlightPathLayer({ map }: Props) {
   }, [map, enabled]);
 
   return null;
+}
+
+function* routeCoords(
+  features: GeoJSON.Feature[],
+): Generator<readonly [number, number]> {
+  for (const f of features) {
+    if (f.geometry?.type !== "LineString") continue;
+    for (const c of f.geometry.coordinates) {
+      if (c.length >= 2) yield [c[0]!, c[1]!];
+    }
+  }
+}
+
+function routeExtent(features: GeoJSON.Feature[]) {
+  return extentOfPoints(routeCoords(features));
 }
