@@ -1,0 +1,130 @@
+{
+ "v": 1,
+ "range": {
+  "from": "2026-11-12",
+  "to": "2026-11-18",
+  "days": 7,
+  "tz": "America/Los_Angeles",
+  "start_ts": 1794470400000,
+  "end_ts": 1795075200000,
+  "includes_today": false
+ },
+ "filter": {
+  "tails": null,
+  "mission": null,
+  "mission_applied": false
+ },
+ "sessions": [
+  {
+   "tail": "N123CB",
+   "nickname": null,
+   "date": "20261115",
+   "start_ts": 1794772800000,
+   "end_ts": 1794774000000,
+   "duration_s": 1200,
+   "sample_count": 20,
+   "max_alt_ft": 9000,
+   "start_coord": {
+    "lat": 47.24,
+    "lon": -122.36
+   },
+   "end_coord": {
+    "lat": 47.25,
+    "lon": -122.3
+   },
+   "id": "20261115T2000",
+   "operator": "CBP",
+   "role": "federal_le"
+  },
+  {
+   "tail": "N422CT",
+   "nickname": "Guardian One",
+   "date": "20261116",
+   "start_ts": 1794852000000,
+   "end_ts": 1794853800000,
+   "duration_s": 1800,
+   "sample_count": 20,
+   "max_alt_ft": 1500,
+   "start_coord": {
+    "lat": 47.24,
+    "lon": -122.36
+   },
+   "end_coord": {
+    "lat": 47.25,
+    "lon": -122.3
+   },
+   "id": "20261116T1800",
+   "operator": "KCSO",
+   "role": "police"
+  },
+  {
+   "tail": "N305DK",
+   "nickname": "Smokey 4",
+   "date": "20261117",
+   "start_ts": 1794952800000,
+   "end_ts": 1794956400000,
+   "duration_s": 3600,
+   "sample_count": 20,
+   "max_alt_ft": 2600,
+   "start_coord": {
+    "lat": 47.24,
+    "lon": -122.36
+   },
+   "end_coord": {
+    "lat": 47.25,
+    "lon": -122.3
+   },
+   "id": "20261117T2200",
+   "operator": "WSP",
+   "role": "police"
+  },
+  {
+   "tail": "N305DK",
+   "nickname": "Smokey 4",
+   "date": "20261117",
+   "start_ts": 1794958200000,
+   "end_ts": 1794959100000,
+   "duration_s": 900,
+   "sample_count": 20,
+   "max_alt_ft": 2000,
+   "start_coord": {
+    "lat": 47.24,
+    "lon": -122.36
+   },
+   "end_coord": {
+    "lat": 47.25,
+    "lon": -122.3
+   },
+   "id": "20261117T2330",
+   "operator": "WSP",
+   "role": "smokey"
+  }
+ ],
+ "polylines": [],
+ "heat": {
+  "cell_deg": 0.0083,
+  "cells": [],
+  "total_cells": 0
+ },
+ "summary": {
+  "flights": 4,
+  "airborne_s": 7500,
+  "tails_flown": 3,
+  "max_alt_ft": 9000,
+  "points_read": 100,
+  "vertices": 15,
+  "tolerance_deg": 0.0003,
+  "days_with_data": 2,
+  "busiest_day": {
+   "date": "2026-11-17",
+   "airborne_s": 4500,
+   "flights": 2
+  },
+  "busiest_hour": {
+   "dow": 2,
+   "hour": 14,
+   "minutes": 60
+  },
+  "per_tail": []
+ }
+}
