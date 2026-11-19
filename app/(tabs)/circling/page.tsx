@@ -9,21 +9,20 @@ import { CirclingLive } from "@/components/CirclingLive";
 import { CoverageNote } from "@/components/CoverageNote";
 import styles from "@/components/pattern-pages.module.css";
 import { BackLink } from "@/components/BackLink";
+import { pageMeta } from "@/lib/seo/site";
 
 // Cookies (time-format pref) make the route dynamic; the live read behind
 // it is cached for 15 s, matching /api/circling.
 export const dynamic = "force-dynamic";
 
-export const metadata = {
+export const metadata = pageMeta({
   title: "What's that plane circling over Tacoma?",
   description:
     "Every tracked aircraft working a pattern over Washington right now, in plain words: who flies it, what it is, which road it is over, and for how long.",
-  openGraph: {
-    title: "What's that plane circling over Tacoma?",
-    description:
-      "Every tracked aircraft working a pattern right now: who flies it, what it is, and which road it is over.",
-  },
-};
+  path: "/circling",
+  socialDescription:
+    "Every tracked aircraft working a pattern right now: who flies it, what it is, and which road it is over.",
+});
 
 const loadCircling = unstable_cache(
   async (): Promise<CirclingResponse> => getCirclingNow(),
@@ -112,6 +111,11 @@ export default async function CirclingPage() {
                   style={{ fontSize: 13, color: SS_TOKENS.fg0 }}
                 >
                   {c.name}
+                  {c.places.length > 1 && (
+                    <span style={{ color: SS_TOKENS.fg1 }}>
+                      {` · ${c.places[0]!.name} to ${c.places[c.places.length - 1]!.name}`}
+                    </span>
+                  )}
                 </Link>
               ))}
               <Link

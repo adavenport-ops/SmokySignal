@@ -1,0 +1,218 @@
+// Run: npx tsx --test lib/seo/seo-content.test.ts
+//
+// Key facts, FAQ sources, llms.txt and the sitemap: counts come from the
+// registry, FAQ answers are the page's own words, and the copy stays
+// inside the voice rules.
+
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { FLEET } from "../seed";
+import { CORRIDORS } from "../corridor";
+import type { FleetEntry } from "../types";
+import { fillHelpPlaceholders, fleetStats, joinAnd, keyFacts } from "./facts";
+import { PROGRAM_FAQ, helpFaq, stripInlineMarkdown } from "./faq";
+import { buildLlmsFullTxt, buildLlmsTxt } from "./llms";
+import { MAX_FLIGHT_URLS, buildSitemap } from "./sitemap-core";
+import { ROBOTS_DISALLOW, STATIC_ROUTES, pageMeta } from "./site";
+
+const BANNED_VISIBLE = ["police", "cop", "law enforcement", "drone", "surveilling", "snitch", "evade"];
+
+test("fleetStats counts the seed registry", () => {
+  const s = fleetStats(FLEET);
+  assert.equal(s.total, FLEET.length);
+  assert.equal(s.smokey, FLEET.filter((f) => f.role === "police").length);
+  assert.equal(s.wsp + s.waSheriffTails + s.mutualAid, s.smokey);
+  assert.deepEqual(s.waSheriffOffices.length, new Set(FLEET.filter((f) => f.policeUnit === "sheriff" && f.scope !== "mutual_aid").map((f) => f.operator)).size);
+  assert.equal(s.fixedWing + s.rotorcraft, s.total);
+});
+
+test("key facts: 5 to 8 sentences, numbers from the registry, voice-clean", () => {
+  const facts = keyFacts(FLEET);
+  assert.ok(facts.length >= 5 && facts.length <= 8, `${facts.length} facts`);
+  const s = fleetStats(FLEET);
+  assert.ok(facts[0]!.includes(`tracks ${s.total} aircraft`), facts[0]);
+  assert.ok(facts[1]!.startsWith(`${s.smokey} of them`), facts[1]);
+  for (const f of facts) {
+    assert.ok(f.endsWith("."), f);
+    assert.ok(!f.includes("!"), f);
+    for (const w of BANNED_VISIBLE) assert.ok(!f.toLowerCase().includes(w), `"${w}" in ${f}`);
+  }
+});
+
+test("key facts follow the registry, not literals", () => {
+  const smaller: FleetEntry[] = FLEET.filter((f) => f.operator !== "KCSO");
+  const s = fleetStats(smaller);
+  assert.ok(keyFacts(smaller)[0]!.includes(`tracks ${s.total} aircraft`));
+  assert.ok(!keyFacts(smaller)[1]!.includes("King"));
+});
+
+test("joinAnd", () => {
+  assert.equal(joinAnd([]), "");
+  assert.equal(joinAnd(["a"]), "a");
+  assert.equal(joinAnd(["a", "b", "c"]), "a, b and c");
+});
+
+test("program FAQ answers appear verbatim on /program", () => {
+  const src = fs
+    .readFileSync(path.join(process.cwd(), "app", "(tabs)", "program", "page.tsx"), "utf8")
+    .replace(/&rsquo;/g, "'")
+    .replace(/\{" "\}/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ");
+  for (const e of PROGRAM_FAQ) {
+    for (const sentence of e.answer.split(/(?<=\.)\s+/)) {
+      assert.ok(src.includes(sentence), `not on /program: "${sentence}"`);
+    }
+  }
+});
+
+test("help FAQ parser: question headings, renamed headings, trouble bullets", () => {
+  const md = [
+    "# Title",
+    "",
+    "## What this is",
+    "",
+    "SmokySignal is a [tool](/x) for **riders**.",
+    "Second line.",
+    "",
+    "More text.",
+    "",
+    "## Why is it still learning?",
+    "",
+    "Because `30` days.",
+    "",
+    "## Settings",
+    "",
+    "Not a question.",
+    "",
+    "## When something looks wrong",
+    "",
+    "- **The feed is empty.** Wait a bit.",
+    "- **\"No fix\" on Spotted.** Allow location.",
+    "- **Map key missing.** Set the environment variable.",
+  ].join("\n");
+  const faq = helpFaq(md);
+  assert.deepEqual(
+    faq.map((e) => e.question),
+    ["What is SmokySignal?", "Why is it still learning?", "What if the feed is empty?", 'What does "No fix" on Spotted mean?'],
+  );
+  assert.equal(faq[0]!.answer, "SmokySignal is a tool for riders. Second line.");
+  assert.equal(faq[1]!.answer, "Because 30 days.");
+});
+
+test("stripInlineMarkdown", () => {
+  assert.equal(stripInlineMarkdown("**a** [b](/c) `d` _e_"), "a b d e");
+});
+
+test("llms.txt: H1, summary blockquote, counts, sections, endpoints", () => {
+  const txt = buildLlmsTxt(FLEET);
+  const s = fleetStats(FLEET);
+  assert.ok(txt.startsWith("# SmokySignal\n"));
+  assert.match(txt, /^> .+/m);
+  assert.ok(txt.includes(`It tracks ${s.total} aircraft`));
+  for (const h of [
+    "## Key facts",
+    "## Who flies over Washington",
+    "## How aerial speed enforcement works in Washington",
+    "## Data sources and licences",
+    "## What we don't store",
+    "## Key pages",
+    "## Machine-readable endpoints",
+    "## Optional",
+  ]) {
+    assert.ok(txt.includes(h), h);
+  }
+  assert.ok(txt.includes("https://www.smokysignal.app/data/flight-hours.csv"));
+  assert.ok(txt.includes("https://www.smokysignal.app/api/status.json"));
+  assert.ok(txt.includes("ODbL"));
+  assert.ok(!/[A-Za-z]!(\s|$)/.test(txt), "no exclamation marks");
+  assert.ok(!/opensky/i.test(txt), "OpenSky is gone; adsb.fi and adsb.lol only");
+  assert.ok(txt.includes("https://www.smokysignal.app/blog/feed.xml"));
+  const withPosts = buildLlmsTxt(FLEET, [{ slug: "2026-11-19-x", title: "T", date: "2026-11-19", summary: "S." }]);
+  assert.ok(withPosts.includes("## Blog posts"));
+  assert.ok(withPosts.includes("https://www.smokysignal.app/blog/2026-11-19-x"));
+});
+
+test("llms-full.txt: every tail and every corridor", () => {
+  const txt = buildLlmsFullTxt(FLEET, CORRIDORS, PROGRAM_FAQ);
+  assert.ok(!/opensky/i.test(txt));
+  for (const f of FLEET) assert.ok(txt.includes(`| ${f.tail} |`), f.tail);
+  for (const c of CORRIDORS) assert.ok(txt.includes(`/road/${c.id})`), c.id);
+  assert.ok(txt.includes("## Aircraft registry"));
+  assert.ok(txt.includes("## Corridors"));
+  assert.ok(txt.includes(`### ${PROGRAM_FAQ[0]!.question}`));
+});
+
+test("sitemap: static, tails, roads, wraps, blog, capped flights, lastModified everywhere", () => {
+  const now = new Date("2026-11-18T12:00:00Z");
+  const sessions = Array.from({ length: 600 }, (_, i) => ({
+    tail: i % 2 ? "N305DK" : "N422CT",
+    id: `202611${String(1 + (i % 28)).padStart(2, "0")}T${String(i % 24).padStart(2, "0")}${String(i % 60).padStart(2, "0")}`,
+    start_ts: now.getTime() - i * 3_600_000,
+    end_ts: now.getTime() - i * 3_600_000 + 1_800_000,
+  }));
+  const map = buildSitemap({
+    now,
+    builtAt: now,
+    tails: FLEET.map((f) => f.tail),
+    corridorIds: CORRIDORS.map((c) => c.id),
+    wrapYears: [2026],
+    blog: [{ slug: "first-post", lastModified: new Date("2026-11-01") }],
+    sessions,
+  });
+  const urls = map.map((e) => e.url);
+  assert.equal(new Set(urls).size, urls.length, "no duplicate URLs");
+  for (const r of STATIC_ROUTES) assert.ok(urls.includes(`https://www.smokysignal.app${r.path}`), r.path);
+  assert.ok(urls.includes("https://www.smokysignal.app/plane/N305DK"));
+  assert.ok(urls.includes("https://www.smokysignal.app/road/i-5"));
+  assert.ok(urls.includes("https://www.smokysignal.app/wrap/2026"));
+  assert.ok(urls.includes("https://www.smokysignal.app/blog"));
+  assert.ok(urls.includes("https://www.smokysignal.app/blog/first-post"));
+  assert.ok(urls.includes("https://www.smokysignal.app/blog/feed.xml"));
+  assert.equal(
+    (map.find((e) => e.url === "https://www.smokysignal.app/blog")!.lastModified as Date).toISOString().slice(0, 10),
+    "2026-11-01",
+    "/blog is as fresh as its newest post",
+  );
+  assert.ok(urls.filter((u) => u.includes("/flight/")).length <= MAX_FLIGHT_URLS);
+  assert.ok(map.every((e) => e.lastModified instanceof Date), "every entry has lastModified");
+  for (const d of ROBOTS_DISALLOW) assert.ok(!urls.some((u) => new URL(u).pathname === d), `${d} must not be listed`);
+});
+
+test("sitemap without posts or KV still lists the core URLs", () => {
+  const now = new Date();
+  const map = buildSitemap({ now, builtAt: now, tails: ["N305DK"], corridorIds: ["i-5"], wrapYears: [2026], blog: null, sessions: [] });
+  const urls = map.map((e) => e.url);
+  assert.ok(urls.includes("https://www.smokysignal.app/blog"), "the blog index is a static route");
+  assert.ok(!urls.some((u) => u.includes("/blog/")), "no posts, no feed");
+  assert.ok(urls.includes("https://www.smokysignal.app/plane/N305DK"));
+});
+
+test("pageMeta: canonical, og, twitter agree; noindex flag; default image", () => {
+  const m = pageMeta({ title: "Radar", description: "d", path: "/radar", noindex: true });
+  assert.equal(m.title, "Radar");
+  assert.equal((m.alternates as { canonical: string }).canonical, "/radar");
+  assert.equal((m.openGraph as { title: string }).title, "Radar · SmokySignal");
+  assert.equal((m.twitter as { title: string }).title, "Radar · SmokySignal");
+  assert.deepEqual(m.robots, { index: false, follow: true });
+  assert.equal((m.openGraph as { images: Array<{ url: string }> }).images[0]!.url, "/icons/og-image.png");
+  const inherit = pageMeta({ title: "t", description: "d", path: "/", inheritImage: true, absoluteTitle: true });
+  assert.equal((inherit.openGraph as { images?: unknown }).images, undefined);
+  assert.deepEqual(inherit.title, { absolute: "t" });
+});
+
+test("content/help.md matches the registry: placeholders fill, no stale fleet lines", () => {
+  const raw = fs.readFileSync(path.join(process.cwd(), "content", "help.md"), "utf8");
+  const md = fillHelpPlaceholders(raw, FLEET);
+  assert.ok(!/\{\{[A-Z_]+\}\}/.test(md), "every placeholder filled");
+  assert.ok(!/USCG/.test(md), "USCG left the registry");
+  assert.ok(!/five of these|WSP runs five/i.test(md), "WSP count comes from the registry");
+  assert.ok(!/opensky/i.test(md));
+  const s = fleetStats(FLEET);
+  assert.ok(md.includes(`**SMOKEY** — ${s.smokey} patrol aircraft. ${s.wsp} are WSP Cessnas`));
+  assert.ok(md.includes(`We track ${s.total} aircraft from ${s.agencies} agencies`));
+  const wspModels = FLEET.filter((f) => f.operator === "WSP" && f.role === "police").map((f) => f.model);
+  assert.ok(wspModels.every((m) => m.startsWith("Cessna")), "help.md calls the WSP patrol fleet Cessnas");
+});

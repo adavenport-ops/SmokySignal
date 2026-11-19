@@ -17,6 +17,10 @@ import {
 } from "@/components/RoadParts";
 import styles from "@/components/pattern-pages.module.css";
 import { BackLink } from "@/components/BackLink";
+import { JsonLd } from "@/components/JsonLd";
+import { breadcrumbJsonLd, roadPageJsonLd } from "@/lib/seo/jsonld";
+import { joinAnd } from "@/lib/seo/facts";
+import { pageMeta } from "@/lib/seo/site";
 
 // Cookies (time-format pref) make the route dynamic; the 30-day digest
 // behind it is cached for 5 minutes (lib/history-digest.ts).
@@ -26,13 +30,16 @@ type Props = { params: { id: string } };
 
 export function generateMetadata({ params }: Props): Metadata {
   const c = corridorById(params.id);
-  if (!c) return { title: "Road not found" };
+  if (!c) return { title: "Road not found", robots: { index: false, follow: false } };
   const first = c.places[0]?.name;
   const last = c.places[c.places.length - 1]?.name;
-  return {
-    title: `Planes over ${c.name}`,
-    description: `What flew over ${c.name}${first && last ? ` between ${first} and ${last}` : ""} in the last 30 days: passes, hours, the busiest stretch, and who flew it.`,
-  };
+  const span = first && last ? `${first} to ${last}` : null;
+  return pageMeta({
+    title: `Planes over ${c.name}${span ? `, ${span}` : ""}`,
+    description: `What flew over ${c.name}${span ? ` between ${first} and ${last}` : ""} in the last 30 days: passes, hours, the busiest stretch, and who flew it.`,
+    path: `/road/${c.id}`,
+    inheritImage: true,
+  });
 }
 
 export default async function RoadPage({ params }: Props) {
@@ -43,9 +50,20 @@ export default async function RoadPage({ params }: Props) {
   const s = digest.roads[c.id] ?? emptyRoadSummary(c);
   const area = digest.roadCoverage[c.id] ?? digest.coverage.weakest?.name ?? null;
   const quiet = s.flights30d === 0;
+  const towns = c.places.map((p) => p.name);
 
   return (
     <main className="ss-page" data-road={c.id}>
+      <JsonLd
+        data={[
+          roadPageJsonLd(c),
+          breadcrumbJsonLd([
+            { name: "SmokySignal", path: "/" },
+            { name: "Road history", path: "/road" },
+            { name: c.name, path: `/road/${c.id}` },
+          ]),
+        ]}
+      />
       <BackLink href="/road" label="Road history" />
       <span className="ss-eyebrow">SmokySignal · Road history</span>
 
@@ -92,7 +110,8 @@ export default async function RoadPage({ params }: Props) {
             <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: SS_TOKENS.fg1 }}>
               A pass is one flight that spent time within about 2 nm of the
               road, from the same public ADS-B tracks as the radar. A dropout
-              can split one flight in two. Times are Pacific. Live now:{" "}
+              can split one flight in two. Times are Pacific.
+              {towns.length > 1 ? ` On this page, ${c.name} runs past ${joinAnd(towns)}.` : ""} Live now:{" "}
               <Link href="/circling" style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}>
                 what&rsquo;s circling
               </Link>

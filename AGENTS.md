@@ -121,6 +121,7 @@ and claim 62 asserts the gate itself.
 - `app/(tabs)/` — main app routes (home, radar, flights, plane, settings, etc.; /dash and /activity redirect to /flights)
 - `app/api/cron/` — scheduled refreshes (snapshot, hotzones, predictor)
 - `public/sw.js` — service worker (push + minimal offline shell: `/offline`, hashed chunks, icons; never API JSON or HTML)
+- `lib/seo/*` — SEO / GEO: `pageMeta()` (title, description, canonical, OG, Twitter in one call), JSON-LD builders + validator, registry-computed Key facts, llms.txt bodies, sitemap assembly, audit parsers. Routes: `app/sitemap.ts`, `app/robots.ts`, `app/llms.txt`, `app/llms-full.txt`. Weekly audit `npm run seo:audit`; how to add metadata for a new page: `docs/seo/PLAYBOOK.md`
 - `app/embed` (framable status widget, only path with `frame-ancestors *`), `app/glance` (handlebar screen), `app/calendar.ics` (busy-window feed), `lib/ics.ts`, `lib/glance.ts`, `lib/embed.ts`
 
 ## Privacy posture

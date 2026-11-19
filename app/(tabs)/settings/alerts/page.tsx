@@ -7,11 +7,14 @@ import { ResetPreferencesButton } from "@/components/ResetPreferencesButton";
 import { getContrastPref, getTimeFormatPref } from "@/lib/user-prefs";
 import { getRegistry } from "@/lib/registry";
 import { SS_TOKENS } from "@/lib/tokens";
+import { pageMeta } from "@/lib/seo/site";
 
-export const metadata = {
-  title: "Alerts",
-  description: "Get a ping when the bird's up.",
-};
+export const metadata = pageMeta({
+  title: "Alerts: a ping when Smokey takes off",
+  description:
+    "Get a push alert when a tracked aircraft takes off or enters one of your zones. No account; quiet hours by default.",
+  path: "/settings/alerts",
+});
 
 export const dynamic = "force-dynamic";
 

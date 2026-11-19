@@ -1,0 +1,1900 @@
+{
+  "summary": {
+    "base": "http://localhost:3000",
+    "date": "2026-11-18",
+    "durationS": 1,
+    "pages": 89,
+    "sitemapUrls": 89,
+    "p0": 0,
+    "p1": 0,
+    "p2": 12,
+    "pagesWithJsonLd": 75,
+    "pagesWithCanonical": 88,
+    "duplicateTitles": 0,
+    "brokenLinks": 0,
+    "linksChecked": 106
+  },
+  "site": [
+    {
+      "name": "robots.txt",
+      "ok": true,
+      "severity": "P0",
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "robots.txt references the sitemap",
+      "ok": true,
+      "severity": "P0",
+      "detail": "https://www.smokysignal.app/sitemap.xml, https://www.smokysignal.app/blog/feed.xml"
+    },
+    {
+      "name": "robots.txt disallows /admin",
+      "ok": true,
+      "severity": "P0",
+      "detail": ""
+    },
+    {
+      "name": "AI crawlers allowed",
+      "ok": true,
+      "severity": "P1",
+      "detail": "GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-SearchBot, Claude-User, PerplexityBot, Perplexity-User, Google-Extended, CCBot, Applebot-Extended"
+    },
+    {
+      "name": "/ crawlable",
+      "ok": true,
+      "severity": "P0",
+      "detail": ""
+    },
+    {
+      "name": "sitemap.xml",
+      "ok": true,
+      "severity": "P0",
+      "detail": "HTTP 200, 89 URLs"
+    },
+    {
+      "name": "llms.txt",
+      "ok": true,
+      "severity": "P0",
+      "detail": "HTTP 200, 10054 bytes"
+    },
+    {
+      "name": "llms-full.txt",
+      "ok": true,
+      "severity": "P1",
+      "detail": "HTTP 200, 26462 bytes"
+    },
+    {
+      "name": "unknown URL returns 404",
+      "ok": true,
+      "severity": "P0",
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "unknown tail returns 404",
+      "ok": true,
+      "severity": "P0",
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "sitemap lists /plane/N305DK",
+      "ok": true,
+      "severity": "P0",
+      "detail": ""
+    },
+    {
+      "name": "sitemap lists /road/i-5",
+      "ok": true,
+      "severity": "P0",
+      "detail": ""
+    }
+  ],
+  "pages": [
+    {
+      "path": "/",
+      "status": 200,
+      "title": "SmokySignal · Live Washington State Patrol aircraft tracker",
+      "titleLength": 59,
+      "description": "Is the state patrol plane flying today? Live map of WSP, King County Guardian One and county sheriff aircraft over Puget Sound and Washington, from public ADS-B.",
+      "descriptionLength": 161,
+      "canonical": "https://www.smokysignal.app",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebSite",
+        "Organization"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 124,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/radar",
+      "status": 200,
+      "title": "Radar: live map of patrol aircraft over Washington · SmokySignal",
+      "titleLength": 64,
+      "description": "Live radar of Washington State Patrol, county sheriff and other tracked aircraft over Puget Sound and Washington, with 30-day hot zones and flight paths.",
+      "descriptionLength": 153,
+      "canonical": "https://www.smokysignal.app/radar",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 52,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "52 words"
+        }
+      ]
+    },
+    {
+      "path": "/flights",
+      "status": 200,
+      "title": "Flights: patrol aircraft up now and recent takeoffs · SmokySignal",
+      "titleLength": 65,
+      "description": "Which Washington State Patrol and sheriff aircraft are up right now, the nearest ones to you, and the latest takeoffs and landings across Washington.",
+      "descriptionLength": 149,
+      "canonical": "https://www.smokysignal.app/flights",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 50,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "50 words"
+        }
+      ]
+    },
+    {
+      "path": "/circling",
+      "status": 200,
+      "title": "What's that plane circling over Tacoma? · SmokySignal",
+      "titleLength": 53,
+      "description": "Every tracked aircraft working a pattern over Washington right now, in plain words: who flies it, what it is, which road it is over, and for how long.",
+      "descriptionLength": 150,
+      "canonical": "https://www.smokysignal.app/circling",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 294,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/seen",
+      "status": 200,
+      "title": "Was that the plane I saw? · SmokySignal",
+      "titleLength": 39,
+      "description": "Pick a time and a place. See every tracked aircraft that passed overhead, how close it came, and what it was doing, from public ADS-B.",
+      "descriptionLength": 134,
+      "canonical": "https://www.smokysignal.app/seen",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/seen/og",
+      "ogImageStatus": 200,
+      "wordCount": 248,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/program",
+      "status": 200,
+      "title": "How aerial speed enforcement works in Washington · SmokySignal",
+      "titleLength": 62,
+      "description": "Who flies over Puget Sound, in what, how Washington State Patrol aerial speed enforcement works, and what SmokySignal is. Agencies, airframes and sources.",
+      "descriptionLength": 154,
+      "canonical": "https://www.smokysignal.app/program",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 1573,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/aircraft",
+      "status": 200,
+      "title": "All aircraft: every tracked WSP and sheriff tail · SmokySignal",
+      "titleLength": 62,
+      "description": "Every tail SmokySignal watches over Washington, grouped by job, with the model, base and public source for each: WSP, county sheriffs, CBP, DNR.",
+      "descriptionLength": 144,
+      "canonical": "https://www.smokysignal.app/aircraft",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 1067,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/road",
+      "status": 200,
+      "title": "Road history: flights over I-5, I-405 and SR-512 · SmokySignal",
+      "titleLength": 62,
+      "description": "Thirty days of tracked WSP and sheriff flights over I-5, I-405, SR-167, SR-512, SR-16, I-90 and the other Puget Sound corridors, road by road.",
+      "descriptionLength": 142,
+      "canonical": "https://www.smokysignal.app/road",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 175,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/forecast",
+      "status": 200,
+      "title": "Forecast: when the WSP plane usually flies · SmokySignal",
+      "titleLength": 56,
+      "description": "Hour-by-weekday odds of a Washington State Patrol or sheriff aircraft takeoff, from the flight log, plus each month on record.",
+      "descriptionLength": 126,
+      "canonical": "https://www.smokysignal.app/forecast",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 151,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/stats",
+      "status": 200,
+      "title": "Stats: daily flight hours for every tracked tail · SmokySignal",
+      "titleLength": 62,
+      "description": "How the bird flew: a permanent daily log of flight hours for every tracked WSP, sheriff and other aircraft over Washington.",
+      "descriptionLength": 123,
+      "canonical": "https://www.smokysignal.app/stats",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 92,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "92 words"
+        }
+      ]
+    },
+    {
+      "path": "/data",
+      "status": 200,
+      "title": "Data and CSV: open flight-hours dataset · SmokySignal",
+      "titleLength": 53,
+      "description": "Monthly flight hours for every tracked tail, by tail and by mission, with a CSV download. Open data under ODbL 1.0, from public ADS-B.",
+      "descriptionLength": 134,
+      "canonical": "https://www.smokysignal.app/data",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "Dataset",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 285,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/about",
+      "status": 200,
+      "title": "About: key facts, tools and open data · SmokySignal",
+      "titleLength": 51,
+      "description": "What SmokySignal is, key facts about the aircraft it tracks over Washington, and every tool past the main tabs: history, data, sharing and help.",
+      "descriptionLength": 144,
+      "canonical": "https://www.smokysignal.app/about",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "Organization"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 599,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/help",
+      "status": 200,
+      "title": "Help: reading the screens, alerts and data · SmokySignal",
+      "titleLength": 56,
+      "description": "What SmokySignal shows you, where the data comes from, how to read each screen, and how push alerts work. Answers to the questions riders ask.",
+      "descriptionLength": 142,
+      "canonical": "https://www.smokysignal.app/help",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 3357,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/blog",
+      "status": 200,
+      "title": "Blog · SmokySignal",
+      "titleLength": 18,
+      "description": "What shipped on SmokySignal, and a weekly log of when the bird flew.",
+      "descriptionLength": 68,
+      "canonical": "https://www.smokysignal.app/blog",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 81,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P2",
+          "code": "description-short",
+          "detail": "68 chars"
+        },
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "81 words"
+        }
+      ]
+    },
+    {
+      "path": "/relay",
+      "status": 200,
+      "title": "Discord and webhooks: Smokey takeoff posts · SmokySignal",
+      "titleLength": 56,
+      "description": "Post Smokey takeoffs to a Discord channel or any HTTPS webhook. Feeds, Siri, and widget recipes. No accounts.",
+      "descriptionLength": 109,
+      "canonical": "https://www.smokysignal.app/relay",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 479,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/embed/help",
+      "status": 200,
+      "title": "Embed the status widget on your site · SmokySignal",
+      "titleLength": 50,
+      "description": "Paste an iframe into a club site or forum to show whether Smokey is up. Two sizes, one optional region.",
+      "descriptionLength": 103,
+      "canonical": "https://www.smokysignal.app/embed/help",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 286,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/board",
+      "status": 200,
+      "title": "Shop board: a departures board for the shop TV · SmokySignal",
+      "titleLength": 60,
+      "description": "Departures board for the shop TV. Which birds are up, which came down, on a 24-hour Pacific clock.",
+      "descriptionLength": 98,
+      "canonical": "https://www.smokysignal.app/board",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 40,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "40 words"
+        }
+      ]
+    },
+    {
+      "path": "/legal",
+      "status": 200,
+      "title": "Legal: privacy, disclaimers and data attribution · SmokySignal",
+      "titleLength": 62,
+      "description": "What SmokySignal stores and what it does not, disclaimers, and attribution for the adsb.fi and adsb.lol (ODbL) data behind it.",
+      "descriptionLength": 126,
+      "canonical": "https://www.smokysignal.app/legal",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 443,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N305DK",
+      "status": 200,
+      "title": "N305DK \"Smokey 4\": WSP Cessna 206H Stationair · SmokySignal",
+      "titleLength": 59,
+      "description": "Is N305DK flying now? Live status, recent flights and a 30-day map for N305DK, a Cessna 206H Stationair flown by Washington State Patrol from KOLM Olympia.",
+      "descriptionLength": 155,
+      "canonical": "https://www.smokysignal.app/plane/N305DK",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 131,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N2446X",
+      "status": 200,
+      "title": "N2446X \"Smokey 3\": WSP Cessna 206H Stationair · SmokySignal",
+      "titleLength": 59,
+      "description": "Is N2446X flying now? Live status, recent flights and a 30-day map for N2446X, a Cessna 206H Stationair flown by Washington State Patrol from KOLM Olympia.",
+      "descriptionLength": 155,
+      "canonical": "https://www.smokysignal.app/plane/N2446X",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 131,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N646JS",
+      "status": 200,
+      "title": "N646JS: WSP Cessna T206H Stationair · SmokySignal",
+      "titleLength": 49,
+      "description": "Is N646JS flying now? Live status, recent flights and a 30-day map for N646JS, a Cessna T206H Stationair flown by Washington State Patrol from KOLM Olympia.",
+      "descriptionLength": 156,
+      "canonical": "https://www.smokysignal.app/plane/N646JS",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 127,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N823EG",
+      "status": 200,
+      "title": "N823EG: WSP Cessna T206H Stationair · SmokySignal",
+      "titleLength": 49,
+      "description": "Is N823EG flying now? Live status, recent flights and a 30-day map for N823EG, a Cessna T206H Stationair flown by Washington State Patrol from KOLM Olympia.",
+      "descriptionLength": 156,
+      "canonical": "https://www.smokysignal.app/plane/N823EG",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 127,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N305RC",
+      "status": 200,
+      "title": "N305RC: WSP Cessna 182T Skylane · SmokySignal",
+      "titleLength": 45,
+      "description": "Is N305RC flying now? Live status, recent flights and a 30-day map for N305RC, a Cessna 182T Skylane flown by Washington State Patrol from KOLM Olympia.",
+      "descriptionLength": 152,
+      "canonical": "https://www.smokysignal.app/plane/N305RC",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 125,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N102LP",
+      "status": 200,
+      "title": "N102LP: WSP Cessna 182T Skylane · SmokySignal",
+      "titleLength": 45,
+      "description": "Is N102LP flying now? Live status, recent flights and a 30-day map for N102LP, a Cessna 182T Skylane flown by Washington State Patrol from KOLM Olympia.",
+      "descriptionLength": 152,
+      "canonical": "https://www.smokysignal.app/plane/N102LP",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 125,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N207HB",
+      "status": 200,
+      "title": "N207HB: WSP Beechcraft B200 King Air · SmokySignal",
+      "titleLength": 50,
+      "description": "Is N207HB flying now? Live status, recent flights and a 30-day map for N207HB, a Beechcraft B200 King Air flown by Washington State Patrol from KOLM Olympia.",
+      "descriptionLength": 157,
+      "canonical": "https://www.smokysignal.app/plane/N207HB",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 127,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N422CT",
+      "status": 200,
+      "title": "N422CT \"Guardian One\": KCSO Bell 407GXi · SmokySignal",
+      "titleLength": 53,
+      "description": "Is N422CT flying now? Live status, recent flights and a 30-day map for N422CT, a Bell 407GXi flown by King County Sheriff's Office from KRNT Renton.",
+      "descriptionLength": 148,
+      "canonical": "https://www.smokysignal.app/plane/N422CT",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 128,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N407KS",
+      "status": 200,
+      "title": "N407KS \"Guardian One (legacy)\": KCSO Bell 407 · SmokySignal",
+      "titleLength": 59,
+      "description": "Is N407KS flying now? Live status, recent flights and a 30-day map for N407KS, a Bell 407 flown by King County Sheriff's Office from KRNT Renton.",
+      "descriptionLength": 145,
+      "canonical": "https://www.smokysignal.app/plane/N407KS",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 128,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N790RJ",
+      "status": 200,
+      "title": "N790RJ \"Guardian Two\": KCSO Bell UH-1H Iroquois · SmokySignal",
+      "titleLength": 61,
+      "description": "Is N790RJ flying now? Live status, recent flights and a 30-day map for N790RJ, a Bell UH-1H Iroquois flown by King County Sheriff's Office from KRNT Renton.",
+      "descriptionLength": 156,
+      "canonical": "https://www.smokysignal.app/plane/N790RJ",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 132,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N71KP",
+      "status": 200,
+      "title": "N71KP: KCSO Bell UH-1H Iroquois · SmokySignal",
+      "titleLength": 45,
+      "description": "Is N71KP flying now? Live status, recent flights and a 30-day map for N71KP, a Bell UH-1H Iroquois flown by King County Sheriff's Office from KRNT Renton.",
+      "descriptionLength": 154,
+      "canonical": "https://www.smokysignal.app/plane/N71KP",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 132,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N67817",
+      "status": 200,
+      "title": "N67817: KCSO Bell 206B · SmokySignal",
+      "titleLength": 36,
+      "description": "Is N67817 flying now? Live status, recent flights and a 30-day map for N67817, a Bell 206B flown by King County Sheriff's Office from KRNT Renton.",
+      "descriptionLength": 146,
+      "canonical": "https://www.smokysignal.app/plane/N67817",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 118,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "118 words"
+        }
+      ]
+    },
+    {
+      "path": "/plane/N67880",
+      "status": 200,
+      "title": "N67880: KCSO Bell 206B · SmokySignal",
+      "titleLength": 36,
+      "description": "Is N67880 flying now? Live status, recent flights and a 30-day map for N67880, a Bell 206B flown by King County Sheriff's Office from KRNT Renton.",
+      "descriptionLength": 146,
+      "canonical": "https://www.smokysignal.app/plane/N67880",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 118,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "118 words"
+        }
+      ]
+    },
+    {
+      "path": "/plane/N78906",
+      "status": 200,
+      "title": "N78906: KCSO Bell 206B · SmokySignal",
+      "titleLength": 36,
+      "description": "Is N78906 flying now? Live status, recent flights and a 30-day map for N78906, a Bell 206B flown by King County Sheriff's Office from KRNT Renton.",
+      "descriptionLength": 146,
+      "canonical": "https://www.smokysignal.app/plane/N78906",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 118,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "118 words"
+        }
+      ]
+    },
+    {
+      "path": "/plane/N9446P",
+      "status": 200,
+      "title": "N9446P: Pierce SO Cessna T206H Stationair · SmokySignal",
+      "titleLength": 55,
+      "description": "Live status and recent flights for N9446P, a Cessna T206H Stationair flown by Pierce County Sheriff's Department from KPLU Thun Field, Puyallup.",
+      "descriptionLength": 144,
+      "canonical": "https://www.smokysignal.app/plane/N9446P",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 134,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N7561N",
+      "status": 200,
+      "title": "N7561N: Pierce SO Cessna TU206G Stationair · SmokySignal",
+      "titleLength": 56,
+      "description": "Live status and recent flights for N7561N, a Cessna TU206G Stationair flown by Pierce County Sheriff's Department from KPLU Thun Field, Puyallup.",
+      "descriptionLength": 145,
+      "canonical": "https://www.smokysignal.app/plane/N7561N",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 125,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N815SC",
+      "status": 200,
+      "title": "N815SC: Snohomish SO Bell UH-1H Iroquois · SmokySignal",
+      "titleLength": 54,
+      "description": "Live status and recent flights for N815SC, a Bell UH-1H Iroquois flown by Snohomish County Sheriff's Office from Snohomish County.",
+      "descriptionLength": 130,
+      "canonical": "https://www.smokysignal.app/plane/N815SC",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 134,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N608SD",
+      "status": 200,
+      "title": "N608SD: Snohomish SO Bell UH-1H Iroquois · SmokySignal",
+      "titleLength": 54,
+      "description": "Live status and recent flights for N608SD, a Bell UH-1H Iroquois flown by Snohomish County Sheriff's Office from Snohomish County.",
+      "descriptionLength": 130,
+      "canonical": "https://www.smokysignal.app/plane/N608SD",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 126,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N13SD",
+      "status": 200,
+      "title": "N13SD: Snohomish SO Hughes 369A · SmokySignal",
+      "titleLength": 45,
+      "description": "Is N13SD flying now? Live status, recent flights and a 30-day map for N13SD, a Hughes 369A flown by Snohomish County Sheriff's Office from Snohomish County.",
+      "descriptionLength": 156,
+      "canonical": "https://www.smokysignal.app/plane/N13SD",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 124,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N500EV",
+      "status": 200,
+      "title": "N500EV: Snohomish SO McDonnell Douglas 369E · SmokySignal",
+      "titleLength": 57,
+      "description": "Live status and recent flights for N500EV, a McDonnell Douglas 369E flown by Snohomish County Sheriff's Office from Snohomish County.",
+      "descriptionLength": 133,
+      "canonical": "https://www.smokysignal.app/plane/N500EV",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 125,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N509DV",
+      "status": 200,
+      "title": "N509DV \"Air 1\": Spokane SO Bell 505 Jet Ranger X · SmokySignal",
+      "titleLength": 62,
+      "description": "Live status and recent flights for N509DV, a Bell 505 Jet Ranger X flown by Spokane County Sheriff's Office from KSFF Felts Field, Spokane.",
+      "descriptionLength": 139,
+      "canonical": "https://www.smokysignal.app/plane/N509DV",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 136,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N509JS",
+      "status": 200,
+      "title": "N509JS \"Rescue 3\": Spokane SO Bell UH-1H Iroquois · SmokySignal",
+      "titleLength": 63,
+      "description": "Live status and recent flights for N509JS, a Bell UH-1H Iroquois flown by Spokane County Sheriff's Office from KSFF Felts Field, Spokane.",
+      "descriptionLength": 137,
+      "canonical": "https://www.smokysignal.app/plane/N509JS",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 131,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N509SC",
+      "status": 200,
+      "title": "N509SC: Spokane SO Bell OH-58A Kiowa · SmokySignal",
+      "titleLength": 50,
+      "description": "Live status and recent flights for N509SC, a Bell OH-58A Kiowa flown by Spokane County Sheriff's Office from KSFF Felts Field, Spokane.",
+      "descriptionLength": 135,
+      "canonical": "https://www.smokysignal.app/plane/N509SC",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 131,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N215SC",
+      "status": 200,
+      "title": "N215SC: Spokane SO Bell OH-58 Kiowa · SmokySignal",
+      "titleLength": 49,
+      "description": "Live status and recent flights for N215SC, a Bell OH-58 Kiowa flown by Spokane County Sheriff's Office from KSFF Felts Field, Spokane.",
+      "descriptionLength": 134,
+      "canonical": "https://www.smokysignal.app/plane/N215SC",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 131,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N911YC",
+      "status": 200,
+      "title": "N911YC: Chelan SO Bell OH-58A Kiowa · SmokySignal",
+      "titleLength": 49,
+      "description": "Is N911YC flying now? Live status, recent flights and a 30-day map for N911YC, a Bell OH-58A Kiowa flown by Chelan County Sheriff's Office from Wenatchee.",
+      "descriptionLength": 154,
+      "canonical": "https://www.smokysignal.app/plane/N911YC",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 124,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N912YC",
+      "status": 200,
+      "title": "N912YC: Chelan SO Bell OH-58A Kiowa · SmokySignal",
+      "titleLength": 49,
+      "description": "Is N912YC flying now? Live status, recent flights and a 30-day map for N912YC, a Bell OH-58A Kiowa flown by Chelan County Sheriff's Office from Wenatchee.",
+      "descriptionLength": 154,
+      "canonical": "https://www.smokysignal.app/plane/N912YC",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 124,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N1977G",
+      "status": 200,
+      "title": "N1977G \"TROY 188\": CBP Airbus AS350B3 · SmokySignal",
+      "titleLength": 51,
+      "description": "Live status and recent flights for N1977G, a Airbus AS350B3 flown by U.S. Customs and Border Protection, Air and Marine Operations from KBLI Bellingham AMB.",
+      "descriptionLength": 156,
+      "canonical": "https://www.smokysignal.app/plane/N1977G",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 126,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N2108J",
+      "status": 200,
+      "title": "N2108J \"TROY 169\": CBP Airbus AS350B3 · SmokySignal",
+      "titleLength": 51,
+      "description": "Live status and recent flights for N2108J, a Airbus AS350B3 flown by U.S. Customs and Border Protection, Air and Marine Operations from KBLI Bellingham AMB.",
+      "descriptionLength": 156,
+      "canonical": "https://www.smokysignal.app/plane/N2108J",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 123,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N741C",
+      "status": 200,
+      "title": "N741C \"TROY 170\": CBP Airbus AS350B3 · SmokySignal",
+      "titleLength": 50,
+      "description": "Live status and recent flights for N741C, a Airbus AS350B3 flown by U.S. Customs and Border Protection, Air and Marine Operations from KBLI Bellingham AMB.",
+      "descriptionLength": 155,
+      "canonical": "https://www.smokysignal.app/plane/N741C",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 123,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N479C",
+      "status": 200,
+      "title": "N479C \"TROY 175\": CBP Airbus AS350B3 · SmokySignal",
+      "titleLength": 50,
+      "description": "Live status and recent flights for N479C, a Airbus AS350B3 flown by U.S. Customs and Border Protection, Air and Marine Operations from KSFF Spokane Air Unit.",
+      "descriptionLength": 157,
+      "canonical": "https://www.smokysignal.app/plane/N479C",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 124,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N128J",
+      "status": 200,
+      "title": "N128J \"TROY 301\": CBP Beechcraft B300C · SmokySignal",
+      "titleLength": 52,
+      "description": "Live status and recent flights for N128J, a Beechcraft B300C flown by U.S. Customs and Border Protection, Air and Marine Operations from KBLI Bellingham AMB.",
+      "descriptionLength": 157,
+      "canonical": "https://www.smokysignal.app/plane/N128J",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 125,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N161V",
+      "status": 200,
+      "title": "N161V \"TROY 326\": CBP Beechcraft B300C · SmokySignal",
+      "titleLength": 52,
+      "description": "Live status and recent flights for N161V, a Beechcraft B300C flown by U.S. Customs and Border Protection, Air and Marine Operations from KBLI Bellingham AMB.",
+      "descriptionLength": 157,
+      "canonical": "https://www.smokysignal.app/plane/N161V",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 125,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N2163J",
+      "status": 200,
+      "title": "N2163J: Portland PB Cessna 182T Skylane · SmokySignal",
+      "titleLength": 53,
+      "description": "Live status and recent flights for N2163J, a Cessna 182T Skylane flown by Portland air unit (Oregon, mutual aid) from Portland, OR.",
+      "descriptionLength": 131,
+      "canonical": "https://www.smokysignal.app/plane/N2163J",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 132,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N17386",
+      "status": 200,
+      "title": "N17386: OSP Cessna T206H Stationair · SmokySignal",
+      "titleLength": 49,
+      "description": "Is N17386 flying now? Live status, recent flights and a 30-day map for N17386, a Cessna T206H Stationair flown by Oregon State (mutual aid) from Salem, OR.",
+      "descriptionLength": 155,
+      "canonical": "https://www.smokysignal.app/plane/N17386",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 127,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N2237S",
+      "status": 200,
+      "title": "N2237S: OSP Cessna T182T Skylane · SmokySignal",
+      "titleLength": 46,
+      "description": "Is N2237S flying now? Live status, recent flights and a 30-day map for N2237S, a Cessna T182T Skylane flown by Oregon State (mutual aid) from Salem, OR.",
+      "descriptionLength": 152,
+      "canonical": "https://www.smokysignal.app/plane/N2237S",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 127,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N2181N",
+      "status": 200,
+      "title": "N2181N: OSP Cessna 182T Skylane · SmokySignal",
+      "titleLength": 45,
+      "description": "Is N2181N flying now? Live status, recent flights and a 30-day map for N2181N, a Cessna 182T Skylane flown by Oregon State (mutual aid) from Salem, OR.",
+      "descriptionLength": 151,
+      "canonical": "https://www.smokysignal.app/plane/N2181N",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 130,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N427AM",
+      "status": 200,
+      "title": "N427AM: OSP Cessna T182T Skylane · SmokySignal",
+      "titleLength": 46,
+      "description": "Is N427AM flying now? Live status, recent flights and a 30-day map for N427AM, a Cessna T182T Skylane flown by Oregon State (mutual aid) from Salem, OR.",
+      "descriptionLength": 152,
+      "canonical": "https://www.smokysignal.app/plane/N427AM",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 130,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N425EJ",
+      "status": 200,
+      "title": "N425EJ: Portland PB Cessna 182T Skylane · SmokySignal",
+      "titleLength": 53,
+      "description": "Live status and recent flights for N425EJ, a Cessna 182T Skylane flown by Portland air unit (Oregon, mutual aid) from Portland, OR.",
+      "descriptionLength": 131,
+      "canonical": "https://www.smokysignal.app/plane/N425EJ",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 136,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N910TW",
+      "status": 200,
+      "title": "N910TW: Multnomah SO Cessna R172K Hawk XP · SmokySignal",
+      "titleLength": 55,
+      "description": "Live status and recent flights for N910TW, a Cessna R172K Hawk XP flown by Multnomah County Sheriff (Oregon, mutual aid) from Portland, OR.",
+      "descriptionLength": 139,
+      "canonical": "https://www.smokysignal.app/plane/N910TW",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 130,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N931EM",
+      "status": 200,
+      "title": "N931EM: Clackamas SO Cessna 182P Skylane · SmokySignal",
+      "titleLength": 54,
+      "description": "Live status and recent flights for N931EM, a Cessna 182P Skylane flown by Clackamas County Sheriff (Oregon, mutual aid) from Oregon City, OR.",
+      "descriptionLength": 141,
+      "canonical": "https://www.smokysignal.app/plane/N931EM",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 126,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N575RW",
+      "status": 200,
+      "title": "N575RW: Washington Co SO Cessna R172K Hawk XP · SmokySignal",
+      "titleLength": 59,
+      "description": "Live status and recent flights for N575RW, a Cessna R172K Hawk XP flown by Washington County Sheriff (Oregon, mutual aid) from Hillsboro, OR.",
+      "descriptionLength": 141,
+      "canonical": "https://www.smokysignal.app/plane/N575RW",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 134,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N4343Z",
+      "status": 200,
+      "title": "N4343Z: Hood River SO Piper PA-18-150 Super Cub · SmokySignal",
+      "titleLength": 61,
+      "description": "Live status and recent flights for N4343Z, a Piper PA-18-150 Super Cub flown by Hood River County Sheriff (Oregon, mutual aid) from Hood River, OR.",
+      "descriptionLength": 147,
+      "canonical": "https://www.smokysignal.app/plane/N4343Z",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 132,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N67176",
+      "status": 200,
+      "title": "N67176: Kootenai RAS Bell 206B · SmokySignal",
+      "titleLength": 44,
+      "description": "Live status and recent flights for N67176, a Bell 206B flown by Kootenai County Regional Air Support (Idaho, mutual aid) from Hayden, ID.",
+      "descriptionLength": 137,
+      "canonical": "https://www.smokysignal.app/plane/N67176",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 133,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N338WN",
+      "status": 200,
+      "title": "N338WN: WA DNR Bell UH-1H Iroquois · SmokySignal",
+      "titleLength": 48,
+      "description": "Live status and recent flights for N338WN, a Bell UH-1H Iroquois flown by Washington Department of Natural Resources from KOLM Olympia.",
+      "descriptionLength": 135,
+      "canonical": "https://www.smokysignal.app/plane/N338WN",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 127,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N339WN",
+      "status": 200,
+      "title": "N339WN: WA DNR Bell UH-1H Iroquois · SmokySignal",
+      "titleLength": 48,
+      "description": "Live status and recent flights for N339WN, a Bell UH-1H Iroquois flown by Washington Department of Natural Resources from KOLM Olympia.",
+      "descriptionLength": 135,
+      "canonical": "https://www.smokysignal.app/plane/N339WN",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 127,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N340WN",
+      "status": 200,
+      "title": "N340WN: WA DNR Bell UH-1H Iroquois · SmokySignal",
+      "titleLength": 48,
+      "description": "Live status and recent flights for N340WN, a Bell UH-1H Iroquois flown by Washington Department of Natural Resources from KOLM Olympia.",
+      "descriptionLength": 135,
+      "canonical": "https://www.smokysignal.app/plane/N340WN",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 127,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N341WN",
+      "status": 200,
+      "title": "N341WN: WA DNR Bell UH-1H Iroquois · SmokySignal",
+      "titleLength": 48,
+      "description": "Live status and recent flights for N341WN, a Bell UH-1H Iroquois flown by Washington Department of Natural Resources from KOLM Olympia.",
+      "descriptionLength": 135,
+      "canonical": "https://www.smokysignal.app/plane/N341WN",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 127,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N342WN",
+      "status": 200,
+      "title": "N342WN: WA DNR Bell UH-1V Iroquois · SmokySignal",
+      "titleLength": 48,
+      "description": "Live status and recent flights for N342WN, a Bell UH-1V Iroquois flown by Washington Department of Natural Resources from KOLM Olympia.",
+      "descriptionLength": 135,
+      "canonical": "https://www.smokysignal.app/plane/N342WN",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 126,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N343WN",
+      "status": 200,
+      "title": "N343WN: WA DNR Bell UH-1 Iroquois · SmokySignal",
+      "titleLength": 47,
+      "description": "Live status and recent flights for N343WN, a Bell UH-1 Iroquois flown by Washington Department of Natural Resources from KOLM Olympia.",
+      "descriptionLength": 134,
+      "canonical": "https://www.smokysignal.app/plane/N343WN",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 127,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N344WN",
+      "status": 200,
+      "title": "N344WN: WA DNR Bell UH-1H Iroquois · SmokySignal",
+      "titleLength": 48,
+      "description": "Live status and recent flights for N344WN, a Bell UH-1H Iroquois flown by Washington Department of Natural Resources from KOLM Olympia.",
+      "descriptionLength": 135,
+      "canonical": "https://www.smokysignal.app/plane/N344WN",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 127,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N345WN",
+      "status": 200,
+      "title": "N345WN: WA DNR Bell UH-1H Iroquois · SmokySignal",
+      "titleLength": 48,
+      "description": "Live status and recent flights for N345WN, a Bell UH-1H Iroquois flown by Washington Department of Natural Resources from KOLM Olympia.",
+      "descriptionLength": 135,
+      "canonical": "https://www.smokysignal.app/plane/N345WN",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 127,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N346WN",
+      "status": 200,
+      "title": "N346WN: WA DNR Bell UH-1H Iroquois · SmokySignal",
+      "titleLength": 48,
+      "description": "Live status and recent flights for N346WN, a Bell UH-1H Iroquois flown by Washington Department of Natural Resources from KOLM Olympia.",
+      "descriptionLength": 135,
+      "canonical": "https://www.smokysignal.app/plane/N346WN",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 127,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N216KQ",
+      "status": 200,
+      "title": "N216KQ: WA DNR Quest Kodiak 100 · SmokySignal",
+      "titleLength": 45,
+      "description": "Live status and recent flights for N216KQ, a Quest Kodiak 100 flown by Washington Department of Natural Resources from KOLM Olympia.",
+      "descriptionLength": 132,
+      "canonical": "https://www.smokysignal.app/plane/N216KQ",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 123,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N565E",
+      "status": 200,
+      "title": "N565E: WA DNR Quest Kodiak 100 · SmokySignal",
+      "titleLength": 44,
+      "description": "Live status and recent flights for N565E, a Quest Kodiak 100 flown by Washington Department of Natural Resources from KOLM Olympia.",
+      "descriptionLength": 131,
+      "canonical": "https://www.smokysignal.app/plane/N565E",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 122,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N346BF",
+      "status": 200,
+      "title": "N346BF: WA DNR Bell 206L-4 LongRanger · SmokySignal",
+      "titleLength": 51,
+      "description": "Live status and recent flights for N346BF, a Bell 206L-4 LongRanger flown by Washington Department of Natural Resources from KOLM Olympia.",
+      "descriptionLength": 138,
+      "canonical": "https://www.smokysignal.app/plane/N346BF",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 122,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/plane/N911MR",
+      "status": 200,
+      "title": "N911MR: Chelan FD1 Bell UH-1H Iroquois · SmokySignal",
+      "titleLength": 52,
+      "description": "Is N911MR flying now? Live status, recent flights and a 30-day map for N911MR, a Bell UH-1H Iroquois flown by Chelan County Fire District 1 from Wenatchee.",
+      "descriptionLength": 155,
+      "canonical": "https://www.smokysignal.app/plane/N911MR",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 118,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "118 words"
+        }
+      ]
+    },
+    {
+      "path": "/plane/N911PR",
+      "status": 200,
+      "title": "N911PR: Chelan FD1 Bell UH-1H Iroquois · SmokySignal",
+      "titleLength": 52,
+      "description": "Is N911PR flying now? Live status, recent flights and a 30-day map for N911PR, a Bell UH-1H Iroquois flown by Chelan County Fire District 1 from Wenatchee.",
+      "descriptionLength": 155,
+      "canonical": "https://www.smokysignal.app/plane/N911PR",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 118,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "118 words"
+        }
+      ]
+    },
+    {
+      "path": "/plane/N357PN",
+      "status": 200,
+      "title": "N357PN: WDFW Partenavia P.68C-TC · SmokySignal",
+      "titleLength": 46,
+      "description": "Live status and recent flights for N357PN, a Partenavia P.68C-TC flown by Washington Department of Fish and Wildlife from Olympia.",
+      "descriptionLength": 130,
+      "canonical": "https://www.smokysignal.app/plane/N357PN",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 115,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "115 words"
+        }
+      ]
+    },
+    {
+      "path": "/road/i-5",
+      "status": 200,
+      "title": "Planes over I-5, Tumwater to Everett · SmokySignal",
+      "titleLength": 50,
+      "description": "What flew over I-5 between Tumwater and Everett in the last 30 days: passes, hours, the busiest stretch, and who flew it.",
+      "descriptionLength": 121,
+      "canonical": "https://www.smokysignal.app/road/i-5",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/road/i-5/opengraph-image-1a53t2?b8a1b3be498db674",
+      "ogImageStatus": 200,
+      "wordCount": 226,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/road/i-405",
+      "status": 200,
+      "title": "Planes over I-405, Tukwila to Canyon Park · SmokySignal",
+      "titleLength": 55,
+      "description": "What flew over I-405 between Tukwila and Canyon Park in the last 30 days: passes, hours, the busiest stretch, and who flew it.",
+      "descriptionLength": 126,
+      "canonical": "https://www.smokysignal.app/road/i-405",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/road/i-405/opengraph-image-1a53t2?b8a1b3be498db674",
+      "ogImageStatus": 200,
+      "wordCount": 216,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/road/sr-167",
+      "status": 200,
+      "title": "Planes over SR-167, Renton to Fife · SmokySignal",
+      "titleLength": 48,
+      "description": "What flew over SR-167 between Renton and Fife in the last 30 days: passes, hours, the busiest stretch, and who flew it.",
+      "descriptionLength": 119,
+      "canonical": "https://www.smokysignal.app/road/sr-167",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/road/sr-167/opengraph-image-1a53t2?b8a1b3be498db674",
+      "ogImageStatus": 200,
+      "wordCount": 212,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/road/sr-512",
+      "status": 200,
+      "title": "Planes over SR-512, Lakewood to Puyallup · SmokySignal",
+      "titleLength": 54,
+      "description": "What flew over SR-512 between Lakewood and Puyallup in the last 30 days: passes, hours, the busiest stretch, and who flew it.",
+      "descriptionLength": 125,
+      "canonical": "https://www.smokysignal.app/road/sr-512",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/road/sr-512/opengraph-image-1a53t2?b8a1b3be498db674",
+      "ogImageStatus": 200,
+      "wordCount": 211,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/road/sr-16",
+      "status": 200,
+      "title": "Planes over SR-16, Tacoma to Gorst · SmokySignal",
+      "titleLength": 48,
+      "description": "What flew over SR-16 between Tacoma and Gorst in the last 30 days: passes, hours, the busiest stretch, and who flew it.",
+      "descriptionLength": 119,
+      "canonical": "https://www.smokysignal.app/road/sr-16",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/road/sr-16/opengraph-image-1a53t2?b8a1b3be498db674",
+      "ogImageStatus": 200,
+      "wordCount": 214,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/road/i-90",
+      "status": 200,
+      "title": "Planes over I-90, Seattle to Snoqualmie Pass · SmokySignal",
+      "titleLength": 58,
+      "description": "What flew over I-90 between Seattle and Snoqualmie Pass in the last 30 days: passes, hours, the busiest stretch, and who flew it.",
+      "descriptionLength": 129,
+      "canonical": "https://www.smokysignal.app/road/i-90",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/road/i-90/opengraph-image-1a53t2?b8a1b3be498db674",
+      "ogImageStatus": 200,
+      "wordCount": 218,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/road/sr-410",
+      "status": 200,
+      "title": "Planes over SR-410, Enumclaw to Chinook Pass · SmokySignal",
+      "titleLength": 58,
+      "description": "What flew over SR-410 between Enumclaw and Chinook Pass in the last 30 days: passes, hours, the busiest stretch, and who flew it.",
+      "descriptionLength": 129,
+      "canonical": "https://www.smokysignal.app/road/sr-410",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/road/sr-410/opengraph-image-1a53t2?b8a1b3be498db674",
+      "ogImageStatus": 200,
+      "wordCount": 213,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/road/us-2",
+      "status": 200,
+      "title": "Planes over US-2, Everett to Stevens Pass · SmokySignal",
+      "titleLength": 55,
+      "description": "What flew over US-2 between Everett and Stevens Pass in the last 30 days: passes, hours, the busiest stretch, and who flew it.",
+      "descriptionLength": 126,
+      "canonical": "https://www.smokysignal.app/road/us-2",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/road/us-2/opengraph-image-1a53t2?b8a1b3be498db674",
+      "ogImageStatus": 200,
+      "wordCount": 215,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/road/sr-18",
+      "status": 200,
+      "title": "Planes over SR-18, Federal Way to Snoqualmie · SmokySignal",
+      "titleLength": 58,
+      "description": "What flew over SR-18 between Federal Way and Snoqualmie in the last 30 days: passes, hours, the busiest stretch, and who flew it.",
+      "descriptionLength": 129,
+      "canonical": "https://www.smokysignal.app/road/sr-18",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/road/sr-18/opengraph-image-1a53t2?b8a1b3be498db674",
+      "ogImageStatus": 200,
+      "wordCount": 214,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/road/us-101-hood-canal",
+      "status": 200,
+      "title": "Planes over US-101, Olympia to Discovery Bay · SmokySignal",
+      "titleLength": 58,
+      "description": "What flew over US-101 between Olympia and Discovery Bay in the last 30 days: passes, hours, the busiest stretch, and who flew it.",
+      "descriptionLength": 129,
+      "canonical": "https://www.smokysignal.app/road/us-101-hood-canal",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "WebPage",
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/road/us-101-hood-canal/opengraph-image-1a53t2?b8a1b3be498db674",
+      "ogImageStatus": 200,
+      "wordCount": 217,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/wrap/2026",
+      "status": 200,
+      "title": "2026 season wrap: how the patrol aircraft flew · SmokySignal",
+      "titleLength": 60,
+      "description": "How the birds flew over Washington in 2026: sorties, hours aloft, busiest month and the corridor worked most. Built from public ADS-B.",
+      "descriptionLength": 134,
+      "canonical": "https://www.smokysignal.app/wrap/2026",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "BreadcrumbList"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/wrap/2026/opengraph-image-ahva28?352381c72cf8ba1b",
+      "ogImageStatus": 200,
+      "wordCount": 121,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/blog/feed.xml",
+      "status": 200,
+      "title": null,
+      "titleLength": 0,
+      "description": null,
+      "descriptionLength": 0,
+      "canonical": null,
+      "h1Count": 0,
+      "jsonLdTypes": [],
+      "jsonLdValid": false,
+      "ogImage": null,
+      "ogImageStatus": null,
+      "wordCount": 0,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/blog/2026-11-19-the-big-update",
+      "status": 200,
+      "title": "SmokySignal, rebuilt: what's new · SmokySignal",
+      "titleLength": 46,
+      "description": "Truer data, a stricter Smokey, a radar with a memory, a dozen new pages, and ways to take the signal with you.",
+      "descriptionLength": 110,
+      "canonical": "https://www.smokysignal.app/blog/2026-11-19-the-big-update",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "Article"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/blog/2026-11-19-the-big-update/og",
+      "ogImageStatus": 200,
+      "wordCount": 1166,
+      "noindex": false,
+      "issues": []
+    }
+  ],
+  "broken": []
+}

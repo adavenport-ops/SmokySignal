@@ -3,6 +3,8 @@
 // Lives OUTSIDE the (tabs) group on purpose — no bottom nav, no
 // rider-screen chrome, social-friendly canonical URL.
 
+import { cache } from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getRegistry } from "@/lib/registry";
@@ -15,6 +17,10 @@ import { BackLink } from "@/components/BackLink";
 import FlightMapView from "@/components/FlightMapView";
 import { fmtDurationHuman, formatTs } from "@/lib/time";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
+import { agencyName } from "@/lib/agencies";
+import { JsonLd } from "@/components/JsonLd";
+import { breadcrumbJsonLd, flightPageJsonLd } from "@/lib/seo/jsonld";
+import { pageMeta } from "@/lib/seo/site";
 
 export const dynamic = "force-dynamic";
 
@@ -23,21 +29,33 @@ type Props = {
   searchParams?: { view?: string | string[] };
 };
 
-export async function generateMetadata({ params }: Props) {
+// One read per request for both metadata and the page.
+const loadFlight = cache(async (tail: string, nickname: string | null, flightId: string) =>
+  getFlightById(tail, nickname, flightId),
+);
+
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const tail = params.tail.toUpperCase();
   const fleet = await getRegistry();
   const entry = fleet.find((f) => f.tail === tail);
-  const niceName = entry?.nickname ? ` "${entry.nickname}"` : "";
-  return {
-    title: `${tail}${niceName} · Flight ${params.flightId} · SmokySignal`,
-    description: `Flight track for ${tail}${niceName}, captured by SmokySignal.`,
-    openGraph: {
-      title: `${tail}${niceName} · Flight ${params.flightId}`,
-      description: `Flight track captured by SmokySignal.`,
-      url: `https://www.smokysignal.app/flight/${tail}/${params.flightId}`,
-      type: "article",
-    },
-  };
+  const parsed = parseFlightId(params.flightId);
+  if (!entry || !parsed) return { title: "Flight not found", robots: { index: false, follow: false } };
+  const flight = await loadFlight(tail, entry.nickname, params.flightId);
+  const niceName = entry.nickname ? ` "${entry.nickname}"` : "";
+  const startMs = flight?.session.start_ts ?? parsed.tsMs;
+  const when = `${formatTs(startMs, "date")} ${formatTs(startMs, "time")}`;
+  return pageMeta({
+    title: `${tail}${niceName} flight, ${when}`,
+    description: `Recorded track of ${tail}${niceName}, a ${entry.model} flown by ${agencyName(entry.operator)}, on ${when}: route, altitude and time aloft from public ADS-B.`,
+    path: `/flight/${tail}/${params.flightId}`,
+    inheritImage: true,
+    socialTitle: `${tail}${niceName} · Flight ${params.flightId}`,
+    socialDescription: "Flight track captured by SmokySignal.",
+    ogType: "article",
+    // A pruned flight renders a "not available" note; keep it out of the
+    // index. ?view=3d is the same flight.
+    noindex: !flight || params.tail !== tail || Object.keys(searchParams ?? {}).length > 0,
+  });
 }
 
 export default async function FlightSharePage({ params, searchParams }: Props) {
@@ -49,7 +67,7 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
   const parsed = parseFlightId(params.flightId);
   if (!parsed) notFound();
 
-  const flight = await getFlightById(tail, entry.nickname, params.flightId);
+  const flight = await loadFlight(tail, entry.nickname, params.flightId);
   if (!flight) {
     return <Missing tail={tail} />;
   }
@@ -72,6 +90,22 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
         color: SS_TOKENS.fg0,
       }}
     >
+      <JsonLd
+        data={[
+          flightPageJsonLd({
+            entry,
+            flightId: params.flightId,
+            startMs: session.start_ts,
+            endMs: session.end_ts,
+            hex: fleetHex(entry),
+          }),
+          breadcrumbJsonLd([
+            { name: "SmokySignal", path: "/" },
+            { name: entry.tail, path: `/plane/${entry.tail}` },
+            { name: `Flight ${params.flightId}`, path: `/flight/${entry.tail}/${params.flightId}` },
+          ]),
+        ]}
+      />
       <BackLink href={`/plane/${entry.tail}`} label="Back to plane" />
       <header
         style={{
@@ -91,17 +125,19 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
               flexWrap: "wrap",
             }}
           >
-            <span
+            <h1
               className="ss-mono"
               style={{
                 fontSize: 24,
                 fontWeight: 700,
                 color: SS_TOKENS.fg0,
                 letterSpacing: "-.02em",
+                margin: 0,
+                lineHeight: "inherit",
               }}
             >
               {entry.tail}
-            </span>
+            </h1>
             {entry.nickname && (
               <span
                 style={{

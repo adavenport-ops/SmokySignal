@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 import { BackLink } from "@/components/BackLink";
+import { pageMeta } from "@/lib/seo/site";
 
-export const metadata = {
-  title: "Legal",
-  description: "Disclaimers and data attribution.",
-};
+export const metadata = pageMeta({
+  title: "Legal: privacy, disclaimers and data attribution",
+  description:
+    "What SmokySignal stores and what it does not, disclaimers, and attribution for the adsb.fi and adsb.lol (ODbL) data behind it.",
+  path: "/legal",
+});
 
 const GITHUB_URL = "https://github.com/adavenport-ops/SmokySignal";
 
@@ -13,7 +16,9 @@ export default function LegalPage() {
   return (
     <main className="ss-page">
       <BackLink />
-      <span className="ss-eyebrow">SmokySignal · Legal</span>
+      <h1 className="ss-eyebrow" style={{ margin: 0, fontWeight: "inherit" }}>
+        SmokySignal · Legal
+      </h1>
 
       <section
         style={{

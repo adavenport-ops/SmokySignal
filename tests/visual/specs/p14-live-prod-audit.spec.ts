@@ -2749,7 +2749,7 @@ test.describe("p14 live-prod audit · navigation", () => {
 // Both mount components/Flight3D.tsx over the radar; the QA hook is the
 // same flight-3d container, with data-scene telling the two apart.
 test.describe("p14 live-prod audit · 3D radar", () => {
-  test("57. /radar?h=1&...&hview=3d and /radar?view=3d render a WebGL2 canvas with no console errors", async ({
+  test("73. /radar?h=1&...&hview=3d and /radar?view=3d render a WebGL2 canvas with no console errors", async ({
     page: projectPage,
     playwright,
     browserName,
@@ -2848,5 +2848,112 @@ test.describe("p14 live-prod audit · 3D radar", () => {
     } finally {
       await ownBrowser?.close();
     }
+  });
+});
+
+// SEO / GEO surfaces (feat/seo-geo). Read-only HTTP checks; the weekly
+// `npm run seo:audit` covers the rest (docs/seo/PLAYBOOK.md).
+test.describe("p14 live-prod audit · SEO", () => {
+  test("74. /sitemap.xml lists /plane/N305DK and /road/i-5", async ({ request }) => {
+    const r = await request.get("/sitemap.xml");
+    const xml = await r.text();
+    const locs = [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((m) => m[1]!);
+    const pass =
+      r.status() === 200 &&
+      locs.some((u) => u.endsWith("/plane/N305DK")) &&
+      locs.some((u) => u.endsWith("/road/i-5"));
+    record({
+      claim: "/sitemap.xml lists /plane/N305DK and /road/i-5",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `HTTP ${r.status()} · ${locs.length} URLs`,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("75. /robots.txt references the sitemap and disallows /admin", async ({ request }) => {
+    const r = await request.get("/robots.txt");
+    const txt = await r.text();
+    const pass =
+      r.status() === 200 &&
+      /^Sitemap:\s*https:\/\/www\.smokysignal\.app\/sitemap\.xml\s*$/im.test(txt) &&
+      /^Disallow:\s*\/admin\s*$/im.test(txt) &&
+      /^User-Agent:\s*GPTBot\s*$/im.test(txt) &&
+      /^User-Agent:\s*ClaudeBot\s*$/im.test(txt);
+    record({
+      claim: "/robots.txt references the sitemap, disallows /admin and names the AI crawlers",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `HTTP ${r.status()} · ${txt.split("\n").length} lines`,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("76. /llms.txt exists and carries the registry counts", async ({ request }) => {
+    const r = await request.get("/llms.txt");
+    const txt = await r.text();
+    const pass =
+      r.status() === 200 &&
+      txt.startsWith("# SmokySignal") &&
+      /## Machine-readable endpoints/.test(txt) &&
+      /flight-hours\.csv/.test(txt) &&
+      /It tracks \d+ aircraft/.test(txt);
+    record({
+      claim: "/llms.txt is served with the summary, key facts and endpoints",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `HTTP ${r.status()} · ${r.headers()["content-type"]} · ${txt.length} bytes`,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("77. /data has Dataset JSON-LD with the ODbL license and CSV distribution", async ({ request }) => {
+    const r = await request.get("/data");
+    const html = await r.text();
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].flatMap((m) => {
+      try {
+        const v = JSON.parse(m[1]!);
+        return Array.isArray(v) ? v : [v];
+      } catch {
+        return [];
+      }
+    });
+    const ds = blocks.find((b) => b?.["@type"] === "Dataset");
+    const pass =
+      !!ds &&
+      /odbl/i.test(String(ds.license)) &&
+      /flight-hours\.csv$/.test(String(ds.distribution?.[0]?.contentUrl ?? "")) &&
+      String(ds.temporalCoverage ?? "").startsWith("2026-10-16");
+    record({
+      claim: "/data carries Dataset JSON-LD (ODbL 1.0, CSV distribution, temporal coverage from 2026-10-16)",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `blocks=${blocks.map((b) => b?.["@type"]).join(",")} license=${ds?.license ?? "-"}`,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("78. every top-level page has a unique <title> and a canonical", async ({ request }) => {
+    const paths = [
+      "/", "/radar", "/flights", "/circling", "/seen", "/program", "/aircraft", "/road",
+      "/forecast", "/stats", "/data", "/about", "/help", "/blog", "/relay", "/embed/help", "/board", "/legal",
+    ];
+    const titles: Record<string, string> = {};
+    const missingCanonical: string[] = [];
+    for (const p of paths) {
+      const html = await (await request.get(p)).text();
+      titles[p] = /<title>([^<]*)<\/title>/.exec(html)?.[1] ?? "";
+      if (!/<link rel="canonical"/.test(html)) missingCanonical.push(p);
+    }
+    const values = Object.values(titles);
+    const dupes = values.filter((t, i) => !t || values.indexOf(t) !== i);
+    const pass = dupes.length === 0 && missingCanonical.length === 0;
+    record({
+      claim: "Every top-level page has a unique, non-empty <title> and a canonical link",
+      category: pass ? "working_as_designed" : "polish_needed",
+      pass,
+      evidence: `duplicates=${JSON.stringify(dupes)} missingCanonical=${JSON.stringify(missingCanonical)}`,
+    });
+    expect(pass).toBe(true);
   });
 });

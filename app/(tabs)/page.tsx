@@ -6,8 +6,23 @@ import { getLearningState } from "@/lib/learning";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 import { getHistoricalContext } from "@/lib/historical-context";
 import { getFreshness } from "@/lib/freshness";
+import { JsonLd } from "@/components/JsonLd";
+import { HomeAbout } from "@/components/HomeAbout";
+import { getRegistry } from "@/lib/registry";
+import { organizationJsonLd, websiteJsonLd } from "@/lib/seo/jsonld";
+import { HOME_DESCRIPTION, HOME_TITLE, pageMeta } from "@/lib/seo/site";
 
 export const dynamic = "force-dynamic";
+
+// The live status card (./opengraph-image.tsx) stays the share image.
+export const metadata = pageMeta({
+  title: HOME_TITLE,
+  absoluteTitle: true,
+  description: HOME_DESCRIPTION,
+  path: "/",
+  inheritImage: true,
+  socialDescription: "Live Washington State Patrol and sheriff aircraft over Washington state. Know when Smokey's up.",
+});
 
 type SP = { mock?: string };
 
@@ -16,11 +31,12 @@ export default async function Page({
 }: {
   searchParams: SP;
 }) {
-  const [real, activity, learning, freshness] = await Promise.all([
+  const [real, activity, learning, freshness, fleet] = await Promise.all([
     getSnapshot(),
     getRecentActivity(1),
     getLearningState(),
     getFreshness(),
+    getRegistry(),
   ]);
   const mockState = parseMockState(searchParams.mock);
   const mockOn = mockState !== null;
@@ -30,14 +46,18 @@ export default async function Page({
   const isCurrentlyUp = initial.aircraft.some((a) => a.airborne);
   const context = await getHistoricalContext(isCurrentlyUp);
   return (
-    <Glanceable
-      initial={initial}
-      mockOn={mockOn}
-      initialActivity={activity}
-      learning={learning}
-      hour12={hour12}
-      contextLine={context?.copy ?? null}
-      lastSampleMs={freshness.lastSampleMs}
-    />
+    <>
+      <JsonLd data={[websiteJsonLd(), organizationJsonLd()]} />
+      <Glanceable
+        initial={initial}
+        mockOn={mockOn}
+        initialActivity={activity}
+        learning={learning}
+        hour12={hour12}
+        contextLine={context?.copy ?? null}
+        lastSampleMs={freshness.lastSampleMs}
+      />
+      <HomeAbout fleet={fleet} />
+    </>
   );
 }

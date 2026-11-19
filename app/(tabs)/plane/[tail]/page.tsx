@@ -30,6 +30,11 @@ import {
   sourceLabel,
 } from "@/lib/role-display";
 import type { FleetEntry } from "@/lib/types";
+import type { Metadata } from "next";
+import { agencyName } from "@/lib/agencies";
+import { JsonLd } from "@/components/JsonLd";
+import { breadcrumbJsonLd, planePageJsonLd } from "@/lib/seo/jsonld";
+import { pageMeta } from "@/lib/seo/site";
 
 export const dynamic = "force-dynamic";
 
@@ -67,8 +72,41 @@ type Props = {
   searchParams: { mock?: string };
 };
 
-export async function generateMetadata({ params }: Props) {
-  return { title: `SmokySignal · ${params.tail.toUpperCase()}` };
+// Title budget leaves room for the " · SmokySignal" template suffix.
+const TITLE_BUDGET = 65 - " · SmokySignal".length;
+const DESC_BUDGET = 160;
+
+/** First candidate that fits the budget, else the last one. */
+function fit(budget: number, candidates: string[]): string {
+  return candidates.find((c) => c.length <= budget) ?? candidates[candidates.length - 1]!;
+}
+
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const tail = params.tail.toUpperCase();
+  const entry = (await getRegistry()).find((f) => f.tail === tail);
+  if (!entry) return { title: "Unknown tail", robots: { index: false, follow: false } };
+  const agency = agencyName(entry.operator);
+  const nick = entry.nickname ? ` "${entry.nickname}"` : "";
+  const model = entry.model.replace(/\s*\(.*\)\s*$/, "");
+  return pageMeta({
+    // Short form for the title (operator code, model without the
+    // parenthetical); the description carries the full names. Each takes
+    // the longest variant that fits.
+    title: fit(TITLE_BUDGET, [
+      `${entry.tail}${nick}: ${entry.operator} ${model}`,
+      `${entry.tail}: ${entry.operator} ${model}`,
+      `${entry.tail}: ${entry.operator} ${model.split(" ").slice(0, 2).join(" ")}`,
+    ]),
+    description: fit(DESC_BUDGET, [
+      `Is ${entry.tail} flying now? Live status, recent flights and a 30-day map for ${entry.tail}${nick}, a ${entry.model} flown by ${agency} from ${entry.base}.`,
+      `Is ${entry.tail} flying now? Live status, recent flights and a 30-day map for ${entry.tail}, a ${model} flown by ${agency} from ${entry.base}.`,
+      `Live status and recent flights for ${entry.tail}, a ${model} flown by ${agency} from ${entry.base}.`,
+      `Live status and recent flights for ${entry.tail}, a ${model} flown by ${agency}.`,
+    ]),
+    path: `/plane/${entry.tail}`,
+    // Lowercase tails and ?mock= states are the same page.
+    noindex: params.tail !== entry.tail || Object.keys(searchParams ?? {}).length > 0,
+  });
 }
 
 export default async function PlanePage({ params, searchParams }: Props) {
@@ -135,19 +173,31 @@ export default async function PlanePage({ params, searchParams }: Props) {
         </div>
       </div>
 
+      <JsonLd
+        data={[
+          planePageJsonLd(entry, fleetHex(entry)),
+          breadcrumbJsonLd([
+            { name: "SmokySignal", path: "/" },
+            { name: "All aircraft", path: "/aircraft" },
+            { name: entry.tail, path: `/plane/${entry.tail}` },
+          ]),
+        ]}
+      />
       <header>
         <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-          <span
+          <h1
             className="ss-mono"
             style={{
               fontSize: 24,
               fontWeight: 700,
               color: SS_TOKENS.fg0,
               letterSpacing: "-.02em",
+              margin: 0,
+              lineHeight: "inherit",
             }}
           >
             {entry.tail}
-          </span>
+          </h1>
           {entry.nickname && (
             <span style={{ fontSize: 14, color: SS_TOKENS.fg1, fontStyle: "italic" }}>
               &ldquo;{entry.nickname}&rdquo;
@@ -215,9 +265,9 @@ export default async function PlanePage({ params, searchParams }: Props) {
       </section>
 
       <section>
-        <div className="ss-eyebrow" style={{ marginBottom: 8 }}>
+        <h2 className="ss-eyebrow" style={{ margin: "0 0 8px", fontWeight: "inherit" }}>
           {recentFlight && !up ? "Last flight" : "Recent track"}
-        </div>
+        </h2>
         <RecentTrackBlock
           tail={entry.tail}
           flight={recentFlight}
@@ -230,7 +280,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
       <section>
         <Card padded={false}>
           <div style={{ padding: "12px 14px 8px" }}>
-            <div className="ss-eyebrow">Where this plane patrols</div>
+            <h2 className="ss-eyebrow" style={{ margin: 0, fontWeight: "inherit" }}>Where this plane patrols</h2>
             <div
               style={{
                 fontSize: 12,
@@ -251,7 +301,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
       <section id="flight-history" aria-label="Flight history" data-testid="flight-history-section">
         <Card padded={false}>
           <div style={{ padding: "12px 14px 10px" }}>
-            <div className="ss-eyebrow">Flight history</div>
+            <h2 className="ss-eyebrow" style={{ margin: 0, fontWeight: "inherit" }}>Flight history</h2>
             <div style={{ fontSize: 12, color: SS_TOKENS.fg1, marginTop: 2 }}>
               Every flight on record for a period. Pacific dates.
             </div>

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
-import { BASE_URL } from "@/lib/config";
+import { HOME_DESCRIPTION, HOME_TITLE, SITE_KEYWORDS, SITE_URL } from "@/lib/seo/site";
 import { SwRegistrar } from "@/components/SwRegistrar";
 import { TooltipProvider } from "@/components/Tooltip";
 import { getContrastPref } from "@/lib/user-prefs";
@@ -19,17 +19,24 @@ const mono = JetBrains_Mono({
   variable: "--font-mono",
 });
 
-const TITLE = "SmokySignal — Is the bird up?";
-const DESCRIPTION =
-  "Live WSP and sheriff aircraft tracker for Washington state riders. Know when Smokey's watching.";
+// Root defaults. Every indexable page overrides title, description,
+// canonical and social cards via pageMeta() (lib/seo/site.ts); these
+// cover anything that does not.
+const TITLE = HOME_TITLE;
+const DESCRIPTION = HOME_DESCRIPTION;
 const SOCIAL_DESCRIPTION =
   "Live aircraft tracker for Washington state riders.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(BASE_URL),
+  // Canonical origin is the www host whatever deployment renders the
+  // page, so canonicals and og:image URLs never point at a preview.
+  metadataBase: new URL(SITE_URL),
   title: { default: TITLE, template: "%s · SmokySignal" },
   description: DESCRIPTION,
   applicationName: "SmokySignal",
+  keywords: [...SITE_KEYWORDS],
+  creator: "SmokySignal",
+  formatDetection: { telephone: false, address: false, email: false },
   manifest: "/manifest.json",
   // Takeoff feeds (app/feed.xml, app/rss.xml) for readers and RSS bots.
   alternates: {
@@ -63,6 +70,7 @@ export const metadata: Metadata = {
     description: SOCIAL_DESCRIPTION,
     type: "website",
     siteName: "SmokySignal",
+    locale: "en_US",
     url: "/",
     images: [
       { url: "/icons/og-image.png", width: 1200, height: 630, alt: "SmokySignal" },

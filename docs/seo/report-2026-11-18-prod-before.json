@@ -1,0 +1,655 @@
+{
+  "summary": {
+    "base": "https://www.smokysignal.app",
+    "date": "2026-11-18",
+    "durationS": 13,
+    "pages": 21,
+    "sitemapUrls": 0,
+    "p0": 23,
+    "p1": 19,
+    "p2": 4,
+    "pagesWithJsonLd": 0,
+    "pagesWithCanonical": 1,
+    "duplicateTitles": 0,
+    "brokenLinks": 1,
+    "linksChecked": 118
+  },
+  "site": [
+    {
+      "name": "robots.txt",
+      "ok": false,
+      "severity": "P0",
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "sitemap.xml",
+      "ok": false,
+      "severity": "P0",
+      "detail": "HTTP 404, 0 URLs"
+    },
+    {
+      "name": "llms.txt",
+      "ok": false,
+      "severity": "P0",
+      "detail": "HTTP 404, 21890 bytes"
+    },
+    {
+      "name": "llms-full.txt",
+      "ok": false,
+      "severity": "P1",
+      "detail": "HTTP 404, 21895 bytes"
+    },
+    {
+      "name": "unknown URL returns 404",
+      "ok": true,
+      "severity": "P0",
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "unknown tail returns 404",
+      "ok": true,
+      "severity": "P0",
+      "detail": "HTTP 404"
+    }
+  ],
+  "pages": [
+    {
+      "path": "/",
+      "status": 200,
+      "title": "SmokySignal — Is the bird up?",
+      "titleLength": 29,
+      "description": "Live WSP and sheriff aircraft tracker for Washington state riders. Know when Smokey's watching.",
+      "descriptionLength": 95,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 62,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        },
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "62 words"
+        },
+        {
+          "severity": "P1",
+          "code": "description-duplicate",
+          "detail": "shared with /radar, /plane/N305DK, /plane/N422CT"
+        }
+      ]
+    },
+    {
+      "path": "/radar",
+      "status": 200,
+      "title": "Radar · SmokySignal",
+      "titleLength": 19,
+      "description": "Live WSP and sheriff aircraft tracker for Washington state riders. Know when Smokey's watching.",
+      "descriptionLength": 95,
+      "canonical": null,
+      "h1Count": 0,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 48,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        },
+        {
+          "severity": "P1",
+          "code": "h1-missing",
+          "detail": ""
+        },
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "48 words"
+        },
+        {
+          "severity": "P1",
+          "code": "description-duplicate",
+          "detail": "shared with /, /plane/N305DK, /plane/N422CT"
+        }
+      ]
+    },
+    {
+      "path": "/flights",
+      "status": 200,
+      "title": "Flights · SmokySignal",
+      "titleLength": 21,
+      "description": "What's up now, the nearest watchers, and the recent takeoffs and landings.",
+      "descriptionLength": 74,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 50,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        },
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "50 words"
+        }
+      ]
+    },
+    {
+      "path": "/circling",
+      "status": 200,
+      "title": "What's that plane circling over Tacoma? · SmokySignal",
+      "titleLength": 53,
+      "description": "Every tracked aircraft working a pattern over Washington right now, in plain words: who flies it, what it is, which road it is over, and for how long.",
+      "descriptionLength": 150,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": null,
+      "ogImageStatus": null,
+      "wordCount": 256,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        },
+        {
+          "severity": "P1",
+          "code": "og-image-missing",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "path": "/seen",
+      "status": 200,
+      "title": "Was that the plane I saw? · SmokySignal · SmokySignal",
+      "titleLength": 53,
+      "description": "Pick a time and a place. See every tracked aircraft that passed overhead, how close it came, and what it was doing, from public ADS-B.",
+      "descriptionLength": 134,
+      "canonical": "https://www.smokysignal.app/seen",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/seen/og",
+      "ogImageStatus": 200,
+      "wordCount": 143,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P1",
+          "code": "title-double-brand",
+          "detail": "Was that the plane I saw? · SmokySignal · SmokySignal"
+        }
+      ]
+    },
+    {
+      "path": "/program",
+      "status": 200,
+      "title": "The program · SmokySignal",
+      "titleLength": 25,
+      "description": "Who flies over Puget Sound, in what, how aerial speed enforcement works in Washington, and what SmokySignal is.",
+      "descriptionLength": 111,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 1398,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "path": "/aircraft",
+      "status": 200,
+      "title": "All aircraft · SmokySignal",
+      "titleLength": 26,
+      "description": "Every tail SmokySignal watches, grouped by job, with the source for each.",
+      "descriptionLength": 73,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 1067,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "path": "/road",
+      "status": 200,
+      "title": "Road history · SmokySignal",
+      "titleLength": 26,
+      "description": "Thirty days of tracked flights over I-5, I-405, SR-167, SR-512 and the other Puget Sound corridors.",
+      "descriptionLength": 99,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 179,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "path": "/forecast",
+      "status": 200,
+      "title": "SmokySignal · Forecast · SmokySignal",
+      "titleLength": 36,
+      "description": "Weekly probability of fleet takeoffs by hour and day, plus each month on record.",
+      "descriptionLength": 80,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 126,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P1",
+          "code": "title-double-brand",
+          "detail": "SmokySignal · Forecast · SmokySignal"
+        },
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "path": "/stats",
+      "status": 200,
+      "title": "SmokySignal · Stats · SmokySignal",
+      "titleLength": 33,
+      "description": "How the bird flew: a permanent daily log of flight hours for every tracked tail.",
+      "descriptionLength": 80,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 308,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P1",
+          "code": "title-double-brand",
+          "detail": "SmokySignal · Stats · SmokySignal"
+        },
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        },
+        {
+          "severity": "P1",
+          "code": "broken-link",
+          "detail": "/plane/N3532K → HTTP 404"
+        }
+      ]
+    },
+    {
+      "path": "/data",
+      "status": 200,
+      "title": "SmokySignal · Data and CSV · SmokySignal",
+      "titleLength": 40,
+      "description": "Monthly flight hours for every tracked tail, by tail and by mission, with a CSV download. ODbL 1.0.",
+      "descriptionLength": 99,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 540,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P1",
+          "code": "title-double-brand",
+          "detail": "SmokySignal · Data and CSV · SmokySignal"
+        },
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        },
+        {
+          "severity": "P1",
+          "code": "broken-link",
+          "detail": "/plane/N3532K → HTTP 404"
+        }
+      ]
+    },
+    {
+      "path": "/about",
+      "status": 200,
+      "title": "More · SmokySignal",
+      "titleLength": 18,
+      "description": "Everything past the four main tabs: live tools, history, sharing, and what SmokySignal is.",
+      "descriptionLength": 90,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 414,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "path": "/help",
+      "status": 200,
+      "title": "Help · SmokySignal",
+      "titleLength": 18,
+      "description": "What SmokySignal shows you, where the data comes from, and how to read each screen.",
+      "descriptionLength": 83,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 3322,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "path": "/relay",
+      "status": 200,
+      "title": "Discord and webhooks · SmokySignal",
+      "titleLength": 34,
+      "description": "Post Smokey takeoffs to a Discord channel or any HTTPS webhook. Feeds, Siri, and widget recipes. No accounts.",
+      "descriptionLength": 109,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 479,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "path": "/embed/help",
+      "status": 200,
+      "title": "Embed the status widget · SmokySignal",
+      "titleLength": 37,
+      "description": "Paste an iframe into a club site or forum to show whether Smokey is up. Two sizes, one optional region.",
+      "descriptionLength": 103,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 286,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "path": "/board",
+      "status": 200,
+      "title": "Board · SmokySignal",
+      "titleLength": 19,
+      "description": "Departures board for the shop TV. Which birds are up, which came down, on a 24-hour Pacific clock.",
+      "descriptionLength": 98,
+      "canonical": null,
+      "h1Count": 0,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/icons/og-image.png",
+      "ogImageStatus": 200,
+      "wordCount": 181,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        },
+        {
+          "severity": "P1",
+          "code": "h1-missing",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "path": "/legal",
+      "status": 200,
+      "title": "Legal · SmokySignal",
+      "titleLength": 19,
+      "description": "Disclaimers and data attribution.",
+      "descriptionLength": 33,
+      "canonical": null,
+      "h1Count": 0,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 443,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P2",
+          "code": "description-short",
+          "detail": "33 chars"
+        },
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        },
+        {
+          "severity": "P1",
+          "code": "h1-missing",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "path": "/plane/N305DK",
+      "status": 200,
+      "title": "SmokySignal · N305DK · SmokySignal",
+      "titleLength": 34,
+      "description": "Live WSP and sheriff aircraft tracker for Washington state riders. Know when Smokey's watching.",
+      "descriptionLength": 95,
+      "canonical": null,
+      "h1Count": 0,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 302,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P1",
+          "code": "title-double-brand",
+          "detail": "SmokySignal · N305DK · SmokySignal"
+        },
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        },
+        {
+          "severity": "P1",
+          "code": "h1-missing",
+          "detail": ""
+        },
+        {
+          "severity": "P1",
+          "code": "description-duplicate",
+          "detail": "shared with /, /radar, /plane/N422CT"
+        }
+      ]
+    },
+    {
+      "path": "/plane/N422CT",
+      "status": 200,
+      "title": "SmokySignal · N422CT · SmokySignal",
+      "titleLength": 34,
+      "description": "Live WSP and sheriff aircraft tracker for Washington state riders. Know when Smokey's watching.",
+      "descriptionLength": 95,
+      "canonical": null,
+      "h1Count": 0,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 290,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P1",
+          "code": "title-double-brand",
+          "detail": "SmokySignal · N422CT · SmokySignal"
+        },
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        },
+        {
+          "severity": "P1",
+          "code": "h1-missing",
+          "detail": ""
+        },
+        {
+          "severity": "P1",
+          "code": "description-duplicate",
+          "detail": "shared with /, /radar, /plane/N305DK"
+        }
+      ]
+    },
+    {
+      "path": "/road/i-5",
+      "status": 200,
+      "title": "Planes over I-5 · SmokySignal",
+      "titleLength": 29,
+      "description": "What flew over I-5 between Tumwater and Everett in the last 30 days: passes, hours, the busiest stretch, and who flew it.",
+      "descriptionLength": 121,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/road/i-5/opengraph-image-1a53t2?b8a1b3be498db674",
+      "ogImageStatus": 200,
+      "wordCount": 399,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "path": "/road/sr-512",
+      "status": 200,
+      "title": "Planes over SR-512 · SmokySignal",
+      "titleLength": 32,
+      "description": "What flew over SR-512 between Lakewood and Puyallup in the last 30 days: passes, hours, the busiest stretch, and who flew it.",
+      "descriptionLength": 125,
+      "canonical": null,
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/road/sr-512/opengraph-image-1a53t2?b8a1b3be498db674",
+      "ogImageStatus": 200,
+      "wordCount": 314,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P0",
+          "code": "canonical-missing",
+          "detail": ""
+        }
+      ]
+    }
+  ],
+  "broken": [
+    {
+      "link": "/plane/N3532K",
+      "status": 404,
+      "from": [
+        "/stats",
+        "/data"
+      ]
+    }
+  ]
+}

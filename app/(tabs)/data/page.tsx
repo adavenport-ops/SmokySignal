@@ -8,14 +8,20 @@ import { formatTs } from "@/lib/time";
 import { BackLink } from "@/components/BackLink";
 import { ScrollX } from "@/components/ScrollX";
 import { SeasonWrapCard } from "@/components/SeasonWrapCard";
+import { pageMeta } from "@/lib/seo/site";
+import { getRegistry } from "@/lib/registry";
+import { JsonLd } from "@/components/JsonLd";
+import { breadcrumbJsonLd, datasetJsonLd } from "@/lib/seo/jsonld";
 
 // Cookies in the tabs layout make the route dynamic; the KV reads behind
 // it are cached for 10 minutes (lib/rollup-read.ts).
 export const dynamic = "force-dynamic";
-export const metadata = {
-  title: "SmokySignal · Data and CSV",
-  description: "Monthly flight hours for every tracked tail, by tail and by mission, with a CSV download. ODbL 1.0.",
-};
+export const metadata = pageMeta({
+  title: "Data and CSV: open flight-hours dataset",
+  description:
+    "Monthly flight hours for every tracked tail, by tail and by mission, with a CSV download. Open data under ODbL 1.0, from public ADS-B.",
+  path: "/data",
+});
 
 const CSV_PATH = "/data/flight-hours.csv";
 
@@ -28,6 +34,7 @@ export default async function DataPage() {
     failed = true;
     console.warn("[data] load failed:", e);
   }
+  const known = new Set((await getRegistry()).map((f) => f.tail));
   const months = ledgerMonths(rows);
   // Newest month first; missions keep their canonical order within it.
   const missionRows = buildMissionRows(rows).sort((a, b) => b.month.localeCompare(a.month));
@@ -35,6 +42,15 @@ export default async function DataPage() {
 
   return (
     <main className="ss-page" style={{ gap: 22 }}>
+      <JsonLd
+        data={[
+          datasetJsonLd({ months }),
+          breadcrumbJsonLd([
+            { name: "SmokySignal", path: "/" },
+            { name: "Data and CSV", path: "/data" },
+          ]),
+        ]}
+      />
       <BackLink />
       <span className="ss-eyebrow">SmokySignal · Data and CSV</span>
 
@@ -117,9 +133,14 @@ export default async function DataPage() {
                 <tr key={`${r.month}-${r.tail}`} style={rowStyle}>
                   <Td mono>{r.month}</Td>
                   <Td mono>
-                    <Link href={`/plane/${r.tail}`} prefetch={false} style={{ color: SS_TOKENS.fg0, fontWeight: 700, textDecoration: "none" }}>
-                      {r.tail}
-                    </Link>
+                    {known.has(r.tail) ? (
+                      <Link href={`/plane/${r.tail}`} prefetch={false} style={{ color: SS_TOKENS.fg0, fontWeight: 700, textDecoration: "none" }}>
+                        {r.tail}
+                      </Link>
+                    ) : (
+                      // Tail since dropped from the registry: no page to link.
+                      <span style={{ color: SS_TOKENS.fg0, fontWeight: 700 }}>{r.tail}</span>
+                    )}
                   </Td>
                   <Td>{r.nickname ?? ""}</Td>
                   <Td>{r.operator}</Td>
