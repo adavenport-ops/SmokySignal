@@ -1,0 +1,228 @@
+/* The Board — split-flap kiosk. Sized off the viewport so a 1080p TV
+ * across a shop floor reads it at 3 m: row tiles land around 56 px at
+ * 1920x1080, the status word around 110 px. */
+
+.board {
+  --row-fs: min(2.95vw, 7.2vh);
+  --tile-w: calc(var(--row-fs) * 0.78);
+  --tile-gap: calc(var(--row-fs) * 0.06);
+  --cell: calc(var(--tile-w) + var(--tile-gap));
+  --sx: 0px;
+  --sy: 0px;
+
+  position: fixed;
+  inset: 0;
+  /* Sits above the root-layout install prompt, which has no place on a
+   * wall-mounted screen. */
+  z-index: 60;
+  overflow: hidden;
+  background: #0b0d10;
+  color: #f2f4f7;
+}
+
+.frame {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 3.2vh 3vw 2.6vh;
+  display: flex;
+  flex-direction: column;
+  gap: 2.4vh;
+  /* Burn-in guard: BoardView nudges these by 1 px every few minutes. */
+  transform: translate(var(--sx), var(--sy));
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 2vw;
+  padding-bottom: 2vh;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.eyebrow {
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: min(1.25vw, 2.6vh);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a8aeb8;
+}
+
+.region {
+  margin-top: 0.8vh;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: min(1.9vw, 4vh);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #f2f4f7;
+}
+
+.status {
+  text-align: center;
+}
+
+.statusWord {
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: min(5.6vw, 11.5vh);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-feature-settings: "zero", "tnum";
+}
+
+.statusSub {
+  margin-top: 1.2vh;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-feature-settings: "zero", "tnum";
+  font-size: min(1.9vw, 4vh);
+  font-weight: 600;
+  color: #a8aeb8;
+}
+
+.toneAlert {
+  color: #f5b840;
+}
+
+.toneClear {
+  color: #5dd9a7;
+}
+
+.toneStale {
+  color: #82899a;
+}
+
+.clock {
+  justify-self: end;
+  text-align: right;
+}
+
+.clockTime {
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: min(4.6vw, 9.5vh);
+  font-weight: 600;
+  line-height: 1;
+  font-feature-settings: "zero", "tnum";
+}
+
+.heads {
+  display: flex;
+  text-transform: uppercase;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: min(1.25vw, 2.6vh);
+  letter-spacing: 0.14em;
+  color: #a8aeb8;
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--row-fs) * 0.22);
+  flex: 1;
+  min-height: 0;
+}
+
+.row {
+  display: flex;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: var(--row-fs);
+  font-weight: 600;
+  line-height: 1;
+  perspective: 600px;
+}
+
+.rowStale {
+  opacity: 0.45;
+}
+
+.tile {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tile-w);
+  height: calc(var(--row-fs) * 1.22);
+  margin-right: var(--tile-gap);
+  border-radius: calc(var(--row-fs) * 0.08);
+  background: #15181d;
+  color: inherit;
+  font-feature-settings: "zero", "tnum";
+  transform-origin: 50% 50%;
+  backface-visibility: hidden;
+}
+
+/* The split between the two flaps. */
+.tile::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: #0b0d10;
+}
+
+.gap {
+  display: inline-block;
+  width: calc(var(--cell) * 2);
+}
+
+.toneRowAlert {
+  color: #f5b840;
+}
+
+.toneRowNeutral {
+  color: #f2f4f7;
+}
+
+.toneRowDim {
+  color: #a8aeb8;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 2vw;
+  padding-top: 1.6vh;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: min(1.5vw, 3.2vh);
+  letter-spacing: 0.06em;
+  color: #a8aeb8;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Split-flap motion only for viewers who haven't asked for less. Each
+ * tile is keyed on its character, so only tiles whose letter changed
+ * remount and flip. Ease-out, no overshoot (BRAND.md §4 Motion). */
+@media (prefers-reduced-motion: no-preference) {
+  .tile {
+    animation: flap 380ms cubic-bezier(0.25, 0.7, 0.35, 1) both;
+    animation-delay: var(--d, 0ms);
+  }
+
+  @keyframes flap {
+    0% {
+      transform: rotateX(-90deg);
+      opacity: 0.3;
+    }
+    100% {
+      transform: rotateX(0deg);
+      opacity: 1;
+    }
+  }
+}

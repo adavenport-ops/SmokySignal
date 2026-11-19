@@ -9,6 +9,10 @@ import type { FleetEntry } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
+// The Beacon how-to (Home Assistant + ESP32) lives in the public repo.
+const BEACON_DOC_URL =
+  "https://github.com/adavenport-ops/SmokySignal/blob/main/docs/beacon.md";
+
 export const metadata = {
   title: "About",
   description:
@@ -72,6 +76,9 @@ export default async function AboutPage() {
         </HubLink>
         <HubLink href="/stats" label="Flight stats: how the bird flew">
           Stats
+        </HubLink>
+        <HubLink href="/board" label="Departures board for the shop TV">
+          Board
         </HubLink>
         <HubLink href="/help" label="Help and FAQ">
           Help
@@ -523,6 +530,25 @@ function EmbedBadgeCallout() {
           alt="SmokySignal status"
           style={{ verticalAlign: "middle" }}
         />
+      </p>
+      <p
+        style={{
+          fontSize: 12,
+          lineHeight: 1.5,
+          color: SS_TOKENS.fg2,
+          margin: 0,
+          marginTop: 8,
+        }}
+      >
+        Got a lamp on the bench? Wire it to{" "}
+        <a
+          href={BEACON_DOC_URL}
+          className="ss-mono"
+          style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
+        >
+          the beacon
+        </a>
+        .
       </p>
     </section>
   );
