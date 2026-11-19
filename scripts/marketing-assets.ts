@@ -1,4 +1,4 @@
-// Writes the press-kit logo files to public/press/ from the brand mark in
+// Writes the press-kit logo files to public/press-kit/ from the brand mark in
 // lib/brand/glyph.ts (the same source the app icons come from).
 //
 //   npm run marketing:assets
@@ -14,7 +14,7 @@ import { createRequire } from "node:module";
 import { COLORS, markPaths, wordmark } from "../lib/brand/glyph";
 
 const ROOT = process.cwd();
-const OUT = path.join(ROOT, "public", "press");
+const OUT = path.join(ROOT, "public", "press-kit");
 const DEEP_AMBER = "#B7791F";
 
 function markSvg(color: string): string {

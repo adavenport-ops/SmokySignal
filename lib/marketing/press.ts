@@ -1,5 +1,5 @@
 // Press kit data: which launch-post media goes in the kit, the logo files
-// scripts/marketing-assets.ts writes to public/press/, and the citation
+// scripts/marketing-assets.ts writes to public/press-kit/, and the citation
 // line. Pure data plus tiny helpers; /press renders it.
 //
 // Copy rules (design/BRAND.md §3): no emoji, no exclamation marks, none
@@ -34,5 +34,5 @@ export const LOGO_FILES: readonly LogoFile[] = [
 ];
 
 export function logoHref(f: LogoFile): string {
-  return `/press/${f.file}`;
+  return `/press-kit/${f.file}`;
 }
