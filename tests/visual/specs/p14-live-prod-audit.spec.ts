@@ -3332,4 +3332,46 @@ test.describe("p14 live-prod audit · 3D camera controls and road tint", () => {
       screenshot,
     });
   });
+  test("85. /press renders and every download link returns 200", async ({ page, request }) => {
+    await page.goto("/press", { waitUntil: "networkidle" });
+    const h1 = await page.locator("h1").first().innerText().catch(() => "");
+    const hrefs = await page.locator('[data-testid="press-download"]').evaluateAll((els) =>
+      els.map((e) => e.getAttribute("href") ?? ""),
+    );
+    const bad: string[] = [];
+    for (const href of hrefs) {
+      const r = await request.get(href);
+      if (r.status() !== 200) bad.push(`${href}=${r.status()}`);
+    }
+    const body = await page.locator("body").innerText();
+    const cite = /Source: SmokySignal \(smokysignal\.app\), built on public ADS-B from adsb\.fi and adsb\.lol \(ODbL\)/.test(body);
+    const pass = /Press kit/i.test(h1) && hrefs.length >= 15 && bad.length === 0 && cite;
+    const screenshot = await shot(page, "85-press");
+    record({
+      claim: "/press renders with the citation line and every logo, screenshot and clip link returns 200",
+      category: pass ? "working_as_designed" : hrefs.length === 0 ? "unshipped" : "confirmed_bug",
+      pass,
+      evidence: `h1="${h1}" links=${hrefs.length} bad=[${bad.join(", ")}] cite=${cite}`,
+      screenshot,
+    });
+  });
+
+  test("86. /poster renders a QR svg and the PDF is application/pdf", async ({ page, request }) => {
+    await page.goto("/poster?ref=poster", { waitUntil: "networkidle" });
+    const qr = await page.locator('[data-testid="poster-qr-main"] svg').count();
+    const board = await page.locator('[data-testid="poster-qr-board"] svg').count();
+    const headline = await page.locator(".poster-h1").innerText().catch(() => "");
+    const pdf = await request.get("/poster/smokysignal-poster.pdf");
+    const ctype = pdf.headers()["content-type"] ?? "";
+    const home = await request.get("/?ref=poster");
+    const pass = qr === 1 && board === 1 && /Is Smokey up\?/.test(headline) && pdf.status() === 200 && /application\/pdf/.test(ctype) && home.status() === 200;
+    const screenshot = await shot(page, "86-poster");
+    record({
+      claim: "/poster renders both QR svgs, its PDF returns 200 application/pdf, and /?ref=poster still loads",
+      category: pass ? "working_as_designed" : qr === 0 ? "unshipped" : "confirmed_bug",
+      pass,
+      evidence: `qr=${qr} board=${board} headline="${headline}" pdf=${pdf.status()} ${ctype} home?ref=${home.status()}`,
+      screenshot,
+    });
+  });
 });

@@ -28,6 +28,16 @@ captured by a script from public prod and committed with the post.
    together. `npm test` checks that every reference resolves, every file
    exists and the folder fits the budget.
 
+6. **Social pack.** `npm run marketing:social -- --post <slug>` reads the post
+   and its `public/blog/media/<slug>/manifest.json` and writes
+   `docs/marketing/weekly/<slug>.md`: a Reddit-ready summary with the best
+   image, a Bluesky post (300 characters at most, link included), two Shorts
+   captions that reference the week's clips, and a one-line Nextdoor blurb.
+   `--dry-run` prints it, `--force` overwrites. It refuses to write a pack
+   that fails the voice check (banned words, emoji, exclamation marks, the
+   limits). Commit the pack with the post. Nothing is posted: the owner posts
+   from his own accounts, using the subreddit notes in `docs/marketing/`.
+
 ## Requirements
 
 - Playwright, resolvable from `NODE_PATH` or `node_modules`. It never

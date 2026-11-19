@@ -300,6 +300,14 @@ export function navSections(nowMs: number = Date.now()): NavSection[] {
           keywords: ["blog", "news", "posts", "changelog", "updates", "weekly", "what's new"],
         },
         {
+          id: "press",
+          label: "Press kit",
+          blurb: "Logos, screenshots, facts and how to cite the data",
+          href: "/press",
+          icon: "program",
+          keywords: ["press", "media", "logo", "brand", "journalist", "screenshots", "cite", "citation"],
+        },
+        {
           id: "help",
           label: "Help",
           blurb: "Questions riders ask",
