@@ -93,7 +93,16 @@ export default function LegalPage() {
           >
             adsb.fi
           </a>{" "}
-          (primary) and{" "}
+          and{" "}
+          <a
+            href="https://adsb.lol"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
+          >
+            adsb.lol
+          </a>
+          , merged by aircraft so each feed fills gaps in the other, with{" "}
           <a
             href="https://opensky-network.org"
             target="_blank"
@@ -102,8 +111,18 @@ export default function LegalPage() {
           >
             OpenSky Network
           </a>{" "}
-          (fallback / historical). Both are anonymous and require attribution,
-          provided here and in the app footer.
+          as the fallback. All are anonymous and require attribution, provided
+          here and in the app footer. Contains information from adsb.lol,
+          which is made available under the{" "}
+          <a
+            href="https://opendatacommons.org/licenses/odbl/1-0/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
+          >
+            Open Database License (ODbL)
+          </a>
+          .
         </p>
         <p>
           The tail registry is built from publicly available state and county
@@ -184,7 +203,8 @@ function DataFlowSection() {
           </>,
           <>
             Aircraft data requests to{" "}
-            <span className="ss-mono">adsb.fi</span> and{" "}
+            <span className="ss-mono">adsb.fi</span>,{" "}
+            <span className="ss-mono">adsb.lol</span> and{" "}
             <span className="ss-mono">OpenSky Network</span> — public,
             anonymous, rate-limited. Same requests anyone could make.
           </>,

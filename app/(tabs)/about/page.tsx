@@ -171,9 +171,9 @@ export default async function AboutPage() {
             color: SS_TOKENS.fg1,
           }}
         >
-          Aircraft positions are pulled from the public ADS-B network. Primary
-          feed:{" "}
-          <Tooltip content="Public ADS-B aggregator network. Free, anonymous, attribution required. Our primary live data source.">
+          Aircraft positions are pulled from the public ADS-B network. Merged
+          feeds:{" "}
+          <Tooltip content="Public ADS-B aggregator network. Free, anonymous, attribution required. Merged with adsb.lol by aircraft.">
             <a
               href="https://adsb.fi"
               target="_blank"
@@ -182,8 +182,19 @@ export default async function AboutPage() {
             >
               adsb.fi
             </a>
-          </Tooltip>
-          . Fallback:{" "}
+          </Tooltip>{" "}
+          and{" "}
+          <Tooltip content="Public ADS-B aggregator network. Free, anonymous, data under the Open Database License (ODbL). Merged with adsb.fi by aircraft.">
+            <a
+              href="https://adsb.lol"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
+            >
+              adsb.lol
+            </a>
+          </Tooltip>{" "}
+          (ODbL). Fallback:{" "}
           <Tooltip content="Academic ADS-B network at opensky-network.org. Used for historical track backfill and live fallback.">
             <a
               href="https://opensky-network.org"
@@ -194,9 +205,9 @@ export default async function AboutPage() {
               OpenSky Network
             </a>
           </Tooltip>
-          . Both are anonymous, free, and require attribution — provided here
+          . All are anonymous, free, and require attribution — provided here
           and in the home footer. We cache snapshots for 10 seconds so a
-          hundred riders watching the page generate one upstream call.
+          hundred riders watching the page generate one call per feed.
         </p>
       </Section>
 

@@ -402,8 +402,10 @@ export default async function ProgramPage() {
         </P>
         <P>
           SmokySignal reads those broadcasts from{" "}
-          <ExtLink href="https://adsb.fi">adsb.fi</ExtLink>, a network of
-          volunteer receivers. Some aircraft don&rsquo;t broadcast, or fly
+          <ExtLink href="https://adsb.fi">adsb.fi</ExtLink> and{" "}
+          <ExtLink href="https://adsb.lol">adsb.lol</ExtLink>, two networks of
+          volunteer receivers. Each hears some aircraft the other misses, so
+          the two are merged. Some aircraft don&rsquo;t broadcast, or fly
           where no receiver hears them. A quiet map doesn&rsquo;t always mean
           a quiet sky.
         </P>
