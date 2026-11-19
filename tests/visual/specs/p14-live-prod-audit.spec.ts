@@ -1868,7 +1868,7 @@ test.describe("p14 live-prod audit", () => {
     const checks = {
       status: r?.status() === 200,
       heading: /The open ledger\./.test(body),
-      license: /CC BY 4\.0, attribute SmokySignal/.test(body),
+      license: /ODbL 1\.0/.test(body),
       start: /2026-10-16/.test(body),
       csvLink: (await page.locator('a[href="/data/flight-hours.csv"]').count()) > 0,
       tables: (await page.locator('[data-testid="data-tails"] table').count()) > 0,
@@ -1881,7 +1881,7 @@ test.describe("p14 live-prod audit", () => {
     const pass = Object.values(checks).every(Boolean) && fromAbout;
     record({
       claim:
-        "/data renders the open ledger (tables, CSV link, methods with the 2026-10-16 start, CC BY 4.0 line), no sideways page scroll, linked from the /about hub",
+        "/data renders the open ledger (tables, CSV link, methods with the 2026-10-16 start, ODbL 1.0 line), no sideways page scroll, linked from the /about hub",
       category: pass ? "working_as_designed" : "unshipped",
       pass,
       evidence: `${JSON.stringify(checks)} fromAbout=${fromAbout}`,

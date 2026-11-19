@@ -2,7 +2,7 @@
 //
 // The open ledger as CSV: one row per tail per Pacific month. Columns are
 // fixed (lib/ledger.ts CSV_COLUMNS). Coarse on purpose: no positions, no
-// times of day. CC BY 4.0, attribute SmokySignal.
+// times of day. ODbL 1.0 (share-alike); attribute SmokySignal, adsb.fi and adsb.lol.
 
 import { ledgerCsv, parseMonthParam } from "@/lib/ledger";
 import { loadLedgerRows } from "@/lib/rollup-read";
@@ -36,7 +36,7 @@ export async function GET(req: Request): Promise<Response> {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="smokysignal-flight-hours${suffix}.csv"`,
       "Cache-Control": "public, max-age=300, s-maxage=600",
-      Link: '<https://creativecommons.org/licenses/by/4.0/>; rel="license"',
+      Link: '<https://opendatacommons.org/licenses/odbl/1-0/>; rel="license"',
     },
   });
 }
