@@ -17,6 +17,7 @@
 
 import type { FeedSrc, NormalizedAc } from "../types";
 import { FeedPayloadError } from "./http";
+import { plausibleAlt } from "../track-point";
 
 /** readsb `now` is seconds on some feeds and milliseconds on others. */
 export function epochMs(now: unknown, fallbackMs: number): number {
@@ -62,7 +63,7 @@ export function normalizeReadsbRow(
     out.pos_ts = Math.round(responseMs - (seen_pos ?? 0) * 1000);
   }
   if (a.alt_baro === "ground") out.alt_baro = "ground";
-  else if (num(a.alt_baro) !== undefined) out.alt_baro = num(a.alt_baro);
+  else if (plausibleAlt(a.alt_baro) !== undefined) out.alt_baro = plausibleAlt(a.alt_baro);
   const gs = num(a.gs);
   if (gs !== undefined) out.gs = gs;
   const track = num(a.track);
