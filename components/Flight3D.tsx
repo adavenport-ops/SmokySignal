@@ -10,6 +10,8 @@
 // the plane page's Flight history, /radar history mode and live /radar 3D.
 // The map is built once; new paths / markers flow through render() and
 // only rebuild deck.gl layers, so a 10 s live poll never re-creates the map.
+// Camera controls (rotate, tilt, compass, Orbit, Q/E/W/S, Shift-drag tilt)
+// come from components/Map3DControls.tsx, mounted under RESET VIEW.
 //
 // Vertical scale: terrain exaggeration and altitude share TERRAIN_EXAGGERATION
 // (lib/flight3d.ts), so height above the ground stays proportional. HUD
@@ -21,7 +23,8 @@ import maplibregl, {
   type StyleSpecification,
   type SourceSpecification,
 } from "maplibre-gl";
-import { applyNeutralBasemap, basemapStyleUrl } from "@/lib/basemap";
+import { applyNeutralBasemap, basemapStyleUrl, firstRoadLayerId } from "@/lib/basemap";
+import Map3DControls from "./Map3DControls";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { WebMercatorViewport, type Layer } from "@deck.gl/core";
@@ -369,6 +372,8 @@ export default function Flight3D({
   const [failed, setFailed] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  /** The live map once loaded, for the camera controls. */
+  const [mapObj, setMapObj] = useState<MaplibreMap | null>(null);
 
   // ---- data model --------------------------------------------------------
   const model = useMemo(() => {
@@ -1103,7 +1108,10 @@ export default function Flight3D({
       applyNeutralBasemap(map);
       const key = demKey;
       const layers = map.getStyle().layers ?? [];
-      const firstSymbol = layers.find((l) => l.type === "symbol")?.id;
+      // Hillshade goes under the roads so their tint is not shaded over;
+      // the keyless style has no roads, so under the first label.
+      const firstSymbol =
+        firstRoadLayerId(layers) ?? layers.find((l) => l.type === "symbol")?.id;
       map.addSource("ss-dem", demSource(key));
       map.addSource("ss-hillshade", demSource(key));
       map.addLayer(
@@ -1149,6 +1157,7 @@ export default function Flight3D({
       map.on("idle", onIdle);
       readyRef.current = true;
       setReady(true);
+      setMapObj(map);
 
       frame(!reduced);
       if (replay && !reduced) {
@@ -1175,6 +1184,7 @@ export default function Flight3D({
       map.remove();
       mapRef.current = null;
       overlayRef.current = null;
+      setMapObj(null);
     };
     // Mount once; data changes flow through render().
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1328,6 +1338,16 @@ export default function Flight3D({
           </div>
         </div>
       )}
+
+      {/* Rotate / tilt / compass / orbit, under RESET VIEW. */}
+      <Map3DControls
+        map={mapObj}
+        defaultPitch={pitch}
+        top={(resetInset?.top ?? 10) + 52}
+        right={resetInset?.right ?? 10}
+        // The scrubber (or the parent's pill row / carousel) owns the bottom.
+        bottomReserve={Math.max(replay && primary ? 64 : 12, framePadding?.bottom ?? 0) + 8}
+      />
 
       {/* Reset view */}
       <button

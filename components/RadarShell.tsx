@@ -186,6 +186,8 @@ export function RadarShell({
   // Live 3D: hydrated from `?view=3d`, mirrored back with replaceState.
   // History mode has its own 3D switch in its banner.
   const [live3d, setLive3d] = useState(false);
+  // History mode's own 3D view (reported by HistoryOverlay).
+  const [history3d, setHistory3d] = useState(false);
   useEffect(() => {
     const want = parseMapView(new URLSearchParams(window.location.search).get(LIVE_VIEW_PARAM)) === "3d";
     if (want && !hasWebGL2()) flashToast(setToast, "3D needs WebGL2 · flat map");
@@ -373,6 +375,7 @@ export function RadarShell({
         bannerTop={PICKER_TOP}
         chipBottom={`calc(${rowBottom + 80}px + var(--ss-install-prompt-h, 0px))`}
         initialPalette={palette}
+        on3dChange={setHistory3d}
       />
       <AddZoneButton
         // Under the freshness chip (top 60, ~34 px tall), so a long
@@ -502,7 +505,11 @@ export function RadarShell({
         />
       </div>
 
-      <CompassN top={PICKER_TOP + 52 + topShift} />
+      {/* 3D carries its own compass (Map3DControls); a fixed "north is
+          up" mark would be wrong once the rider rotates. */}
+      {!(live3d && !historyOn) && !(historyOn && history3d) && (
+        <CompassN top={PICKER_TOP + 52 + topShift} />
+      )}
 
       <div
         style={{

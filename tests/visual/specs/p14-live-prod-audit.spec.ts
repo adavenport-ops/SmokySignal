@@ -3121,3 +3121,163 @@ test.describe("p14 live-prod audit · full navigation", () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------
+// 3D camera controls (components/Map3DControls.tsx) and the palette road
+// tint on the basemap (lib/basemap.ts applyRoadTint).
+// ---------------------------------------------------------------------
+
+/** A recent /flight/<tail>/<id> share path, via /api/flight-paths and the
+ *  tail's /plane page (same route as claim 60). */
+async function findRecentFlightPath(request: APIRequestContext): Promise<{ path: string | null; tails: string[] }> {
+  const fp = await request.get("/api/flight-paths");
+  const tails: string[] = [];
+  if (fp.ok()) {
+    const fc = (await fp.json()) as { features?: { properties?: { tail?: string; date?: string } }[] };
+    const byDate = [...(fc.features ?? [])].sort((a, b) =>
+      String(b.properties?.date ?? "").localeCompare(String(a.properties?.date ?? "")),
+    );
+    for (const f of byDate) {
+      const t = f.properties?.tail;
+      if (t && !tails.includes(t)) tails.push(t);
+    }
+  }
+  for (const t of tails.slice(0, 8)) {
+    const html = await (await request.get(`/plane/${t}`)).text();
+    const m = /\/flight\/[A-Z0-9]+\/\d{8}T\d{4}/.exec(html);
+    if (m) return { path: m[0], tails };
+  }
+  return { path: null, tails };
+}
+
+/** Signed smallest angle a -> b, degrees. */
+function bearingDelta(a: number, b: number): number {
+  let d = (((b - a) % 360) + 360) % 360;
+  if (d > 180) d -= 360;
+  return d;
+}
+
+test.describe("p14 live-prod audit · 3D camera controls and road tint", () => {
+  test("83. a 3D flight: the rotate button turns the bearing 45° and the compass puts north back up", async ({
+    page: projectPage,
+    request,
+    playwright,
+    browserName,
+    baseURL,
+    viewport,
+    userAgent,
+    deviceScaleFactor,
+    isMobile,
+    hasTouch,
+    extraHTTPHeaders,
+  }) => {
+    test.setTimeout(150_000);
+    const claim = "3D flight: rotate turns the bearing 45°, the compass resets to north up, every control is 44px";
+    const { path: flightPath, tails } = await findRecentFlightPath(request);
+    if (!flightPath) {
+      record({
+        claim,
+        category: "indeterminate",
+        pass: true,
+        evidence: `no recent flight link found (tails tried: ${tails.slice(0, 8).join(",") || "none"})`,
+      });
+      return;
+    }
+    let ownBrowser: Awaited<ReturnType<typeof playwright.chromium.launch>> | null = null;
+    let page = projectPage;
+    if (browserName === "chromium") {
+      ownBrowser = await playwright.chromium.launch({
+        args: GL_ARGS,
+        executablePath: process.env.SS_CHROMIUM_EXECUTABLE_PATH || undefined,
+      });
+      const ctx = await ownBrowser.newContext({
+        baseURL,
+        viewport,
+        userAgent,
+        deviceScaleFactor,
+        isMobile,
+        hasTouch,
+        extraHTTPHeaders,
+      });
+      page = await ctx.newPage();
+    }
+    try {
+      await page.goto(`${flightPath}?view=3d`, { waitUntil: "domcontentloaded" });
+      const gl2 = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl2"));
+      if (!gl2) {
+        record({ claim, category: "indeterminate", pass: true, evidence: "browser has no WebGL2" });
+        return;
+      }
+      const ready = await page
+        .waitForSelector('[data-testid="flight-3d"][data-ready="1"] [data-testid="map3d-controls"][data-bearing]', {
+          timeout: 45_000,
+        })
+        .then(() => true)
+        .catch(() => false);
+      // Let the intro swoop finish before touching the camera.
+      await page.waitForTimeout(3500);
+      const read = async () => {
+        const el = page.locator('[data-testid="map3d-controls"]').first();
+        return {
+          bearing: Number(await el.getAttribute("data-bearing").catch(() => "NaN")),
+          pitch: Number(await el.getAttribute("data-pitch").catch(() => "NaN")),
+        };
+      };
+      const before = await read();
+      await page.getByTestId("map3d-rotate-right").click().catch(() => {});
+      await page.waitForTimeout(1200);
+      const rotated = await read();
+      const screenshot = await shot(page, "83-flight-3d-rotated");
+      await page.getByTestId("map3d-compass").click().catch(() => {});
+      await page.waitForTimeout(1200);
+      const reset = await read();
+      const sizes = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>('[data-testid="map3d-controls"] button')].map((b) => {
+          const r = b.getBoundingClientRect();
+          return { id: b.dataset.testid ?? "", w: Math.round(r.width), h: Math.round(r.height), label: b.getAttribute("aria-label") ?? "" };
+        }),
+      );
+      const turned = Math.abs(bearingDelta(before.bearing, rotated.bearing) - 45) < 3;
+      const north = Math.abs(bearingDelta(0, reset.bearing)) < 1;
+      const targets = sizes.length >= 5 && sizes.every((s) => s.w >= 44 && s.h >= 44 && s.label.length > 0);
+      const pass = ready && turned && north && targets;
+      record({
+        claim,
+        category: pass ? "working_as_designed" : ready ? "confirmed_bug" : "unshipped",
+        pass,
+        evidence: `${flightPath}?view=3d bearing ${before.bearing} -> ${rotated.bearing} (turned=${turned}) -> compass ${reset.bearing} pitch ${reset.pitch} (north=${north}); buttons=${JSON.stringify(sizes.map((s) => `${s.id}:${s.w}x${s.h}`))}`,
+        screenshot,
+      });
+    } finally {
+      await ownBrowser?.close();
+    }
+  });
+
+  test("84. /radar paints motorways with the default palette's road tint, not grey", async ({ page, context }) => {
+    test.setTimeout(90_000);
+    await context.clearCookies({ name: "ss_palette" }).catch(() => {});
+    await context.clearCookies({ name: "ss_contrast" }).catch(() => {});
+    await page.goto("/radar", { waitUntil: "domcontentloaded" });
+    // applyRoadTint stamps the map container with the motorway colour it
+    // reads back from MapLibre's own paint property on the road layer.
+    const found = await page
+      .waitForSelector("[data-road-motorway]", { timeout: 30_000 })
+      .then(() => true)
+      .catch(() => false);
+    const color = await page.locator("[data-road-motorway]").first().getAttribute("data-road-motorway").catch(() => null);
+    const layer = await page.locator("[data-road-motorway]").first().getAttribute("data-road-layer").catch(() => null);
+    const m = color ? /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color) : null;
+    const rgb = m ? [1, 2, 3].map((i) => parseInt(m[i]!, 16)) : null;
+    // Grey means r = g = b; the Ember tint is a slate-teal.
+    const spread = rgb ? Math.max(...rgb) - Math.min(...rgb) : 0;
+    const pass = found && spread >= 16;
+    const screenshot = await shot(page, "84-radar-road-tint");
+    record({
+      claim: "/radar motorway road layer has a non-grey line-color for the default palette (Ember slate-teal)",
+      category: pass ? "working_as_designed" : found ? "confirmed_bug" : "unshipped",
+      pass,
+      evidence: `layer=${layer} line-color(motorway)=${color} rgb spread=${spread}`,
+      screenshot,
+    });
+  });
+});

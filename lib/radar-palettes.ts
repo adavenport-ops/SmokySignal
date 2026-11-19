@@ -7,6 +7,11 @@
 //   history  per-tail lines in history mode: six distinct colours plus
 //            one "many" colour once more than six tails show
 //   live     the dark halo disc behind live aircraft glyphs
+//   roadTint the basemap road network by class (lib/basemap.ts):
+//            motorway, major (primary / secondary) and street (tertiary
+//            and below, fading in from about z12). Muted on purpose: the
+//            roads give the map some colour without outranking the heat,
+//            the routes or a live aircraft.
 //
 // Rules every palette holds (lib/radar-palettes.test.ts enforces them):
 //   - Heat and routes differ in LIGHTNESS, not only hue, so the two read
@@ -14,6 +19,10 @@
 //   - Route colour clears 3:1 against the basemap land and water greys.
 //   - History colours stay out of the palette's own heat hues and clear
 //     the categorical CVD / normal-vision floors on adjacent slots.
+//   - Road tints take a hue far from the palette's heat and routes, sit
+//     at least 0.15 OKLCH L below the route colour, and stay well under
+//     the heat midpoint, the route and the live marker in salience
+//     (lib/basemap.test.ts has the numbers).
 //   - Live aircraft never get lost in the heat: the glyph is near-white
 //     on a dark halo disc with an identity ring (alert orange for police,
 //     neutral for every other mission). The disc keeps 3:1 against every
@@ -38,6 +47,17 @@ export const HIGH_CONTRAST_PALETTE: PaletteId = "high-contrast";
 
 export type HeatStops = ReadonlyArray<readonly [number, string]>;
 
+/** Basemap road colours, opaque, painted at line-opacity 1 over the
+ *  land grey (BASEMAP.land in lib/basemap.ts). */
+export type RoadTint = {
+  /** motorway + trunk */
+  motorway: string;
+  /** primary + secondary */
+  major: string;
+  /** tertiary, minor, service, track; fades in from about z12 */
+  street: string;
+};
+
 export type RadarPalette = {
   id: PaletteId;
   /** Chip label and aria-label stem. */
@@ -48,6 +68,7 @@ export type RadarPalette = {
   route: { color: string; opacity: ZoomStops };
   history: { tails: readonly [string, string, string, string, string, string]; many: string };
   live: { halo: string; haloOpacity: number };
+  roadTint: RoadTint;
 };
 
 /** Route opacity for the bright-thread palettes. Routes sit above the
@@ -92,6 +113,9 @@ export const PALETTES: Record<PaletteId, RadarPalette> = {
       many: "#9DB8E8",
     },
     live: { halo: "#0B0D10", haloOpacity: 0.82 },
+    // Slate-teal: the cool side of the wheel from the red heat and the
+    // sand routes.
+    roadTint: { motorway: "#4E757D", major: "#455D62", street: "#3C494C" },
   },
   magma: {
     id: "magma",
@@ -111,6 +135,10 @@ export const PALETTES: Record<PaletteId, RadarPalette> = {
       many: "#8FD3C8",
     },
     live: { halo: "#0B0D10", haloOpacity: 0.82 },
+    // Muted sand, away from the purple-pink heat and the ice routes.
+    // A touch more chroma than the others: at less, protan / deutan
+    // riders lose it against the pink heat stop at the same lightness.
+    roadTint: { motorway: "#796F45", major: "#5E5942", street: "#4A473A" },
   },
   ice: {
     id: "ice",
@@ -129,6 +157,9 @@ export const PALETTES: Record<PaletteId, RadarPalette> = {
       many: "#D8C08A",
     },
     live: { halo: "#0B0D10", haloOpacity: 0.82 },
+    // Clay, a warm grey against the blue heat, far darker than the
+    // sand routes.
+    roadTint: { motorway: "#816A5D", major: "#64554C", street: "#4F4641" },
   },
   "high-contrast": {
     id: "high-contrast",
@@ -148,6 +179,11 @@ export const PALETTES: Record<PaletteId, RadarPalette> = {
       many: "#36C9E0",
     },
     live: { halo: "#000000", haloOpacity: 0.9 },
+    // Neutral grey, held 0.15 L under the cyan routes so the yellow heat
+    // and the cyan stay the loudest things in bright sun. That caps the
+    // motorway at 2.4:1 on the land (a 3:1 grey would sit level with the
+    // cyan in lightness).
+    roadTint: { motorway: "#5E5E5E", major: "#525252", street: "#464646" },
   },
   mono: {
     id: "mono",
@@ -167,6 +203,9 @@ export const PALETTES: Record<PaletteId, RadarPalette> = {
       many: "#9DB8E8",
     },
     live: { halo: "#000000", haloOpacity: 0.88 },
+    // Very faint grey, darker than the lowest grey heat stop so low
+    // density never reads as a road.
+    roadTint: { motorway: "#525252", major: "#4B4B4B", street: "#444444" },
   },
 };
 

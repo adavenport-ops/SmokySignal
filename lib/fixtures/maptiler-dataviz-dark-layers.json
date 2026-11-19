@@ -1,0 +1,732 @@
+{
+ "_comment": "Layer list (id, type, source-layer, zoom range, filter) of MapTiler dataviz-dark style.json, captured 2026-11-18 for lib/basemap.test.ts. Paint, sources and the key are stripped.",
+ "layers": [
+  {
+   "id": "Background",
+   "type": "background"
+  },
+  {
+   "id": "Residential",
+   "type": "fill",
+   "source-layer": "landuse",
+   "minzoom": 6,
+   "maxzoom": 14,
+   "filter": [
+    "==",
+    "class",
+    "residential"
+   ]
+  },
+  {
+   "id": "Landcover",
+   "type": "fill",
+   "source-layer": "landcover",
+   "filter": [
+    "in",
+    "class",
+    "wood",
+    "grass"
+   ]
+  },
+  {
+   "id": "Forest",
+   "type": "fill",
+   "source-layer": "globallandcover",
+   "maxzoom": 7,
+   "filter": [
+    "in",
+    "class",
+    "forest",
+    "tree"
+   ]
+  },
+  {
+   "id": "Stadium",
+   "type": "fill",
+   "source-layer": "landuse",
+   "minzoom": 10,
+   "filter": [
+    "in",
+    "class",
+    "stadium",
+    "pitch"
+   ]
+  },
+  {
+   "id": "Cemetery",
+   "type": "fill",
+   "source-layer": "landuse",
+   "minzoom": 10,
+   "filter": [
+    "==",
+    "class",
+    "cemetery"
+   ]
+  },
+  {
+   "id": "River",
+   "type": "line",
+   "source-layer": "waterway"
+  },
+  {
+   "id": "Water shadow",
+   "type": "fill",
+   "source-layer": "water",
+   "filter": [
+    "all",
+    [
+     "==",
+     "$type",
+     "Polygon"
+    ],
+    [
+     "!=",
+     "brunnel",
+     "tunnel"
+    ]
+   ]
+  },
+  {
+   "id": "Water",
+   "type": "fill",
+   "source-layer": "water",
+   "minzoom": 0,
+   "filter": [
+    "all",
+    [
+     "==",
+     "$type",
+     "Polygon"
+    ],
+    [
+     "!=",
+     "brunnel",
+     "tunnel"
+    ]
+   ]
+  },
+  {
+   "id": "Aeroway",
+   "type": "line",
+   "source-layer": "aeroway",
+   "minzoom": 12,
+   "filter": [
+    "all",
+    [
+     "==",
+     "$type",
+     "LineString"
+    ]
+   ]
+  },
+  {
+   "id": "Tunnel outline",
+   "type": "line",
+   "source-layer": "transportation",
+   "minzoom": 11,
+   "filter": [
+    "all",
+    [
+     "in",
+     "class",
+     "motorway",
+     "trunk",
+     "primary",
+     "secondary",
+     "tertiary",
+     "minor",
+     "service"
+    ],
+    [
+     "==",
+     "brunnel",
+     "tunnel"
+    ]
+   ]
+  },
+  {
+   "id": "Tunnel path",
+   "type": "line",
+   "source-layer": "transportation",
+   "minzoom": 15,
+   "filter": [
+    "all",
+    [
+     "==",
+     "class",
+     "path"
+    ],
+    [
+     "==",
+     "brunnel",
+     "tunnel"
+    ]
+   ]
+  },
+  {
+   "id": "Tunnel",
+   "type": "line",
+   "source-layer": "transportation",
+   "minzoom": 11,
+   "filter": [
+    "all",
+    [
+     "in",
+     "class",
+     "motorway",
+     "trunk",
+     "primary",
+     "secondary",
+     "tertiary",
+     "minor",
+     "service"
+    ],
+    [
+     "==",
+     "brunnel",
+     "tunnel"
+    ]
+   ]
+  },
+  {
+   "id": "Railway tunnel",
+   "type": "line",
+   "source-layer": "transportation",
+   "minzoom": 13,
+   "filter": [
+    "all",
+    [
+     "==",
+     "class",
+     "rail"
+    ],
+    [
+     "==",
+     "brunnel",
+     "tunnel"
+    ]
+   ]
+  },
+  {
+   "id": "Railway tunnel dash",
+   "type": "line",
+   "source-layer": "transportation",
+   "minzoom": 15,
+   "filter": [
+    "all",
+    [
+     "==",
+     "class",
+     "rail"
+    ],
+    [
+     "==",
+     "brunnel",
+     "tunnel"
+    ]
+   ]
+  },
+  {
+   "id": "Pier",
+   "type": "fill",
+   "source-layer": "transportation",
+   "filter": [
+    "all",
+    [
+     "==",
+     "$type",
+     "Polygon"
+    ],
+    [
+     "==",
+     "class",
+     "pier"
+    ]
+   ]
+  },
+  {
+   "id": "Pier road",
+   "type": "line",
+   "source-layer": "transportation",
+   "filter": [
+    "all",
+    [
+     "==",
+     "$type",
+     "LineString"
+    ],
+    [
+     "in",
+     "class",
+     "pier"
+    ]
+   ]
+  },
+  {
+   "id": "Bridge",
+   "type": "fill",
+   "source-layer": "transportation",
+   "filter": [
+    "all",
+    [
+     "==",
+     "$type",
+     "Polygon"
+    ],
+    [
+     "in",
+     "brunnel",
+     "bridge"
+    ]
+   ]
+  },
+  {
+   "id": "Road network outline",
+   "type": "line",
+   "source-layer": "transportation",
+   "minzoom": 6,
+   "filter": [
+    "all",
+    [
+     "!in",
+     "brunnel",
+     "tunnel"
+    ],
+    [
+     "!in",
+     "class",
+     "bridge",
+     "ferry",
+     "rail",
+     "transit",
+     "pier",
+     "path",
+     "aerialway",
+     "motorway_construction",
+     "trunk_construction",
+     "primary_construction",
+     "secondary_construction",
+     "tertiary_construction",
+     "minor_construction",
+     "service_construction",
+     "track_construction"
+    ]
+   ]
+  },
+  {
+   "id": "Road network",
+   "type": "line",
+   "source-layer": "transportation",
+   "minzoom": 6,
+   "filter": [
+    "all",
+    [
+     "!=",
+     "brunnel",
+     "tunnel"
+    ],
+    [
+     "!in",
+     "class",
+     "ferry",
+     "rail",
+     "transit",
+     "pier",
+     "bridge",
+     "path",
+     "aerialway",
+     "motorway_construction",
+     "trunk_construction",
+     "primary_construction",
+     "secondary_construction",
+     "tertiary_construction",
+     "minor_construction",
+     "service_construction",
+     "track_construction"
+    ]
+   ]
+  },
+  {
+   "id": "Path outline",
+   "type": "line",
+   "source-layer": "transportation",
+   "minzoom": 16,
+   "filter": [
+    "all",
+    [
+     "in",
+     "class",
+     "path",
+     "track"
+    ],
+    [
+     "!has",
+     "brunnel"
+    ]
+   ]
+  },
+  {
+   "id": "Path minor",
+   "type": "line",
+   "source-layer": "transportation",
+   "minzoom": 14,
+   "filter": [
+    "all",
+    [
+     "in",
+     "class",
+     "path_pedestrian"
+    ],
+    [
+     "!has",
+     "brunnel"
+    ]
+   ]
+  },
+  {
+   "id": "Path",
+   "type": "line",
+   "source-layer": "transportation",
+   "minzoom": 14,
+   "filter": [
+    "all",
+    [
+     "in",
+     "class",
+     "path",
+     "track"
+    ],
+    [
+     "!has",
+     "brunnel"
+    ]
+   ]
+  },
+  {
+   "id": "Railway",
+   "type": "line",
+   "source-layer": "transportation",
+   "minzoom": 10,
+   "filter": [
+    "all",
+    [
+     "==",
+     "class",
+     "rail"
+    ],
+    [
+     "!=",
+     "brunnel",
+     "tunnel"
+    ]
+   ]
+  },
+  {
+   "id": "Railway dash",
+   "type": "line",
+   "source-layer": "transportation",
+   "minzoom": 15,
+   "filter": [
+    "all",
+    [
+     "==",
+     "class",
+     "rail"
+    ],
+    [
+     "!=",
+     "brunnel",
+     "tunnel"
+    ]
+   ]
+  },
+  {
+   "id": "Building",
+   "type": "fill",
+   "source-layer": "building"
+  },
+  {
+   "id": "Building top",
+   "type": "fill",
+   "source-layer": "building"
+  },
+  {
+   "id": "Other border",
+   "type": "line",
+   "source-layer": "boundary",
+   "minzoom": 5,
+   "maxzoom": 8,
+   "filter": [
+    "all",
+    [
+     "in",
+     "admin_level",
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10
+    ],
+    [
+     "==",
+     "maritime",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "Other border dash",
+   "type": "line",
+   "source-layer": "boundary",
+   "minzoom": 8,
+   "filter": [
+    "all",
+    [
+     "in",
+     "admin_level",
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10
+    ],
+    [
+     "==",
+     "maritime",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "Disputed border",
+   "type": "line",
+   "source-layer": "boundary",
+   "minzoom": 0,
+   "filter": [
+    "all",
+    [
+     "==",
+     "admin_level",
+     2
+    ],
+    [
+     "==",
+     "maritime",
+     0
+    ],
+    [
+     "==",
+     "disputed",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "Country border",
+   "type": "line",
+   "source-layer": "boundary",
+   "minzoom": 0,
+   "filter": [
+    "all",
+    [
+     "==",
+     "admin_level",
+     2
+    ],
+    [
+     "==",
+     "maritime",
+     0
+    ],
+    [
+     "==",
+     "disputed",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "Ocean labels",
+   "type": "symbol",
+   "source-layer": "water_name",
+   "minzoom": 0,
+   "maxzoom": 4,
+   "filter": [
+    "all",
+    [
+     "==",
+     "class",
+     "ocean"
+    ],
+    [
+     "has",
+     "name"
+    ]
+   ]
+  },
+  {
+   "id": "Sea labels",
+   "type": "symbol",
+   "source-layer": "water_name",
+   "minzoom": 3,
+   "filter": [
+    "all",
+    [
+     "==",
+     "class",
+     "sea"
+    ],
+    [
+     "has",
+     "name"
+    ]
+   ]
+  },
+  {
+   "id": "Lakeline labels",
+   "type": "symbol",
+   "source-layer": "water_name",
+   "filter": [
+    "has",
+    "name"
+   ]
+  },
+  {
+   "id": "Road labels",
+   "type": "symbol",
+   "source-layer": "transportation_name",
+   "minzoom": 14,
+   "filter": [
+    "in",
+    "class",
+    "primary",
+    "secondary",
+    "tertiary",
+    "minor",
+    "service"
+   ]
+  },
+  {
+   "id": "Place labels",
+   "type": "symbol",
+   "source-layer": "place",
+   "minzoom": 13,
+   "filter": [
+    "!in",
+    "class",
+    "city",
+    "continent",
+    "country",
+    "province",
+    "state",
+    "town",
+    "village",
+    "place"
+   ]
+  },
+  {
+   "id": "Village labels",
+   "type": "symbol",
+   "source-layer": "place",
+   "minzoom": 12,
+   "filter": [
+    "==",
+    "class",
+    "village"
+   ]
+  },
+  {
+   "id": "Town labels",
+   "type": "symbol",
+   "source-layer": "place",
+   "minzoom": 11,
+   "maxzoom": 16,
+   "filter": [
+    "==",
+    "class",
+    "town"
+   ]
+  },
+  {
+   "id": "State labels",
+   "type": "symbol",
+   "source-layer": "place",
+   "minzoom": 5,
+   "maxzoom": 8,
+   "filter": [
+    "all",
+    [
+     "==",
+     "class",
+     "state"
+    ],
+    [
+     "==",
+     "rank",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "City labels",
+   "type": "symbol",
+   "source-layer": "place",
+   "minzoom": 5,
+   "maxzoom": 14,
+   "filter": [
+    "all",
+    [
+     "==",
+     "class",
+     "city"
+    ],
+    [
+     "has",
+     "rank"
+    ]
+   ]
+  },
+  {
+   "id": "Country labels",
+   "type": "symbol",
+   "source-layer": "place",
+   "minzoom": 2,
+   "maxzoom": 10,
+   "filter": [
+    "all",
+    [
+     "==",
+     "class",
+     "country"
+    ],
+    [
+     "has",
+     "iso_a2"
+    ],
+    [
+     "!=",
+     "iso_a2",
+     "VA"
+    ]
+   ]
+  },
+  {
+   "id": "Continent labels",
+   "type": "symbol",
+   "source-layer": "place",
+   "minzoom": 0,
+   "maxzoom": 2,
+   "filter": [
+    "==",
+    "class",
+    "continent"
+   ]
+  }
+ ]
+}
