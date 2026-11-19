@@ -1,3 +1,5 @@
+import type { TrackCapture } from "./track-point";
+
 /**
  * Mission taxonomy. Drives the home + radar status pill via lib/status.ts,
  * push defaults, radar filters and every rider-facing badge.
@@ -113,6 +115,11 @@ export type AircraftLive = {
    * citation list and Aircraft is FleetEntry & AircraftLive.
    */
   feed_sources?: FeedSrc[];
+  /**
+   * Extra per-observation fields for the permanent track log
+   * (lib/track-point.ts). Compact, all optional; absent when grounded.
+   */
+  obs?: TrackCapture;
 };
 
 export type Aircraft = FleetEntry & AircraftLive;
@@ -174,6 +181,35 @@ export type NormalizedAc = {
   src?: FeedSrc;
   /** Every feed that reported this hex. Set by the merge. */
   sources?: FeedSrc[];
+  // ── Optional extras (readsb v2 names), kept for the permanent track
+  // log. Feeds that lack a field leave it undefined. Set by
+  // lib/feeds/readsb.ts (readsb feeds) and lib/opensky.ts.
+  /** Geometric (GNSS) altitude, ft. */
+  alt_geom?: number;
+  /** Barometric vertical rate, ft/min. */
+  baro_rate?: number;
+  /** Geometric vertical rate, ft/min. */
+  geom_rate?: number;
+  /** Emergency status ("none", "general", "lifeguard", ...). */
+  emergency?: string;
+  /** ADS-B emitter category ("A1".."C7"). */
+  category?: string;
+  /** Navigation integrity category. */
+  nic?: number;
+  /** Radius of containment, metres. */
+  rc?: number;
+  /** Navigation accuracy category, position. */
+  nac_p?: number;
+  /** Signal strength, dBFS. */
+  rssi?: number;
+  /** Fields derived from MLAT (readsb lists field names). */
+  mlat?: string[];
+  /** readsb message type ("adsb_icao", "mlat", "tisb_icao", ...). */
+  type?: string;
+  /** Callsign / flight ID, as sent (may carry trailing spaces). */
+  flight?: string;
+  /** Receivers that heard the aircraft, when the feed exposes it. */
+  receivers?: number;
 };
 
 export type Snapshot = {

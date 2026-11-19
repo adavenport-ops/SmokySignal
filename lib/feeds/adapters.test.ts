@@ -36,6 +36,11 @@ test("adsb.fi: reads `aircraft`, seconds-based `now`, tags src fi", () => {
     gs: 472.3,
     track: 315.17,
     squawk: "6630",
+    // Track-log extras (lib/track-point.ts captureFields).
+    flight: "AIH241",
+    type: "adsb_icao",
+    mlat: [],
+    rssi: -20.2,
   });
   const ground = rows.find((r) => r.hex === "a76d90")!;
   assert.equal(ground.alt_baro, "ground");

@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import { hasKv } from "@/lib/cache";
 import { runRollup } from "@/lib/rollup";
 import { persistTrackHistory } from "@/lib/tracks";
+import { backfillActivityArchive } from "@/lib/activity";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -59,9 +60,18 @@ export async function GET(req: Request) {
     } catch (e) {
       console.warn("[cron/rollup] persistTrackHistory failed:", e);
     }
+    // Copy anything still in the capped activity:feed into the permanent
+    // per-day archive. Idempotent and best-effort.
+    let activity: { copied: number; days: number } | null = null;
+    try {
+      activity = await backfillActivityArchive();
+    } catch (e) {
+      console.warn("[cron/rollup] backfillActivityArchive failed:", e);
+    }
     return NextResponse.json({
       ok: true,
       persisted,
+      activity_archived: activity,
       built,
       remaining,
       elapsed_ms: Date.now() - started,

@@ -101,39 +101,63 @@ async function clearOpenskyToken(): Promise<void> {
 
 type OpenSkyResp = { time: number; states: unknown[][] | null };
 
+// OpenSky category (states/all?extended=1, index 17) → ADS-B emitter category.
+const OPENSKY_CATEGORY: Record<number, string> = {
+  2: "A1", 3: "A2", 4: "A3", 5: "A4", 6: "A5", 7: "A6", 8: "A7",
+  9: "B1", 10: "B2", 11: "B3", 12: "B4", 14: "B6", 15: "B7",
+  16: "C1", 17: "C2", 18: "C3", 19: "C4", 20: "C5",
+};
+
+const M_TO_FT = 3.28084;
+const MS_TO_KT = 1.94384;
+const MS_TO_FPM = 196.850394;
+
 export function normalizeStates(
   states: unknown[][],
   responseTimeS?: number,
 ): NormalizedAc[] {
   // states_vector schema (positional):
-  // [0]=icao24 [3]=time_position(s) [5]=lon [6]=lat [7]=baro_alt(m)
-  // [8]=on_ground [9]=velocity(m/s) [10]=true_track [14]=squawk
-  return states.map((s) => ({
-    hex: String(s[0] ?? "").toLowerCase(),
-    src: "os" as const,
-    ...(typeof s[3] === "number"
-      ? {
-          pos_ts: (s[3] as number) * 1000,
-          ...(typeof responseTimeS === "number"
-            ? { seen_pos: Math.max(0, responseTimeS - (s[3] as number)) }
-            : {}),
-        }
-      : {}),
-    lon: typeof s[5] === "number" ? (s[5] as number) : undefined,
-    lat: typeof s[6] === "number" ? (s[6] as number) : undefined,
-    alt_baro:
-      s[8] === true
-        ? "ground"
-        : typeof s[7] === "number"
-          ? Math.round((s[7] as number) * 3.28084) // m → ft
-          : undefined,
-    gs:
-      typeof s[9] === "number"
-        ? Math.round((s[9] as number) * 1.94384) // m/s → kt
-        : undefined,
-    track: typeof s[10] === "number" ? (s[10] as number) : undefined,
-    squawk: typeof s[14] === "string" ? (s[14] as string) : null,
-  }));
+  // [0]=icao24 [1]=callsign [3]=time_position(s) [5]=lon [6]=lat
+  // [7]=baro_alt(m) [8]=on_ground [9]=velocity(m/s) [10]=true_track
+  // [11]=vertical_rate(m/s) [12]=sensors [13]=geo_altitude(m) [14]=squawk
+  // [16]=position_source (0 ADS-B, 1 ASTERIX, 2 MLAT, 3 FLARM)
+  // [17]=category (only with extended=1)
+  const n = (v: unknown): number | undefined =>
+    typeof v === "number" && Number.isFinite(v) ? v : undefined;
+  return states.filter(Array.isArray).map((s) => {
+    const tPos = n(s[3]);
+    const out: NormalizedAc = {
+      hex: String(s[0] ?? "").toLowerCase(),
+      src: "os",
+      lon: n(s[5]),
+      lat: n(s[6]),
+      alt_baro:
+        s[8] === true
+          ? "ground"
+          : n(s[7]) !== undefined
+            ? Math.round(n(s[7])! * M_TO_FT)
+            : undefined,
+      gs: n(s[9]) !== undefined ? Math.round(n(s[9])! * MS_TO_KT) : undefined,
+      track: n(s[10]),
+      squawk: typeof s[14] === "string" ? (s[14] as string) : null,
+    };
+    if (tPos !== undefined) {
+      out.pos_ts = tPos * 1000;
+      if (typeof responseTimeS === "number") {
+        out.seen_pos = Math.max(0, responseTimeS - tPos);
+      }
+    }
+    const geo = n(s[13]);
+    if (geo !== undefined) out.alt_geom = Math.round(geo * M_TO_FT);
+    const vs = n(s[11]);
+    if (vs !== undefined) out.baro_rate = Math.round(vs * MS_TO_FPM);
+    if (Array.isArray(s[12])) out.receivers = (s[12] as unknown[]).length;
+    const cat = n(s[17]);
+    if (cat !== undefined && OPENSKY_CATEGORY[cat]) out.category = OPENSKY_CATEGORY[cat];
+    if (s[16] === 2) out.type = "mlat";
+    if (typeof s[1] === "string" && s[1].trim()) out.flight = s[1].trim();
+    return out;
+  });
 }
 
 /**
@@ -146,7 +170,8 @@ export async function fetchOpenSky(
   budget?: AbortSignal,
 ): Promise<NormalizedAc[]> {
   if (hexes.length === 0) return [];
-  const url = `${STATES_URL}?icao24=${hexes.join(",")}`;
+  // extended=1 adds the emitter category (index 17) to each state vector.
+  const url = `${STATES_URL}?icao24=${hexes.join(",")}&extended=1`;
 
   const doFetch = async (): Promise<Response> => {
     const token = await getOpenskyToken(budget);
