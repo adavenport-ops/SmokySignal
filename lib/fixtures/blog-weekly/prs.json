@@ -1,0 +1,57 @@
+[
+ {
+  "number": 201,
+  "title": "feat(radar): coverage layer and legend (#201)",
+  "mergedAt": "2026-11-13T19:00:00Z"
+ },
+ {
+  "number": 202,
+  "title": "fix(push): police-only alerts respect quiet hours",
+  "mergedAt": "2026-11-14T03:00:00Z"
+ },
+ {
+  "number": 203,
+  "title": "chore: bump deps",
+  "mergedAt": "2026-11-14T04:00:00Z"
+ },
+ {
+  "number": 204,
+  "title": "ci: cache playwright",
+  "mergedAt": "2026-11-15T04:00:00Z"
+ },
+ {
+  "number": 205,
+  "title": "test(seen): more fixtures",
+  "mergedAt": "2026-11-15T05:00:00Z"
+ },
+ {
+  "number": 206,
+  "title": "Design pass: bigger type!",
+  "mergedAt": "2026-11-16T05:00:00Z"
+ },
+ {
+  "number": 207,
+  "title": "feat(stats): week over week",
+  "mergedAt": "2026-11-12T07:59:00Z"
+ },
+ {
+  "number": 208,
+  "title": "feat: night mode",
+  "mergedAt": "2026-11-19T08:00:00Z"
+ },
+ {
+  "number": 209,
+  "title": "fix(ui): telescope icon",
+  "mergedAt": "2026-11-17T05:00:00Z"
+ },
+ {
+  "number": 210,
+  "title": "data(registry): add two helicopters",
+  "mergedAt": "2026-11-18T05:00:00Z"
+ },
+ {
+  "number": 201,
+  "title": "feat(radar): coverage layer and legend (#201)",
+  "mergedAt": "2026-11-13T19:00:00Z"
+ }
+]

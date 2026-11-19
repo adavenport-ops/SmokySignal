@@ -2667,4 +2667,80 @@ test.describe("p14 live-prod audit · navigation", () => {
       await ctx.close();
     }
   });
+
+  test("70. /blog lists at least one post and links to it from More", async ({ page }) => {
+    await page.goto("/blog", { waitUntil: "domcontentloaded" });
+    const posts = await page.locator('[data-testid="blog-post-link"]').count();
+    const chips = await page.locator('[data-testid="blog-kind-chips"] a').count();
+    await page.goto("/about", { waitUntil: "domcontentloaded" });
+    const hub = await page.locator('[data-hub-group="about"] a[href="/blog"]').count();
+    const pass = posts >= 1 && chips === 4 && hub === 1;
+    record({
+      claim: "/blog lists at least one post with kind filter chips, and More links to it",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `posts=${posts} chips=${chips} hubLink=${hub}`,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("71. the launch post renders with Article JSON-LD and a PNG og:image", async ({ page, request }) => {
+    await page.goto("/blog/2026-11-19-the-big-update", { waitUntil: "domcontentloaded" });
+    const h1 = (await page.locator('[data-testid="blog-post"] h1').textContent())?.trim() ?? "";
+    const og = (await page.locator('meta[property="og:image"]').first().getAttribute("content")) ?? "";
+    const ld = await page.locator('script[type="application/ld+json"]').allTextContents();
+    const hasArticle = ld.some((t) => {
+      try {
+        return JSON.parse(t)["@type"] === "Article";
+      } catch {
+        return false;
+      }
+    });
+    const img = og ? await request.get(og) : null;
+    const pass =
+      /rebuilt/i.test(h1) &&
+      /\/blog\/2026-11-19-the-big-update\/og$/.test(og) &&
+      img?.status() === 200 &&
+      (img?.headers()["content-type"] ?? "").startsWith("image/png") &&
+      hasArticle;
+    record({
+      claim: "Launch post renders, carries Article JSON-LD, and its og:image is a 200 PNG",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `h1="${h1}" og=${og} img=${img?.status()} ${img?.headers()["content-type"]} article=${hasArticle}`,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("72. /blog/feed.xml is a valid Atom feed with the launch post", async ({ page, request }) => {
+    const r = await request.get("/blog/feed.xml");
+    const body = await r.text();
+    const parsed = await page.evaluate((xml) => {
+      const doc = new DOMParser().parseFromString(xml, "application/xml");
+      const err = doc.getElementsByTagName("parsererror").length > 0;
+      const root = doc.documentElement;
+      return {
+        err,
+        root: root?.localName,
+        ns: root?.namespaceURI,
+        entries: doc.getElementsByTagNameNS("http://www.w3.org/2005/Atom", "entry").length,
+        hasLaunch: xml.includes("/blog/2026-11-19-the-big-update"),
+      };
+    }, body);
+    const pass =
+      r.status() === 200 &&
+      (r.headers()["content-type"] ?? "").includes("application/atom+xml") &&
+      !parsed.err &&
+      parsed.root === "feed" &&
+      parsed.ns === "http://www.w3.org/2005/Atom" &&
+      parsed.entries >= 1 &&
+      parsed.hasLaunch;
+    record({
+      claim: "/blog/feed.xml parses as Atom 1.0 with at least one entry, the launch post included",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `status=${r.status()} type=${r.headers()["content-type"]} ${JSON.stringify(parsed)}`,
+    });
+    expect(pass).toBe(true);
+  });
 });

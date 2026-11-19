@@ -98,8 +98,25 @@ export function feedItemsFromActivity(
   return out;
 }
 
+/**
+ * What buildAtom needs from an entry. FeedItem (takeoffs) satisfies it;
+ * the blog feed (app/(tabs)/blog/feed.xml) passes posts with their kind
+ * as the category.
+ */
+export type AtomEntry = {
+  id: string;
+  title: string;
+  link: string;
+  ts: number;
+  /** Category term. */
+  type: string;
+  summary: string;
+};
+
 export type FeedMeta = {
   siteUrl: string;
+  /** Human page this feed mirrors. Defaults to the Recent flights list. */
+  alternateUrl?: string;
   /** Absolute URL of this feed document. */
   selfUrl: string;
   title: string;
@@ -108,7 +125,7 @@ export type FeedMeta = {
   nowMs: number;
 };
 
-export function buildAtom(items: readonly FeedItem[], meta: FeedMeta): string {
+export function buildAtom(items: readonly AtomEntry[], meta: FeedMeta): string {
   const updated = new Date(items[0]?.ts ?? meta.nowMs).toISOString();
   const lines = [
     `<?xml version="1.0" encoding="utf-8"?>`,
@@ -117,7 +134,7 @@ export function buildAtom(items: readonly FeedItem[], meta: FeedMeta): string {
     `  <subtitle>${escapeXml(meta.subtitle)}</subtitle>`,
     `  <id>${escapeXml(meta.selfUrl)}</id>`,
     `  <link rel="self" type="application/atom+xml" href="${escapeXml(meta.selfUrl)}"/>`,
-    `  <link rel="alternate" type="text/html" href="${escapeXml(meta.siteUrl)}/flights?tab=recent"/>`,
+    `  <link rel="alternate" type="text/html" href="${escapeXml(meta.alternateUrl ?? `${meta.siteUrl}/flights?tab=recent`)}"/>`,
     `  <updated>${updated}</updated>`,
     `  <author><name>SmokySignal</name></author>`,
     `  <icon>${escapeXml(meta.siteUrl)}/icons/favicon-96.png</icon>`,
@@ -131,7 +148,7 @@ export function buildAtom(items: readonly FeedItem[], meta: FeedMeta): string {
       `    <link rel="alternate" type="text/html" href="${escapeXml(it.link)}"/>`,
       `    <updated>${iso}</updated>`,
       `    <published>${iso}</published>`,
-      `    <category term="${it.type}"/>`,
+      `    <category term="${escapeXml(it.type)}"/>`,
       `    <summary>${escapeXml(it.summary)}</summary>`,
       `  </entry>`,
     );

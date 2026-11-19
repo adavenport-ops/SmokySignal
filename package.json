@@ -16,7 +16,8 @@
     "test": "node scripts/run-tests.mjs",
     "env:pull": "vercel env pull .env.local --environment=development --yes",
     "verify-prod": "./scripts/verify-prod.zsh",
-    "feeds:check": "tsx scripts/feeds-live-check.ts"
+    "feeds:check": "tsx scripts/feeds-live-check.ts",
+    "blog:weekly": "tsx scripts/blog-weekly.ts"
   },
   "dependencies": {
     "@deck.gl/core": "9.4.1",

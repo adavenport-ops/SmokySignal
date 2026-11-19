@@ -65,6 +65,7 @@ function hubGroups(wrapYear: number): HubGroup[] {
       items: [
         { href: "/program", label: "The program", blurb: "Who flies, in what, and how it works" },
         { href: "/aircraft", label: "All aircraft", blurb: "Every tail we watch, with sources" },
+        { href: "/blog", label: "Blog", blurb: "What shipped, and when the bird flew each week" },
         { href: "/help", label: "Help", blurb: "Questions riders ask" },
         { href: "/legal", label: "Legal", blurb: "Privacy and terms" },
         { href: "/settings", label: "Settings", blurb: "Alerts, zones, display" },

@@ -1,0 +1,15 @@
+{
+ "summary": {
+  "flights": 1,
+  "airborne_s": 3600,
+  "tails_flown": 1,
+  "max_alt_ft": 2000,
+  "points_read": 10,
+  "vertices": 5,
+  "tolerance_deg": 0.0003,
+  "days_with_data": 1,
+  "busiest_day": null,
+  "busiest_hour": null,
+  "per_tail": []
+ }
+}

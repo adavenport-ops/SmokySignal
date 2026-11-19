@@ -79,6 +79,12 @@ const nextConfig = {
   },
   experimental: {
     typedRoutes: false,
+    // lib/blog.ts lists content/blog at request time; make sure the
+    // serverless bundles for the blog routes carry the markdown.
+    outputFileTracingIncludes: {
+      "/blog": ["./content/blog/**/*"],
+      "/blog/**/*": ["./content/blog/**/*"],
+    },
   },
   // Brand asset path migration. The old PWA had its manifest at
   // /manifest.webmanifest and root-level icons; the canonical bundle

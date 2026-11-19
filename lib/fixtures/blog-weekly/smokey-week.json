@@ -1,0 +1,212 @@
+{
+ "v": 1,
+ "range": {
+  "from": "2026-11-12",
+  "to": "2026-11-18",
+  "days": 7,
+  "tz": "America/Los_Angeles",
+  "start_ts": 1794470400000,
+  "end_ts": 1795075200000,
+  "includes_today": false
+ },
+ "filter": {
+  "tails": null,
+  "mission": "police",
+  "mission_applied": true
+ },
+ "sessions": [
+  {
+   "tail": "N422CT",
+   "nickname": "Guardian One",
+   "date": "20261116",
+   "start_ts": 1794852000000,
+   "end_ts": 1794853800000,
+   "duration_s": 1800,
+   "sample_count": 20,
+   "max_alt_ft": 1500,
+   "start_coord": {
+    "lat": 47.24,
+    "lon": -122.36
+   },
+   "end_coord": {
+    "lat": 47.25,
+    "lon": -122.3
+   },
+   "id": "20261116T1800",
+   "operator": "KCSO",
+   "role": "police"
+  },
+  {
+   "tail": "N305DK",
+   "nickname": "Smokey 4",
+   "date": "20261117",
+   "start_ts": 1794952800000,
+   "end_ts": 1794956400000,
+   "duration_s": 3600,
+   "sample_count": 20,
+   "max_alt_ft": 2600,
+   "start_coord": {
+    "lat": 47.24,
+    "lon": -122.36
+   },
+   "end_coord": {
+    "lat": 47.25,
+    "lon": -122.3
+   },
+   "id": "20261117T2200",
+   "operator": "WSP",
+   "role": "police"
+  },
+  {
+   "tail": "N305DK",
+   "nickname": "Smokey 4",
+   "date": "20261117",
+   "start_ts": 1794958200000,
+   "end_ts": 1794959100000,
+   "duration_s": 900,
+   "sample_count": 20,
+   "max_alt_ft": 2000,
+   "start_coord": {
+    "lat": 47.24,
+    "lon": -122.36
+   },
+   "end_coord": {
+    "lat": 47.25,
+    "lon": -122.3
+   },
+   "id": "20261117T2330",
+   "operator": "WSP",
+   "role": "smokey"
+  }
+ ],
+ "polylines": [
+  {
+   "id": "20261117T2200",
+   "tail": "N305DK",
+   "points": [
+    [
+     47.24,
+     -122.36,
+     2600,
+     1794952800
+    ],
+    [
+     47.2405,
+     -122.356,
+     2600,
+     1794952860
+    ],
+    [
+     47.241,
+     -122.352,
+     2600,
+     1794952920
+    ],
+    [
+     47.2415,
+     -122.348,
+     2600,
+     1794952980
+    ],
+    [
+     47.242,
+     -122.344,
+     2600,
+     1794953040
+    ],
+    [
+     47.2425,
+     -122.34,
+     2600,
+     1794953100
+    ],
+    [
+     47.243,
+     -122.336,
+     2600,
+     1794953160
+    ],
+    [
+     47.2435,
+     -122.332,
+     2600,
+     1794953220
+    ],
+    [
+     47.244,
+     -122.328,
+     2600,
+     1794953280
+    ],
+    [
+     47.2445,
+     -122.324,
+     2600,
+     1794953340
+    ]
+   ]
+  },
+  {
+   "id": "20261116T1800",
+   "tail": "N422CT",
+   "points": [
+    [
+     46.5,
+     -119.5,
+     1500,
+     1794852000
+    ],
+    [
+     46.5,
+     -119.49,
+     1500,
+     1794852060
+    ],
+    [
+     46.5,
+     -119.48,
+     1500,
+     1794852120
+    ],
+    [
+     46.5,
+     -119.47,
+     1500,
+     1794852180
+    ],
+    [
+     46.5,
+     -119.46,
+     1500,
+     1794852240
+    ]
+   ]
+  }
+ ],
+ "heat": {
+  "cell_deg": 0.0083,
+  "cells": [],
+  "total_cells": 0
+ },
+ "summary": {
+  "flights": 3,
+  "airborne_s": 6300,
+  "tails_flown": 2,
+  "max_alt_ft": 2600,
+  "points_read": 100,
+  "vertices": 15,
+  "tolerance_deg": 0.0003,
+  "days_with_data": 2,
+  "busiest_day": {
+   "date": "2026-11-17",
+   "airborne_s": 4500,
+   "flights": 2
+  },
+  "busiest_hour": {
+   "dow": 2,
+   "hour": 14,
+   "minutes": 60
+  },
+  "per_tail": []
+ }
+}

@@ -114,6 +114,7 @@ and claim 62 asserts the gate itself.
 - `lib/voice-mode.ts` — speechSynthesis readback toggle (foreground only)
 - `lib/proximity-alert.ts` — foreground proximity ping when alert-tier tail nearby
 - `lib/speed-warning.ts` — pure `evaluateWarning()` for N1a dryrun pipeline
+- `lib/blog-core.ts` (pure: frontmatter, ordering, JSON-LD, Atom entries) + `lib/blog.ts` (reads `content/blog/YYYY-MM-DD-slug.md`) — `/blog`, `/blog/[slug]` (SSG), `/blog/[slug]/og`, `/blog/feed.xml`. Weekly posts: `npm run blog:weekly -- --week-ending YYYY-MM-DD [--dry-run] [--force]` (`scripts/blog-weekly.ts`, core in `lib/blog-weekly.ts`), reads public `/api/history`, merged PRs via `gh`, and the `## This week` pick in `docs/BACKLOG.md`
 - `lib/bots/*` — Telegram DM alerts (read aloud in-car), Discord `/smokey`, Bluesky autopost. Env-gated, 503 `not_configured` until set; `dispatchBots()` rides the push `waitUntil` in `lib/activity.ts`. Setup: `docs/bots.md`
 - `lib/storage-keys.ts` — canonical KV key formatter (NX7 foundation; route all `tracks:*`/`spots:*`/`hotzones:*`/`flights:*` through this)
 - `components/FilterPanel.tsx` — radar filter UI (extracted from HotZoneLayer P16); multi-select roles supported
