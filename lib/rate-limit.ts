@@ -29,6 +29,7 @@ export type RateLimitBucket =
   | "relay-create"
   | "relay-test"
   | "relay-manage"
+  | "bots-telegram"
   | "admin-login"
   | "history";
 
@@ -52,6 +53,9 @@ export const RATE_LIMITS: Record<RateLimitBucket, BucketConfig> = {
   "relay-create": { limit: 5, window: "10 m", failClosed: false },
   "relay-test": { limit: 5, window: "1 m", failClosed: false },
   "relay-manage": { limit: 30, window: "1 m", failClosed: false },
+  // Keyed by a hash of the Telegram chat id, not an IP: every webhook
+  // call comes from Telegram's own servers.
+  "bots-telegram": { limit: 20, window: "1 m", failClosed: false },
   "admin-login": { limit: 5, window: "15 m", failClosed: true },
   // Read endpoint, but each miss can fan out to thousands of KV reads.
   // CDN-cached hits never reach the limiter.

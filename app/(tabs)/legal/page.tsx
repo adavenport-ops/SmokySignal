@@ -222,6 +222,13 @@ function DataFlowSection() {
             </Link>
             .
           </>,
+          <>
+            If you DM the Telegram bot: your chat id and the filters you set
+            (birds, corridors, region, quiet hours), stored only so the bot
+            can send the alerts you asked for. Send{" "}
+            <span className="ss-mono">/stop</span> and both are deleted.
+            The Discord command stores nothing about you.
+          </>,
         ]}
       />
 

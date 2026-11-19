@@ -147,3 +147,32 @@ export function relayFailCountKey(id: string): string {
 export function relayStatusKey(id: string): string {
   return `${RELAY_PREFIX}status:${id}`;
 }
+
+// ─── bots:* ──────────────────────────────────────────────────────────
+// Telegram / Bluesky bot state (lib/bots/*). Not region-scoped: one bot
+// per deployment. Telegram chat ids are PII-equivalent, so every key
+// carries a hash of the chat id, never the raw id; the raw id lives only
+// inside the subscriber record.
+//
+// bots:tg:sub:{chatHash}          → JSON { chat_id, prefs, savedAt }
+// bots:tg:subs                    → SET of chatHash
+// bots:tg:cd:{chatHash}:{TAIL}    → per-(chat, tail) alert cooldown (NX EX)
+// bots:tg:me                      → cached getMe username for /relay
+// bots:bsky:session               → cached AT Protocol session (JWTs)
+// bots:bsky:cd:{TAIL}             → global per-tail post cooldown (NX EX)
+// bots:bsky:day:{YYYY-MM-DD}      → posts made that PT day (INCR)
+export function tgSubKey(chatHash: string): string {
+  return `bots:tg:sub:${chatHash}`;
+}
+export const TG_SUBS_INDEX_KEY = "bots:tg:subs";
+export function tgCooldownKey(chatHash: string, tail: string): string {
+  return `bots:tg:cd:${chatHash}:${tail.toUpperCase()}`;
+}
+export const TG_ME_CACHE_KEY = "bots:tg:me";
+export const BSKY_SESSION_KEY = "bots:bsky:session";
+export function bskyCooldownKey(tail: string): string {
+  return `bots:bsky:cd:${tail.toUpperCase()}`;
+}
+export function bskyDailyKey(ptDate: string): string {
+  return `bots:bsky:day:${ptDate}`;
+}

@@ -194,6 +194,10 @@ export async function recordActivity(curr: Snapshot): Promise<void> {
           // Relays run as their own never-rejecting promise, so a slow
           // or broken club webhook can't touch the push sends.
           relayFanout(curr, relayEvents),
+          import("./bots/dispatch").then((m) => m.dispatchBots(takeoffs, curr)).catch((err) => {
+            console.warn("[activity] dispatchBots failed:", err);
+            return null;
+          }),
           ...takeoffs.map((e) =>
             dispatchTakeoff({
               tail: e.tail,
