@@ -96,6 +96,9 @@ export async function renderStatusCardImage(
   if (mono) fonts.push({ name: "JetBrains Mono", data: mono, weight: 600, style: "normal" });
   const sans = inter ? "Inter" : undefined;
   const monoFamily = mono ? "JetBrains Mono" : undefined;
+  // Satori throws on `fontFamily: undefined`; omit the key when a font
+  // failed to load so the card falls back to the default face.
+  const ff = (family: string | undefined) => (family ? { fontFamily: family } : {});
 
   const image = new ImageResponse(
     (
@@ -123,7 +126,7 @@ export async function renderStatusCardImage(
           />
           <span
             style={{
-              fontFamily: sans,
+              ...ff(sans),
               fontSize: 26,
               fontWeight: 800,
               letterSpacing: 3,
@@ -137,7 +140,7 @@ export async function renderStatusCardImage(
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <span
             style={{
-              fontFamily: sans,
+              ...ff(sans),
               fontSize: 132,
               fontWeight: 800,
               letterSpacing: -5,
@@ -149,7 +152,7 @@ export async function renderStatusCardImage(
           </span>
           <span
             style={{
-              fontFamily: text.tone === "alert" ? monoFamily : sans,
+              ...ff(text.tone === "alert" ? monoFamily : sans),
               fontSize: 48,
               fontWeight: text.tone === "alert" ? 600 : 800,
               color: SS_TOKENS.fg0,
@@ -171,7 +174,7 @@ export async function renderStatusCardImage(
         >
           <span
             style={{
-              fontFamily: monoFamily,
+              ...ff(monoFamily),
               fontSize: 44,
               fontWeight: 600,
               color: SS_TOKENS.fg0,
@@ -181,7 +184,7 @@ export async function renderStatusCardImage(
           </span>
           <span
             style={{
-              fontFamily: monoFamily,
+              ...ff(monoFamily),
               fontSize: 26,
               fontWeight: 600,
               color: SS_TOKENS.fg1,

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 import { RelayCreate } from "@/components/RelayCreate";
+import { BotsCallout } from "@/components/BotsCallout";
+import { getBotsPublicInfo } from "@/lib/bots/public-info";
 
 // /relay: get Smokey takeoff alerts into the tools riders and clubs
 // already use. A Discord channel or any HTTPS webhook, plus zero-setup
@@ -23,6 +25,10 @@ export const metadata = {
   },
 };
 
+// The Telegram / Discord bot cards (BotsCallout) depend on env vars and
+// the bot's public username; re-read them hourly.
+export const revalidate = 3600;
+
 const DOCS_URL = "https://github.com/adavenport-ops/SmokySignal/blob/main/docs/relay.md";
 const WIDGET_URL =
   "https://github.com/adavenport-ops/SmokySignal/blob/main/docs/widgets/scriptable-smokey.js";
@@ -42,7 +48,8 @@ const SAMPLE = {
   url: "https://smokysignal.app/plane/N305DK",
 };
 
-export default function RelayPage() {
+export default async function RelayPage() {
+  const bots = await getBotsPublicInfo();
   return (
     <main
       className="ss-page-narrow"
@@ -152,6 +159,8 @@ export default function RelayPage() {
           <a href={DOCS_URL} style={linkStyle}>relay docs</a>.
         </p>
       </Explainer>
+
+      <BotsCallout {...bots} />
 
       <Explainer eyebrow="Webhook format">
         <p style={pStyle}>

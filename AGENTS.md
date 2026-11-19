@@ -87,12 +87,14 @@ waiting for a live event.
 - `lib/push/*` — VAPID push pipeline (subscribe / dispatcher / dedupe / quiet hours)
 - `lib/radar-filter.ts` — shared filter state (operator/tail/region) for /radar
 - `lib/mission.ts` — mission taxonomy (police = Smokey, federal_le, sar, wildfire, medevac, survey, transport, unknown), legacy role mapper, `countsAsSmokey()` (mutual aid only in WA airspace). Labels in `lib/role-display.ts`
+- `lib/circling.ts` (+ `circling-server.ts`) — /circling and /api/circling: airborne tails working a pattern now, plain-language line, mission label. `lib/road.ts` — /road/[id] pass filter (~2 nm of a corridor) and summaries. `lib/coverage.ts` — lost-contact drop-outs into hot-zone cells for /api/coverage and `<CoverageNote/>`. `lib/history-digest.ts` reads 30 days of tracks once (5 min cache) for roads + coverage
 - `lib/registry-migrate.ts` + `/api/admin/migrate-taxonomy` — KV registry v3→v4 migration (GET = dry run, POST = apply, admin cookie)
 - `lib/user-zones.ts` — rider-defined geofences (localStorage); managed at `/settings/zones`
 - `lib/user-prefs.ts` — cookie-backed display prefs (12/24-hour, normal/high contrast)
 - `lib/voice-mode.ts` — speechSynthesis readback toggle (foreground only)
 - `lib/proximity-alert.ts` — foreground proximity ping when alert-tier tail nearby
 - `lib/speed-warning.ts` — pure `evaluateWarning()` for N1a dryrun pipeline
+- `lib/bots/*` — Telegram DM alerts (read aloud in-car), Discord `/smokey`, Bluesky autopost. Env-gated, 503 `not_configured` until set; `dispatchBots()` rides the push `waitUntil` in `lib/activity.ts`. Setup: `docs/bots.md`
 - `lib/storage-keys.ts` — canonical KV key formatter (NX7 foundation; route all `tracks:*`/`spots:*`/`hotzones:*`/`flights:*` through this)
 - `components/FilterPanel.tsx` — radar filter UI (extracted from HotZoneLayer P16); multi-select roles supported
 - `app/(tabs)/` — main app routes (home, radar, dash, plane, settings, etc.)
@@ -107,6 +109,9 @@ waiting for a live event.
   pref, contrast pref).
 - The only server-side identifier is the push subscription endpoint —
   required by Web Push, treated as PII-equivalent in the schema.
+- Telegram bot: chat id + filters only, keyed by a hash of the chat id
+  (raw id inside the record). PII-equivalent, same footing as a push
+  endpoint. `/stop` deletes it.
 - Geolocation is browser-only, never persisted server-side.
 - Speed data: device reports it, we do not display or store it.
 
