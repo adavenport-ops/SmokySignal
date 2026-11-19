@@ -58,7 +58,7 @@ export type NavItem = {
 
 export type NavSection = { id: string; title: string; items: NavItem[] };
 
-/** First year the season wrap exists for (the log starts 2026-10-16). */
+/** First year the season wrap exists for (the log starts 2026-10-14). */
 export const FIRST_WRAP_YEAR = 2026;
 
 /** Current Pacific year, floored at the first wrap year. */
