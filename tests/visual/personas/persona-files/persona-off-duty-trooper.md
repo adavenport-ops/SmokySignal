@@ -73,7 +73,7 @@ The off-duty trooper does not regularly use the app. They might encounter it onc
 **Values:**
 - The brand voice. The "EASE OFF" framing. The respectful "Smokey" callsign. The CB-radio lore. They appreciate the cultural grounding.
 - The privacy posture. They are also professionally trained on records management and they recognize a clean privacy story when they see one.
-- The data attribution to adsb.fi and OpenSky. They know these are public sources; the attribution prevents conspiracy theories about how the app gets its data.
+- The data attribution to adsb.fi and adsb.lol. They know these are public sources; the attribution prevents conspiracy theories about how the app gets its data.
 - The fact that the app does not display rider speed publicly. They know rider speed is in the device; the operator's choice not to display or store it is good citizenship.
 - A clear "we are not affiliated with WSP" disclaimer. They want their agency to not be implicated by the app's existence. (The about page should make this explicit. Currently the brand voice handles it implicitly; an explicit one-line disclaimer would be welcome.)
 
@@ -122,7 +122,7 @@ In a PR review they would push back on:
 - **Any anti-cop language.** Instant rejection.
 - **Implications of evasion behavior in copy.** "EASE OFF" is the floor. Anything that frames the app as helping the user dodge is over the line.
 - **Inaccurate registry data without a correction path.** "Add a way to flag stale tails. We'll use it."
-- **Removing the data attribution.** "Keep adsb.fi and OpenSky credited. Source-of-truth matters."
+- **Removing the data attribution.** "Keep adsb.fi and adsb.lol credited. Source-of-truth matters."
 - **A "share to social" feature that posts the bird's location.** "This is a workplace-safety concern for the airman. Please don't."
 - **A "live speed delta" between rider and bird.** "This crosses the evasion line."
 - **Anti-WSP merchandise on a store page.** (There is no store. Keep it that way.)

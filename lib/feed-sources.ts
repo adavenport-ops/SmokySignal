@@ -4,13 +4,12 @@
 import type { FeedSrc, SnapshotSource } from "./types";
 
 /** Canonical order: summary strings and `sources` arrays follow it. */
-export const FEED_ORDER: readonly FeedSrc[] = ["fi", "lol", "apl", "os"];
+export const FEED_ORDER: readonly FeedSrc[] = ["fi", "lol", "apl"];
 
 export const FEED_NAMES: Record<FeedSrc, string> = {
   fi: "adsb.fi",
   lol: "adsb.lol",
   apl: "airplanes.live",
-  os: "OpenSky Network",
 };
 
 export function isFeedSrc(v: string): v is FeedSrc {
@@ -31,7 +30,6 @@ export function summarizeSources(srcs: Iterable<FeedSrc>): SnapshotSource {
 /** Splits a summary back into tags. Pre-merge values map to their tag. */
 export function parseSources(source: SnapshotSource): FeedSrc[] {
   if (source === "adsbfi") return ["fi"];
-  if (source === "opensky") return ["os"];
   return sortFeeds(source.split("+").filter(isFeedSrc));
 }
 
@@ -50,7 +48,7 @@ export function describeSource(source: SnapshotSource): {
     return { label: source.toUpperCase(), detail: `${source.toUpperCase()} feed.` };
   }
   const label =
-    source === "adsbfi" || source === "opensky"
+    source === "adsbfi"
       ? source.toUpperCase()
       : tags.map((t) => t.toUpperCase()).join("+");
   const legend = tags

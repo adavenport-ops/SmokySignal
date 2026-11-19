@@ -68,16 +68,7 @@ export default function LegalPage() {
           >
             adsb.lol
           </a>
-          , merged by aircraft so each feed fills gaps in the other, with{" "}
-          <a
-            href="https://opensky-network.org"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
-          >
-            OpenSky Network
-          </a>{" "}
-          as the fallback. All are anonymous and require attribution, provided
+          , merged by aircraft so each feed fills gaps in the other. Both are anonymous and require attribution, provided
           here and in the app footer. Contains information from adsb.lol,
           which is made available under the{" "}
           <a
@@ -169,9 +160,8 @@ function DataFlowSection() {
           </>,
           <>
             Aircraft data requests to{" "}
-            <span className="ss-mono">adsb.fi</span>,{" "}
-            <span className="ss-mono">adsb.lol</span> and{" "}
-            <span className="ss-mono">OpenSky Network</span> — public,
+            <span className="ss-mono">adsb.fi</span> and{" "}
+            <span className="ss-mono">adsb.lol</span> — public,
             anonymous, rate-limited. Same requests anyone could make.
           </>,
           <>

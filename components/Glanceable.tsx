@@ -292,15 +292,7 @@ function Footer() {
       >
         adsb.lol
       </a>{" "}
-      (ODbL) ·{" "}
-      <a
-        href="https://opensky-network.org"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={FOOTER_LINK}
-      >
-        OpenSky Network
-      </a>
+      (ODbL)
       <br />
       <Link href="/about" style={FOOTER_LINK}>
         More

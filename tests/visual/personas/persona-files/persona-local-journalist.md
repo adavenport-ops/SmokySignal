@@ -60,7 +60,7 @@ The journalist does not encounter SmokySignal often. When they do, it is one of:
 
 - **No clear "about the operator" page.** They want a name, a posture, an email. The about page tells the brand lore but does not introduce the human who runs it. They will email the operator anyway, but a "press inquiries" line on `/about` would save them a step.
 - **No public posture statement about surveillance / civil rights.** They want to know whether the operator considers WSP aviation enforcement to be (a) legitimate and useful, (b) an information asymmetry the public should rebalance, or (c) a civil-liberties concern. The product currently leans (b) but does not say so explicitly. The journalist would value an explicit framing on the about or legal page.
-- **Activity feed depth.** They want a full chronology, not a 30-day window. If they are reporting on an enforcement event from last summer, the app cannot help them. (This is the OpenSky-lockout reality; the data tank fills forward only. They will note this and include it as a caveat in any piece.)
+- **Activity feed depth.** They want a full chronology, not a 30-day window. If they are reporting on an enforcement event from last summer, the app cannot help them. (This is the reality of the data tank: it fills forward only. They will note this and include it as a caveat in any piece.)
 - **No deep-link to a specific historical flight.** They want to send their editor a link that says "this is the bird's track on 2026-02-14." If the URL is unstable or the data has rolled out of the 30-day window, they cannot.
 - **No press kit.** They want logo SVG, brand colors, screenshot mocks, an operator headshot, a one-paragraph operator bio. Currently no press kit page exists.
 - **Confidentiality concerns about emailing the operator.** Some journalists prefer Signal or ProtonMail. If the operator publishes a `Signal: <handle>` line, that earns trust.
@@ -71,7 +71,7 @@ The journalist does not encounter SmokySignal often. When they do, it is one of:
 **Values:**
 - The brand voice. They will quote it. The "the app *informs*, it does not *evade*" line is **the** quotable sentence in the project.
 - The privacy posture, if it is on a page they can link to.
-- The data sourcing transparency — "primary: adsb.fi, fallback: OpenSky" is a sentence they will paraphrase in a story.
+- The data sourcing transparency — "sources: adsb.fi and adsb.lol" is a sentence they will paraphrase in a story.
 - The hot zones. They will use the heatmap to anchor a "where does WSP fly" piece.
 - Operator quotes that are calm, not crusading.
 - The dark theme. (They are tired of bright apps.)
@@ -109,7 +109,7 @@ Sample inquiries to the operator:
 
 > Hi — I'm a reporter at [outlet] working on a piece about aviation enforcement in Washington. I came across SmokySignal and I have a few questions:
 > 
-> 1. Could you confirm the data sources for the aircraft positions? I see references to adsb.fi and OpenSky on the about page; I want to verify before I cite.
+> 1. Could you confirm the data sources for the aircraft positions? I see references to adsb.fi and adsb.lol on the about page; I want to verify before I cite.
 > 2. The privacy section says no user data is persisted server-side. Could you walk me through what is logged on the server and for how long? I'm not asking for proprietary detail — just enough to characterize the privacy posture in a paragraph.
 > 3. Is there a press kit (logo, screenshots) I could use?
 > 4. Would you be willing to be quoted on the record about why you built this?
@@ -134,7 +134,7 @@ In a PR review the journalist would push back on:
 
 - **Anti-cop framing in copy.** "Don't. It will tank your citation rate. The brand voice nails this — keep it."
 - **Implying the app helps people break the law.** "The current framing ('the app informs, does not evade') is exactly right. Don't drift."
-- **Removing data attribution.** "Keep adsb.fi and OpenSky credited. Citation chains matter."
+- **Removing data attribution.** "Keep adsb.fi and adsb.lol credited. Citation chains matter."
 - **Hiding the operator's name.** "If a reporter can't find a real name within 30 seconds of looking, the credibility ceiling is lower."
 - **No press kit.** "Add one. Logo SVG, screenshots, one-paragraph bio. Two-hour job."
 - **Aggressive marketing copy.** "The app's brand is its tone. Stay calm. Sensational copy will hurt your share-of-voice with reporters."

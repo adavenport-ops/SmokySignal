@@ -21,6 +21,8 @@ Three principles drive every prioritization call:
 
 ## Where we are right now
 
+OpenSky removed 2026-11: the integration, backfill scripts and OPENSKY_* env vars are gone; sources are adsb.fi and adsb.lol.
+
 **P15 sweep (2026-05-02):** Shipped /zones (N20), high-contrast mode
 (NX1), voice readback (NX4), and deprecated the OpenSky historical
 backfill (N2 → not viable on adsb.fi). One PR (#59, /about tail

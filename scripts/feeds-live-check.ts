@@ -1,9 +1,8 @@
 // One-shot live check of every ADS-B feed for the WA region circle.
 // Usage: npm run feeds:check
 //
-// Asks each feed exactly once (adsb.fi, adsb.lol, airplanes.live, and
-// OpenSky by fleet hex), then merges the regional answers the way the
-// snapshot does and prints per-feed counts. airplanes.live is asked even
+// Asks each feed exactly once (adsb.fi, adsb.lol, airplanes.live), then merges
+// the answers the way the snapshot does and prints per-feed counts. airplanes.live is asked even
 // when SS_FEED_APL is off so the check shows whether access was granted.
 // Costs one metered adsb.lol request out of the 500/day anonymous quota.
 // Reads no KV and writes nothing.
@@ -15,7 +14,6 @@ import { fetchAdsbLol } from "../lib/feeds/adsblol";
 import { fetchAirplanesLive } from "../lib/feeds/airplaneslive";
 import { feedErrorCode } from "../lib/feeds/http";
 import { REGION } from "../lib/feeds/region";
-import { fetchOpenSky } from "../lib/opensky";
 import { FLEET, fleetHex } from "../lib/seed";
 import type { FeedSrc, NormalizedAc } from "../lib/types";
 
@@ -43,10 +41,9 @@ async function main() {
     time("lol", () => fetchAdsbLol(REGION)),
     time("apl", () => fetchAirplanesLive(REGION)),
   ]);
-  const os = await time("os", () => fetchOpenSky(fleetHexes));
 
   console.log("\nfeed  status  aircraft  fleet  latency");
-  for (const r of [...regional, os]) {
+  for (const r of regional) {
     const n = r.rows?.length ?? 0;
     const f = r.rows?.filter((a) => fleet.has(a.hex)).length ?? 0;
     const status = r.rows ? "ok" : `err:${r.err}`;

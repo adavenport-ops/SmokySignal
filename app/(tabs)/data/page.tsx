@@ -218,11 +218,11 @@ function Methods() {
         <a href="https://adsb.fi" target="_blank" rel="noopener noreferrer" style={linkStyle}>
           adsb.fi
         </a>{" "}
-        with the{" "}
-        <a href="https://opensky-network.org" target="_blank" rel="noopener noreferrer" style={linkStyle}>
-          OpenSky Network
-        </a>{" "}
-        as fallback. Nothing here comes from an agency.
+        and{" "}
+        <a href="https://adsb.lol" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+          adsb.lol
+        </a>
+        . Nothing here comes from an agency.
       </p>
       <p style={p}>
         <strong style={{ color: SS_TOKENS.fg0 }}>Coverage.</strong> Receivers are volunteer stations. Low flying,

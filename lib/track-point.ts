@@ -1,10 +1,9 @@
 // Per-point capture for the permanent track history. Pure: no Redis, no
 // Next imports, so lib/track-point.test.ts can pin it.
 //
-// Feed rows are normalized once, upstream: lib/feeds/readsb.ts for every
-// readsb v2 feed (adsb.fi, adsb.lol, airplanes.live) and lib/opensky.ts
-// for OpenSky. Both fill NormalizedAc with the capture fields and tag
-// `src`; lib/feed-merge.ts unions them by hex. captureFields() then folds
+// Feed rows are normalized once, upstream, in lib/feeds/readsb.ts for every
+// readsb v2 feed (adsb.fi, adsb.lol, airplanes.live). It fills NormalizedAc
+// with the capture fields and tags `src`; lib/feed-merge.ts unions them by hex. captureFields() then folds
 // the merged NormalizedAc into the compact optional keys appended to each
 // TrackPoint, and parseTrackPoint() reads stored points back.
 //
@@ -13,13 +12,13 @@
 // Every new key is optional, so points written before 2026-11-18 (only
 // lat/lon/alt/spd/trk/ts) still parse as TrackPoint.
 
-import type { FeedSrc, NormalizedAc } from "./types";
+import type { NormalizedAc, StoredFeedSrc } from "./types";
 
 /** Optional per-point capture. Short keys keep each stored point small. */
 export type TrackCapture = {
-  /** Geometric (GNSS) altitude, ft. adsb.fi `alt_geom`, OpenSky geo_altitude. */
+  /** Geometric (GNSS) altitude, ft. adsb.fi `alt_geom`. */
   ag?: number;
-  /** Barometric vertical rate, ft/min. adsb.fi `baro_rate`, OpenSky vertical_rate. */
+  /** Barometric vertical rate, ft/min. adsb.fi `baro_rate`. */
   vr?: number;
   /** Geometric vertical rate, ft/min. adsb.fi `geom_rate`. */
   vg?: number;
@@ -29,7 +28,7 @@ export type TrackCapture = {
   em?: string;
   /** 1 when the position came from MLAT, not the aircraft's own ADS-B. */
   ml?: 1;
-  /** ADS-B emitter category ("A1".."C7"). adsb.fi `category`, OpenSky category. */
+  /** ADS-B emitter category ("A1".."C7"). adsb.fi `category`. */
   cat?: string;
   /** Navigation integrity category. adsb.fi `nic`. */
   nic?: number;
@@ -41,12 +40,12 @@ export type TrackCapture = {
   sp?: number;
   /** Signal strength at the receiving station, dBFS. adsb.fi `rssi`. */
   rs?: number;
-  /** Receivers that heard this aircraft, when the source says. OpenSky `sensors`. */
+  /** Receivers that heard this aircraft, when the source says. */
   rx?: number;
-  /** Callsign / flight ID, trimmed. adsb.fi `flight`, OpenSky callsign. */
+  /** Callsign / flight ID, trimmed. adsb.fi `flight`. */
   cs?: string;
-  /** Feed that supplied the position: "fi", "lol", "apl" or "os" (lib/types.ts FeedSrc). */
-  src?: FeedSrc;
+  /** Feed that supplied the position: "fi", "lol" or "apl"; older points may carry "os" (lib/types.ts StoredFeedSrc). */
+  src?: StoredFeedSrc;
 };
 
 export type TrackPoint = {

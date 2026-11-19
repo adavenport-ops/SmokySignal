@@ -27,7 +27,7 @@ The bird is a **public-data artifact**. They are not afraid of it, not protected
 They came for the **shape** of the product, not the utility. They like:
 - The fact that someone built a glance-able, brand-coherent, dark-themed micro-app.
 - The lore (Smokey Bear → CB radio → callsign).
-- The data feed mechanics (ADS-B + adsb.fi + OpenSky fallback).
+- The data feed mechanics (ADS-B + adsb.fi + adsb.lol).
 - The privacy posture.
 - The honest "learning your sky" empty state.
 

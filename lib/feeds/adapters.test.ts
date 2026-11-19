@@ -13,7 +13,6 @@ import { adsbLolUrl, normalizeAdsbLol } from "./adsblol";
 import { airplanesLiveUrl, normalizeAirplanesLive } from "./airplaneslive";
 import { epochMs } from "./readsb";
 import { feedErrorCode, FeedHttpError } from "./http";
-import { normalizeStates } from "../opensky";
 import fiFixture from "./fixtures/adsbfi-point.json";
 import lolFixture from "./fixtures/adsblol-point.json";
 
@@ -107,18 +106,6 @@ test("URLs: one regional circle per feed, radius capped at 250 nm", () => {
   );
 });
 
-test("OpenSky states: tagged os, pos_ts from time_position", () => {
-  const [a] = normalizeStates(
-    [["a1b2c3", "N123  ", "United States", 1795059300, 1795059301, -122.3, 47.5, 914.4, false, 51.4, 270, null, null, 960, "1200"]],
-    1795059310,
-  );
-  assert.equal(a!.src, "os");
-  assert.equal(a!.pos_ts, 1795059300000);
-  assert.equal(a!.seen_pos, 10);
-  assert.equal(a!.alt_baro, 3000);
-  assert.equal(a!.gs, 100);
-});
-
 test("error codes are short and fixed", () => {
   assert.equal(feedErrorCode(new FeedHttpError("lol", 429, 60)), "rate_limited");
   assert.equal(feedErrorCode(new FeedHttpError("apl", 403)), "forbidden");
@@ -127,6 +114,6 @@ test("error codes are short and fixed", () => {
   const t = new Error("x");
   t.name = "TimeoutError";
   assert.equal(feedErrorCode(t), "timeout");
-  assert.equal(feedErrorCode(new Error("opensky auth 401: secret body")), "forbidden");
+  assert.equal(feedErrorCode(new Error("upstream auth 401: secret body")), "forbidden");
   assert.equal(feedErrorCode(new TypeError("fetch failed")), "network");
 });

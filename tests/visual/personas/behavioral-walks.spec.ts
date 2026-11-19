@@ -130,7 +130,7 @@ test.describe("behavioral persona walks", () => {
     });
     const text = await page.locator("main").innerText();
     const mentionsNoAccount = /no account|no sign[- ]?in|no login/i.test(text);
-    const mentionsDataSources = /adsb\.fi|opensky/i.test(text);
+    const mentionsDataSources = /adsb\.fi|adsb\.lol/i.test(text);
     const mentionsRetention = /retain|delete|keep|store/i.test(text);
     log.goalReached = mentionsNoAccount && mentionsDataSources;
     log.finalState = `noAccount=${mentionsNoAccount} dataSources=${mentionsDataSources} retention=${mentionsRetention}`;

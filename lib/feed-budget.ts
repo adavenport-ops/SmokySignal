@@ -80,9 +80,7 @@ function envInt(v: string | undefined, fallback: number): number {
 }
 
 /**
- * Published limits as of 2026-11-18. OpenSky is absent on purpose: it is
- * only called as a fallback when every regional feed fails, and its own
- * adapter tracks the credit header (lib/opensky.ts).
+ * Published limits as of 2026-11-18.
  */
 export function providerLimits(
   env: Record<string, string | undefined> = process.env,

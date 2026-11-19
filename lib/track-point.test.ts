@@ -1,8 +1,7 @@
 // Run: npx tsx --test lib/track-point.test.ts
 //
 // Per-point capture for the permanent track history, end to end through
-// the one readsb v2 normalizer (lib/feeds/readsb.ts), the OpenSky
-// normalizer (lib/opensky.ts) and the multi-feed merge
+// the one readsb v2 normalizer (lib/feeds/readsb.ts) and the multi-feed merge
 // (lib/feed-merge.ts): rich fields survive, `src` comes from the feed
 // tag, JSON stays compact, and pre-capture points still parse.
 
@@ -15,7 +14,6 @@ import {
   type TrackPoint,
 } from "./track-point";
 import { normalizeReadsbRow } from "./feeds/readsb";
-import { normalizeStates } from "./opensky";
 import { mergeByHex } from "./feed-merge";
 import type { FeedSrc } from "./types";
 
@@ -169,33 +167,14 @@ test("parseTrackPoint reads pre-capture points and auto-deserialized objects", (
   assert.equal(parseTrackPoint({ lat: "47", lon: -122, ts: 1 }), null);
 });
 
-test("OpenSky normalizer converts units and fills what OpenSky has", () => {
-  const state = [
-    "a1b2c3", "WSP5    ", "United States", 1000, 1002, -122.5, 47.2, 1000, false,
-    60, 90, -2.54, [11, 22], 1050, "1200", false, 2, 8,
-  ];
-  const [ac] = normalizeStates([state], 1004);
-  assert.equal(ac!.hex, "a1b2c3");
-  assert.equal(ac!.src, "os");
-  assert.equal(ac!.pos_ts, 1_000_000);
-  assert.equal(ac!.alt_baro, 3281);
-  assert.equal(ac!.alt_geom, 3445);
-  assert.equal(ac!.gs, 117);
-  assert.equal(ac!.baro_rate, -500);
-  assert.equal(ac!.seen_pos, 4);
-  assert.equal(ac!.receivers, 2);
-  assert.equal(ac!.category, "A7");
-  assert.equal(ac!.type, "mlat");
-  const c = captureFields(ac!);
-  assert.equal(c.src, "os");
-  assert.equal(c.ml, 1);
-  assert.equal(c.cs, "WSP5");
-  assert.equal(c.rx, 2);
-  // Short (non-extended) vector, on the ground.
-  const [g] = normalizeStates([["a1b2c3", null, "US", null, 1, -122, 47, null, true, 0, null, null, null, null, null]]);
-  assert.equal(g!.alt_baro, "ground");
-  assert.equal(g!.category, undefined);
-  assert.equal(g!.seen_pos, undefined);
+test("a stored point from the retired feed (src os) still parses", () => {
+  const p = parseTrackPoint(
+    JSON.stringify({ lat: 47.2, lon: -122.5, alt: 3281, spd: 117, trk: 90, ts: 1_000_000, src: "os", cs: "WSP5", rx: 2 }),
+  );
+  assert.ok(p);
+  assert.equal(p!.src, "os");
+  assert.equal(p!.cs, "WSP5");
+  assert.equal(p!.rx, 2);
 });
 
 test("merge: the freshest fix wins as a unit, extras fill from the other feed", () => {

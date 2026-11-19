@@ -16,11 +16,6 @@ const WARN = [
     "Without it: in-memory cache fallback. Fine for UI work; track-history persistence won't survive a dev-server restart.",
   ],
   ["KV_REST_API_TOKEN", "Without it: in-memory cache fallback."],
-  [
-    "OPENSKY_CLIENT_ID",
-    "Without it: anonymous OpenSky fallback (heavily rate-limited).",
-  ],
-  ["OPENSKY_CLIENT_SECRET", "Without it: anonymous OpenSky fallback."],
 ];
 
 // Keys we BLOCK on (dev/build aborts with a clear error).

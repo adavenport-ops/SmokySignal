@@ -38,7 +38,7 @@ export function feedErrorCode(e: unknown): FeedErrorCode {
     if (e.name === "SyntaxError" || e.name === "FeedPayloadError") {
       return "bad_payload";
     }
-    // OpenSky's adapter throws plain Errors with the status in the message.
+    // Plain Errors carrying the HTTP status in the message.
     const m = /\b(\d{3})\b/.exec(e.message);
     if (m) {
       const status = Number(m[1]);

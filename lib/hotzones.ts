@@ -33,8 +33,7 @@ export const HOTZONE_DAYS_BACK = 30;
 // upstream snapshot query in lib/adsb.ts. Those gate which aircraft we
 // pull from adsb.fi (a 250 nm circle around 47.4, -120.8, which reaches
 // roughly lat 43.2-51.6 and lon -126.9 to -114.7); this gates which
-// stored track points enter the heatmap aggregate. Points beyond the
-// adsb.fi circle can only arrive via the OpenSky fallback.
+// stored track points enter the heatmap aggregate.
 
 const CURRENT_KEY = hotzonesCurrentKey();
 const LAST_REFRESH_KEY = hotzonesLastRefreshKey();
