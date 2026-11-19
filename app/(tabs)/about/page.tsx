@@ -98,6 +98,9 @@ export default async function AboutPage() {
         <HubLink href="/relay" label="Relay: takeoffs to Discord, webhooks, feeds">
           Relay
         </HubLink>
+        <HubLink href="/glance" label="Glance mode: huge-type status for a handlebar mount">
+          Glance
+        </HubLink>
         <HubLink href="/help" label="Help and FAQ">
           Help
         </HubLink>
@@ -653,6 +656,21 @@ function EmbedBadgeCallout() {
           alt="SmokySignal status"
           style={{ verticalAlign: "middle" }}
         />
+      </p>
+      <p
+        style={{
+          fontSize: 12,
+          lineHeight: 1.5,
+          color: SS_TOKENS.fg2,
+          margin: 0,
+          marginTop: 8,
+        }}
+      >
+        Want it live on a club site? Paste the{" "}
+        <a href="/embed/help" className="ss-mono" style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}>
+          status widget
+        </a>
+        .
       </p>
       <p
         style={{

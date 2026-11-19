@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BASE_URL } from "@/lib/config";
 import { unstable_cache } from "next/cache";
 import { SS_TOKENS, TYPE } from "@/lib/tokens";
 import { getForecastGrid } from "@/lib/predictor";
@@ -234,6 +235,7 @@ export default async function ForecastPage({
               busier hour. Tap a cell to see the regular birds.
             </p>
             <DeliveryNote />
+            <a href={`${BASE_URL.replace(/^https?:/, "webcal:")}/calendar.ics`} className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.alert, textDecoration: "underline" }}>Subscribe in calendar</a>
           </section>
 
           <ForecastMissionFilter selected={missions} />

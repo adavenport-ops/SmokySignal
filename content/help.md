@@ -113,6 +113,14 @@ The map shows the in-progress flight if the plane is currently up (with a pulsin
 
 `/forecast` shows a 7×24 grid: probability of any fleet takeoff per hour-of-week. Brighter cells = more historical activity. The current Pacific (day, hour) is outlined in amber. Tap any cell to see which tails most commonly fly in that bucket.
 
+### Glance mode
+
+[/glance](/glance) is one screen of huge type for a phone on a handlebar mount: UP or DOWN, the nearest Smokey's distance and bearing, and a 24-hour Pacific clock. High contrast, read-only, the screen stays awake. The only control is a small EXIT.
+
+Distance and bearing appear only when your browser has already been given location access for SmokySignal. Glance never asks. If the feed goes quiet it says NO READ with the time of the last good read; it never shows DOWN on an old read.
+
+**Mounting and safety.** Set it before you ride; don't interact while moving. Mount the phone, open /glance, check the read time, then ride. If something needs a tap, pull over.
+
 ## Sharing flights
 
 Every flight gets a permanent shareable URL: `/flight/{TAIL}/{FLIGHT_ID}`. You can grab it via the **Share** button next to the back link on any plane detail page (and on the admin recent-flights view). The link works without auth and includes a social-friendly preview image.
