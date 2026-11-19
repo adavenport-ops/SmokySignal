@@ -45,6 +45,9 @@ export default async function ForecastPage({
   const showLearning =
     learning.stillLearning ||
     grid.total_events < FORECAST_LEARNING_EVENT_FLOOR;
+  const days = learning.daysElapsed;
+  const daysNum = `${days}${learning.stillLearning ? "" : "+"}`;
+  const daysWord = days === 1 ? "day" : "days";
   const hour12 = isHour12(getTimeFormatPref());
   return (
     <main
@@ -159,8 +162,35 @@ export default async function ForecastPage({
         >
           Hour-of-week probability of any fleet takeoff, drawn from{" "}
           <span className="ss-mono">{grid.total_events}</span> logged
-          takeoff{grid.total_events === 1 ? "" : "s"}. Brighter cells,
+          takeoff{grid.total_events === 1 ? "" : "s"}, seen in public ADS-B
+          data via adsb.fi {days <= 0 ? (
+            "so far"
+          ) : (
+            <>
+              over <span className="ss-mono">{daysNum}</span> {daysWord}
+            </>
+          )}
+          . Brighter cells,
           busier hour. Tap a cell to see the regular birds.
+        </p>
+        <p
+          style={{
+            fontSize: 12,
+            color: SS_TOKENS.fg1,
+            lineHeight: 1.5,
+            margin: 0,
+          }}
+        >
+          This page is check-back, not push. It never pings you. Live takeoff
+          alerts are set up in{" "}
+          <Link
+            href="/settings/alerts"
+            className="ss-mono"
+            style={{ color: SS_TOKENS.alert, textDecoration: "underline" }}
+          >
+            /settings/alerts
+          </Link>
+          .
         </p>
       </section>
 
