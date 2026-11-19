@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
-import { saveSubscription, type AlertPrefs } from "@/lib/push/store";
+import { saveSubscription } from "@/lib/push/store";
+import { parsePushSubscription, validatePrefsInput } from "@/lib/push/validate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function isPushSubscriptionJSON(v: unknown): v is PushSubscriptionJSON {
-  if (!v || typeof v !== "object") return false;
-  const o = v as Record<string, unknown>;
-  if (typeof o.endpoint !== "string" || !o.endpoint.startsWith("https://"))
-    return false;
-  if (!o.keys || typeof o.keys !== "object") return false;
-  const k = o.keys as Record<string, unknown>;
-  return typeof k.p256dh === "string" && typeof k.auth === "string";
-}
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -24,12 +15,20 @@ export async function POST(req: Request) {
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
   }
-  const b = body as { sub?: unknown; prefs?: Partial<AlertPrefs> };
-  if (!isPushSubscriptionJSON(b.sub)) {
+  const b = body as { sub?: unknown; prefs?: unknown };
+  // Endpoint must be a known browser push service (no arbitrary hosts) and
+  // keys must be base64url of plausible length. Only { endpoint, keys } is
+  // kept; any other fields on the incoming object are dropped.
+  const sub = parsePushSubscription(b.sub);
+  if (!sub) {
     return NextResponse.json({ error: "invalid_subscription" }, { status: 400 });
   }
+  const prefs = validatePrefsInput(b.prefs);
+  if (!prefs.ok) {
+    return NextResponse.json({ error: prefs.error }, { status: 400 });
+  }
   try {
-    const id = await saveSubscription(b.sub, b.prefs);
+    const id = await saveSubscription(sub, prefs.prefs);
     return NextResponse.json({ ok: true, id });
   } catch (e) {
     console.warn("[push/subscribe] save failed:", e);

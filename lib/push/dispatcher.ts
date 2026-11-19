@@ -4,10 +4,17 @@
 // matching tier + zone + quiet-hours, and best-effort send via web-push.
 // Dead endpoints (HTTP 410/404) are pruned from KV. Failures never throw —
 // the snapshot pipeline must keep flowing.
+//
+// Hardening: sends run in bounded-concurrency batches, each with a socket
+// timeout plus an overall deadline, so one slow or hostile endpoint can't
+// hold up every other rider's alert. Endpoints are re-checked against the
+// push-service allow-list at send time, which covers rows stored before
+// /api/push/subscribe enforced it.
 
 import webpush from "web-push";
 import { getRedis } from "../cache";
 import { zoneIdForPoint } from "../hotzones";
+import { pushCooldownKey } from "../storage-keys";
 import {
   listSubscriptions,
   removeSubscription,
@@ -15,11 +22,20 @@ import {
   type StoredSubscription,
   type UserZoneSpec,
 } from "./store";
+import { parsePushSubscription } from "./validate";
 import type { FleetRole, RoleConfidence } from "../types";
 
-const DEDUPE_PREFIX = "push:dispatched:";
-const DEDUPE_TTL_SECONDS = 6 * 60 * 60;
+/** One alert per tail per 20 minutes, claimed atomically (SET NX EX). */
+const COOLDOWN_TTL_SECONDS = 20 * 60;
 const MAX_BODY_CHARS = 140;
+/** Push TTL: an alert older than 10 minutes is stale, let the service drop it. */
+const PUSH_TTL_SECONDS = 600;
+/** web-push socket idle timeout. */
+const SEND_SOCKET_TIMEOUT_MS = 5_000;
+/** Hard ceiling per send, covers slow-drip responses the socket timeout misses. */
+const SEND_DEADLINE_MS = 8_000;
+/** Concurrent sends per batch. */
+export const SEND_CONCURRENCY = 10;
 
 const ALERT_ROLES: ReadonlySet<FleetRole> = new Set([
   "smokey",
@@ -52,7 +68,10 @@ export type DispatchTakeoffArgs = {
   lat: number | null;
   lon: number | null;
   alt_ft: number | null;
-  /** ISO timestamp of takeoff. Used to compute the dedupe key. */
+  /**
+   * ISO timestamp of takeoff. Informational; dedupe is a per-tail cooldown
+   * (pushCooldownKey) rather than a timestamp bucket.
+   */
   ts_iso: string;
 };
 
@@ -70,30 +89,37 @@ export async function dispatchTakeoff(
     return { sent: 0, skipped: 0, removed: 0, reason: "vapid_not_configured" };
   }
 
-  const dedupeKey = buildDedupeKey(args.tail, args.ts_iso);
-  const redis = await getRedis();
-  if (redis) {
-    const already = await redis.get(`${DEDUPE_PREFIX}${dedupeKey}`);
-    if (already) return { sent: 0, skipped: 0, removed: 0, reason: "duplicate" };
-    await redis.set(`${DEDUPE_PREFIX}${dedupeKey}`, "1", {
-      ex: DEDUPE_TTL_SECONDS,
-    });
+  let subs: StoredSubscription[];
+  try {
+    const redis = await getRedis();
+    if (redis) {
+      // Atomic claim: concurrent snapshot regens race on the same key and
+      // exactly one wins. Upstash returns null when NX finds the key set.
+      const claimed = await redis.set(pushCooldownKey(args.tail), "1", {
+        nx: true,
+        ex: COOLDOWN_TTL_SECONDS,
+      });
+      if (claimed === null) {
+        return { sent: 0, skipped: 0, removed: 0, reason: "duplicate" };
+      }
+    }
+    subs = await listSubscriptions();
+  } catch (e) {
+    console.warn("[push] cooldown/list failed:", e);
+    return { sent: 0, skipped: 0, removed: 0, reason: "kv_error" };
   }
-
-  const subs = await listSubscriptions();
   if (subs.length === 0) {
     return { sent: 0, skipped: 0, removed: 0, reason: "no_subs" };
   }
 
-  const payload = composePayload(args);
+  const payload = JSON.stringify(composePayload(args));
   const aircraftZone =
     args.lat != null && args.lon != null
       ? zoneIdForPoint(args.lat, args.lon)
       : null;
 
-  let sent = 0;
   let skipped = 0;
-  let removed = 0;
+  const targets: StoredSubscription[] = [];
   for (const stored of subs) {
     const skip = shouldSkip(
       stored.prefs,
@@ -103,26 +129,48 @@ export async function dispatchTakeoff(
       args.lon,
       aircraftZone,
     );
-    if (skip) {
-      skipped++;
-      continue;
-    }
-    const result = await sendOne(stored, payload);
-    if (result === "sent") sent++;
-    else if (result === "removed") removed++;
+    if (skip) skipped++;
+    else targets.push(stored);
+  }
+
+  const results = await mapWithConcurrency(targets, SEND_CONCURRENCY, (s) =>
+    sendOne(s, payload),
+  );
+  let sent = 0;
+  let removed = 0;
+  for (const r of results) {
+    if (r.status === "fulfilled" && r.value === "sent") sent++;
+    else if (r.status === "fulfilled" && r.value === "removed") removed++;
     else skipped++;
   }
   return { sent, skipped, removed };
 }
 
-function buildDedupeKey(tail: string, tsIso: string): string {
-  // Round to the nearest minute so a 10s poll cadence can't fire two
-  // distinct dedupe keys for the same takeoff event.
-  const ts = Date.parse(tsIso);
-  const minute = Number.isFinite(ts)
-    ? Math.floor(ts / 60_000) * 60_000
-    : Math.floor(Date.now() / 60_000) * 60_000;
-  return `${tail}:${minute}`;
+/**
+ * Runs `fn` over `items` in batches of `limit` via Promise.allSettled, so
+ * at most `limit` requests are in flight and one rejection never aborts
+ * the rest. Results are in input order.
+ */
+export async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<PromiseSettledResult<R>[]> {
+  const size = Math.max(1, Math.floor(limit));
+  const out: PromiseSettledResult<R>[] = [];
+  for (let i = 0; i < items.length; i += size) {
+    const batch = items.slice(i, i + size);
+    out.push(...(await Promise.allSettled(batch.map((item) => fn(item)))));
+  }
+  return out;
+}
+
+function withDeadline<T>(p: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`push send exceeded ${ms}ms`)), ms);
+  });
+  return Promise.race([p, deadline]).finally(() => clearTimeout(timer));
 }
 
 // Per-degree shorthand for the user-zone bbox check. 1° latitude is
@@ -263,12 +311,23 @@ type SendResult = "sent" | "removed" | "skipped";
 
 async function sendOne(
   stored: StoredSubscription,
-  payload: PushPayload,
+  payload: string,
 ): Promise<SendResult> {
+  // Rebuild from validated fields only, and never POST to a host outside
+  // the push-service allow-list (legacy rows predate that check).
+  const sub = parsePushSubscription(stored.sub);
+  if (!sub) {
+    console.warn(`[push] skipping ${stored.id}: endpoint/keys failed validation`);
+    return "skipped";
+  }
   try {
-    const sub = stored.sub as webpush.PushSubscription;
-    if (!sub.endpoint) return "skipped";
-    await webpush.sendNotification(sub, JSON.stringify(payload), { TTL: 600 });
+    await withDeadline(
+      webpush.sendNotification(sub, payload, {
+        TTL: PUSH_TTL_SECONDS,
+        timeout: SEND_SOCKET_TIMEOUT_MS,
+      }),
+      SEND_DEADLINE_MS,
+    );
     return "sent";
   } catch (e: unknown) {
     const status =

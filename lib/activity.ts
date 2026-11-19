@@ -254,7 +254,10 @@ export async function recordActivity(curr: Snapshot): Promise<void> {
     if (takeoffs.length > 0) {
       try {
         const { dispatchTakeoff } = await import("./push/dispatcher");
-        await Promise.all(
+        // Don't block the snapshot request on push fan-out. waitUntil keeps
+        // the Vercel function alive until sends settle (no-op off Vercel).
+        const { waitUntil } = await import("@vercel/functions");
+        waitUntil(Promise.all(
           takeoffs.map((e) =>
             dispatchTakeoff({
               tail: e.tail,
@@ -271,7 +274,7 @@ export async function recordActivity(curr: Snapshot): Promise<void> {
               return null;
             }),
           ),
-        );
+        ));
       } catch (e) {
         console.warn("[activity] push dispatch import/init failed:", e);
       }

@@ -65,3 +65,10 @@ export function hotzonesPlaneKey(tail: string, region?: Region): string {
 export function flightsRecentCacheKey(region?: Region): string {
   return `${regionPrefix(region)}flights:recent_cache_v1`;
 }
+
+// ─── push:cooldown:{TAIL} ────────────────────────────────────────────
+// Per-tail takeoff-alert cooldown. Claimed atomically with SET NX EX by
+// lib/push/dispatcher.ts so concurrent snapshot regens can't double-send.
+export function pushCooldownKey(tail: string, region?: Region): string {
+  return `${regionPrefix(region)}push:cooldown:${tail.toUpperCase()}`;
+}
