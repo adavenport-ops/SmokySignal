@@ -12,6 +12,8 @@
 //   - public/sw.js service worker (same origin); it caches only the
 //     /offline shell and hashed static assets, never API JSON
 //   - /embed is the one framable route (see embedHeaders below)
+//   - blog clips (components/BlogVideo.tsx) play same-origin mp4 / webm
+//     from /blog/media → media-src 'self'
 // script-src keeps 'unsafe-inline' because Next 14 App Router emits
 // inline bootstrap / flight-data scripts and this app does not use
 // nonces. style-src keeps 'unsafe-inline' for React style attributes.
@@ -33,6 +35,7 @@ const buildCsp = (frameAncestors) => [
   "worker-src 'self' blob:",
   "child-src 'self' blob:",
   "manifest-src 'self'",
+  "media-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -83,7 +86,7 @@ const nextConfig = {
     // serverless bundles for the blog routes carry the markdown.
     outputFileTracingIncludes: {
       "/blog": ["./content/blog/**/*"],
-      "/blog/**/*": ["./content/blog/**/*"],
+      "/blog/**/*": ["./content/blog/**/*", "./public/blog/media/**/manifest.json"],
     },
   },
   // Brand asset path migration. The old PWA had its manifest at

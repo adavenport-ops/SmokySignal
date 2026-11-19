@@ -1,0 +1,5 @@
+{
+  "illustrative": true,
+  "note": "Staged for the blog's speed-warning screenshot only: one hot-zone cell on I-405 at Renton. Not real data.",
+  "zones": [{ "lat": 47.4829, "lon": -122.2171, "count": 240, "tails": ["N305DK"] }]
+}

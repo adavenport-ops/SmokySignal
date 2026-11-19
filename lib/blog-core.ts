@@ -135,6 +135,7 @@ const WORDS_PER_MINUTE = 220;
 export function readingMinutes(markdown: string): number {
   const text = markdown
     .replace(/```[\s\S]*?```/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
     .replace(/\]\([^)]*\)/g, "]")
     .replace(/[#>*_`|[\]-]/g, " ");
   const words = text.split(/\s+/).filter((w) => /[A-Za-z0-9]/.test(w)).length;

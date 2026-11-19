@@ -204,11 +204,48 @@ test("featureOfWeek: first item under ## This week, with its blog line", () => {
   assert.deepEqual(featureOfWeek(BACKLOG), {
     title: "B05 · Weather line",
     blogLine: "A one-line ceiling and wind read under the hero, so a gray morning explains a quiet sky.",
+    route: null,
   });
-  assert.deepEqual(featureOfWeek("## This week\n- **Ride check**\n\n## Next\n"), { title: "Ride check", blogLine: null });
+  assert.deepEqual(featureOfWeek("## This week\n- **Ride check**\n\n## Next\n"), { title: "Ride check", blogLine: null, route: null });
   assert.equal(featureOfWeek("## This week\n\n_Nothing picked yet._\n\n## Ranked\n- B01"), null);
   assert.equal(featureOfWeek("# no section"), null);
   assert.equal(featureOfWeek(null), null);
+});
+
+test("featureOfWeek: a Route field names the page the media stub captures", () => {
+  const backlog = [
+    "## This week",
+    "",
+    "### B07 · Corridor alerts",
+    "- **Route:** `/settings/alerts`",
+    "- **Blog line:** Alerts can follow your road now.",
+    "",
+    "## Ranked",
+  ].join("\n");
+  assert.deepEqual(featureOfWeek(backlog), {
+    title: "B07 · Corridor alerts",
+    blogLine: "Alerts can follow your road now.",
+    route: "/settings/alerts",
+  });
+  // A protocol-relative or bare route is ignored.
+  assert.equal(featureOfWeek("## This week\n### B1 · X\n- Route: //evil.example\n")!.route, null);
+  assert.equal(featureOfWeek("## This week\n### B1 · X\n- Route: radar\n")!.route, null);
+});
+
+test("renderWeeklyMarkdown: media placeholders land under the feature of the week", () => {
+  const s = foldWeek(input);
+  const media = ["![Alt](/blog/media/2026-11-18-week-47/feature-phone.webp \"Caption.\")"];
+  const md = renderWeeklyMarkdown(s, [], featureOfWeek(BACKLOG), { ...META, media });
+  const feat = md.indexOf("## Feature of the week");
+  const img = md.indexOf(media[0]!);
+  assert.ok(feat > 0 && img > feat, "image after the feature heading");
+  assert.ok(md.indexOf("\n---\n", img) > img, "before the footer rule");
+  assert.deepEqual(voiceViolations(md.slice(feat)), []);
+  // Without a picked feature the heading still frames the media.
+  const bare = renderWeeklyMarkdown(s, [], null, { ...META, media });
+  assert.ok(bare.includes("## Feature of the week\n\n" + media[0]));
+  // No media, no change.
+  assert.equal(renderWeeklyMarkdown(s, [], null, META), renderWeeklyMarkdown(s, [], null, { ...META, media: [] }));
 });
 
 // ─── markdown ────────────────────────────────────────────────────────

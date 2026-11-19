@@ -13,6 +13,7 @@ import {
   routeLabel,
 } from "@/lib/blog-core";
 import { getAllPosts, getPost } from "@/lib/blog";
+import { getPostMedia } from "@/lib/blog-media";
 import { BackLink } from "@/components/BackLink";
 import { BlogMarkdown } from "@/components/BlogMarkdown";
 import { BLOG_CARD_ALT } from "@/lib/og/blog-card";
@@ -105,7 +106,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
           ) : null}
         </header>
 
-        <BlogMarkdown source={post.body} />
+        <BlogMarkdown source={post.body} media={getPostMedia(post.slug)} />
       </article>
 
       <section aria-labelledby="blog-related" data-testid="blog-related" style={{ display: "flex", flexDirection: "column", gap: 8 }}>

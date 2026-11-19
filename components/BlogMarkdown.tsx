@@ -1,12 +1,19 @@
 // Server-rendered markdown for blog posts. Same look as /help's prose
 // (app/help/HelpView.tsx) but rendered on the server, so a post ships no
 // markdown parser to the phone. Links are neutral: orange means "up".
+//
+// Media: `![alt](/blog/media/<slug>/<id>.webp "caption")` becomes a
+// <figure> with a <picture> (webp, png fallback); `.mp4` becomes a clip
+// (<BlogVideo>, the one client component). Sizes come from the post's
+// manifest.json, so nothing shifts as it loads. See lib/blog-media-core.ts.
 
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
 import { SS_TOKENS } from "@/lib/tokens";
+import { resolveBlogMedia, type MediaManifest, type MediaRender } from "@/lib/blog-media-core";
+import { BlogVideo } from "./BlogVideo";
 
 const BODY = { fontSize: 16, color: SS_TOKENS.fg1, lineHeight: 1.7 } as const;
 const LINK = {
@@ -16,7 +23,68 @@ const LINK = {
   textUnderlineOffset: 3,
 } as const;
 
-export function BlogMarkdown({ source }: { source: string }) {
+function BlogFigure({ m }: { m: MediaRender }) {
+  return (
+    <figure
+      className="ss-blog-figure"
+      data-testid="blog-figure"
+      data-media={m.kind}
+      data-media-id={m.id}
+      style={{ margin: "8px auto 24px", maxWidth: m.displayWidth, width: "100%" }}
+    >
+      {m.kind === "image" ? (
+        <>
+          <div
+            style={{
+              borderRadius: 12,
+              overflow: "hidden",
+              border: `.5px solid ${SS_TOKENS.hairline2}`,
+              background: SS_TOKENS.bg1,
+            }}
+          >
+            <picture>
+              <source srcSet={m.webp} type="image/webp" />
+              {/* eslint-disable-next-line @next/next/no-img-element -- static, pre-sized, already optimised */}
+              <img
+                src={m.png}
+                alt={m.alt}
+                width={m.width}
+                height={m.height}
+                loading="lazy"
+                decoding="async"
+                style={{ display: "block", width: "100%", height: "auto" }}
+              />
+            </picture>
+          </div>
+          {m.caption ? (
+            <figcaption style={{ fontSize: 13, lineHeight: 1.5, color: SS_TOKENS.fg1, marginTop: 8 }}>{m.caption}</figcaption>
+          ) : null}
+        </>
+      ) : (
+        <BlogVideo
+          mp4={m.mp4}
+          webm={m.webm}
+          poster={m.poster}
+          width={m.width}
+          height={m.height}
+          label={m.alt}
+          caption={m.caption}
+        />
+      )}
+    </figure>
+  );
+}
+
+/** A paragraph holding only one image: the figure replaces the <p>. */
+function soleImage(node: unknown): { src?: string; alt?: string; title?: string } | null {
+  const n = node as { children?: Array<{ type: string; tagName?: string; value?: string; properties?: Record<string, unknown> }> } | undefined;
+  const kids = (n?.children ?? []).filter((c) => !(c.type === "text" && !(c.value ?? "").trim()));
+  if (kids.length !== 1 || kids[0]!.type !== "element" || kids[0]!.tagName !== "img") return null;
+  const p = kids[0]!.properties ?? {};
+  return { src: p.src as string | undefined, alt: p.alt as string | undefined, title: p.title as string | undefined };
+}
+
+export function BlogMarkdown({ source, media = null }: { source: string; media?: MediaManifest | null }) {
   return (
     <div className="ss-blog-prose">
       <ReactMarkdown
@@ -47,7 +115,14 @@ export function BlogMarkdown({ source }: { source: string }) {
           h3: ({ node: _n, ...props }) => (
             <h3 style={{ fontSize: 18, fontWeight: 600, color: SS_TOKENS.fg0, margin: "28px 0 10px", lineHeight: 1.4 }} {...props} />
           ),
-          p: ({ node: _n, ...props }) => <p style={{ ...BODY, margin: "0 0 16px" }} {...props} />,
+          p: ({ node, ...props }) => {
+            const img = soleImage(node);
+            if (img) {
+              const m = resolveBlogMedia(img, media);
+              return m ? <BlogFigure m={m} /> : null;
+            }
+            return <p style={{ ...BODY, margin: "0 0 16px" }} {...props} />;
+          },
           ul: ({ node: _n, ...props }) => (
             <ul
               style={{ ...BODY, listStyleType: "disc", paddingLeft: 20, margin: "0 0 18px", display: "flex", flexDirection: "column", gap: 8 }}
@@ -167,6 +242,8 @@ export function BlogMarkdown({ source }: { source: string }) {
           hr: () => <hr style={{ border: 0, borderTop: `.5px solid ${SS_TOKENS.hairline2}`, margin: "32px 0" }} />,
           strong: ({ node: _n, ...props }) => <strong style={{ color: SS_TOKENS.fg0, fontWeight: 700 }} {...props} />,
           em: ({ node: _n, ...props }) => <em style={{ color: SS_TOKENS.fg1 }} {...props} />,
+          // Inline images (inside a sentence) are not supported: a figure
+          // needs its own paragraph. Anything else stays out.
           img: () => null,
         }}
       >

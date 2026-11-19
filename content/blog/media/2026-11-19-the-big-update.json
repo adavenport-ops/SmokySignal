@@ -1,0 +1,260 @@
+{
+  "post": "2026-11-19-the-big-update",
+  "shots": [
+    {
+      "id": "hero-3d",
+      "kind": "clip",
+      "url": "/flight/N305DK/20261118T0032?view=3d",
+      "viewport": "desktop",
+      "steps": [
+        "waitfor [data-testid=\"flight-3d\"][data-ready=\"1\"] [data-testid=\"map3d-controls\"][data-bearing]",
+        "wait 3000",
+        "action replay3d 300",
+        "action orbit3d 2500",
+        "start",
+        "wait 6000"
+      ],
+      "duration": 6,
+      "posterAt": 3.5,
+      "caption": "N305DK's 17 Nov run from Gray AAF down I-5 to Olympia, in 3D at true altitude, with the Orbit control turning the camera.",
+      "alt": "A 3D view of a real Smokey flight path draped over terrain, the camera orbiting slowly while the rotate, tilt, compass and Orbit buttons sit at the top right.",
+      "element": "[data-testid=\"flight-3d\"]"
+    },
+    {
+      "id": "radar-history",
+      "kind": "clip",
+      "url": "/radar",
+      "viewport": "phone",
+      "steps": [
+        "waitfor [data-road-motorway]",
+        "waitfor [data-testid=\"history-pill\"]",
+        "click [data-testid=\"history-pill\"]",
+        "waitfor [data-testid=\"history-sheet\"] button:has-text(\"N305DK\")",
+        "click [aria-label=\"Close history panel\"]",
+        "wait 2000",
+        "start",
+        "wait 300",
+        "click [data-testid=\"history-pill\"]",
+        "wait 1000",
+        "click [data-testid=\"history-sheet\"] button:has-text(\"Last 30 days\")",
+        "wait 700",
+        "click [data-testid=\"history-apply\"]",
+        "wait 2300",
+        "select puget_sound [aria-label=\"Region\"]",
+        "wait 3500"
+      ],
+      "duration": 8,
+      "posterAt": 7.6,
+      "caption": "History mode on a phone: open HISTORY, pick Last 30 days, and a month of Smokey routes draws in. Then zoom to the Sound.",
+      "alt": "On a phone, the radar's History sheet opens, Last 30 days is picked, and thirty days of Smokey flight paths fill in across the Puget Sound map."
+    },
+    {
+      "id": "radar-palettes",
+      "kind": "clip",
+      "url": "/radar",
+      "viewport": "desktop",
+      "steps": [
+        "waitfor [aria-label=\"Radar filters\"]",
+        "wait 4000",
+        "click [aria-label=\"Radar filters\"]",
+        "wait 800",
+        "click button[data-palette=\"ember\"]",
+        "wait 1200",
+        "start",
+        "wait 1800",
+        "click button[data-palette=\"magma\"]",
+        "wait 2600",
+        "click button[data-palette=\"ice\"]",
+        "wait 2600"
+      ],
+      "duration": 7,
+      "posterAt": 3.5,
+      "caption": "Ember, Magma, Ice. Each palette recolours the heat, the routes and the roads under them.",
+      "alt": "The desktop radar with its layers panel open, switching the map palette from Ember to Magma to Ice, the heat and the tinted motorways changing colour each time."
+    },
+    {
+      "id": "search-cmdk",
+      "kind": "clip",
+      "url": "/",
+      "viewport": "desktop",
+      "steps": [
+        "wait 3500",
+        "start",
+        "wait 500",
+        "press Meta+K",
+        "wait 700",
+        "type N305DK",
+        "wait 800",
+        "press Enter",
+        "wait 3800"
+      ],
+      "duration": 7,
+      "posterAt": 2.2,
+      "caption": "Command-K from anywhere. Type a tail, hit Enter, land on its logbook.",
+      "alt": "On desktop with the sidebar showing, the search palette opens, N305DK is typed, and Enter lands on that plane's page."
+    },
+    {
+      "id": "home-phone",
+      "kind": "screenshot",
+      "url": "/",
+      "viewport": "phone",
+      "steps": [
+        "wait 3000"
+      ],
+      "caption": "The Now tab on a phone. One glance: up, down, or the feed's quiet.",
+      "alt": "SmokySignal's home screen on a phone, showing the live status of the Smokey fleet."
+    },
+    {
+      "id": "home-desktop",
+      "kind": "screenshot",
+      "url": "/",
+      "viewport": "desktop",
+      "steps": [
+        "wait 3000"
+      ],
+      "caption": "Desktop gets the sidebar: every page, six sections, one rail.",
+      "alt": "SmokySignal's home screen on desktop with the navigation sidebar down the left."
+    },
+    {
+      "id": "circling",
+      "kind": "screenshot",
+      "url": "/circling",
+      "viewport": "phone",
+      "steps": [
+        "wait 3000"
+      ],
+      "caption": "What's circling: anything working a pattern right now, in plain words.",
+      "alt": "The What's circling page on a phone."
+    },
+    {
+      "id": "seen-fife",
+      "kind": "screenshot",
+      "url": "/seen?place=Fife&date=2026-11-17&time=15:30",
+      "viewport": "phone",
+      "steps": [
+        "waitfor [data-testid=\"seen-results\"][data-state=\"results\"]",
+        "wait 1200",
+        "scrollto [data-testid=\"seen-results\"]",
+        "scroll -90",
+        "wait 900"
+      ],
+      "caption": "What flew over Fife on 17 Nov around 15:30: N305DK, right overhead at 15:22, 1,600 ft, working I-5.",
+      "alt": "The /seen answer for Fife on 17 November at 15:30: N305DK, Smokey 4, passed 0.1 mi away at 15:22 at 1,600 ft, with a small map of its pattern over I-5."
+    },
+    {
+      "id": "road-i5",
+      "kind": "screenshot",
+      "url": "/road/i-5",
+      "viewport": "phone",
+      "steps": [
+        "wait 3500"
+      ],
+      "caption": "I-5's pass history: time overhead, the busiest stretch and the hour of day.",
+      "alt": "The I-5 road history page on a phone with time overhead and the busiest stretch."
+    },
+    {
+      "id": "forecast-month",
+      "kind": "screenshot",
+      "url": "/forecast?month=2026-11",
+      "viewport": "desktop",
+      "steps": [
+        "wait 3000",
+        "scrollto [data-testid=\"forecast-month-title\"]",
+        "wait 800"
+      ],
+      "caption": "The forecast's month view: hour by weekday for November so far. History, not a promise.",
+      "alt": "The forecast month view on desktop, an hour-by-weekday grid of Smokey activity for November 2026."
+    },
+    {
+      "id": "stats",
+      "kind": "screenshot",
+      "url": "/stats",
+      "viewport": "desktop",
+      "steps": [
+        "wait 3000"
+      ],
+      "caption": "Stats keeps a permanent daily log of hours aloft, week by week.",
+      "alt": "The stats page on desktop with hours aloft by week."
+    },
+    {
+      "id": "plane-logbook",
+      "kind": "screenshot",
+      "url": "/plane/N305DK",
+      "viewport": "phone",
+      "steps": [
+        "waitfor [data-testid=\"logbook\"]",
+        "wait 1500",
+        "scrollto [data-testid=\"logbook\"]",
+        "scroll -70",
+        "wait 900"
+      ],
+      "caption": "N305DK's logbook: sorties and hours per month, departure fields, time on station.",
+      "alt": "N305DK's page on a phone, scrolled to its logbook."
+    },
+    {
+      "id": "flight-card",
+      "kind": "screenshot",
+      "url": "/flight/N305DK/20261118T0032/card",
+      "viewport": "desktop",
+      "capture": "image",
+      "caption": "Every flight renders a share card: the track, the altitude profile and the corridor it worked.",
+      "alt": "The share card for N305DK's 18 November flight, with the track, an altitude profile and the corridor it worked."
+    },
+    {
+      "id": "board",
+      "kind": "screenshot",
+      "url": "/board",
+      "viewport": "desktop",
+      "steps": [
+        "wait 3500"
+      ],
+      "caption": "The shop board, a departures board for the TV over the bench.",
+      "alt": "The /board departures-board view on a desktop screen."
+    },
+    {
+      "id": "glance",
+      "kind": "screenshot",
+      "url": "/glance",
+      "viewport": "phone",
+      "steps": [
+        "wait 3000"
+      ],
+      "caption": "Handlebar mode: huge type, high contrast, screen kept awake.",
+      "alt": "The /glance handlebar view on a phone, status in very large type."
+    },
+    {
+      "id": "speed-warning",
+      "kind": "screenshot",
+      "url": "/glance?mock=up",
+      "viewport": "phone",
+      "target": "local",
+      "illustrative": true,
+      "init": [
+        "speedWarningRider"
+      ],
+      "routes": [
+        {
+          "path": "/api/hotzones",
+          "fixture": "fixtures/hotzones-i405-renton.json"
+        }
+      ],
+      "steps": [
+        "waitfor [data-testid=\"speed-warning-detail\"]",
+        "wait 800"
+      ],
+      "caption": "The speed warning, illustrative: a staged rider and a staged bird. Opt in, foreground only, and your speed never leaves the phone.",
+      "alt": "The full-screen EASE OFF speed warning on a phone, with the distance to the bird and how far over the limit the rider is."
+    },
+    {
+      "id": "aircraft",
+      "kind": "screenshot",
+      "url": "/aircraft",
+      "viewport": "desktop",
+      "steps": [
+        "wait 3000"
+      ],
+      "caption": "All aircraft: every tail we watch, grouped by mission, with where the facts came from.",
+      "alt": "The All aircraft page on desktop, tails grouped by mission with their sources."
+    }
+  ]
+}
