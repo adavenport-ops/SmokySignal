@@ -6,9 +6,9 @@ import type { Aircraft, FleetEntry, Snapshot } from "@/lib/types";
 import type { ActivityEntry } from "@/lib/activity";
 import type { LearningState } from "@/lib/learning";
 import { SS_TOKENS } from "@/lib/tokens";
-import { fmtAgoTs, fmtAloft, formatTs, formatTsBare } from "@/lib/time";
+import { fmtAgoTs, fmtAloft, formatTsBare } from "@/lib/time";
 import { useAircraft } from "@/lib/hooks/useAircraft";
-import { computeStatus, type StatusState } from "@/lib/status";
+import { computeStatus, feedDownStatus, type StatusState } from "@/lib/status";
 import { StatusPill } from "./StatusPill";
 import { Card } from "./Card";
 import { PlaneIcon } from "./PlaneIcon";
@@ -213,7 +213,7 @@ export function Glanceable({
         </Tooltip>
       </header>
 
-      <Hero status={status} neutral={feedDown} />
+      <Hero status={status} />
 
       {contextLine && (
         <p
@@ -347,34 +347,10 @@ function ActivityStrip({ latest }: { latest: ActivityEntry }) {
   );
 }
 
-/**
- * Hero copy for a degraded snapshot. Deliberately neither "up" nor "down":
- * with both feeds quiet we do not know the sky state.
- */
-function feedDownStatus(lastGoodMs: number | null, hour12: boolean): StatusState {
-  return {
-    kind: "clear",
-    pill: "FEED QUIET",
-    headline: "Feed's quiet.",
-    body:
-      lastGoodMs != null
-        ? `Last good read ${formatTs(lastGoodMs, "time", { hour12 })}. Positions below may be out of date. Checking again every few seconds.`
-        : "No good read from either feed yet. Checking again every few seconds.",
-    lead: null,
-    alertCount: 0,
-    totalAirborne: 0,
-  };
-}
-
-function Hero({
-  status,
-  neutral = false,
-}: {
-  status: StatusState;
-  /** Grey accent for the feed-down state: not alert, not all clear. */
-  neutral?: boolean;
-}) {
+function Hero({ status }: { status: StatusState }) {
   const isAlert = status.kind === "alert";
+  // Feed-down renders grey: not alert, not all clear.
+  const neutral = status.kind === "feed_down";
   const accentColor = neutral
     ? SS_TOKENS.fg1
     : isAlert

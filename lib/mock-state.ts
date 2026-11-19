@@ -90,7 +90,8 @@ export function applyMockState(input: Snapshot, state: MockState | null): Snapsh
   if (!state) return input;
   // Snapshot-level mock states are synthetic, so they must render the same
   // during a real upstream outage: drop the degraded flag for them.
-  const { degraded: _degraded, ...snap } = input;
+  const snap: Snapshot = { ...input };
+  delete snap.degraded;
   switch (state) {
     case "down":
       // All clear — every aircraft grounded, even if upstream had something
