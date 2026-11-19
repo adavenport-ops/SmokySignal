@@ -23,6 +23,9 @@ export const maxDuration = 60;
 
 // Leave headroom under maxDuration for the in-flight days to finish.
 const BUDGET_MS = 45_000;
+// The follow-up steps each scan the keyspace; skip them (tomorrow's run
+// picks them up) once the run is past this point.
+const FOLLOWUP_CUTOFF_MS = 40_000;
 
 function digest(s: string): Buffer {
   return createHash("sha256").update(s, "utf8").digest();
@@ -61,14 +64,14 @@ export async function GET(req: Request) {
     // Strip the legacy 35-day TTL from older track days. Best-effort.
     let persisted = 0;
     try {
-      persisted = await persistTrackHistory();
+      if (Date.now() - started < FOLLOWUP_CUTOFF_MS) persisted = await persistTrackHistory();
     } catch (e) {
       console.warn("[cron/rollup] persistTrackHistory failed:", e);
     }
     // Recompute the first day on record. Best-effort.
     let dataSince: string | null = null;
     try {
-      dataSince = (await refreshDataSince()).data_since;
+      if (Date.now() - started < FOLLOWUP_CUTOFF_MS) dataSince = (await refreshDataSince()).data_since;
     } catch (e) {
       console.warn("[cron/rollup] refreshDataSince failed:", e);
     }
@@ -76,7 +79,7 @@ export async function GET(req: Request) {
     // per-day archive. Idempotent and best-effort.
     let activity: { copied: number; days: number } | null = null;
     try {
-      activity = await backfillActivityArchive();
+      if (Date.now() - started < FOLLOWUP_CUTOFF_MS) activity = await backfillActivityArchive();
     } catch (e) {
       console.warn("[cron/rollup] backfillActivityArchive failed:", e);
     }

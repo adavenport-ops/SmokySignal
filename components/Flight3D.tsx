@@ -37,7 +37,7 @@ import {
 } from "@deck.gl/layers";
 import { TripsLayer } from "@deck.gl/geo-layers";
 import { SS_TOKENS } from "@/lib/tokens";
-import { supportsWebGL2 } from "@/lib/webgl";
+import { releaseMap, supportsWebGL2 } from "@/lib/webgl";
 import { MapBoundary } from "./MapBoundary";
 import { TrackSvgFallback } from "./TrackSvgFallback";
 import type { TrackPoint } from "@/lib/tracks";
@@ -1444,8 +1444,12 @@ function Flight3DInner({
       } catch {
         /* overlay never attached */
       }
-      overlay.finalize();
-      map.remove();
+      try {
+        overlay.finalize();
+      } catch {
+        /* still release the map below */
+      }
+      releaseMap(map);
       mapRef.current = null;
       overlayRef.current = null;
       setMapObj(null);

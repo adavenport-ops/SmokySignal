@@ -20,7 +20,6 @@ import { SeasonWrapCard } from "@/components/SeasonWrapCard";
 import { pageMeta } from "@/lib/seo/site";
 import { getRegistry } from "@/lib/registry";
 import { getDataSince } from "@/lib/data-since";
-import { ptDateOf } from "@/lib/data-since-core";
 
 // Cookies (time-format pref, flags in the tabs layout) make the route
 // dynamic; the KV reads behind it are cached for 5 minutes instead.
@@ -59,9 +58,8 @@ export default async function StatsPage() {
   const empty = !stats || stats.days_on_record === 0;
   const known = new Set((await getRegistry()).map((f) => f.tail));
   const since = await getDataSince();
-  // Pacific days from the first day on record through today.
-  const spanDays =
-    Math.round((Date.parse(`${ptDateOf(Date.now())}T00:00:00Z`) - Date.parse(`${since}T00:00:00Z`)) / 86_400_000) + 1;
+  // Days actually rolled up, not the calendar span from `since`.
+  const spanDays = stats?.days_on_record ?? 0;
 
   return (
     <main className="ss-page" style={{ gap: 22 }}>

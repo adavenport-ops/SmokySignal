@@ -292,6 +292,11 @@ export function dedupeActivity<T extends Pick<ActivityEntry, "tail" | "kind" | "
   const lastKept = new Map<string, number>();
   const out: T[] = [];
   for (const r of sorted) {
+    // Emergency squawks are never collapsed: 7500 then 7700 are two events.
+    if (r.kind === "squawk_emergency") {
+      out.push(r);
+      continue;
+    }
     const k = `${r.tail}|${r.kind}`;
     const prev = lastKept.get(k);
     if (prev !== undefined && r.ts - prev <= windowMs) continue;

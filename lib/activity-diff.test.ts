@@ -7,6 +7,7 @@
 import { test } from "node:test";
 import assert from "node:assert";
 import {
+  dedupeActivity,
   diffActivity,
   LANDING_DEBOUNCE_MS,
   type PrevState,
@@ -172,4 +173,12 @@ test("emergency squawk transition still fires", () => {
     events.map((e) => e.kind),
     ["first_seen", "squawk_emergency"],
   );
+});
+
+test("dedupeActivity keeps every emergency squawk", () => {
+  const rows = [
+    { tail: "N1", kind: "squawk_emergency" as const, ts: 1_000_000_000_000 },
+    { tail: "N1", kind: "squawk_emergency" as const, ts: 1_000_000_030_000 },
+  ];
+  assert.equal(dedupeActivity(rows).length, 2);
 });

@@ -12,7 +12,7 @@ import { unstable_cache } from "next/cache";
 import { getRedis } from "./cache";
 import { dataSinceKey } from "./storage-keys";
 import { getTracksForDay, listAllTrackKeys } from "./tracks";
-import { DATA_SINCE_FALLBACK, dataSinceFrom, earliestTrackDay, resolveDataSince } from "./data-since-core";
+import { DATA_SINCE_FALLBACK, dataSinceFrom, earliestTrackDay, ptDateOf, resolveDataSince } from "./data-since-core";
 
 export { DATA_SINCE_FALLBACK } from "./data-since-core";
 
@@ -33,7 +33,10 @@ export async function refreshDataSince(): Promise<{ data_since: string; earliest
       for (const p of pts) if (minTs === null || p.ts < minTs) minTs = p.ts;
     }
   }
-  const value = day ? dataSinceFrom(day, minTs) : DATA_SINCE_FALLBACK;
+  // No tracks yet: report today and write nothing, so a later run records
+  // the real first day instead of a guessed one.
+  if (!day) return { data_since: ptDateOf(Date.now()), earliest_day: null };
+  const value = dataSinceFrom(day, minTs);
   await redis.set(dataSinceKey(), value);
   return { data_since: value, earliest_day: day };
 }
