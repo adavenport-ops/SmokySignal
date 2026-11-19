@@ -248,9 +248,19 @@ export type ForecastGrid = {
   generated_at: number;
 };
 
-export async function getForecastGrid(): Promise<ForecastGrid> {
+/**
+ * `tails`: optional allow-list (the rider's mission / operator / tail
+ * filter resolved through lib/mission.ts resolveAllowedTails). Null or
+ * omitted = every tail.
+ */
+export async function getForecastGrid(
+  opts: { tails?: ReadonlySet<string> | null } = {},
+): Promise<ForecastGrid> {
   const events = await readActivityEvents();
-  const takeoffs = events.filter((e) => e.kind === "takeoff");
+  const allow = opts.tails ?? null;
+  const takeoffs = events.filter(
+    (e) => e.kind === "takeoff" && (!allow || allow.has(e.tail)),
+  );
   const total = takeoffs.length;
   const now = Date.now();
   const dowCounts = new Array<number>(7).fill(0);

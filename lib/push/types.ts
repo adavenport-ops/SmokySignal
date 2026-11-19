@@ -2,6 +2,14 @@
 // file is safe for client bundles. Server-only code (KV ops, web-push
 // sending) lives in lib/push/store.ts and lib/push/dispatcher.ts.
 
+import type { Mission } from "../types";
+import { DEFAULT_MISSIONS, MISSIONS, normalizeMissionList } from "../mission";
+
+/**
+ * @deprecated Superseded by `missions`. Still read for rows and clients
+ * from before the mission taxonomy: 'alert_only' → ['police'],
+ * 'all' → every mission.
+ */
 export type AlertTier = "all" | "alert_only";
 
 /** Server-side mirror of a UserZone — coordinates + radius + label only,
@@ -16,11 +24,16 @@ export type UserZoneSpec = {
 
 export type AlertPrefs = {
   /**
-   * 'alert_only' (default) → only fire pushes for smokey + patrol + unknown
-   * (matches computeStatus() alert tiers). 'all' also fires for sar +
-   * transport so curious riders can hear about every wing in the air.
+   * Legacy tier, kept in sync with `missions` so older clients still read
+   * a sensible value: 'all' when every mission is on, else 'alert_only'.
    */
   tier: AlertTier;
+  /**
+   * Which missions ping this rider. Default ['police'] (Smokey only).
+   * Optional on the type because rows stored before the taxonomy lack it;
+   * read it through effectiveMissions().
+   */
+  missions?: Mission[];
   /**
    * 'any' → push for any qualifying takeoff regardless of where it happens.
    * Otherwise an array of hot-zone cell IDs the rider has opted into.
@@ -50,6 +63,7 @@ export type AlertPrefs = {
 
 export const DEFAULT_PREFS: AlertPrefs = {
   tier: "alert_only",
+  missions: [...DEFAULT_MISSIONS],
   zones: "any",
   quiet_start_h: 23,
   quiet_end_h: 6,
@@ -62,3 +76,25 @@ export type StoredSubscription = {
   prefs: AlertPrefs;
   savedAt: number;
 };
+
+/** Missions implied by a legacy tier value. */
+export function missionsForTier(tier: AlertTier | undefined): Mission[] {
+  return tier === "all" ? [...MISSIONS] : [...DEFAULT_MISSIONS];
+}
+
+/** Legacy tier implied by a mission set. */
+export function tierForMissions(missions: readonly Mission[]): AlertTier {
+  return MISSIONS.every((m) => missions.includes(m)) ? "all" : "alert_only";
+}
+
+/**
+ * The missions a stored prefs row alerts on. A valid non-empty `missions`
+ * list wins; otherwise the legacy tier decides; otherwise police only.
+ */
+export function effectiveMissions(
+  prefs: { tier?: AlertTier; missions?: unknown },
+): Mission[] {
+  const list = normalizeMissionList(prefs.missions);
+  if (list.length > 0) return list;
+  return missionsForTier(prefs.tier);
+}

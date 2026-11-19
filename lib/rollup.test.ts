@@ -26,10 +26,11 @@ const ENTRY: FleetEntry = {
   nickname: "Smokey 5",
   roleDescription: "Speed enforcement",
   base: "KOLM",
-  role: "smokey",
+  role: "police",
   roleConfidence: "confirmed",
+  sources: [],
 };
-const OTHER: FleetEntry = { ...ENTRY, tail: "N2446X", nickname: null, operator: "KCSO", role: "patrol" };
+const OTHER: FleetEntry = { ...ENTRY, tail: "N2446X", nickname: null, operator: "KCSO", role: "police" };
 
 /** Samples every `stepS` seconds from start (inclusive) to end (inclusive). */
 function run(startMs: number, endMs: number, stepS = 60, alt = 1500): TrackPoint[] {
@@ -156,7 +157,7 @@ test("summarizeRollups: totals, busiest day, longest sortie, per-tail, grid", ()
   assert.equal(s.per_tail[0]!.tail, "N305DK");
   assert.equal(s.per_tail[0]!.flights, 2);
   assert.equal(s.per_tail[0]!.airborne_s, 165 * 60);
-  assert.equal(s.per_tail[1]!.role, "patrol");
+  assert.equal(s.per_tail[1]!.role, "police");
   assert.equal(s.week_grid[2]![10], 45); // Tue 10:00
   assert.equal(s.week_grid[3]![12], 60); // Wed 12:00
   assert.equal(s.week_grid[3]![13], 90); // Wed 13:00: 60 from N305DK + 30 from N2446X

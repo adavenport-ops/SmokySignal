@@ -18,16 +18,13 @@ import {
   logoutAction,
 } from "./actions";
 import { Logo } from "@/components/brand/Logo";
+import { FLEET } from "@/lib/seed";
+import { MISSIONS, POLICE_UNITS } from "@/lib/mission";
 
-const OPERATORS = [
-  "WSP",
-  "KCSO",
-  "Pierce SO",
-  "Snohomish SO",
-  "Spokane SO",
-  "State of WA",
+const OPERATORS: readonly string[] = [
+  ...Array.from(new Set(FLEET.map((f) => f.operator))),
   "Other",
-] as const;
+];
 
 type Flash = { error?: string; saved?: string };
 type Flags = { speedWarningEnabled: boolean };
@@ -701,7 +698,7 @@ function EditRow({
   entry: FleetEntry;
   onCancel: () => void;
 }) {
-  const isCustomOperator = !OPERATORS.slice(0, -1).includes(entry.operator as (typeof OPERATORS)[number]);
+  const isCustomOperator = !OPERATORS.slice(0, -1).includes(entry.operator);
   return (
     <tr
       style={{
@@ -735,6 +732,7 @@ function EditRow({
             defaultValue={entry.role}
             required
           />
+          <TaxonomyFields entry={entry} />
           <RoleConfidenceSelect
             label="Confidence"
             name="roleConfidence"
@@ -783,6 +781,7 @@ function AddForm({ onCancel }: { onCancel: () => void }) {
       <Field label="Base (e.g. KOLM Olympia)" name="base" required />
       <Field label="Mission (free text, optional)" name="roleDescription" />
       <RoleSelect label="Class (drives status pill)" name="role" required />
+      <TaxonomyFields />
       <RoleConfidenceSelect label="Confidence" name="roleConfidence" required />
       <Field label="Class note (≤120 chars, optional)" name="roleNote" maxLength={120} />
       <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
@@ -866,12 +865,85 @@ function Field({
 }
 
 const ROLE_OPTIONS: Array<{ value: import("@/lib/types").FleetRole; label: string }> = [
-  { value: "smokey", label: "smokey — fixed-wing speed enforcement" },
-  { value: "patrol", label: "patrol — multi-role helicopter" },
-  { value: "sar", label: "sar — search & rescue" },
-  { value: "transport", label: "transport — exec / multi-mission" },
-  { value: "unknown", label: "unknown — default to alert" },
+  { value: "police", label: "police — SMOKEY (only class that flips the pill)" },
+  { value: "federal_le", label: "federal_le — FEDERAL (CBP)" },
+  { value: "sar", label: "sar — SEARCH & RESCUE" },
+  { value: "wildfire", label: "wildfire — WILDFIRE" },
+  { value: "medevac", label: "medevac — MEDEVAC" },
+  { value: "survey", label: "survey — SURVEY" },
+  { value: "transport", label: "transport — TRANSPORT" },
+  { value: "unknown", label: "unknown — UNCONFIRMED (not Smokey)" },
 ];
+
+function PlainSelect({
+  label,
+  name,
+  defaultValue,
+  options,
+}: {
+  label: string;
+  name: string;
+  defaultValue?: string;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <label style={fieldLabelStyle}>{label.toUpperCase()}</label>
+      <select name={name} defaultValue={defaultValue ?? ""} style={inputStyle}>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+// policeUnit / secondaryMission / scope / sources. Sources is one URL per
+// line; a blank box on edit keeps the stored list.
+function TaxonomyFields({ entry }: { entry?: FleetEntry }) {
+  return (
+    <>
+      <PlainSelect
+        label="Police unit (police only)"
+        name="policeUnit"
+        defaultValue={entry?.policeUnit ?? ""}
+        options={[
+          { value: "", label: "—" },
+          ...POLICE_UNITS.map((u) => ({ value: u, label: u })),
+        ]}
+      />
+      <PlainSelect
+        label="Second mission"
+        name="secondaryMission"
+        defaultValue={entry?.secondaryMission ?? ""}
+        options={[
+          { value: "", label: "—" },
+          ...MISSIONS.map((m) => ({ value: m, label: m })),
+        ]}
+      />
+      <PlainSelect
+        label="Scope"
+        name="scope"
+        defaultValue={entry?.scope ?? "wa"}
+        options={[
+          { value: "wa", label: "wa — based in Washington" },
+          { value: "mutual_aid", label: "mutual_aid — OR / ID, counts only in WA airspace" },
+        ]}
+      />
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <label style={fieldLabelStyle}>SOURCES (ONE HTTPS URL PER LINE)</label>
+        <textarea
+          name="sources"
+          defaultValue={(entry?.sources ?? []).join("\n")}
+          rows={3}
+          style={{ ...inputStyle, fontFamily: "var(--font-mono)", fontSize: 11 }}
+        />
+      </div>
+    </>
+  );
+}
 
 const CONFIDENCE_OPTIONS: Array<{
   value: import("@/lib/types").RoleConfidence;

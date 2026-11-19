@@ -8,6 +8,7 @@
 // (Safari, most desktop installs).
 
 import { useEffect } from "react";
+import { countsAsSmokey } from "@/lib/mission";
 
 type BadgeNavigator = Navigator & {
   setAppBadge?: (count?: number) => Promise<void> | void;
@@ -15,7 +16,6 @@ type BadgeNavigator = Navigator & {
 };
 
 const POLL_INTERVAL_MS = 30_000;
-const ALERT_ROLES: ReadonlySet<string> = new Set(["smokey", "patrol", "unknown"]);
 
 export function AppBadge() {
   useEffect(() => {
@@ -31,11 +31,17 @@ export function AppBadge() {
         const r = await fetch("/api/aircraft", { cache: "no-store" });
         if (!r.ok) return;
         const data = (await r.json()) as {
-          aircraft: { airborne: boolean; role?: string }[];
+          aircraft: {
+            airborne: boolean;
+            role?: string;
+            scope?: "wa" | "mutual_aid";
+            lat?: number;
+            lon?: number;
+          }[];
         };
         if (cancelled) return;
         const count = data.aircraft.filter(
-          (a) => a.airborne && ALERT_ROLES.has(a.role ?? "unknown"),
+          (a) => a.airborne && countsAsSmokey(a),
         ).length;
         try {
           if (count > 0) await nav.setAppBadge?.(count);

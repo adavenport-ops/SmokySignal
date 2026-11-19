@@ -23,19 +23,15 @@ import {
   type PushDeps,
   type SendOptions,
 } from "./send";
-import type { FleetRole, RoleConfidence } from "../types";
+import type { Mission, MissionScope, PoliceUnit, RoleConfidence } from "../types";
+import { effectiveMissions } from "./types";
+import { inWashingtonAirspace, normalizeMission } from "../mission";
 
 /** One alert per tail per 20 minutes, claimed atomically (SET NX EX). */
 export const COOLDOWN_TTL_SECONDS = 20 * 60;
 const MAX_BODY_CHARS = 140;
 /** Push TTL: an alert older than 10 minutes is stale, let the service drop it. */
 const PUSH_TTL_SECONDS = 600;
-
-const ALERT_ROLES: ReadonlySet<FleetRole> = new Set([
-  "smokey",
-  "patrol",
-  "unknown",
-]);
 
 let vapidConfigured = false;
 function ensureVapid(): boolean {
@@ -51,7 +47,11 @@ function ensureVapid(): boolean {
 
 export type DispatchTakeoffArgs = {
   tail: string;
-  role: FleetRole;
+  /** Mission (legacy role values are normalized). */
+  role: Mission;
+  policeUnit?: PoliceUnit;
+  /** 'mutual_aid' police only match 'police' inside WA airspace. */
+  scope?: MissionScope;
   roleConfidence: RoleConfidence;
   nickname: string | null;
   /**
@@ -124,6 +124,7 @@ export async function dispatchTakeoff(
     return { sent: 0, skipped: 0, removed: 0, reason: "no_subs" };
   }
 
+  const matchMission = missionForMatching(args);
   const payload = JSON.stringify(composePayload(args));
   const aircraftZone =
     args.lat != null && args.lon != null
@@ -135,7 +136,7 @@ export async function dispatchTakeoff(
   for (const stored of subs) {
     const skip = shouldSkip(
       stored.prefs,
-      args.role,
+      matchMission,
       args.tail,
       args.lat,
       args.lon,
@@ -184,18 +185,37 @@ function matchesUserZone(
   return false;
 }
 
-function shouldSkip(
+/**
+ * The mission a takeoff is matched against rider prefs as. Mutual-aid
+ * police outside Washington airspace match nothing (null), so an Oregon
+ * unit lifting off at Salem never pings a Washington rider.
+ */
+export function missionForMatching(args: {
+  role: unknown;
+  scope?: MissionScope;
+  lat: number | null;
+  lon: number | null;
+}): Mission | null {
+  const m = normalizeMission(args.role);
+  if (m === "police" && args.scope === "mutual_aid" && !inWashingtonAirspace(args.lat, args.lon)) {
+    return null;
+  }
+  return m;
+}
+
+export function shouldSkip(
   prefs: AlertPrefs,
-  role: FleetRole,
+  mission: Mission | null,
   tail: string,
   lat: number | null,
   lon: number | null,
   aircraftZone: string | null,
 ): boolean {
-  // tier
-  if (prefs.tier === "alert_only" && !ALERT_ROLES.has(role)) return true;
-  // tail allow-list — applied AFTER tier so a rider asking for "all
-  // tiers, only N305DK" still gets every transition for that tail.
+  // missions — default ['police'] (Smokey only). Rows from before the
+  // taxonomy fall back to their legacy tier via effectiveMissions().
+  if (mission === null || !effectiveMissions(prefs).includes(mission)) return true;
+  // tail allow-list — applied AFTER the mission filter, so it narrows
+  // within the missions the rider picked.
   if (Array.isArray(prefs.tails) && prefs.tails.length > 0) {
     if (!prefs.tails.includes(tail.toUpperCase())) return true;
   }
@@ -255,38 +275,53 @@ type PushPayload = {
 function composePayload(args: DispatchTakeoffArgs): PushPayload {
   const name = args.nickname ?? args.tail;
   const altStr = args.alt_ft != null ? `${args.alt_ft.toLocaleString()}'` : "alt unk";
+  const mission = normalizeMission(args.role);
   let title: string;
   let body: string;
-  // Title carries the Smokey umbrella for every law-enforcement role —
-  // speed-enforcement fixed-wing, patrol helicopter, or unconfirmed
-  // alert-class all read "Smokey's up." Body still distinguishes airframe.
-  switch (args.role) {
-    case "smokey":
+  // Only police read "Smokey's up." Every other mission names itself.
+  switch (mission) {
+    case "police":
       title = "Smokey's up.";
-      body = trimBody(`${name} watching. ${altStr}.`);
+      body =
+        args.policeUnit === "wsp"
+          ? trimBody(`${name} watching. ${altStr}.`)
+          : trimBody(`${name} airborne. ${altStr}.`);
       break;
-    case "patrol":
-      title = "Smokey's up.";
-      body = trimBody(`${name} airborne. ${altStr}.`);
-      break;
-    case "unknown":
-      title = "Smokey's up.";
-      body = trimBody(`Unidentified bird airborne. ${altStr}.`);
+    case "federal_le":
+      title = "Federal up.";
+      body = trimBody(`${name} airborne. Not Smokey. ${altStr}.`);
       break;
     case "sar":
       title = "SAR run.";
       body = trimBody(`${name} on a rescue run.`);
       break;
+    case "wildfire":
+      title = "Fire run.";
+      body = trimBody(`${name} on a fire run.`);
+      break;
+    case "medevac":
+      title = "Medevac up.";
+      body = trimBody(`${name} on a medical run.`);
+      break;
+    case "survey":
+      title = "Survey up.";
+      body = trimBody(`${name} airborne. ${altStr}.`);
+      break;
     case "transport":
       title = "Transport up.";
       body = trimBody(`${name} airborne. ${altStr}.`);
+      break;
+    case "unknown":
+    default:
+      title = "Unconfirmed bird up.";
+      body = trimBody(`${name} airborne. Not confirmed as Smokey. ${altStr}.`);
       break;
   }
   return {
     title,
     body,
     tag: `smokey-${args.tail}`,
-    data: { url: `/plane/${args.tail}`, tail: args.tail, role: args.role },
+    data: { url: `/plane/${args.tail}`, tail: args.tail, role: mission },
   };
 }
 

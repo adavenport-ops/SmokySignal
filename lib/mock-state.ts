@@ -6,7 +6,8 @@
 // Data-layer states: learning (forecast empty + Day 0 of 30),
 // full-data (predictor confident + learning panel hidden).
 
-import type { Snapshot, FleetRole } from "./types";
+import type { Aircraft, Snapshot } from "./types";
+import { isPoliceMission } from "./mission";
 import type { LearningState } from "./learning";
 import type { ForecastGrid, ForecastCell } from "./predictor";
 
@@ -53,9 +54,17 @@ const TAIL_OVERRIDES: Record<
   },
 };
 
+// Predicates over the mission taxonomy. "WSP" is the speed-enforcement
+// fleet (police / wsp); "other police" is every other WA-based police
+// airframe (sheriffs). Mutual aid is never lifted: mock rows have no
+// position for those tails, so they would not count as Smokey anyway.
+const isWsp = (a: Aircraft) => isPoliceMission(a.role) && a.policeUnit === "wsp";
+const isOtherPolice = (a: Aircraft) =>
+  isPoliceMission(a.role) && a.policeUnit !== "wsp" && a.scope !== "mutual_aid";
+
 function liftAirborne(
   snap: Snapshot,
-  predicate: (role: FleetRole) => boolean,
+  predicate: (a: Aircraft) => boolean,
   cap?: number,
 ): Snapshot {
   let lifted = 0;
@@ -63,7 +72,7 @@ function liftAirborne(
     ...snap,
     source: "mock",
     aircraft: snap.aircraft.map((a) => {
-      if (!predicate(a.role)) return a;
+      if (!predicate(a)) return a;
       if (cap != null && lifted >= cap) return a;
       lifted++;
       const o = TAIL_OVERRIDES[a.tail] ?? {};
@@ -103,7 +112,7 @@ export function applyMockState(input: Snapshot, state: MockState | null): Snapsh
       };
     case "up":
       // At least one smokey-class up. The original mock=up behavior.
-      return liftAirborne(snap, (r) => r === "smokey");
+      return liftAirborne(snap, isWsp);
     case "eyes-up": {
       // Patrol or unknown airborne, no smokey. Drives the alert-tier
       // pill (which reads SMOKEY UP under the umbrella relabel) with
@@ -117,20 +126,17 @@ export function applyMockState(input: Snapshot, state: MockState | null): Snapsh
         ...snap,
         source: "mock",
         aircraft: snap.aircraft.map((a) =>
-          a.role === "smokey" ? { ...a, airborne: false } : a,
+          isWsp(a) ? { ...a, airborne: false } : a,
         ),
       };
-      return liftAirborne(
-        grounded,
-        (r) => r === "patrol" || r === "unknown",
-      );
+      return liftAirborne(grounded, isOtherPolice);
     }
     case "multiple":
       // 3 smokey-class + 1 patrol. Drives the "X up" pill sub and the
       // others-also-up list.
       return liftAirborne(
-        liftAirborne(snap, (r) => r === "smokey", 3),
-        (r) => r === "patrol",
+        liftAirborne(snap, isWsp, 3),
+        isOtherPolice,
         1,
       );
     case "stale":

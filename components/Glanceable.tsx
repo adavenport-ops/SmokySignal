@@ -513,7 +513,7 @@ function Others({ others }: { others: Aircraft[] }) {
               color: "inherit",
             }}
           >
-            <PlaneIcon size={18} role={p.role} />
+            <PlaneIcon size={18} role={p.role} model={p.model} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
                 className="ss-mono"

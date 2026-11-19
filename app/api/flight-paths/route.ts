@@ -14,6 +14,7 @@
 // lib/route-decimate.ts (envelope filter, ~1 m rounding, ~110 m radial
 // decimation) to keep the statewide payload small.
 
+import { resolveAllowedTails } from "@/lib/mission";
 import { NextResponse } from "next/server";
 import { getRegistry } from "@/lib/registry";
 import { listTrackKeys, getTracksForDay } from "@/lib/tracks";
@@ -82,20 +83,9 @@ export async function GET(req: Request) {
 
   // Resolve operator + role + tails filters to a tail allow-list. Empty
   // filter = every tail in the registry.
-  let allowedTails: Set<string> | null = null;
-  if (operators.length > 0 || roles.length > 0 || tails.length > 0) {
-    allowedTails = new Set(tails);
-    if (operators.length > 0 || roles.length > 0) {
-      for (const f of registry) {
-        if (operators.length > 0 && operators.includes(f.operator)) {
-          allowedTails.add(f.tail);
-        }
-        if (roles.length > 0 && roles.includes(String(f.role).toLowerCase())) {
-          allowedTails.add(f.tail);
-        }
-      }
-    }
-  }
+  // Every non-empty constraint must match (AND), mirroring the radar
+  // marker filter. Legacy ?roles=smokey,patrol maps to police.
+  const allowedTails = resolveAllowedTails(registry, { tails, operators, roles });
 
   const cutoff = utcDateKey(new Date(Date.now() - days * 86_400_000));
   const features: LineFeature[] = [];

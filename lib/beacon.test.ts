@@ -31,6 +31,7 @@ function entry(tail: string, role: FleetRole, nickname: string | null = null): F
     base: "KOLM Olympia",
     role,
     roleConfidence: "confirmed",
+    sources: [],
   };
 }
 
@@ -50,8 +51,8 @@ function snap(
   } as Snapshot;
 }
 
-const smokey = entry("N305DK", "smokey", "Smokey 4");
-const patrol = entry("N422CT", "patrol", "Guardian One");
+const smokey = entry("N305DK", "police", "Smokey 4");
+const patrol = entry("N422CT", "police", "Guardian One");
 const sar = entry("N815SC", "sar", "SnoHawk 10");
 const fleet = new Map([smokey, patrol, sar].map((e) => [e.tail, e]));
 

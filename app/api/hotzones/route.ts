@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { resolveAllowedTails } from "@/lib/mission";
 import { getHotZonesCached, getLastHotZoneRefresh } from "@/lib/hotzones";
 import { getRegistry } from "@/lib/registry";
 import { REGIONS, type RegionId } from "@/lib/regions";
@@ -42,9 +43,10 @@ export async function GET(req: Request) {
   // Operator now accepts a comma-separated list. A single-operator query
   // (?operator=WSP) still works — parses as a one-element list.
   const operators = parseListCaseSensitive(url.searchParams.get("operator"));
-  // "Smokey" filter resolves through here as ?roles=smokey,patrol — the
-  // registry lookup expands the role set to the current matching tails
-  // so the rider's filter follows fleet membership changes automatically.
+  // Mission filter resolves through here as ?roles=police,sar (legacy
+  // ?roles=smokey,patrol still maps to police). The registry lookup
+  // expands the mission set to the current matching tails so the rider's
+  // filter follows fleet membership changes automatically.
   const roles = parseList(url.searchParams.get("roles")).map((r) =>
     r.toLowerCase(),
   );
@@ -54,22 +56,12 @@ export async function GET(req: Request) {
     getLastHotZoneRefresh(),
   ]);
 
-  // Build effective tail set from operator + roles if specified.
-  let allowedTails: Set<string> | null = null;
-  if (tails.length > 0 || operators.length > 0 || roles.length > 0) {
-    allowedTails = new Set(tails);
-    if (operators.length > 0 || roles.length > 0) {
-      const registry = await getRegistry();
-      for (const f of registry) {
-        if (operators.length > 0 && operators.includes(f.operator)) {
-          allowedTails.add(f.tail);
-        }
-        if (roles.length > 0 && roles.includes(String(f.role).toLowerCase())) {
-          allowedTails.add(f.tail);
-        }
-      }
-    }
-  }
+  // Effective tail set: every non-empty constraint must match (AND),
+  // mirroring the radar marker filter.
+  const allowedTails =
+    tails.length > 0 || operators.length > 0 || roles.length > 0
+      ? resolveAllowedTails(await getRegistry(), { tails, operators, roles })
+      : null;
 
   const zones = allZones.filter((z) => {
     if (allowedTails && !z.tails.some((t) => allowedTails!.has(t))) return false;

@@ -17,7 +17,7 @@ const AUTH = Buffer.alloc(16, 7).toString("base64url");
 
 const ARGS: DispatchTakeoffArgs = {
   tail: "N305DK",
-  role: "smokey",
+  role: "police",
   roleConfidence: "unknown",
   nickname: "Smokey 3",
   lat: 47.6,

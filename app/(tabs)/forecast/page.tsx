@@ -7,6 +7,8 @@ import { getLearningState } from "@/lib/learning";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 import { getSnapshot } from "@/lib/snapshot";
 import { getRegistry } from "@/lib/registry";
+import { parseMissionsParam, resolveAllowedTails } from "@/lib/mission";
+import { ForecastMissionFilter } from "@/components/ForecastMissionFilter";
 import { computeStatus } from "@/lib/status";
 import {
   applyMockForecastGrid,
@@ -23,7 +25,7 @@ export const metadata = {
 
 const FORECAST_LEARNING_EVENT_FLOOR = 30;
 
-type SP = { mock?: string };
+type SP = { mock?: string; missions?: string };
 
 export default async function ForecastPage({
   searchParams,
@@ -31,11 +33,16 @@ export default async function ForecastPage({
   searchParams: SP;
 }) {
   const mockState = parseMockState(searchParams.mock);
-  const [realGrid, realLearning, realSnap, fleet] = await Promise.all([
-    getForecastGrid(),
+  // Same mission filter as /radar (lib/radar-filter.ts). The client chip
+  // row writes the shared filter state and mirrors it into ?missions=.
+  // Default: Smokey only.
+  const missions = parseMissionsParam(searchParams.missions);
+  const fleet = await getRegistry();
+  const allowedTails = resolveAllowedTails(fleet, { roles: missions });
+  const [realGrid, realLearning, realSnap] = await Promise.all([
+    getForecastGrid({ tails: allowedTails }),
     getLearningState(),
     getSnapshot(),
-    getRegistry(),
   ]);
   const grid = applyMockForecastGrid(realGrid, mockState);
   const learning = applyMockLearning(realLearning, mockState);
@@ -160,7 +167,7 @@ export default async function ForecastPage({
             margin: 0,
           }}
         >
-          Hour-of-week probability of any fleet takeoff, drawn from{" "}
+          Hour-of-week probability of a takeoff in the classes picked below, drawn from{" "}
           <span className="ss-mono">{grid.total_events}</span> logged
           takeoff{grid.total_events === 1 ? "" : "s"}, seen in public ADS-B
           data via adsb.fi {days <= 0 ? (
@@ -193,6 +200,8 @@ export default async function ForecastPage({
           .
         </p>
       </section>
+
+      <ForecastMissionFilter selected={missions} />
 
       {showLearning && (
         <LearningPanel

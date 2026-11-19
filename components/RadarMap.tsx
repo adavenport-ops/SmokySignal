@@ -69,8 +69,8 @@ const ROLE_ICON_KEY: Record<GlyphRole, string> = {
   transport: "aircraft-transport",
 };
 
-function iconForRole(role: FleetRole | undefined | null): string {
-  return ROLE_ICON_KEY[glyphRoleFor(role)];
+function iconForRole(role: FleetRole | undefined | null, model?: string | null): string {
+  return ROLE_ICON_KEY[glyphRoleFor(role, model)];
 }
 
 const RIDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="${SS_TOKENS.sky}" fill-opacity="0.10"/><circle cx="24" cy="24" r="12" fill="${SS_TOKENS.sky}" fill-opacity="0.22"/><circle cx="24" cy="24" r="6" fill="${SS_TOKENS.sky}" stroke="white" stroke-width="2"/></svg>`;
@@ -762,7 +762,7 @@ export default function RadarMap({
       if (a.lat == null || a.lon == null) continue;
       newTo.set(a.tail, [a.lon, a.lat]);
       newMeta.set(a.tail, {
-        icon: iconForRole(a.role),
+        icon: iconForRole(a.role, a.model),
         track: a.heading ?? 0,
         nickname: a.nickname,
       });

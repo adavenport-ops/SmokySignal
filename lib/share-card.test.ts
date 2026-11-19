@@ -76,8 +76,10 @@ test("statusCardText: nothing up reads down, still stamped", () => {
   assert.equal(t.stamp, "14:20 PT · 2026-11-18");
 });
 
-test("statusCardText: rescue run alone reads down (SAR does not count)", () => {
-  const s = snap([{ tail: "N815SC", lat: 47.9, lon: -122.2 }]);
+test("statusCardText: a fire run alone reads down (only police count)", () => {
+  // N338WN is a DNR wildfire Huey. (N815SC, SnoHawk 10, is a sheriff
+  // airframe and counts as Smokey since the 2026-11 taxonomy.)
+  const s = snap([{ tail: "N338WN", lat: 47.9, lon: -122.2 }]);
   const t = statusCardText(computeStatus(s, fleet), s.fetched_at, Date.now());
   assert.equal(t.headline, "Smokey's down.");
 });

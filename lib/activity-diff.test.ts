@@ -20,7 +20,7 @@ function plane(airborne: boolean, extra: Partial<Aircraft> = {}): Aircraft {
   return {
     tail: "N2446X",
     nickname: "Pierce One",
-    role: "patrol",
+    role: "police",
     icao24: "a1b2c3",
     airborne,
     ...(airborne ? { lat: 47.2, lon: -122.4, altitude_ft: 2400 } : {}),

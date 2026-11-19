@@ -4,7 +4,19 @@ import { getRegistry } from "@/lib/registry";
 import { SS_TOKENS } from "@/lib/tokens";
 import { Tooltip } from "@/components/Tooltip";
 import { Logo } from "@/components/brand/Logo";
-import { roleBadgeStyle, roleBadgeText, roleTooltip } from "@/lib/role-display";
+import {
+  MISSION_ORDER,
+  confidenceBadgeStyle,
+  confidenceLabel,
+  missionBlurb,
+  missionLabel,
+  policeUnitLabel,
+  roleBadgeStyle,
+  roleBadgeText,
+  roleTooltip,
+  sourceLabel,
+} from "@/lib/role-display";
+import { normalizeMission } from "@/lib/mission";
 import type { FleetEntry } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -117,8 +129,9 @@ export default async function AboutPage() {
         <p style={{ fontSize: 14, lineHeight: 1.55, color: SS_TOKENS.fg1, margin: 0 }}>
           SmokySignal tells motorcyclists, drivers, and curious locals — in
           one glance — whether the bird is up, where it is, and what it&rsquo;s
-          watching. Coverage: Washington state — every WSP, county sheriff,
-          and federal agency airframe we can confirm is broadcasting.
+          watching. Coverage: Washington state — every WSP and county
+          sheriff airframe we can confirm, plus federal, rescue, fire, and
+          transport aircraft so you know what else is up.
         </p>
       </Section>
 
@@ -196,13 +209,14 @@ export default async function AboutPage() {
             marginBottom: 10,
           }}
         >
-          These are the tails this app currently watches. The list comes from
-          public ADS-B sightings cross-referenced with state and county fleet
-          records. Tap any tail to see its detail page.
+          These are the tails this app currently watches, grouped by job.
+          Each one is checked against the FAA registry and, where we found
+          one, an agency or press source. Only Smokey flips the pill. Tap a
+          tail for its detail page.
         </p>
-        <div className="ss-grid-desktop-2">
-          {fleet.map((f) => (
-            <TailCard key={f.tail} entry={f} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          {groupByMission(fleet).map((g) => (
+            <MissionGroup key={g.mission} mission={g.mission} entries={g.entries} />
           ))}
         </div>
       </Section>
@@ -255,23 +269,84 @@ export default async function AboutPage() {
   );
 }
 
+function groupByMission(
+  fleet: FleetEntry[],
+): Array<{ mission: FleetEntry["role"]; entries: FleetEntry[] }> {
+  return MISSION_ORDER.map((m) => ({
+    mission: m,
+    entries: fleet.filter((f) => normalizeMission(f.role) === m),
+  })).filter((g) => g.entries.length > 0);
+}
+
+function MissionGroup({
+  mission,
+  entries,
+}: {
+  mission: FleetEntry["role"];
+  entries: FleetEntry[];
+}) {
+  return (
+    <section
+      aria-label={`${missionLabel(mission)} tails`}
+      data-mission={mission}
+      className="ss-mission-group"
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 8,
+          flexWrap: "wrap",
+          marginBottom: 4,
+        }}
+      >
+        <h3
+          className="ss-mono"
+          style={{
+            fontSize: 12,
+            letterSpacing: ".12em",
+            margin: 0,
+            color: SS_TOKENS.fg0,
+          }}
+        >
+          {roleBadgeText(mission)}
+        </h3>
+        <span className="ss-mono" style={{ fontSize: 11, color: SS_TOKENS.fg2 }}>
+          {entries.length} {entries.length === 1 ? "tail" : "tails"}
+        </span>
+      </div>
+      <p style={{ fontSize: 12, color: SS_TOKENS.fg2, margin: "0 0 8px", lineHeight: 1.45 }}>
+        {missionBlurb(mission)}
+      </p>
+      <div className="ss-grid-desktop-2">
+        {entries.map((f) => (
+          <TailCard key={f.tail} entry={f} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function TailCard({ entry }: { entry: FleetEntry }) {
   const badge = roleBadgeText(entry.role);
-  const tentative = entry.roleConfidence === "tentative";
+  const unit = policeUnitLabel(entry.policeUnit);
+  const source = entry.sources[0];
+  const mutualAid = entry.scope === "mutual_aid";
   return (
-    <Link
-      href={`/plane/${entry.tail}`}
-      prefetch={false}
+    <div
+      data-tail={entry.tail}
       style={{
-        display: "block",
-        textDecoration: "none",
-        color: "inherit",
         background: SS_TOKENS.bg1,
         border: `.5px solid ${SS_TOKENS.hairline}`,
         borderRadius: 12,
         padding: "12px 14px",
       }}
     >
+      <Link
+        href={`/plane/${entry.tail}`}
+        prefetch={false}
+        style={{ display: "block", textDecoration: "none", color: "inherit" }}
+      >
       <div
         style={{
           display: "flex",
@@ -324,22 +399,7 @@ function TailCard({ entry }: { entry: FleetEntry }) {
             {badge}
           </span>
         </Tooltip>
-        {tentative && (
-          <Tooltip content="Role is best-guess from public records. May be refined.">
-            <span
-              className="ss-mono"
-              tabIndex={0}
-              style={{
-                fontSize: 9.5,
-                color: SS_TOKENS.fg2,
-                fontStyle: "italic",
-                cursor: "help",
-              }}
-            >
-              (tentative)
-            </span>
-          </Tooltip>
-        )}
+        <ConfidenceBadge confidence={entry.roleConfidence} />
       </div>
       <div
         className="ss-mono"
@@ -351,8 +411,54 @@ function TailCard({ entry }: { entry: FleetEntry }) {
         }}
       >
         {fleetHex(entry).toUpperCase()} · {entry.base}
+        {unit ? ` · ${unit}` : ""}
+        {mutualAid ? " · Mutual aid" : ""}
       </div>
-    </Link>
+      </Link>
+      {source && (
+        <a
+          href={source}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ss-mono"
+          aria-label={`Source for ${entry.tail}: ${sourceLabel(source)}`}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            minHeight: 28,
+            marginTop: 2,
+            fontSize: 10.5,
+            color: SS_TOKENS.fg1,
+            textDecoration: "underline",
+            letterSpacing: ".04em",
+          }}
+        >
+          source: {sourceLabel(source)}
+          {entry.sources.length > 1 ? ` +${entry.sources.length - 1}` : ""}
+        </a>
+      )}
+    </div>
+  );
+}
+
+function ConfidenceBadge({ confidence }: { confidence: FleetEntry["roleConfidence"] }) {
+  const tip =
+    confidence === "confirmed"
+      ? "Confirmed. The FAA owner record and an agency source agree."
+      : confidence === "tentative"
+        ? "Tentative. One source only, or the callsign-to-tail link is inferred. May be refined."
+        : "Unverified. We have not confirmed this yet.";
+  return (
+    <Tooltip content={tip}>
+      <span
+        className="ss-mono"
+        tabIndex={0}
+        data-confidence={confidence}
+        style={confidenceBadgeStyle(confidence)}
+      >
+        {confidenceLabel(confidence)}
+      </span>
+    </Tooltip>
   );
 }
 

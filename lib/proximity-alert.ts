@@ -10,7 +10,8 @@
 "use client";
 
 import { haversineNm } from "./geo";
-import type { Aircraft, FleetRole } from "./types";
+import type { Aircraft, FleetRole, PoliceUnit } from "./types";
+import { countsAsSmokey } from "./mission";
 import { speakAlert } from "./voice-mode";
 
 export const PROXIMITY_THRESHOLD_KEY = "ss_proximity_threshold_nm";
@@ -19,11 +20,6 @@ export const DEFAULT_PROXIMITY_NM = 5;
 const COOLDOWN_MS = 15 * 60 * 1000;
 const COOLDOWN_PREFIX = "ss_proximity_seen:";
 
-const ALERT_ROLES: ReadonlySet<FleetRole> = new Set([
-  "smokey",
-  "patrol",
-  "unknown",
-]);
 
 export function getProximityThresholdNm(): number {
   if (typeof window === "undefined") return DEFAULT_PROXIMITY_NM;
@@ -67,6 +63,7 @@ export type ProximityHit = {
   tail: string;
   nickname: string | null;
   role: FleetRole;
+  policeUnit?: PoliceUnit;
   distanceNm: number;
 };
 
@@ -84,7 +81,7 @@ export function detectProximityHits(
   for (const a of aircraft) {
     if (!a.airborne) continue;
     if (a.lat == null || a.lon == null) continue;
-    if (!ALERT_ROLES.has(a.role)) continue;
+    if (!countsAsSmokey(a)) continue;
     if (recentlySeen(a.tail)) continue;
     const d = haversineNm(rider.lat, rider.lon, a.lat, a.lon);
     if (d <= thresholdNm) {
@@ -92,6 +89,7 @@ export function detectProximityHits(
         tail: a.tail,
         nickname: a.nickname,
         role: a.role,
+        policeUnit: a.policeUnit,
         distanceNm: d,
       });
     }
@@ -126,7 +124,7 @@ export async function fireProximityNotifications(
       // for fixed-wing speed enforcement; the rest collapse to a plain
       // distance-only body since the title already names the plane.
       const body =
-        h.role === "smokey"
+        h.policeUnit === "wsp"
           ? `${dist} nm out. Watching.`
           : `${dist} nm out.`;
       await reg.showNotification(title, {
