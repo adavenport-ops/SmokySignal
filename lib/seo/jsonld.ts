@@ -165,6 +165,44 @@ export function breadcrumbJsonLd(items: readonly Crumb[]): JsonLdObject {
   };
 }
 
+/** A plain schema.org WebPage that sits inside the WebSite. */
+export function webPageJsonLd(opts: { path: string; name: string; description: string }): JsonLdObject {
+  const url = absUrl(opts.path);
+  return {
+    "@context": CONTEXT,
+    "@type": "WebPage",
+    "@id": url,
+    url,
+    name: opts.name,
+    description: opts.description,
+    inLanguage: "en-US",
+    isPartOf: { "@id": WEBSITE_ID },
+    publisher: { "@id": ORG_ID },
+  };
+}
+
+/**
+ * Light structured data for a top-level page: a WebPage plus a
+ * Home > Page BreadcrumbList. Pass `parents` for deeper pages.
+ */
+export function simplePageJsonLd(opts: {
+  path: string;
+  name: string;
+  description: string;
+  /** Crumb label; defaults to `name`. */
+  crumb?: string;
+  parents?: readonly Crumb[];
+}): JsonLdObject[] {
+  return [
+    webPageJsonLd(opts),
+    breadcrumbJsonLd([
+      { name: "Home", path: "/" },
+      ...(opts.parents ?? []),
+      { name: opts.crumb ?? opts.name, path: opts.path },
+    ]),
+  ];
+}
+
 function aircraftDescription(e: FleetEntry): string {
   const op = agencyName(e.operator);
   return `${e.model} flown by ${op}${e.roleDescription ? ` (${e.roleDescription.toLowerCase()})` : ""}, based at ${e.base}.`;

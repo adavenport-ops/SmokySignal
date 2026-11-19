@@ -82,7 +82,8 @@ export function buildBlueskyPost(e: BotTakeoffEvent, siteUrl: string = SITE_URL)
   }
   parts.push(`${ptStamp(e.tsMs).time} PT`);
   const planeUrl = `${siteUrl}/plane/${encodeURIComponent(e.tail)}`;
-  const display = planeUrl.replace(/^https?:\/\//, "");
+  // Show the short brand host; the facet still links the canonical www URL.
+  const display = planeUrl.replace(/^https?:\/\/(www\.)?/, "");
   const text = `${parts.join(" · ")}\n${display}`;
   const facet = linkFacet(text, display, planeUrl);
   return { text, facets: facet ? [facet] : [], planeUrl };

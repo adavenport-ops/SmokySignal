@@ -39,6 +39,12 @@ export const KEY_PAGES: readonly Link[] = [
   { path: "/help", title: "Help", note: "How to read each screen, alerts, and where the data comes from." },
   { path: "/blog", title: "Blog", note: "What shipped on SmokySignal, and a weekly log of when the bird flew." },
   { path: "/legal", title: "Legal", note: "Privacy, disclaimers and data attribution." },
+  { path: "/about", title: "About", note: "What SmokySignal is, key facts about the tracked aircraft, and every tool past the main tabs." },
+  { path: "/press", title: "Press kit", note: "Description, key facts, logos, screenshots and how to cite the open data." },
+  { path: "/board", title: "Shop board", note: "Full-screen split-flap departures board for a shop or garage TV: which birds are up and which came down." },
+  { path: "/glance", title: "Handlebar mode", note: "One big status word for a phone on the handlebars, readable at a glance." },
+  { path: "/embed/help", title: "Embed widget", note: "Copy-paste status widget and badge for a club site or blog, with every variant." },
+  { path: "/relay", title: "Discord and webhooks", note: "Post Smokey takeoffs to a Discord channel or any HTTPS webhook, plus feeds and phone recipes." },
 ];
 
 export const MACHINE_ENDPOINTS: readonly Link[] = [

@@ -36,9 +36,9 @@ const smokey4: BotTakeoffEvent = {
 test("buildBlueskyPost: brand line plus the plane link", () => {
   const p = buildBlueskyPost(smokey4);
   assert.equal(p.text, "Smokey 4 up · I-5 · Fife · 14:22 PT\nsmokysignal.app/plane/N305DK");
-  assert.equal(p.planeUrl, "https://smokysignal.app/plane/N305DK");
+  assert.equal(p.planeUrl, "https://www.smokysignal.app/plane/N305DK");
   assert.equal(p.facets.length, 1);
-  assert.equal(p.facets[0]!.features[0]!.uri, "https://smokysignal.app/plane/N305DK");
+  assert.equal(p.facets[0]!.features[0]!.uri, "https://www.smokysignal.app/plane/N305DK");
 });
 
 test("facet offsets are UTF-8 bytes, not UTF-16 code units", () => {

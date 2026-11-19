@@ -1,12 +1,25 @@
 /* The Board — split-flap kiosk. Sized off the viewport so a 1080p TV
- * across a shop floor reads it at 3 m: row tiles land around 56 px at
- * 1920x1080, the status word around 110 px. Every size floors at 12px
- * so the board still reads on a phone. */
+ * across a shop floor reads it at 3 m: row tiles land around 44 x 68 px
+ * at 1920x1080, the status word around 110 px. Every text size floors at
+ * 12px so the board still reads on a phone.
+ *
+ * Tile geometry is whole pixels. BoardView measures the rows area and
+ * sets --tile-w / --tile-h / --tile-gap / --tile-fs / --split-y / --row-gap
+ * / --pad-x / --pad-y as integer px (lib/board.ts boardLayout()). The
+ * values below only cover the first frame before that measurement, and
+ * round() snaps even those where the browser has it. */
 
 .board {
-  --row-fs: max(12px, min(2.95vw, 7.2vh));
-  --tile-w: calc(var(--row-fs) * 0.78);
-  --tile-gap: calc(var(--row-fs) * 0.06);
+  --tile-h: max(16px, min(3.6vw, 8.4vh));
+  --tile-w: calc(var(--tile-h) / 1.56);
+  --tile-gap: max(1px, calc(var(--tile-w) * 0.08));
+  --tile-fs: calc(var(--tile-h) * 0.8);
+  --tile-r: max(1px, calc(var(--tile-h) * 0.06));
+  --split-y: calc(var(--tile-h) / 2 - 1px);
+  --row-gap: calc(var(--tile-h) * 0.18);
+  --line-gap: 0px;
+  --pad-x: 0px;
+  --pad-y: 0px;
   --cell: calc(var(--tile-w) + var(--tile-gap));
   --sx: 0px;
   --sy: 0px;
@@ -21,15 +34,29 @@
   color: #f2f4f7;
 }
 
+@supports (width: round(down, 10.5px, 2px)) {
+  .board {
+    --tile-h: round(down, max(16px, min(3.6vw, 8.4vh)), 2px);
+    --tile-w: round(down, calc(var(--tile-h) / 1.56), 1px);
+    --tile-gap: max(1px, round(calc(var(--tile-w) * 0.08), 1px));
+    --tile-fs: round(down, calc(var(--tile-h) * 0.8), 1px);
+    --row-gap: round(calc(var(--tile-h) * 0.18), 1px);
+  }
+}
+
 .frame {
+  position: relative;
+  /* Burn-in guard: BoardView nudges these by 1 px every few minutes.
+   * left / top rather than a transform, so the board never becomes a
+   * transformed (and resampled) layer. */
+  left: var(--sx);
+  top: var(--sy);
   height: 100%;
   box-sizing: border-box;
   padding: 3.2vh 3vw 2.6vh;
   display: flex;
   flex-direction: column;
   gap: 2.4vh;
-  /* Burn-in guard: BoardView nudges these by 1 px every few minutes. */
-  transform: translate(var(--sx), var(--sy));
 }
 
 .header {
@@ -69,6 +96,7 @@
   line-height: 1;
   letter-spacing: 0.02em;
   font-feature-settings: "zero", "tnum";
+  white-space: nowrap;
 }
 
 .statusSub {
@@ -105,6 +133,12 @@
   font-feature-settings: "zero", "tnum";
 }
 
+/* "PACIFIC · 24H" stays on one line. */
+.clockZone {
+  margin-top: 0.8vh;
+  white-space: nowrap;
+}
+
 .heads {
   display: flex;
   text-transform: uppercase;
@@ -112,62 +146,90 @@
   font-size: max(12px, min(1.25vw, 2.6vh));
   letter-spacing: 0.14em;
   color: #a8aeb8;
+  white-space: nowrap;
 }
 
 .rows {
   list-style: none;
   margin: 0;
-  padding: 0;
+  /* Sub-pixel pad from BoardView: puts the first tile on a whole pixel. */
+  padding: var(--pad-y) 0 0 var(--pad-x);
   display: flex;
   flex-direction: column;
-  gap: calc(var(--row-fs) * 0.22);
+  gap: var(--row-gap);
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .row {
   display: flex;
+  flex-direction: column;
+  gap: var(--line-gap);
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
-  font-size: var(--row-fs);
+  font-size: var(--tile-fs);
   font-weight: 600;
   line-height: 1;
-  perspective: 600px;
+}
+
+.line {
+  display: flex;
+  height: var(--tile-h);
+}
+
+.tiles {
+  display: flex;
 }
 
 .rowStale {
   opacity: 0.45;
 }
 
+/* One flap. Integer width and height (from BoardView), so every glyph
+ * edge lands on a device pixel. The split between the two flaps is a
+ * background band exactly 1 px tall at a whole-pixel offset (--split-y,
+ * tile height is always even), drawn BEHIND the glyph rather than over it.
+ * No transform, no backface-visibility, no will-change: a settled tile is
+ * plain paint, not a compositor layer. */
 .tile {
   position: relative;
-  display: inline-flex;
+  display: flex;
+  flex: none;
   align-items: center;
   justify-content: center;
   width: var(--tile-w);
-  height: calc(var(--row-fs) * 1.22);
+  height: var(--tile-h);
   margin-right: var(--tile-gap);
-  border-radius: calc(var(--row-fs) * 0.08);
-  background: #15181d;
+  border-radius: var(--tile-r);
+  overflow: hidden;
+  background: linear-gradient(
+    to bottom,
+    #15181d 0,
+    #15181d var(--split-y),
+    #0b0d10 var(--split-y),
+    #0b0d10 calc(var(--split-y) + 1px),
+    #15181d calc(var(--split-y) + 1px),
+    #15181d 100%
+  );
   color: inherit;
   font-feature-settings: "zero", "tnum";
-  transform-origin: 50% 50%;
-  backface-visibility: hidden;
 }
 
-/* The split between the two flaps. */
-.tile::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 1px;
-  background: #0b0d10;
+.glyph {
+  display: block;
 }
 
 .gap {
-  display: inline-block;
+  display: block;
+  flex: none;
   width: calc(var(--cell) * 2);
+}
+
+/* Compact (phone) rows: the status line starts under the flight name. */
+.indent {
+  display: block;
+  flex: none;
+  width: calc(var(--cell) * 6);
 }
 
 .toneRowAlert {
@@ -223,22 +285,83 @@
   border: 0;
 }
 
-/* Split-flap motion only for viewers who haven't asked for less. Each
- * tile is keyed on its character, so only tiles whose letter changed
- * remount and flip. Ease-out, no overshoot (BRAND.md §4 Motion). */
+/* Phones and narrow windows: the header stacks (brand and clock on top,
+ * the status word under them, full width), and the rows switch to the
+ * two-line compact layout BoardView picks from the measured width. */
+@media (max-width: 719px) {
+  .frame {
+    padding: 16px 16px 12px;
+    gap: 14px;
+  }
+
+  .header {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "brand clock"
+      "status status";
+    row-gap: 14px;
+    padding-bottom: 14px;
+  }
+
+  .header > :first-child {
+    grid-area: brand;
+    min-width: 0;
+  }
+
+  .status {
+    grid-area: status;
+  }
+
+  .clock {
+    grid-area: clock;
+  }
+
+  .statusWord {
+    font-size: clamp(30px, 11vw, 56px);
+  }
+
+  .statusSub {
+    margin-top: 6px;
+    font-size: 15px;
+  }
+
+  .clockTime {
+    font-size: clamp(26px, 8vw, 40px);
+  }
+
+  .eyebrow {
+    letter-spacing: 0.1em;
+  }
+
+  .region {
+    margin-top: 4px;
+    font-size: 15px;
+  }
+
+  .footer {
+    flex-wrap: wrap;
+    font-size: 12px;
+  }
+}
+
+/* Split-flap motion only for viewers who haven't asked for less. Only a
+ * glyph whose character changed flips, never a whole tile and never a
+ * blank. The animation fills backwards (it holds the first frame during
+ * its delay) but not forwards, and BoardView drops the class on
+ * animationend, so a settled glyph has no transform at all. Ease-out, no
+ * overshoot (BRAND.md §4 Motion). */
 @media (prefers-reduced-motion: no-preference) {
-  .tile {
-    animation: flap 380ms cubic-bezier(0.25, 0.7, 0.35, 1) both;
-    animation-delay: var(--d, 0ms);
+  .flip {
+    animation: flap 320ms cubic-bezier(0.25, 0.7, 0.35, 1) backwards;
   }
 
   @keyframes flap {
     0% {
-      transform: rotateX(-90deg);
+      transform: perspective(400px) rotateX(-90deg);
       opacity: 0.3;
     }
     100% {
-      transform: rotateX(0deg);
+      transform: perspective(400px) rotateX(0deg);
       opacity: 1;
     }
   }

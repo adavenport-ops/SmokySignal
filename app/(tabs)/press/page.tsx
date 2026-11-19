@@ -18,7 +18,7 @@ import { CITATION, LOGO_FILES, PRESS_CLIP, PRESS_EMAIL, PRESS_MEDIA_BASE, PRESS_
 export const dynamic = "force-dynamic";
 
 export const metadata = pageMeta({
-  title: "Press kit: logos, screenshots, facts and data citation",
+  title: "Press kit: logos, screenshots and key facts",
   description:
     "Everything for writing about SmokySignal: description, key facts, logos, six screenshots, a 3D clip and how to cite the open flight-hours data.",
   path: "/press",
@@ -62,7 +62,7 @@ export default async function PressPage() {
 
       <section data-testid="press-news">
         <h2 className="ss-eyebrow" style={H2}>Why it is a story</h2>
-        <ul style={LIST}>
+        <ul className="ss-tap-list" style={LIST}>
           <li>
             <strong style={STRONG}>A public dataset.</strong> Monthly flight hours for every tracked tail, by tail and
             by mission, as an ODbL 1.0 CSV at{" "}
@@ -292,6 +292,8 @@ const DL: React.CSSProperties = {
   textDecoration: "underline",
   fontSize: 12,
   minHeight: 44,
+  minWidth: 44,
   display: "inline-flex",
   alignItems: "center",
+  justifyContent: "center",
 };

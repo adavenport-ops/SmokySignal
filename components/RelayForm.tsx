@@ -176,7 +176,8 @@ function CheckRow({
         display: "flex",
         alignItems: "center",
         gap: 10,
-        minHeight: 40,
+        // The whole row is the hit area for the 18px box: 44px tall.
+        minHeight: 44,
         fontSize: 14,
         color: SS_TOKENS.fg0,
         cursor: "pointer",

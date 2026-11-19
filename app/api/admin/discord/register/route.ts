@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { isAdminAuthed } from "@/lib/admin-auth";
 import { discordRegisterConfig } from "@/lib/bots/env";
 import { DISCORD_COMMANDS } from "@/lib/bots/discord";
+import { SITE_URL } from "@/lib/seo/site";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +30,7 @@ async function discordCall(
       headers: {
         authorization: `Bot ${botToken}`,
         "content-type": "application/json",
-        "user-agent": "DiscordBot (https://smokysignal.app, 1.0)",
+        "user-agent": `DiscordBot (${SITE_URL}, 1.0)`,
       },
       body: JSON.stringify(body),
       signal: ctrl.signal,

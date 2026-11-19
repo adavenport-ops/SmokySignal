@@ -7,8 +7,11 @@
 import { test } from "node:test";
 import assert from "node:assert";
 import {
+  BOARD_COMPACT_CELLS,
   BOARD_EVENT_WINDOW_MS,
+  BOARD_WIDE_CELLS,
   baseCode,
+  boardLayout,
   boardName,
   boardRowText,
   buildBoardRows,
@@ -209,4 +212,67 @@ test("buildBoardRows: caps at maxRows", () => {
   );
   const rows = buildBoardRows({ snapshot: snapshot(many), activity: [], regionId: null, now: NOW, maxRows: 8 });
   assert.equal(rows.length, 8);
+});
+
+// ─── tile geometry ──────────────────────────────────────────────────────
+
+function assertWholePixels(l: ReturnType<typeof boardLayout>) {
+  for (const k of ["tileW", "tileH", "gap", "rowGap", "lineGap", "fontSize", "splitY", "radius", "rows"] as const) {
+    assert.ok(Number.isInteger(l[k]), `${k} = ${l[k]} is not a whole pixel`);
+  }
+  assert.equal(l.tileH % 2, 0, "tile height is even so the split sits on a whole pixel");
+  assert.equal(l.splitY, l.tileH / 2 - 1);
+}
+
+test("boardLayout: whole-pixel tiles at 1080p, 720p and odd sizes", () => {
+  for (const [w, h] of [
+    [1804, 640],
+    [1203, 420],
+    [1366.4, 512.7],
+    [2560, 1100],
+    [3840, 1500],
+    [1023, 777],
+  ] as const) {
+    const l = boardLayout(w, h);
+    assertWholePixels(l);
+    assert.equal(l.compact, false, `${w}x${h} is a wide board`);
+    assert.equal(l.rows, 8);
+    // Everything fits the measured box.
+    assert.ok(BOARD_WIDE_CELLS * (l.tileW + l.gap) <= Math.floor(w), `width fits at ${w}`);
+    assert.ok(8 * l.tileH + 7 * l.rowGap <= Math.floor(h), `height fits at ${h}`);
+  }
+});
+
+test("boardLayout: 1080p tiles stay TV-sized", () => {
+  const l = boardLayout(1804, 640);
+  assert.ok(l.tileH >= 56 && l.tileH <= 72, `tileH ${l.tileH}`);
+  assert.ok(l.tileW >= 36 && l.tileW <= 48, `tileW ${l.tileW}`);
+});
+
+test("boardLayout: phones stack each departure and grow the tiles", () => {
+  const phone = boardLayout(358, 560);
+  assertWholePixels(phone);
+  assert.equal(phone.compact, true);
+  assert.ok(BOARD_COMPACT_CELLS * (phone.tileW + phone.gap) <= 358);
+  // Far bigger than the 9 x 15 px wide-row tile a phone used to get.
+  assert.ok(phone.tileW >= 14, `tileW ${phone.tileW}`);
+  assert.ok(phone.rows >= 3 && phone.rows <= 8, `rows ${phone.rows}`);
+  const used = phone.rows * (2 * phone.tileH + phone.lineGap) + (phone.rows - 1) * phone.rowGap;
+  assert.ok(used <= 560, "rows fit the height");
+  // A shorter screen shows fewer departures, not smaller tiles.
+  const short = boardLayout(358, 300);
+  assert.equal(short.tileW, phone.tileW);
+  assert.ok(short.rows < phone.rows);
+});
+
+test("boardLayout: degenerate boxes still return sane whole pixels", () => {
+  for (const [w, h] of [
+    [0, 0],
+    [NaN, 100],
+    [200, 20],
+  ] as const) {
+    const l = boardLayout(w, h);
+    assertWholePixels(l);
+    assert.ok(l.rows >= 1 && l.tileH >= 4);
+  }
 });

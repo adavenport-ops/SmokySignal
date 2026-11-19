@@ -78,6 +78,7 @@ export function HelpMarkdown({ source }: { source: string }) {
           ),
           ul: (props) => (
             <ul
+              className="ss-tap-list"
               style={{
                 paddingLeft: 20,
                 margin: "0 0 18px",
@@ -93,6 +94,7 @@ export function HelpMarkdown({ source }: { source: string }) {
           ),
           ol: (props) => (
             <ol
+              className="ss-tap-list"
               style={{
                 paddingLeft: 22,
                 margin: "0 0 18px",

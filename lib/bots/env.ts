@@ -9,8 +9,8 @@ import { createHmac } from "node:crypto";
 
 export type BotEnv = Readonly<Record<string, string | undefined>>;
 
-/** Canonical public origin. Links in bot messages always point here. */
-export const SITE_URL = "https://smokysignal.app";
+/** Canonical public origin (the www host). Links in bot messages always point here. */
+export { SITE_URL } from "../seo/site";
 
 function val(env: BotEnv, name: string): string | null {
   const v = env[name];

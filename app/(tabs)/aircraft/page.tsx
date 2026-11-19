@@ -1,3 +1,5 @@
+import { JsonLd } from "@/components/JsonLd";
+import { simplePageJsonLd } from "@/lib/seo/jsonld";
 import Link from "next/link";
 import { fleetHex } from "@/lib/seed";
 import { getRegistry } from "@/lib/registry";
@@ -38,6 +40,14 @@ export default async function AircraftPage() {
   const groups = groupByMission(fleet);
   return (
     <main className="ss-page">
+      <JsonLd
+        data={simplePageJsonLd({
+          path: "/aircraft",
+          name: "All aircraft: every tracked WSP and sheriff tail",
+          description: "Every tail SmokySignal watches over Washington, grouped by job, with the model, base and public source for each: WSP, county sheriffs, CBP, DNR.",
+          crumb: "Aircraft",
+        })}
+      />
       <BackLink />
       <header style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span className="ss-eyebrow">SmokySignal · Aircraft</span>

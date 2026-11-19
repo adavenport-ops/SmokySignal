@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 export const metadata = pageMeta({
   title: "Towns: what flies over Puyallup, Fife and Tacoma",
   description:
-    "Plane circling over your town? Thirty days of tracked WSP and sheriff flights near Puyallup, Fife, Tacoma, Kent, Everett, Olympia, Spokane and other Washington towns.",
+    "Plane circling over your town? Thirty days of tracked WSP and sheriff flights near Puyallup, Fife, Tacoma, Kent, Everett, Spokane and other Washington towns.",
   path: "/near",
 });
 

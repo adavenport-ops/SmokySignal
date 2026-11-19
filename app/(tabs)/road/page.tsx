@@ -1,3 +1,5 @@
+import { JsonLd } from "@/components/JsonLd";
+import { simplePageJsonLd } from "@/lib/seo/jsonld";
 import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 import { CORRIDORS } from "@/lib/corridor";
@@ -23,6 +25,14 @@ export default async function RoadIndexPage() {
   const digest = await getHistoryDigest();
   return (
     <main className="ss-page">
+      <JsonLd
+        data={simplePageJsonLd({
+          path: "/road",
+          name: "Road history: flights over I-5, I-405 and SR-512",
+          description: "Thirty days of tracked WSP and sheriff flights over I-5, I-405, SR-167, SR-512, SR-16, I-90 and the other Puget Sound corridors, road by road.",
+          crumb: "Road history",
+        })}
+      />
       <BackLink />
       <span className="ss-eyebrow">SmokySignal · Road history</span>
 

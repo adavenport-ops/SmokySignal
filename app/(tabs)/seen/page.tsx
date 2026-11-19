@@ -1,3 +1,5 @@
+import { JsonLd } from "@/components/JsonLd";
+import { simplePageJsonLd } from "@/lib/seo/jsonld";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { areaName } from "@/lib/places";
@@ -80,6 +82,14 @@ export default function SeenPage({ searchParams }: Props) {
 
   return (
     <main className="ss-page">
+      <JsonLd
+        data={simplePageJsonLd({
+          path: "/seen",
+          name: BASE_TITLE,
+          description: BASE_DESCRIPTION,
+          crumb: "Was that the plane I saw?",
+        })}
+      />
       <BackLink />
       <span className="ss-eyebrow">SmokySignal · Look back</span>
 

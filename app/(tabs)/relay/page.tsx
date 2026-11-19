@@ -3,7 +3,7 @@ import { RelayCreate } from "@/components/RelayCreate";
 import { BotsCallout } from "@/components/BotsCallout";
 import { getBotsPublicInfo } from "@/lib/bots/public-info";
 import { BackLink } from "@/components/BackLink";
-import { pageMeta } from "@/lib/seo/site";
+import { absUrl, pageMeta } from "@/lib/seo/site";
 import { Related } from "@/components/Related";
 
 // /relay: get Smokey takeoff alerts into the tools riders and clubs
@@ -39,7 +39,7 @@ const SAMPLE = {
   alt_ft: 1800,
   corridor: "I-5 · Fife",
   ts_iso: "2026-11-18T22:22:00.000Z",
-  url: "https://smokysignal.app/plane/N305DK",
+  url: absUrl("/plane/N305DK"),
 };
 
 export default async function RelayPage() {
@@ -80,7 +80,7 @@ export default async function RelayPage() {
               Skip the webhook. Point any feed reader or a Discord RSS bot at the feed and
               it posts on its own.
             </p>
-            <ul style={{ ...listStyle, listStyleType: "disc" }}>
+            <ul className="ss-tap-list" style={{ ...listStyle, listStyleType: "disc" }}>
               <li>
                 <a href="/feed.xml" className="ss-mono" style={linkStyle}>/feed.xml</a>{" "}
                 Atom, last 100 takeoffs and landings, Smokey only

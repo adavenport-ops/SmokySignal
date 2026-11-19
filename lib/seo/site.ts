@@ -179,4 +179,4 @@ export const SITE_KEYWORDS: readonly string[] = [
 
 export const HOME_TITLE = "SmokySignal · Live Washington State Patrol aircraft tracker";
 export const HOME_DESCRIPTION =
-  "Is the state patrol plane flying today? Live map of WSP, King County Guardian One and county sheriff aircraft over Puget Sound and Washington, from public ADS-B.";
+  "Is the state patrol plane flying today? Live map of WSP, King County Guardian One and sheriff aircraft over Puget Sound and Washington, from public ADS-B.";

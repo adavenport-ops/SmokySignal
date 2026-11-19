@@ -71,7 +71,7 @@ test("buildStatusEmbed: up is orange with one field per Smokey, place and mono d
   assert.equal(e.color, EMBED_COLOR.alert);
   assert.equal(e.fields?.length, 1);
   assert.match(e.fields![0]!.value, /`N305DK` · I-5 · Fife · `2,600 ft`/);
-  assert.match(e.fields![0]!.value, /https:\/\/smokysignal\.app\/plane\/N305DK/);
+  assert.match(e.fields![0]!.value, /https:\/\/www\.smokysignal\.app\/plane\/N305DK/);
   assert.equal(e.footer.text, "SmokySignal · 14:22 PT · 2026-11-18");
   assert.equal(e.timestamp, new Date(T).toISOString());
   assert.ok(!/!/.test(JSON.stringify(e)));
@@ -119,7 +119,7 @@ test("buildPlaneEmbed: last flight, link to /plane/{tail}, orange only when Smok
     stale: false,
   };
   const down = buildPlaneEmbed(base);
-  assert.equal(down.url, "https://smokysignal.app/plane/N305DK");
+  assert.equal(down.url, "https://www.smokysignal.app/plane/N305DK");
   assert.notEqual(down.color, EMBED_COLOR.alert);
   const last = down.fields!.find((f) => f.name === "Last flight")!;
   assert.match(last.value, /`2026-11-18` · `10:02` to `11:40` PT · `1h 38m` · max `3,100 ft`/);
@@ -147,7 +147,7 @@ function interactionReq(body: unknown, signed = true): Request {
     headers["x-signature-ed25519"] = signBody(ts, raw);
     headers["x-signature-timestamp"] = ts;
   }
-  return new Request("https://smokysignal.app/api/discord/interactions", { method: "POST", headers, body: raw });
+  return new Request("https://www.smokysignal.app/api/discord/interactions", { method: "POST", headers, body: raw });
 }
 
 const ENV = { DISCORD_APPLICATION_ID: "123456789012345678", DISCORD_PUBLIC_KEY: PUB_HEX };
@@ -182,7 +182,7 @@ test("handleDiscordInteraction: PING, bad signature, /smokey, /smokey plane, unk
       deps,
     )
   ).json();
-  assert.equal(plane.data.embeds[0].url, "https://smokysignal.app/plane/N305DK");
+  assert.equal(plane.data.embeds[0].url, "https://www.smokysignal.app/plane/N305DK");
   assert.deepEqual(plane.data.allowed_mentions, { parse: [] });
 
   const unknown = await (

@@ -1,3 +1,5 @@
+import { JsonLd } from "@/components/JsonLd";
+import { simplePageJsonLd } from "@/lib/seo/jsonld";
 import Link from "next/link";
 import { BASE_URL } from "@/lib/config";
 import { unstable_cache } from "next/cache";
@@ -119,6 +121,14 @@ export default async function ForecastPage({
   const hour12 = isHour12(getTimeFormatPref());
   return (
     <main className="ss-page">
+      <JsonLd
+        data={simplePageJsonLd({
+          path: "/forecast",
+          name: "Forecast: when the WSP plane usually flies",
+          description: "Hour-by-weekday odds of a Washington State Patrol or sheriff aircraft takeoff, from the flight log, plus each month on record.",
+          crumb: "Forecast",
+        })}
+      />
       <style>{`
         .ss-forecast-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         @media (min-width: 768px) {

@@ -259,10 +259,42 @@ export function formatPostDate(date: string): string {
   return `${d} ${MONTHS[m - 1]} ${y}`;
 }
 
-/** Noon Pacific on the publish date, as ms. Stable regardless of server zone. */
-export function postTimestamp(date: string): number {
-  // 20:00 UTC is 12:00 PST / 13:00 PDT: always the same calendar day in PT.
-  return Date.parse(`${date}T20:00:00Z`);
+const PT_DATE_FMT = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Los_Angeles",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  hourCycle: "h23",
+});
+
+/** 00:00 America/Los_Angeles on a YYYY-MM-DD date. The offset is -7 or -8
+ * and DST flips at 02:00, so midnight is always 07:00 or 08:00 UTC. */
+function ptMidnightMs(date: string): number {
+  const [y, m, d] = date.split("-").map(Number) as [number, number, number];
+  for (const h of [8, 7]) {
+    const t = Date.UTC(y, m - 1, d, h);
+    const parts = Object.fromEntries(PT_DATE_FMT.formatToParts(t).map((p) => [p.type, p.value]));
+    if (`${parts.year}-${parts.month}-${parts.day}` === date && parts.hour === "00") return t;
+  }
+  return Date.UTC(y, m - 1, d, 8);
+}
+
+/**
+ * The publish instant for a date-only post: 00:00 America/Los_Angeles on
+ * that calendar date, as ms. The sitemap lastmod, the Article JSON-LD
+ * datePublished, og publishedTime and the Atom <updated> all read this one
+ * function, so they always agree.
+ *
+ * Midnight Pacific is the earliest instant the date can mean, so a post
+ * shipped on its own date never carries a timestamp ahead of the deploy
+ * (noon, the old choice, read as "four hours from now" on a morning ship).
+ * A post dated after `nowMs` is clamped to `nowMs`; pass a fixed value
+ * when several surfaces must agree on a future-dated post.
+ */
+export function postTimestamp(date: string, nowMs: number = Date.now()): number {
+  const start = ptMidnightMs(date);
+  return Number.isFinite(nowMs) ? Math.min(start, nowMs) : start;
 }
 
 export function postUrl(siteUrl: string, slug: string): string {

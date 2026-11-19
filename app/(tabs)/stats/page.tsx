@@ -1,3 +1,5 @@
+import { JsonLd } from "@/components/JsonLd";
+import { simplePageJsonLd } from "@/lib/seo/jsonld";
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { SS_TOKENS } from "@/lib/tokens";
@@ -57,6 +59,14 @@ export default async function StatsPage() {
 
   return (
     <main className="ss-page" style={{ gap: 22 }}>
+      <JsonLd
+        data={simplePageJsonLd({
+          path: "/stats",
+          name: "Stats: daily flight hours for every tracked tail",
+          description: "How the bird flew: a permanent daily log of flight hours for every tracked WSP, sheriff and other aircraft over Washington.",
+          crumb: "Stats",
+        })}
+      />
       <BackLink />
       <span className="ss-eyebrow">SmokySignal · Stats</span>
 

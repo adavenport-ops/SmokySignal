@@ -1,3 +1,5 @@
+import { JsonLd } from "@/components/JsonLd";
+import { simplePageJsonLd } from "@/lib/seo/jsonld";
 import type { Metadata } from "next";
 import { RadarShell } from "@/components/RadarShell";
 import { VisuallyHidden } from "@/components/VisuallyHidden";
@@ -43,6 +45,14 @@ export default async function RadarPage({
   // (app/globals.css). RadarShell itself stays as it is.
   return (
     <div className="ss-radar-page">
+      <JsonLd
+        data={simplePageJsonLd({
+          path: "/radar",
+          name: "Radar: live map of patrol aircraft over Washington",
+          description: "Live radar of Washington State Patrol, county sheriff and other tracked aircraft over Puget Sound and Washington, with 30-day hot zones and flight paths.",
+          crumb: "Radar",
+        })}
+      />
       {/* The map style, tiles and glyphs all come from MapTiler (the only
           third-party host the radar loads, already in the CSP): open the
           connection while the client bundle boots. */}

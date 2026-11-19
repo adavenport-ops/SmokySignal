@@ -232,3 +232,103 @@ export function buildBoardRows(args: {
 
   return rows.slice(0, maxRows);
 }
+
+// ─── Tile geometry ──────────────────────────────────────────────────────
+//
+// Every tile sits on whole CSS pixels. Fractional tile sizes (the old
+// min(2.95vw, 7.2vh) sizing gave 44.17 x 69.09 px at 1080p) put glyph
+// edges between device pixels, and TV GPUs resample them into a shimmer.
+// BoardView measures the rows area and feeds it here; the result goes out
+// as integer px CSS variables.
+
+/** Tile cells across one wide row: 4 + 2 + 14 + 2 + 14. */
+export const BOARD_WIDE_CELLS =
+  BOARD_COLS.base + BOARD_GAP + BOARD_COLS.name + BOARD_GAP + BOARD_COLS.status;
+/**
+ * Tile cells across one compact (phone) row. The departure stacks on two
+ * lines, base + name over the status, so each tile can be much bigger.
+ */
+export const BOARD_COMPACT_CELLS = BOARD_COLS.base + BOARD_GAP + BOARD_COLS.name;
+/** Below this many px per tile cell the wide row is unreadable: stack it. */
+export const BOARD_COMPACT_MIN_CELL = 22;
+/** Tile height over tile width, from the original 1.22 / 0.78 em tile. */
+const TILE_ASPECT = 1.56;
+
+export type BoardLayout = {
+  compact: boolean;
+  /** Departures shown, blanks included. */
+  rows: number;
+  /** All integer CSS px. tileH is even, so the split lands on a whole pixel. */
+  tileW: number;
+  tileH: number;
+  gap: number;
+  /** Space between departures. */
+  rowGap: number;
+  /** Space between the two lines of a compact departure. */
+  lineGap: number;
+  fontSize: number;
+  /** Top edge of the 1 px split band, from the tile's top: tileH / 2 - 1. */
+  splitY: number;
+  radius: number;
+};
+
+const even = (n: number) => Math.max(4, 2 * Math.floor(n / 2));
+
+/**
+ * Integer tile geometry for a rows area of `width` x `height` CSS px.
+ * Wide screens get `maxRows` one-line departures sized to fit both ways.
+ * Narrow screens stack each departure on two lines, size the tiles from
+ * the width, and show as many departures as the height holds.
+ */
+export function boardLayout(
+  width: number,
+  height: number,
+  maxRows: number = BOARD_MAX_ROWS,
+): BoardLayout {
+  const w = Math.max(0, Math.floor(Number.isFinite(width) ? width : 0));
+  const h = Math.max(0, Math.floor(Number.isFinite(height) ? height : 0));
+  const compact = Math.floor(w / BOARD_WIDE_CELLS) < BOARD_COMPACT_MIN_CELL;
+  const cells = compact ? BOARD_COMPACT_CELLS : BOARD_WIDE_CELLS;
+  const lines = compact ? 2 : 1;
+
+  // Width bound: cells * (tileW + gap) <= w, the gap about 7% of a cell.
+  const cell = Math.max(5, Math.floor(w / cells));
+  const gap = Math.max(1, Math.round(cell * 0.07));
+  let tileH = even((cell - gap) * TILE_ASPECT);
+
+  const rowGapFor = (th: number) => Math.max(2, Math.round(th * 0.18));
+  const lineGapFor = (th: number) => (compact ? Math.max(1, Math.round(th * 0.06)) : 0);
+  const stack = (th: number, n: number) =>
+    n * (th * lines + lineGapFor(th)) + Math.max(0, n - 1) * rowGapFor(th);
+
+  let rows = Math.max(1, Math.floor(maxRows));
+  if (compact) {
+    // Keep the width-sized tile; show as many departures as fit.
+    const want = rows;
+    rows = 1;
+    while (rows < want && stack(tileH, rows + 1) <= h) rows++;
+  }
+  // Height bound: shrink in even steps until the rows fit.
+  while (tileH > 4 && stack(tileH, rows) > h) tileH -= 2;
+  const tileW = Math.max(3, Math.min(cell - gap, Math.round(tileH / TILE_ASPECT)));
+  // On a phone the stack fills the screen: spare height opens up the
+  // space between departures (up to one tile), in whole pixels.
+  let rowGap = rowGapFor(tileH);
+  if (compact && rows > 1) {
+    const spare = h - stack(tileH, rows);
+    rowGap = Math.min(tileH, rowGap + Math.max(0, Math.floor(spare / (rows - 1))));
+  }
+
+  return {
+    compact,
+    rows,
+    tileW,
+    tileH,
+    gap,
+    rowGap,
+    lineGap: lineGapFor(tileH),
+    fontSize: Math.max(8, Math.floor(tileH * 0.8)),
+    splitY: tileH / 2 - 1,
+    radius: Math.max(1, Math.round(tileH * 0.06)),
+  };
+}

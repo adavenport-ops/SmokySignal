@@ -24,6 +24,7 @@ import { agencyName } from "@/lib/agencies";
 import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbJsonLd, flightPageJsonLd } from "@/lib/seo/jsonld";
 import { pageMeta } from "@/lib/seo/site";
+import { flightDescription, flightTitle } from "@/lib/seo/meta-fit";
 import { flightShareText } from "@/lib/share-text";
 
 export const dynamic = "force-dynamic";
@@ -49,8 +50,16 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const startMs = flight?.session.start_ts ?? parsed.tsMs;
   const when = `${formatTs(startMs, "date")} ${formatTs(startMs, "time")}`;
   return pageMeta({
-    title: `${tail}${niceName} flight, ${when}`,
-    description: `Recorded track of ${tail}${niceName}, a ${entry.model} flown by ${agencyName(entry.operator)}, on ${when}: route, altitude and time aloft from public ADS-B.`,
+    // Long nicknames ("Guardian One (legacy)") lose the parenthetical,
+    // then the nickname, before the title or description runs long.
+    title: flightTitle(tail, entry.nickname, when),
+    description: flightDescription({
+      tail,
+      nickname: entry.nickname,
+      model: entry.model,
+      agency: agencyName(entry.operator),
+      when,
+    }),
     path: `/flight/${tail}/${params.flightId}`,
     inheritImage: true,
     socialTitle: `${tail}${niceName} · Flight ${params.flightId}`,
