@@ -2,13 +2,20 @@
 // Brand-voice gate. Reads changed user-facing files via stdin (one path
 // per line), emits {p0,p1} JSON to stdout, exits 1 if any P0 violation.
 // Pure regex/wordlist — no LLM, no network. Rules from design/BRAND.md.
+//
+// Exports the rule lists and checkers for .github/scripts/voice-gate.test.mjs;
+// the CLI only runs when this file is executed directly.
 
 import { readFileSync, existsSync } from "node:fs";
 import { extname } from "node:path";
+import { pathToFileURL } from "node:url";
 
-const P0_BANNED = [
+// [rule, reason, matcher?]. Without a matcher the rule is a case-insensitive
+// substring. "cop" needs a word boundary: as a substring it also hit
+// "helicopter", "copy", "scope" and "copilot".
+export const P0_BANNED = [
   ["police", 'use "Smokey" / "the bird"'],
-  ["cop", 'use "Smokey" / "the bird"'],
+  ["cop", 'use "Smokey" / "the bird"', /\b(?:cops?|coppers?)\b/i],
   ["law enforcement", 'use "Smokey"'],
   ["drone", "drones aren't the bird"],
   ["surveilling", 'use "watching"'],
@@ -18,7 +25,7 @@ const P0_BANNED = [
   ["evade", "frame as situational awareness, not evasion"],
 ];
 
-const P1_DISCOURAGED = [
+export const P1_DISCOURAGED = [
   ["the plane", 'prefer "the bird" or "Smokey"'],
   ["the aircraft", 'prefer "the bird" in rider-facing copy'],
   ["active patrol", 'prefer "up" / "watching"'],
@@ -28,10 +35,10 @@ const P1_DISCOURAGED = [
   ["Smoky", 'canonical spelling is "Smokey" with the e'],
 ];
 
-const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F000}-\u{1F2FF}]/u;
-const EXCL_RE = /[A-Za-z]\!(\s|$|")/;
+export const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F000}-\u{1F2FF}]/u;
+export const EXCL_RE = /[A-Za-z]\!(\s|$|")/;
 
-function extractStrings(text, ext) {
+export function extractStrings(text, ext) {
   const out = [];
   if (ext === ".md" || ext === ".mdx") {
     text.split("\n").forEach((line, i) => {
@@ -60,11 +67,12 @@ function extractStrings(text, ext) {
   return out;
 }
 
-function check(s) {
+export function check(s) {
   const v = [];
   const lower = s.text.toLowerCase();
-  for (const [word, reason] of P0_BANNED) {
-    if (lower.includes(word.toLowerCase())) v.push({ severity: "P0", rule: word, reason });
+  for (const [word, reason, re] of P0_BANNED) {
+    const hit = re ? re.test(s.text) : lower.includes(word.toLowerCase());
+    if (hit) v.push({ severity: "P0", rule: word, reason });
   }
   if (EMOJI_RE.test(s.text))
     v.push({ severity: "P0", rule: "emoji", reason: "BRAND.md §3 — zero emoji in product copy" });
@@ -77,7 +85,7 @@ function check(s) {
   return v;
 }
 
-function isUserFacing(p) {
+export function isUserFacing(p) {
   if (p.startsWith("app/(tabs)/") && p.endsWith("page.tsx")) return true;
   if (p.startsWith("components/") && p.endsWith(".tsx") && !/(?:admin|debug|dev[-_])/i.test(p))
     return true;
@@ -86,22 +94,32 @@ function isUserFacing(p) {
   return false;
 }
 
-const paths = readFileSync(0, "utf8")
-  .split("\n").map((s) => s.trim()).filter(Boolean).filter(isUserFacing);
-const findings = [];
-for (const p of paths) {
-  if (!existsSync(p)) continue;
-  const text = readFileSync(p, "utf8");
-  for (const s of extractStrings(text, extname(p))) {
-    for (const v of check(s)) {
-      findings.push({ ...v, path: p, line: s.line, snippet: s.text.slice(0, 120) });
+/** Runs the gate over repo-relative paths (resolved against cwd). */
+export function runGate(allPaths) {
+  const paths = allPaths.map((x) => x.trim()).filter(Boolean).filter(isUserFacing);
+  const findings = [];
+  for (const p of paths) {
+    if (!existsSync(p)) continue;
+    const text = readFileSync(p, "utf8");
+    for (const s of extractStrings(text, extname(p))) {
+      for (const v of check(s)) {
+        findings.push({ ...v, path: p, line: s.line, snippet: s.text.slice(0, 120) });
+      }
     }
   }
+  return {
+    p0: findings.filter((f) => f.severity === "P0"),
+    p1: findings.filter((f) => f.severity === "P1"),
+  };
 }
-const p0 = findings.filter((f) => f.severity === "P0");
-const p1 = findings.filter((f) => f.severity === "P1");
-process.stdout.write(JSON.stringify({ p0, p1 }, null, 2) + "\n");
-process.stderr.write(
-  `voice-gate: ${p0.length} P0, ${p1.length} P1 — ${p0.length > 0 ? "FAIL" : "pass"}\n`,
-);
-process.exit(p0.length > 0 ? 1 : 0);
+
+function main() {
+  const { p0, p1 } = runGate(readFileSync(0, "utf8").split("\n"));
+  process.stdout.write(JSON.stringify({ p0, p1 }, null, 2) + "\n");
+  process.stderr.write(
+    `voice-gate: ${p0.length} P0, ${p1.length} P1 — ${p0.length > 0 ? "FAIL" : "pass"}\n`,
+  );
+  process.exit(p0.length > 0 ? 1 : 0);
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) main();

@@ -1,3 +1,5 @@
+> Archived 2026-11-18. Historical hand-off material from the first build; paths in it are from that time. Current operating context: `AGENTS.md`.
+
 # How to hand this off to Claude Code
 
 Step-by-step. Follow in order.

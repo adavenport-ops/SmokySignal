@@ -23,6 +23,49 @@ Three principles drive every prioritization call:
 
 OpenSky removed 2026-11: the integration, backfill scripts and OPENSKY_* env vars are gone; sources are adsb.fi and adsb.lol.
 
+**2026-11 sweep (#133–#167, through 2026-11-18).** After the audit in
+`docs/AUDIT-2026-11.md`, Phase 1 and most of the feature roadmap shipped:
+
+- **Integrity and security:** no invented events on feed failure (#136),
+  push allow-list and bounded fan-out (#135), share links that resolve
+  (#134), rider privacy, input caps, rate limits and security headers
+  (#139).
+- **Data:** helm launchd pinger refreshes the snapshot every 30s (#138);
+  adsb.fi + adsb.lol merged by ICAO hex with per-feed health (#153);
+  flight tracks kept forever (#149) plus a permanent daily rollup and
+  `/stats` (#144); richer track capture, permanent activity archive,
+  `/api/history` and the monthly forecast (#154); sourced WA, Idaho and
+  Oregon aircraft inventory (#141, #148).
+- **Truth in labels:** mission taxonomy, police-only Smokey (#152);
+  corridor, orbit and airport inference (#143); collapsed repeats and
+  place context on /activity and /forecast (#147); what's circling,
+  road pages and coverage honesty (#158).
+- **Design:** one up colour, 12px type floor, inline install card,
+  desktop home console (#151); radar region picker is camera-only (#150);
+  radar top row on phones (#163).
+- **Distribution:** live status share card and `/program` (#146);
+  `/board` and the `/api/status.txt` beacon (#145); Discord and webhook
+  relays, takeoff feeds, Siri and widget recipes (#155); embed widget,
+  calendar feed, `/glance`, offline shell (#156); Telegram, Discord and
+  Bluesky bots (#157).
+- **History:** aircraft logbook, flight card, open ledger (ODbL 1.0) and
+  season wrap (#159, #161); history overlay on /radar and flight history
+  on the plane page (#160); 3D flight view on the share page (#162).
+- **Navigation and lookup:** five tabs with Flights (/dash and /activity
+  redirect there), a regrouped More hub and a desktop rail on /radar
+  (#165); "Was that the plane I saw?" at `/seen` and `GET /api/seen` (#164).
+- **Ops (chore/ops-health):** hourly feed-health alerting
+  (`feed-health.yml`), GitHub heartbeat retired in favour of
+  `last_refresh_age_s`, `?mock=` off in production, live-prod audit
+  runnable end to end, voice gate "cop" rule made whole-word, ESLint
+  flat config.
+
+- **Late additions:** OpenSky removed end to end (#166); N1b rider speed
+  warning on /flights and /glance, opt-in, foreground only (#167).
+
+Still open from the audit: the Next 15 / React 19 upgrade and the
+Phase 2 owner decisions on server-side zones and old dry-run keys.
+
 **P15 sweep (2026-05-02):** Shipped /zones (N20), high-contrast mode
 (NX1), voice readback (NX4), and deprecated the OpenSky historical
 backfill (N2 → not viable on adsb.fi). One PR (#59, /about tail
@@ -51,9 +94,8 @@ across `/about` `/legal` `/help`, time-format toggle (24h ↔ 12h, PT
 hard-coded), GitHub Actions CI mirroring Vercel, two rounds of QA pass
 infrastructure including state-coherence assertions.
 
-Not yet shipped: speed-warning UI (the `warn` token is reserved but unused),
-adsb.fi historical backfill (OpenSky's historical endpoint is broken),
-geographic expansion, native shell.
+Not yet shipped (as of 2026-11-18): adsb.fi historical backfill (no
+historical endpoint), the NX8 scrub bar, geographic expansion, native shell.
 
 The product has the bones. The roadmap is about which next moves move the
 needle vs which ones risk pulling it off-brand or out of scope.
@@ -402,7 +444,7 @@ tradeoff conversation. New infra OK if it's commodity.
   instead of ~3 weeks of refactoring.
 - **Status:** Foundation live; expansion remains an L6 decision.
 
-### NX8. Time-scrubber for historical playback on `/radar`
+### NX8. Time-scrubber for historical playback on `/radar` ◐ PARTIAL (#160)
 - **Description:** Promoted from L7 → NX. A scrub bar at the bottom
   of `/radar` letting the rider drag through the last 24 hours of
   fleet positions. "Where was Smokey at 3pm yesterday?"
@@ -414,7 +456,7 @@ tradeoff conversation. New infra OK if it's commodity.
 - **Risk:** med — performance on mobile with large polylines.
 - **Brand tension:** none.
 - **Dependencies:** none.
-- **Status:** ready to design.
+- **Status:** history mode shipped in #160 (`/radar?h=1&from=&to=` draws every flight in a date range, permanent tracks since #149). The drag-to-a-moment scrub bar is still open.
 
 ### NX9. Mobile-specific heat-map paint strategy
 - **Description:** N11 tuned the heatmap globally for readability.

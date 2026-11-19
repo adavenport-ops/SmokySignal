@@ -1,0 +1,12 @@
+// Fixture: copy that must pass the gate. "cop" only appears inside longer words.
+export function Clean() {
+  return (
+    <section aria-label="Helicopter overhead">
+      <p>The helicopter is up over I-5.</p>
+      <button title="Copy link">Copy the link</button>
+      <p>Outside the scope of this receiver.</p>
+      <p>The copilot seat is empty today.</p>
+      <p>Smokey is up. Ease off.</p>
+    </section>
+  );
+}

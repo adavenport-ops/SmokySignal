@@ -1,6 +1,7 @@
 // QA dashboard. Operator-facing, admin-passcode-gated. Reads
 // docs/qa-dashboard.md from the deployed bundle for the static body
-// + KV for the live heartbeat. Render is intentionally minimal —
+// + the cached health snapshot for the last fleet refresh (the helm
+// pinger regenerates it every 30s). Render is intentionally minimal —
 // this is operator info, not a rider surface.
 
 import { redirect } from "next/navigation";
@@ -10,7 +11,7 @@ import {
   isAdminAuthed,
   isAdminPasscodeConfigured,
 } from "@/lib/admin-auth";
-import { cacheGet } from "@/lib/cache";
+import { peekHealthSnapshot } from "@/lib/snapshot";
 import { SS_TOKENS } from "@/lib/tokens";
 
 export const dynamic = "force-dynamic";
@@ -29,25 +30,28 @@ async function loadBody(): Promise<string> {
   }
 }
 
-function formatHeartbeat(ts: number | null): {
+// Same threshold the hourly feed-health workflow alerts on.
+const REFRESH_STALE_S = 10 * 60;
+
+function formatRefresh(fetchedAtMs: number | null): {
   iso: string;
   age: string;
   color: string;
 } {
-  if (ts == null) {
+  if (fetchedAtMs == null) {
     return { iso: "never", age: "—", color: SS_TOKENS.fg2 };
   }
-  const ageS = Math.max(0, Math.floor(Date.now() / 1000 - ts));
+  const ageS = Math.max(0, Math.floor((Date.now() - fetchedAtMs) / 1000));
   const ageMin = Math.floor(ageS / 60);
-  const stale = ageS > 5400;
+  const stale = ageS > REFRESH_STALE_S;
   const ageStr =
-    ageMin < 1
-      ? "just now"
+    ageS < 60
+      ? `${ageS}s ago`
       : ageMin < 60
         ? `${ageMin}m ago`
         : `${Math.floor(ageMin / 60)}h ${ageMin % 60}m ago`;
   return {
-    iso: new Date(ts * 1000).toISOString(),
+    iso: new Date(fetchedAtMs).toISOString(),
     age: ageStr,
     color: stale ? SS_TOKENS.alert : SS_TOKENS.clear,
   };
@@ -69,11 +73,12 @@ export default async function QADashboardPage() {
     redirect("/admin?next=qa");
   }
 
-  const [body, lastHeartbeatTs] = await Promise.all([
+  const [body, snap] = await Promise.all([
     loadBody(),
-    cacheGet<number>("meta:last_heartbeat"),
+    peekHealthSnapshot().catch(() => null),
   ]);
-  const hb = formatHeartbeat(lastHeartbeatTs ?? null);
+  const fetchedAt = snap?.fetched_at ?? null;
+  const refresh = formatRefresh(fetchedAt);
 
   return (
     <main
@@ -117,14 +122,14 @@ export default async function QADashboardPage() {
         }}
       >
         <div className="ss-eyebrow" style={{ color: SS_TOKENS.fg2 }}>
-          Mac Mini heartbeat
+          Last fleet refresh
         </div>
-        <div className="ss-mono" style={{ fontSize: 14, color: hb.color }}>
-          {hb.age}
-          {lastHeartbeatTs != null ? ` · ${hb.iso}` : ""}
+        <div className="ss-mono" style={{ fontSize: 14, color: refresh.color }}>
+          {refresh.age}
+          {fetchedAt != null ? ` · ${refresh.iso}` : ""}
         </div>
         <div style={{ fontSize: 11, color: SS_TOKENS.fg2 }}>
-          Threshold for infra-alert: &gt; 90 min stale.
+          Helm pinger refreshes every 30s. Threshold for infra-alert: &gt; 10 min stale.
         </div>
       </section>
 

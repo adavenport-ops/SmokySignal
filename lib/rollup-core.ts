@@ -3,8 +3,8 @@
 // lib/rollup.test.ts can pin the arithmetic. The IO half lives in
 // lib/rollup.ts.
 //
-// Why a rollup at all: tracks:* and activity:* carry a 35-day TTL, so
-// anything about the past evaporates. One small JSON doc per UTC day,
+// Why a rollup at all: tracks:* and activity:* carried a 35-day TTL when
+// this shipped (tracks are permanent since 2026-11-18). One small JSON doc per UTC day,
 // stored with no TTL, keeps "how the bird flew" forever without keeping
 // a single position point.
 

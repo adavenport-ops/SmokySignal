@@ -1,0 +1,114 @@
+name: Feed health
+
+# Hourly read of https://www.smokysignal.app/api/health. Opens ONE issue
+# labelled infra-alert when the run is unhealthy, keeps it updated while
+# the fault lasts, and closes it once health recovers.
+#
+# Unhealthy when any of (see .github/scripts/feed-health.mjs):
+#   - ok is false
+#   - snapshot_age_s > 600 (10 min) or missing
+#   - feeds.fi status is not "ok"
+#   - kv is not "ok"
+#
+# A bad first read is re-checked once 90s later, so a single slow tick
+# does not open an issue. Needs only GITHUB_TOKEN (issues: write).
+#
+# Replaces the retired heartbeat.yml: the helm pinger refreshes the
+# snapshot every 30s, so snapshot age is the liveness signal.
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: feed-health
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      HEALTH_URL: https://www.smokysignal.app/api/health
+      ISSUE_TITLE: "infra-alert: feed health degraded"
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+
+      - name: Read /api/health
+        id: health
+        run: |
+          probe() {
+            curl -sS -L --max-time 30 --retry 2 --retry-delay 10 \
+              -H "cache-control: no-cache" "$HEALTH_URL" -o /tmp/health.json \
+              || echo "" > /tmp/health.json
+            node .github/scripts/feed-health.mjs /tmp/health.json > /tmp/verdict.json
+          }
+          probe
+          if [ "$(jq -r .healthy /tmp/verdict.json)" != "true" ]; then
+            echo "first read unhealthy: $(jq -c .reasons /tmp/verdict.json); re-checking in 90s"
+            sleep 90
+            probe
+          fi
+          cat /tmp/health.json; echo
+          cat /tmp/verdict.json
+          echo "healthy=$(jq -r .healthy /tmp/verdict.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Open, update or close the infra-alert issue
+        run: |
+          HEALTHY="${{ steps.health.outputs.healthy }}"
+          NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          EXISTING=$(gh issue list --state open --label infra-alert --limit 100 \
+            --json number,title \
+            --jq "[.[] | select(.title == \"$ISSUE_TITLE\")][0].number // empty")
+
+          if [ "$HEALTHY" = "true" ]; then
+            if [ -n "$EXISTING" ]; then
+              gh issue close "$EXISTING" \
+                --comment "Recovered at $NOW. /api/health is healthy again ($RUN_URL)."
+              echo "closed #$EXISTING"
+            else
+              echo "healthy, no open issue"
+            fi
+            exit 0
+          fi
+
+          {
+            echo "Feed health check failed at $NOW."
+            echo
+            echo "**Reasons**"
+            jq -r '.reasons[] | "- " + .' /tmp/verdict.json
+            echo
+            echo "**/api/health**"
+            echo
+            echo '```json'
+            (jq . /tmp/health.json 2>/dev/null || head -c 2000 /tmp/health.json)
+            echo '```'
+            echo
+            echo "Run: $RUN_URL"
+            echo
+            echo "Check: the helm pinger (scripts/helm-pinger/), the Vercel cron, adsb.fi reachability, and the KV (Upstash) dashboard. This issue closes itself when /api/health recovers."
+          } > /tmp/body.md
+
+          if [ -n "$EXISTING" ]; then
+            gh issue edit "$EXISTING" --body-file /tmp/body.md
+            echo "updated #$EXISTING"
+          else
+            gh label create infra-alert --color B60205 \
+              --description "Production infrastructure alert" 2>/dev/null || true
+            gh issue create --title "$ISSUE_TITLE" --label infra-alert --body-file /tmp/body.md
+          fi
+          # The run stays green: the issue is the alert, so an outage does
+          # not also send an Actions failure email every hour.

@@ -42,7 +42,10 @@ jobs:
       - name: Typecheck (root project)
         run: npx tsc --noEmit
 
-      - name: Unit tests (lib/**/*.test.ts via node:test)
+      - name: Lint (eslint.config.mjs)
+        run: npm run lint
+
+      - name: Unit tests (lib/**/*.test.ts + .github/scripts/**/*.test.mjs via node:test)
         run: npm test
 
       - name: Build (Vercel-equivalent env)

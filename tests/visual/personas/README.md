@@ -183,8 +183,11 @@ states for QA:
 | `?mock=multiple` | 3 smokeys + 1 patrol airborne |
 | `?mock=stale` | Last sample 16 min ago (FreshnessLabel amber) |
 
-Source of truth: `lib/mock-state.ts`. Persona-walk specs use these
-states to exercise specific UI variants.
+Source of truth: `lib/mock-state.ts`. **Production ignores `?mock=`**
+(`VERCEL_ENV=production`), so the nightly sweep against smokysignal.app
+sees the live sky only. Use these states against `npm run dev` or a
+preview deploy (`--base-url`); `specs/routes.ts` drops its mock routes
+when the target is prod.
 
 ## What's deliberately not here yet
 

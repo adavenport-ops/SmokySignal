@@ -1,0 +1,12 @@
+// Fixture: one P0 on each of lines 5-8, one P1 on line 9.
+export function Banned() {
+  return (
+    <section>
+      <p>Cops are flying near Tacoma.</p>
+      <p>Watch for a copper up high.</p>
+      <p>Two drone units overhead.</p>
+      <p>Smokey is up!</p>
+      <p>Check the plane on radar.</p>
+    </section>
+  );
+}

@@ -17,6 +17,10 @@ import { test } from "@playwright/test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
+// The ?mock=up rows only differ from the plain rows off prod: production
+// ignores ?mock= (lib/mock-state.ts), so against smokysignal.app they
+// capture the live sky. Point SS_VISUAL_BASE_URL at a preview to get the
+// mocked up-state.
 const ROUTES: Array<{ name: string; path: string; settleMs?: number }> = [
   { name: "01-home", path: "/", settleMs: 2000 },
   { name: "02-home-mock-up", path: "/?mock=up", settleMs: 2000 },
