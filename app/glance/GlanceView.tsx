@@ -221,7 +221,7 @@ export function GlanceView({ initialSnapshot, serverNow, mock, speedWarningAvail
       </div>
 
       {/* N1b speed warning: on-device only, opt-in from /settings. */}
-      <SpeedWarning aircraft={snap?.aircraft} available={speedWarningAvailable} />
+      <SpeedWarning aircraft={snap?.aircraft} available={speedWarningAvailable} variant="full" />
     </main>
   );
 }

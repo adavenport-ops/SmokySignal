@@ -58,6 +58,9 @@ type Props = {
   aircraft: Aircraft[] | null | undefined;
   /** Server kill switch (lib/flags.ts). Default on. */
   available?: boolean;
+  /** "banner" keeps the page usable under a strip at the top (pages with
+   *  a map); "full" is the handlebar takeover (/glance). */
+  variant?: "banner" | "full";
 };
 
 /** Rider prefs, live: re-read on our own writes and on other tabs'. */
@@ -87,11 +90,11 @@ function usePageVisible(): boolean {
   return visible;
 }
 
-export function SpeedWarning({ aircraft, available = true }: Props) {
+export function SpeedWarning({ aircraft, available = true, variant = "banner" }: Props) {
   const prefs = useSpeedWarningPrefs();
   const visible = usePageVisible();
   if (!available || !prefs.enabled || !visible) return null;
-  return <SpeedWarningActive aircraft={aircraft ?? NO_AIRCRAFT} prefs={prefs} />;
+  return <SpeedWarningActive aircraft={aircraft ?? NO_AIRCRAFT} prefs={prefs} variant={variant} />;
 }
 
 type Action =
@@ -209,9 +212,11 @@ function useGrantedFix(onFix: (f: Fix) => void): void {
 function SpeedWarningActive({
   aircraft,
   prefs,
+  variant,
 }: {
   aircraft: Aircraft[];
   prefs: SpeedWarningPrefs;
+  variant: "banner" | "full";
 }) {
   const zones = useHotZones();
   const [state, dispatch] = useReducer(reducer, INITIAL_WARN_STATE);
@@ -252,8 +257,16 @@ function SpeedWarningActive({
     return () => clearInterval(t);
   }, []);
 
+  // "Got it" holds for this encounter: until the warning stands down (the
+  // bird leaves the radius or the rider is back under the limit), then a
+  // new pass can warn again.
+  const [acked, setAcked] = useState(false);
+  useEffect(() => {
+    if (state.phase === "idle") setAcked(false);
+  }, [state.phase]);
+
   const muted = isMuted(prefs.muteUntil, now);
-  const showing = state.phase === "showing" && state.detail != null && !muted;
+  const showing = state.phase === "showing" && state.detail != null && !muted && !acked;
 
   const copy = useMemo(
     () =>
@@ -286,6 +299,8 @@ function SpeedWarningActive({
       detail={copy.detail}
       text={copy.text}
       limit={limit}
+      variant={variant}
+      onAck={() => setAcked(true)}
       onMute={() => setSpeedWarningMuteUntil(muteUntilFrom(Date.now()))}
     />
   );
@@ -315,16 +330,52 @@ export function WarningOverlay({
   detail,
   text,
   limit,
+  variant = "full",
+  onAck,
   onMute,
 }: {
   detail: string;
   text: string;
   limit: ResolvedLimit | null;
+  variant?: "banner" | "full";
+  onAck?: () => void;
   onMute: () => void;
 }) {
   const limitLine = limit
     ? `Limit ${limit.limitMph} · ${limit.source === "corridor" ? `${limit.corridor} default` : "your setting"}`
     : null;
+  const ack = onAck ? (
+    <button type="button" className={s.mute} onClick={onAck} data-testid="speed-warning-ack">
+      Got it
+    </button>
+  ) : null;
+  const mute = (
+    <button type="button" className={s.mute} onClick={onMute} data-testid="speed-warning-mute">
+      Mute 10 min
+    </button>
+  );
+  if (variant === "banner") {
+    return (
+      <div
+        className={s.banner}
+        role="alert"
+        aria-live="assertive"
+        aria-label={text}
+        data-testid="speed-warning"
+        data-variant="banner"
+      >
+        <div className={s.bannerText}>
+          <span className={`${s.bannerEyebrow} ss-mono`}>Speed warning · ease off</span>
+          <DetailLine detail={detail} />
+          {limitLine && <span className={`${s.bannerMeta} ss-mono`}>{limitLine}</span>}
+        </div>
+        <div className={s.bannerActions}>
+          {ack}
+          {mute}
+        </div>
+      </div>
+    );
+  }
   return (
     <div
       className={s.root}
@@ -339,9 +390,10 @@ export function WarningOverlay({
       <DetailLine detail={detail} />
       <p className={s.note}>Ride within the posted limit.</p>
       {limitLine && <span className={`${s.meta} ss-mono`}>{limitLine}</span>}
-      <button type="button" className={s.mute} onClick={onMute} data-testid="speed-warning-mute">
-        Mute 10 min
-      </button>
+      <div className={s.fullActions}>
+        {ack}
+        {mute}
+      </div>
     </div>
   );
 }
