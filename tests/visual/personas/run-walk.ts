@@ -340,6 +340,15 @@ async function main() {
 
   await stagehand.init();
   const page = (stagehand as any).context.pages()[0];
+  // Vercel preview deploys sit behind Vercel Authentication. The
+  // automation bypass secret lets CI walk them without a login.
+  const bypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  if (bypass) {
+    await page.context().setExtraHTTPHeaders({
+      "x-vercel-protection-bypass": bypass,
+      "x-vercel-set-bypass-cookie": "true",
+    });
+  }
 
   const reviews: { route: string; reviewPath: string; ms?: number; via?: string }[] = [];
   let totalIn = 0;
