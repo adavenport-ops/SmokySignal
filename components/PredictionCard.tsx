@@ -85,7 +85,7 @@ export function PredictionCard({
           </div>
           <div
             style={{
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: 700,
               color: SS_TOKENS.fg0,
               lineHeight: 1.3,
@@ -95,7 +95,7 @@ export function PredictionCard({
           </div>
           <div
             className="ss-mono"
-            style={{ fontSize: 12, color: SS_TOKENS.fg1, marginTop: 4 }}
+            style={{ fontSize: 14, color: SS_TOKENS.fg1, marginTop: 4 }}
           >
             {fmtPredictionTimeRange(top.window_start, top.window_end, hour12)}
           </div>
@@ -104,9 +104,10 @@ export function PredictionCard({
           <div
             className="ss-mono"
             style={{
-              fontSize: 22,
+              fontSize: 28,
               fontWeight: 700,
-              color: SS_TOKENS.alert,
+              // Neutral: a forecast is not "Smokey is up".
+              color: SS_TOKENS.fg0,
               lineHeight: 1,
             }}
           >
@@ -115,8 +116,8 @@ export function PredictionCard({
           <div
             className="ss-mono"
             style={{
-              fontSize: 9,
-              color: SS_TOKENS.fg2,
+              fontSize: 12,
+              color: SS_TOKENS.fg1,
               letterSpacing: ".08em",
               marginTop: 4,
             }}
@@ -129,8 +130,8 @@ export function PredictionCard({
         <div
           className="ss-mono"
           style={{
-            fontSize: 10.5,
-            color: SS_TOKENS.fg2,
+            fontSize: 12,
+            color: SS_TOKENS.fg1,
             marginTop: 10,
             letterSpacing: ".04em",
           }}
@@ -142,8 +143,8 @@ export function PredictionCard({
       )}
       <div
         style={{
-          fontSize: 11,
-          color: SS_TOKENS.fg2,
+          fontSize: 13,
+          color: SS_TOKENS.fg1,
           marginTop: 12,
           lineHeight: 1.45,
         }}
@@ -152,7 +153,13 @@ export function PredictionCard({
         {top.sample_count === 1 ? "" : "s"} in this hour-of-week.{" "}
         <Link
           href="/forecast"
-          style={{ color: SS_TOKENS.fg1, textDecoration: "underline" }}
+          style={{
+            color: SS_TOKENS.fg0,
+            textDecoration: "underline",
+            display: "inline-flex",
+            alignItems: "center",
+            minHeight: 44,
+          }}
         >
           View weekly forecast →
         </Link>

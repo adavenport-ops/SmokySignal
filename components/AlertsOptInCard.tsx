@@ -8,6 +8,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { SS_TOKENS } from "@/lib/tokens";
+import { currentBlockedAlertsHelp, markArmTapped } from "@/lib/alerts-ux";
 import {
   getCurrentSubscriptionId,
   isPushSupported,
@@ -62,7 +63,8 @@ export function AlertsOptInCard() {
     if (r.ok) {
       setPhase("armed");
     } else if (r.reason === "denied") {
-      setError("Browser blocked alerts. Update permission in your settings.");
+      markArmTapped();
+      setError(currentBlockedAlertsHelp());
     } else if (r.reason === "vapid_missing") {
       setError("Push isn't configured on this build.");
     } else {
@@ -86,9 +88,9 @@ export function AlertsOptInCard() {
           10-4. Alerts armed. Tweak in{" "}
           <Link
             href="/settings/alerts"
-            style={{ color: SS_TOKENS.alert, textDecoration: "underline" }}
+            style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
           >
-            /settings/alerts
+            alert settings
           </Link>
           .
         </p>
@@ -148,13 +150,14 @@ export function AlertsOptInCard() {
           onClick={onArm}
           disabled={busy}
           style={{
-            padding: "8px 14px",
+            minHeight: 44,
+            padding: "0 16px",
             borderRadius: 999,
             border: 0,
-            background: SS_TOKENS.alert,
-            color: SS_TOKENS.bg0,
+            background: SS_TOKENS.cta,
+            color: SS_TOKENS.ctaInk,
             fontFamily: "var(--font-inter)",
-            fontSize: 12.5,
+            fontSize: 14,
             fontWeight: 700,
             letterSpacing: ".02em",
             cursor: busy ? "default" : "pointer",
@@ -169,13 +172,14 @@ export function AlertsOptInCard() {
           type="button"
           onClick={onDismiss}
           style={{
-            padding: "8px 14px",
+            minHeight: 44,
+            padding: "0 16px",
             borderRadius: 999,
             border: `.5px solid ${SS_TOKENS.hairline2}`,
             background: "transparent",
             color: SS_TOKENS.fg1,
             fontFamily: "var(--font-inter)",
-            fontSize: 12.5,
+            fontSize: 14,
             fontWeight: 600,
             letterSpacing: ".02em",
             cursor: "pointer",

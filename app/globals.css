@@ -11,19 +11,39 @@
   --ss-fg1: #A8AEB8;
   --ss-fg2: #82899A;
   --ss-fg3: #3f4651;
-  /* SEMANTIC: speed-enforcement plane up. Matches the icon files in
-     Design/ — alert orange is amber #f5b840, not BRAND.md's #FF7A1A.
-     #FF7A1A is reserved as --ss-warn for future speed-warning UX. */
-  --ss-alert: #f5b840;
-  --ss-alert-dim: rgba(245, 184, 64, 0.13);
+  /* Colour rules live at the top of lib/tokens.ts. Short version:
+     --ss-alert (#FF7A1A) means only "Smokey is up" / "ease off".
+     --ss-brand (#F5B840) is the hat mark only. CTAs are neutral. */
+  --ss-alert: #FF7A1A;
+  --ss-alert-dim: rgba(255, 122, 26, 0.13);
   --ss-warn: #FF7A1A;
   --ss-warn-dim: rgba(255, 122, 26, 0.13);
+  --ss-brand: #F5B840;
+  --ss-cta: #F2F4F7;
+  --ss-cta-ink: #0B0D10;
   --ss-clear: #5DD9A7;
   --ss-clear-dim: rgba(93, 217, 167, 0.13);
   --ss-sky: #5BB6FF;
   --ss-sky-dim: rgba(91, 182, 255, 0.13);
   --ss-hairline: rgba(255, 255, 255, 0.06);
   --ss-hairline-2: rgba(255, 255, 255, 0.10);
+  /* Type scale (px): 56 / 28 / 18 / 14 / 11. Floor for page text is 12. */
+  --ss-type-display: 56px;
+  --ss-type-title: 28px;
+  --ss-type-heading: 18px;
+  --ss-type-body: 14px;
+  --ss-type-micro: 11px;
+  --ss-type-floor: 12px;
+  /* Bottom tab bar height (excluding the safe-area inset). Zero once the
+     bar becomes a left rail at >= 1024px. */
+  --ss-tabbar-h: 66px;
+  --ss-rail-w: 0px;
+}
+@media (min-width: 1024px) {
+  :root {
+    --ss-tabbar-h: 0px;
+    --ss-rail-w: 88px;
+  }
 }
 
 /* High-contrast variant — stays dark, lifts secondary text + hairline
@@ -53,16 +73,22 @@ body {
 .ss-mono {
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   font-feature-settings: "zero", "ss20", "cv01", "tnum";
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
+}
+
+.ss-num {
+  font-variant-numeric: tabular-nums;
 }
 
 .ss-eyebrow {
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
   font-feature-settings: "zero";
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
+  /* Was 10.5px at fg2, which washes out in direct sun. */
+  font-size: var(--ss-type-floor);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ss-fg2);
+  color: var(--ss-fg1);
 }
 
 .ss-divider {
@@ -123,7 +149,8 @@ body {
   outline: none;
 }
 :focus-visible {
-  outline: 2px solid var(--ss-alert);
+  /* Sky, not alert: orange is reserved for "Smokey is up". */
+  outline: 2px solid var(--ss-sky);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -204,4 +231,142 @@ body {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ---------------------------------------------------------------------
+   Tab chrome. Mobile: bottom bar. >= 1024px: left rail (every route
+   except /radar, whose map is position:fixed and keeps the bottom bar).
+   --------------------------------------------------------------------- */
+.ss-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  /* Total height stays <= the 82px the radar overlays were laid out
+     against (TABBAR_HEIGHT + 16), including the iPhone home indicator. */
+  padding: 4px 4px max(8px, calc(env(safe-area-inset-bottom) - 8px));
+  background: linear-gradient(to top, rgba(11, 13, 16, 0.97) 75%, rgba(11, 13, 16, 0.88));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 0.5px solid var(--ss-hairline);
+}
+.ss-tabbar-item {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 4px 2px;
+  color: var(--ss-fg1);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ss-tabbar-item[aria-current="page"] {
+  color: var(--ss-fg0);
+}
+.ss-tabbar-label {
+  font-size: var(--ss-type-floor);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+@media (min-width: 1024px) {
+  .ss-tabbar[data-rail="true"] {
+    top: 0;
+    right: auto;
+    width: var(--ss-rail-w);
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 16px 6px;
+    background: var(--ss-bg0);
+    border-top: 0;
+    border-right: 0.5px solid var(--ss-hairline);
+  }
+  .ss-tabbar[data-rail="true"] .ss-tabbar-item {
+    flex: 0 0 auto;
+    min-height: 64px;
+    border-radius: 12px;
+  }
+  .ss-tabbar[data-rail="true"] .ss-tabbar-item[aria-current="page"] {
+    background: var(--ss-bg1);
+  }
+  .ss-tabbar[data-rail="true"] .ss-tabbar-spacer {
+    flex: 1 1 auto;
+  }
+}
+
+/* Wrapper for every (tabs) route. Bottom padding reserves the tab bar +
+   safe-area so the last row of content is never under the bar; at
+   >= 1024px the bar is a rail, so the padding moves to the left. */
+.ss-tabs-shell {
+  padding-bottom: calc(var(--ss-tabbar-h) + env(safe-area-inset-bottom) + 16px);
+}
+@media (min-width: 1024px) {
+  .ss-tabs-shell {
+    padding-left: var(--ss-rail-w);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Home. Single column on phones and tablets; >= 1280px is a two-column
+   console: hero + up-list left, live mini-map + next sweep right.
+   --------------------------------------------------------------------- */
+.ss-home-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ss-home-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.ss-home-minimap {
+  display: none;
+}
+@media (min-width: 1280px) {
+  .ss-page-narrow.ss-home-page {
+    max-width: 1240px;
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+  }
+  .ss-home-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .ss-home-col-side {
+    position: sticky;
+    top: 16px;
+  }
+  .ss-home-minimap {
+    display: block;
+  }
+}
+
+/* Type floor safety net for surfaces owned by other components (e.g.
+   LearningPanel) that still carry sub-12px inline sizes. Lifts them to
+   the floor without touching those files. Remove once they adopt TYPE. */
+.ss-type-floor [style*="font-size: 9px"],
+.ss-type-floor [style*="font-size: 9.5px"],
+.ss-type-floor [style*="font-size: 10px"],
+.ss-type-floor [style*="font-size: 10.5px"],
+.ss-type-floor [style*="font-size: 11px"],
+.ss-type-floor [style*="font-size: 11.5px"] {
+  font-size: var(--ss-type-floor) !important;
 }

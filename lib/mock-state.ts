@@ -43,6 +43,44 @@ const TAIL_OVERRIDES: Record<
     time_aloft_min: 47,
     squawk: "1234",
   },
+  // The rest of the smokey-class tails lifted by ?mock=up, so the home
+  // "Also up" rows have real-looking numbers to render. N3532K is left
+  // without a position on purpose: it exercises the "no fix" fallback.
+  N305RC: {
+    lat: 47.2611,
+    lon: -122.4087,
+    altitude_ft: 2100,
+    ground_speed_kt: 104,
+    heading: 352,
+    time_aloft_min: 63,
+  },
+  N2446X: {
+    lat: 47.8203,
+    lon: -122.2715,
+    altitude_ft: 3400,
+    ground_speed_kt: 96,
+    heading: 15,
+    time_aloft_min: 28,
+  },
+  N102LP: {
+    lat: 46.9812,
+    lon: -122.8823,
+    altitude_ft: 1700,
+    ground_speed_kt: 112,
+    heading: 140,
+    time_aloft_min: 9,
+  },
+  N3532K: {
+    time_aloft_min: 21,
+  },
+  N9446P: {
+    lat: 47.1504,
+    lon: -122.2934,
+    altitude_ft: 2500,
+    ground_speed_kt: 91,
+    heading: 220,
+    time_aloft_min: 95,
+  },
   N422CT: {
     lat: 47.671,
     lon: -122.3345,

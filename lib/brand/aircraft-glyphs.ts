@@ -9,10 +9,10 @@
 //   Family B — HELICOPTER → patrol, sar
 //
 // COLOR STRATEGY (rationale doc, design/brand/aircraft-glyphs.md):
-//   alert     (smokey, patrol)    fill #F2F4F7, stroke #f5b840 1.0px
+//   alert     (smokey, patrol)    fill #F2F4F7, stroke #FF7A1A 1.0px
 //   non-alert (sar, transport)    fill #6B7380, stroke none
 //
-// White fill + amber stroke borrows ATC display convention so alert
+// White fill + orange stroke borrows ATC display convention so alert
 // glyphs survive the amber heat layer (the moment they matter most);
 // muted gray glyphs visually deprioritize without disappearing.
 //
@@ -35,7 +35,9 @@ import { isRotorcraftModel, normalizeMission } from "@/lib/mission";
 
 export const AIRCRAFT_COLORS = {
   ALERT_FILL: "#F2F4F7",
-  ALERT_STROKE: "#f5b840",
+  // Alert orange (#FF7A1A): an alert-class glyph is a bird that is up.
+  // Was the brand amber; see the colour rules in lib/tokens.ts.
+  ALERT_STROKE: "#FF7A1A",
   MUTED_FILL: "#6B7380",
 } as const;
 

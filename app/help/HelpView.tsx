@@ -126,9 +126,10 @@ export function HelpMarkdown({ source }: { source: string }) {
                         fontSize: ".75em",
                       }
                     : {
-                        color: SS_TOKENS.alert,
+                        // Links are neutral; orange is reserved for "up".
+                        color: SS_TOKENS.fg0,
                         textDecoration: "underline",
-                        textDecorationColor: `${SS_TOKENS.alert}55`,
+                        textDecorationColor: SS_TOKENS.hairline2,
                       }
                 }
                 {...rest}
