@@ -13,6 +13,10 @@ import { useCallback, useEffect, useState } from "react";
 import type { Map as MaplibreMap } from "maplibre-gl";
 import type { Aircraft } from "@/lib/types";
 import { SS_TOKENS, TAP_MIN } from "@/lib/tokens";
+import { DEFAULT_RADAR_VIEW, type Padding } from "@/lib/radar-view";
+
+// Puget Sound default view (camera only), small even inset for the card.
+const MINI_INSETS: Padding = { top: 16, bottom: 16, left: 16, right: 16 };
 
 const RadarMap = nextDynamic(() => import("./RadarMap"), {
   ssr: false,
@@ -89,7 +93,13 @@ export function HomeMiniMap({ airborne }: { airborne: Aircraft[] }) {
           background: SS_TOKENS.bg0,
         }}
       >
-        <RadarMap aircraft={airborne} rider={null} onMapReady={onMapReady} />
+        <RadarMap
+          aircraft={airborne}
+          rider={null}
+          viewId={DEFAULT_RADAR_VIEW}
+          insets={MINI_INSETS}
+          onMapReady={onMapReady}
+        />
         <div
           className="ss-mono"
           aria-hidden

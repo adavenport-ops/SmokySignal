@@ -121,7 +121,7 @@ export function FilterPanel({
       >
         <span
           className="ss-mono"
-          style={{ fontSize: 11, color: SS_TOKENS.fg2, letterSpacing: ".1em" }}
+          style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".1em" }}
         >
           FILTERS
         </span>
@@ -225,7 +225,7 @@ function TailGroup({
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <span
         className="ss-mono"
-        style={{ fontSize: 9.5, color: SS_TOKENS.fg2, letterSpacing: ".1em" }}
+        style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".1em" }}
       >
         Tails
       </span>
@@ -267,7 +267,7 @@ function TailGroup({
                 borderRadius: 6,
                 padding: "5px 8px",
                 color: SS_TOKENS.fg1,
-                fontSize: 11,
+                fontSize: 12,
                 cursor: "pointer",
                 touchAction: "manipulation",
                 WebkitTapHighlightColor: "transparent",
@@ -292,12 +292,14 @@ function TailGroup({
               aria-label={`Remove ${t} from tail filter`}
               className="ss-mono"
               style={{
-                padding: "5px 8px 5px 10px",
+                minHeight: 44,
+                padding: "0 10px 0 12px",
                 borderRadius: 999,
-                background: SS_TOKENS.alert,
-                border: `.5px solid ${SS_TOKENS.alert}`,
-                color: SS_TOKENS.bg0,
-                fontSize: 10.5,
+                // Selected = neutral; orange is reserved for live aircraft.
+                background: SS_TOKENS.cta,
+                border: `.5px solid ${SS_TOKENS.cta}`,
+                color: SS_TOKENS.ctaInk,
+                fontSize: 12,
                 letterSpacing: ".04em",
                 cursor: "pointer",
                 display: "inline-flex",
@@ -330,7 +332,7 @@ function Group({
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <span
         className="ss-mono"
-        style={{ fontSize: 9.5, color: SS_TOKENS.fg2, letterSpacing: ".1em" }}
+        style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".1em" }}
       >
         {label}
       </span>
@@ -355,12 +357,14 @@ function Pill({
       aria-pressed={active}
       className="ss-mono"
       style={{
-        padding: "5px 10px",
+        minHeight: 44,
+        padding: "0 12px",
         borderRadius: 999,
-        background: active ? SS_TOKENS.alert : "transparent",
-        border: `.5px solid ${active ? SS_TOKENS.alert : SS_TOKENS.hairline2}`,
-        color: active ? SS_TOKENS.bg0 : SS_TOKENS.fg1,
-        fontSize: 10.5,
+        // Selected = neutral; orange is reserved for live aircraft.
+        background: active ? SS_TOKENS.cta : "transparent",
+        border: `.5px solid ${active ? SS_TOKENS.cta : SS_TOKENS.hairline2}`,
+        color: active ? SS_TOKENS.ctaInk : SS_TOKENS.fg1,
+        fontSize: 12,
         letterSpacing: ".04em",
         cursor: "pointer",
         touchAction: "manipulation",

@@ -195,7 +195,7 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
             color: SS_TOKENS.fg0,
             border: `.5px solid ${SS_TOKENS.hairline2}`,
             fontFamily: "var(--font-mono)",
-            fontSize: 11,
+            fontSize: 12,
             letterSpacing: ".04em",
             whiteSpace: "nowrap",
           }}
