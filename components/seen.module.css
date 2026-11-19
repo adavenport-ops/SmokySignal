@@ -1,0 +1,194 @@
+/* /seen layout. Mobile first: form, then results, in one column. At
+   >= 1024 px the form sits in a narrow left column beside the results.
+   Colours come from the --ss-* variables in app/globals.css. */
+
+.cols {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+@media (min-width: 1024px) {
+  .cols {
+    display: grid;
+    grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+    align-items: start;
+    gap: 28px;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.legend {
+  padding: 0;
+  margin: 0 0 8px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ss-fg1);
+  min-width: 0;
+}
+
+.input {
+  min-height: 48px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 0.5px solid var(--ss-hairline-2);
+  background: var(--ss-bg2);
+  color: var(--ss-fg0);
+  font-size: 16px;
+  color-scheme: dark;
+}
+
+.input:focus-visible,
+.seg input:focus-visible + span,
+.placeBtn:focus-visible,
+.cta:focus-visible,
+.ghost:focus-visible {
+  outline: 2px solid var(--ss-sky);
+  outline-offset: 2px;
+}
+
+.seg {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+
+.seg label {
+  position: relative;
+  display: block;
+}
+
+.seg input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.seg span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 10px;
+  border: 0.5px solid var(--ss-hairline-2);
+  background: var(--ss-bg2);
+  color: var(--ss-fg1);
+  font-size: 14px;
+}
+
+.seg input:checked + span {
+  background: var(--ss-fg0);
+  color: var(--ss-bg0);
+  border-color: var(--ss-fg0);
+  font-weight: 600;
+}
+
+.placeList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.placeBtn {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 0.5px solid var(--ss-hairline-2);
+  background: var(--ss-bg2);
+  color: var(--ss-fg0);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.placeBtn[aria-pressed="true"] {
+  background: var(--ss-fg0);
+  color: var(--ss-bg0);
+  border-color: var(--ss-fg0);
+  font-weight: 600;
+}
+
+.cta {
+  min-height: 52px;
+  border-radius: 12px;
+  border: none;
+  background: var(--ss-cta);
+  color: var(--ss-cta-ink);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cta:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ghost {
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 0.5px solid var(--ss-hairline-2);
+  background: transparent;
+  color: var(--ss-fg0);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 1280px) {
+  .list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
