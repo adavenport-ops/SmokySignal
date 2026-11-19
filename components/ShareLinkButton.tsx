@@ -9,10 +9,18 @@ export function ShareLinkButton({
   path,
   label = "Copy link",
   size = "md",
+  text,
+  ariaLabel,
 }: {
   path: string;
   label?: string;
   size?: "sm" | "md";
+  /**
+   * Optional message shared alongside the URL. Read at tap time, so a
+   * caller can pass live copy. Clipboard fallback copies "text url".
+   */
+  text?: string;
+  ariaLabel?: string;
 }) {
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -33,13 +41,13 @@ export function ShareLinkButton({
       };
       if (typeof navAny.share === "function") {
         try {
-          await navAny.share({ url });
+          await navAny.share(text ? { text, url } : { url });
           return; // share sheet handles its own UI
         } catch {
           // user cancelled, or share unsupported — try clipboard
         }
       }
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(text ? `${text} ${url}` : url);
       setCopied(true);
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setCopied(false), 1800);
@@ -53,7 +61,7 @@ export function ShareLinkButton({
     <button
       type="button"
       onClick={onClick}
-      aria-label={`Copy share link${path ? `: ${path}` : ""}`}
+      aria-label={ariaLabel ?? `Copy share link${path ? `: ${path}` : ""}`}
       className="ss-mono"
       style={{
         display: "inline-flex",

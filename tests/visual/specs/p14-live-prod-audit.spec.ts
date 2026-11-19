@@ -1069,4 +1069,81 @@ test.describe("p14 live-prod audit", () => {
       evidence: `HTTP ${r.status()} first="${text.split("\n")[0]}" cache="${cc}"`,
     });
   });
+  test("31. home og:image is the live status card (share program)", async ({
+    page,
+    request,
+  }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    const ogUrl = await page
+      .locator('meta[property="og:image"]')
+      .first()
+      .getAttribute("content");
+    const twUrl = await page
+      .locator('meta[name="twitter:image"]')
+      .first()
+      .getAttribute("content");
+    let evidence = `og:image=${ogUrl ?? "missing"} twitter:image=${twUrl ?? "missing"}`;
+    let pass = false;
+    if (ogUrl && /\/opengraph-image/.test(ogUrl)) {
+      const r = await request.get(ogUrl);
+      const body = await r.body();
+      // PNG IHDR: width at bytes 16-19, height at 20-23.
+      const isPng = body.length > 24 && body.readUInt32BE(0) === 0x89504e47;
+      const w = isPng ? body.readUInt32BE(16) : 0;
+      const h = isPng ? body.readUInt32BE(20) : 0;
+      const cc = r.headers()["cache-control"] ?? "";
+      const sMax = Number(/s-maxage=(\d+)/.exec(cc)?.[1] ?? NaN);
+      pass =
+        r.ok() &&
+        isPng &&
+        w === 1200 &&
+        h === 630 &&
+        Number.isFinite(sMax) &&
+        sMax <= 60 &&
+        /\/twitter-image/.test(twUrl ?? "");
+      fs.writeFileSync(path.join(AUDIT_DIR, "21-og-status-card.png"), body);
+      evidence += ` · HTTP ${r.status()} ${w}x${h} cache-control="${cc}"`;
+    }
+    record({
+      claim:
+        "Home og:image + twitter:image point at the live status card (1200x630 PNG, CDN cache <=60s)",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence,
+      screenshot: path.join(AUDIT_DIR, "21-og-status-card.png"),
+    });
+  });
+
+  test("32. /program explainer renders and is linked from /about + /legal", async ({
+    page,
+  }) => {
+    await page.goto("/program", { waitUntil: "networkidle" });
+    const screenshot = await shot(page, "22-program");
+    const body = await page.locator("body").innerText();
+    const checks = {
+      heading: /What.s flying\./.test(body),
+      notAffiliated: /Not affiliated with WSP/i.test(body),
+      unknowns: /We don.t know\./.test(body),
+      flir: /forward-looking infrared/i.test(body),
+      adsbPublic: /ADS-B is public/i.test(body),
+      glossary: ["Bird", "Tail", "MLAT", "Squawk", "Sortie"].every((t) =>
+        body.includes(t),
+      ),
+      wspAgency: /Washington State Patrol/.test(body),
+    };
+    await page.goto("/about", { waitUntil: "domcontentloaded" });
+    const aboutLink = await page.locator('nav a[href="/program"]').count();
+    await page.goto("/legal", { waitUntil: "domcontentloaded" });
+    const legalLink = await page.locator('main a[href="/program"]').count();
+    const pass =
+      Object.values(checks).every(Boolean) && aboutLink > 0 && legalLink > 0;
+    record({
+      claim:
+        "/program explains agencies, airframes, FLIR, aerial timing, public ADS-B, says 'not affiliated with WSP', and is linked from /about + /legal",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `${JSON.stringify(checks)} aboutLink=${aboutLink} legalLink=${legalLink}`,
+      screenshot,
+    });
+  });
 });
