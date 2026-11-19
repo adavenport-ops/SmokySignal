@@ -151,7 +151,7 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
         onClick={onTap}
         style={{
           position: "fixed",
-          bottom: TABBAR_HEIGHT + 30,
+          bottom: `calc(var(--ss-tabbar-h, ${TABBAR_HEIGHT}px) + 30px)`,
           right: 16,
           zIndex: 25,
           width: 56,
@@ -187,7 +187,7 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
             position: "fixed",
             left: "50%",
             transform: "translateX(-50%)",
-            bottom: TABBAR_HEIGHT + 100,
+            bottom: `calc(var(--ss-tabbar-h, ${TABBAR_HEIGHT}px) + 100px)`,
             zIndex: 26,
             padding: "8px 14px",
             borderRadius: 999,

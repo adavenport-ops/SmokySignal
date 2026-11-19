@@ -19,6 +19,7 @@ import maplibregl, {
   LngLatBoundsLike,
   NavigationControl,
 } from "maplibre-gl";
+import { applyNeutralBasemap, basemapStyleUrl } from "@/lib/basemap";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { TrackPoint } from "@/lib/tracks";
@@ -115,7 +116,7 @@ export default function PlaneTrackMap({
     const initialCoords = pointsToCoords(points);
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${key}`,
+      style: basemapStyleUrl(key),
       center: initialCoords[0] ?? PUGET_SOUND,
       zoom: initialCoords.length < 2 ? SHORT_TRACK_ZOOM : FALLBACK_ZOOM,
       attributionControl: { compact: true },
@@ -131,6 +132,7 @@ export default function PlaneTrackMap({
     map.addControl(new NavigationControl({ showCompass: true }), "top-right");
 
     map.on("load", () => {
+      applyNeutralBasemap(map);
       if (!mapRef.current) return;
       styleLoadedRef.current = true;
 

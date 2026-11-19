@@ -11,6 +11,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import maplibregl, { Map as MaplibreMap } from "maplibre-gl";
+import { applyNeutralBasemap, basemapStyleUrl } from "@/lib/basemap";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { HotZone } from "@/lib/hotzones";
@@ -56,7 +57,7 @@ export default function PerPlaneHeatLayer({ tail }: { tail: string }) {
     const zones = state.zones;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${key}`,
+      style: basemapStyleUrl(key),
       center: PUGET_SOUND,
       zoom: DEFAULT_ZOOM,
       attributionControl: { compact: true },
@@ -65,6 +66,7 @@ export default function PerPlaneHeatLayer({ tail }: { tail: string }) {
     mapRef.current = map;
 
     map.on("load", () => {
+      applyNeutralBasemap(map);
       const features = zones.map((z) => ({
         type: "Feature" as const,
         geometry: { type: "Point" as const, coordinates: [z.lon, z.lat] },

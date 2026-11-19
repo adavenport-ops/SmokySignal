@@ -126,6 +126,8 @@ Built for dark, glanceable, on-a-handlebar use. Background is near-black; signal
 
 **Rule:** orange (`--alert`) means *only* "Smokey is up" or "you should ease off." Never use it as a generic accent. Green (`--clear`) means *only* "no aircraft up." This semantic discipline is the whole product.
 
+**Map heat exception:** the /radar heat ramp is a rider-picked palette (`lib/radar-palettes.ts`). The default, Ember, runs deep red to amber, by owner call. On the map, `--alert` keeps one job: the ring and pulse around a live police tail, drawn as a near-white glyph on a dark halo so it never reads as heat. The map basemap is neutral charcoal (`lib/basemap.ts`), not sky blue.
+
 ### Typography
 - **Display & UI:** Inter, weights 500 / 600 / 700 / 800.
 - **Mono / data:** JetBrains Mono, weights 500 / 600. Used for tail numbers (N305DK), altitude (1,800′), speed (62 mph), times (15:42), coordinates. Anything a pilot or trucker would read off a panel.

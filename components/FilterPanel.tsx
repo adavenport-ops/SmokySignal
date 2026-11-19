@@ -10,6 +10,7 @@
 //   Operators  — multi-select chips per registry operator
 //   Tails      — typeahead + chip set, follow a single tail
 //   Layers     — Hot zones / Flight paths toggles inside the panel
+//   Colors     — radar palette swatches (lib/radar-palettes.ts)
 //
 // The pre-P19 Quick filter row (All / Smokey / Operator) duplicated
 // the rider buckets in Categories and the multi-select chips in
@@ -37,6 +38,8 @@ import {
   type RegistryTail,
   type RiderBucketId,
 } from "@/lib/radar-filter";
+import type { PaletteId } from "@/lib/radar-palettes";
+import { PaletteChips } from "./PaletteChips";
 
 type Props = {
   /** Final CSS bottom value — accepts a number (px) or a string
@@ -50,6 +53,9 @@ type Props = {
   onToggleHotZones: () => void;
   flightPathsEnabled: boolean;
   onToggleFlightPaths: () => void;
+  /** Radar colour palette (lib/radar-palettes.ts). Omit to hide the row. */
+  palette?: PaletteId;
+  onPaletteChange?: (id: PaletteId) => void;
 };
 
 export function FilterPanel({
@@ -61,6 +67,8 @@ export function FilterPanel({
   onToggleHotZones,
   flightPathsEnabled,
   onToggleFlightPaths,
+  palette,
+  onPaletteChange,
 }: Props) {
   const toggleBucket = (id: RiderBucketId) => {
     onChange({ ...filter, buckets: toggleMission(filter.buckets, id) });
@@ -185,6 +193,18 @@ export function FilterPanel({
           Flight paths
         </Pill>
       </Group>
+
+      {palette && onPaletteChange && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span
+            className="ss-mono"
+            style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".1em" }}
+          >
+            Colors
+          </span>
+          <PaletteChips active={palette} onPick={onPaletteChange} />
+        </div>
+      )}
     </div>
   );
 }

@@ -32,10 +32,14 @@ import {
   HEAT_OPACITY_STOPS,
   HEAT_RADIUS_STOPS,
   zoomInterpolate,
-  heatColorExpression,
-  HEAT_SWATCH,
-  ROUTE_COLOR,
 } from "@/lib/radar-zoom";
+import {
+  heatColorExpressionFor,
+  heatSwatch,
+  type PaletteId,
+  type RadarPalette,
+} from "@/lib/radar-palettes";
+import { useRadarPalette } from "@/lib/hooks/useRadarPalette";
 import { extentOfPoints } from "@/lib/radar-view";
 import { Tooltip } from "./Tooltip";
 import { LearningPanel } from "./LearningPanel";
@@ -83,6 +87,8 @@ type Props = {
   /** History mode (HistoryOverlay.tsx) is on: hide the 30-day heat and
    *  its pill row without touching the rider's saved toggles. */
   suppressed?: boolean;
+  /** Palette the server rendered with (ss_palette cookie). */
+  initialPalette?: PaletteId;
 };
 
 export function HotZoneLayer({
@@ -90,7 +96,11 @@ export function HotZoneLayer({
   bottomBoost = 0,
   learning,
   suppressed = false,
+  initialPalette,
 }: Props) {
+  const [palette, setPalette] = useRadarPalette(initialPalette);
+  const paletteRef = useRef<RadarPalette>(palette);
+  paletteRef.current = palette;
   const [enabled, setEnabled] = useState<boolean>(true);
   const [flightPathsEnabled, setFlightPathsEnabled] = useState<boolean>(true);
   const [filter, setFilter] = useState<Filter>(DEFAULT_FILTER);
@@ -293,10 +303,11 @@ export function HotZoneLayer({
               // the radius outruns cell spacing so the grid never shows.
               "heatmap-intensity": zoomInterpolate(HEAT_INTENSITY_STOPS),
               "heatmap-radius": zoomInterpolate(HEAT_RADIUS_STOPS),
-              // Cool ramp (indigo -> teal -> ice, lib/radar-zoom.ts) so
-              // live aircraft are the only warm thing on the map. The top
-              // stop stays translucent so dense corridors remain readable.
-              "heatmap-color": heatColorExpression(),
+              // The rider's palette ramp (lib/radar-palettes.ts; Ember
+              // by default). Live aircraft keep their own halo + ring so
+              // a warm ramp never swallows them. The top stop stays
+              // translucent so dense corridors remain readable.
+              "heatmap-color": heatColorExpressionFor(paletteRef.current),
               // Drop opacity at deep zoom so dense corridors don't go
               // opaque; the polyline overlay (FlightPathLayer.tsx) sits
               // beneath the heat and stays visible through it.
@@ -306,6 +317,7 @@ export function HotZoneLayer({
           beforeId,
         );
         console.log("[HZ] addLayer fired");
+        markPalette(map, paletteRef.current);
       } catch (e) {
         console.warn("[HZ] addSource/addLayer threw:", e);
       }
@@ -371,6 +383,19 @@ export function HotZoneLayer({
     console.log("[HZ] setData with", zones.length, "zones");
   }, [map, zones]);
 
+  // ── Palette: repaint the heat in place when the rider picks colours.
+  // No layer rebuild, no map reload.
+  useEffect(() => {
+    if (!map) return;
+    try {
+      if (!map.getLayer(LAYER_ID)) return;
+      map.setPaintProperty(LAYER_ID, "heatmap-color", heatColorExpressionFor(palette));
+      markPalette(map, palette);
+    } catch {
+      /* layer not yet attached; addLayerOnce reads paletteRef */
+    }
+  }, [map, palette]);
+
   // ── Effect C: mirror the enabled state to the layer's visibility.
   // The toggle handler also calls setLayoutProperty inline so the
   // visual change isn't gated on React re-render order, but this
@@ -394,9 +419,11 @@ export function HotZoneLayer({
   // final CSS bottom value composes it with the prompt height via
   // calc() so each absolutely-positioned child still clears the
   // fixed iOS prompt at the bottom of the viewport.
-  const bottom = TABBAR_HEIGHT + 16 + bottomBoost;
+  // The tab bar height is a CSS var: 66 px on phones, 0 from 1024 px
+  // where the bar becomes a left rail (app/globals.css).
+  const bottom = 16 + bottomBoost;
   const offsetCss = (extra: number) =>
-    `calc(${bottom + extra}px + var(--ss-install-prompt-h, 0px))`;
+    `calc(${bottom + extra}px + var(--ss-tabbar-h, ${TABBAR_HEIGHT}px) + var(--ss-install-prompt-h, 0px))`;
 
   // Empty-state messaging: only show once we know zones returned empty AND
   // the toggle is on (otherwise the user explicitly hid them). Sits just
@@ -525,7 +552,7 @@ export function HotZoneLayer({
             onClick={toggleHotZones}
             aria-pressed={enabled}
             className="ss-mono"
-            style={pillStyle(enabled ? HEAT_SWATCH : SS_TOKENS.fg1)}
+            style={pillStyle(enabled ? heatSwatch(palette) : SS_TOKENS.fg1)}
           >
             {enabled ? "● HOT ZONES" : "○ HOT ZONES"}
           </button>
@@ -541,7 +568,7 @@ export function HotZoneLayer({
             aria-pressed={flightPathsEnabled}
             className="ss-mono"
             style={pillStyle(
-              flightPathsEnabled ? ROUTE_COLOR : SS_TOKENS.fg1,
+              flightPathsEnabled ? palette.route.color : SS_TOKENS.fg1,
             )}
           >
             {flightPathsEnabled ? "● FLIGHT PATHS" : "○ FLIGHT PATHS"}
@@ -575,6 +602,8 @@ export function HotZoneLayer({
           onToggleHotZones={toggleHotZones}
           flightPathsEnabled={flightPathsEnabled}
           onToggleFlightPaths={toggleFlightPaths}
+          palette={palette.id}
+          onPaletteChange={setPalette}
         />
       )}
     </>
@@ -617,4 +646,18 @@ function toFeatureCollection(
       properties: { count: z.count },
     })),
   };
+}
+
+/** Read-only QA hook (tests/visual/specs/p14-live-prod-audit.spec.ts):
+ *  the palette id and the heatmap-color the layer actually holds, read
+ *  back from MapLibre after the paint call. No map handle on window. */
+function markPalette(map: MaplibreMap, p: RadarPalette): void {
+  try {
+    const el = map.getContainer();
+    el.setAttribute("data-palette", p.id);
+    const paint = map.getLayer(LAYER_ID) ? map.getPaintProperty(LAYER_ID, "heatmap-color") : null;
+    if (paint) el.setAttribute("data-heat-color", JSON.stringify(paint));
+  } catch {
+    /* map torn down */
+  }
 }

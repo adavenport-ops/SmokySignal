@@ -7,14 +7,20 @@ import maplibregl, {
   MapMouseEvent,
   MapGeoJSONFeature,
 } from "maplibre-gl";
+import { applyNeutralBasemap, basemapStyleUrl } from "@/lib/basemap";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { Aircraft, FleetRole } from "@/lib/types";
 import {
-  aircraftSvg,
+  LIVE_GLYPH,
+  LIVE_MARKER_SIZE,
   glyphRoleFor,
+  isAlertGlyph,
+  liveAircraftSvg,
   type GlyphRole,
 } from "@/lib/brand/aircraft-glyphs";
+import type { PaletteId, RadarPalette } from "@/lib/radar-palettes";
+import { useRadarPalette } from "@/lib/hooks/useRadarPalette";
 import {
   boundsForView,
   fitPadding,
@@ -61,7 +67,17 @@ function circleRingCoords(
 // expression picks the right one per feature via properties.icon.
 // 'unknown' maps to 'aircraft-smokey' (see glyphRoleFor — conservative
 // alert default, matches computeStatus()).
-const AIRCRAFT_ICON_SIZE = 32; // bitmap raster size; layer `icon-size` scales it
+// Live markers (lib/brand/aircraft-glyphs.ts liveAircraftSvg): near-white
+// glyph on a dark halo disc with an identity ring, so a live tail never
+// gets lost in warm heat. Rasterised at 2x and registered with
+// pixelRatio 2 so the ring stays crisp on phones.
+const MARKER_PIXEL_RATIO = 2;
+const MARKER_BITMAP = LIVE_MARKER_SIZE * MARKER_PIXEL_RATIO;
+const AIRCRAFT_ICON_SCALE = 0.95; // layer icon-size; marker ~42 px on screen
+// Ring radius on screen, for the pulse that breathes out from it.
+const MARKER_RING_PX = 19.2 * (LIVE_MARKER_SIZE / 44) * AIRCRAFT_ICON_SCALE;
+const PULSE_LAYER = "aircraft-pulse";
+const PULSE_MS = 1800;
 const ROLE_ICON_KEY: Record<GlyphRole, string> = {
   smokey: "aircraft-smokey",
   patrol: "aircraft-patrol",
@@ -69,11 +85,42 @@ const ROLE_ICON_KEY: Record<GlyphRole, string> = {
   transport: "aircraft-transport",
 };
 
+/** Icon keys that carry the alert (police) treatment. */
+const ALERT_ICON_KEYS = new Set(
+  (Object.entries(ROLE_ICON_KEY) as Array<[GlyphRole, string]>)
+    .filter(([role]) => isAlertGlyph(role))
+    .map(([, key]) => key),
+);
+
 function iconForRole(role: FleetRole | undefined | null, model?: string | null): string {
   return ROLE_ICON_KEY[glyphRoleFor(role, model)];
 }
 
 const RIDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="${SS_TOKENS.sky}" fill-opacity="0.10"/><circle cx="24" cy="24" r="12" fill="${SS_TOKENS.sky}" fill-opacity="0.22"/><circle cx="24" cy="24" r="6" fill="${SS_TOKENS.sky}" stroke="white" stroke-width="2"/></svg>`;
+
+function markerBitmaps(p: RadarPalette): Promise<ImageBitmap[]> {
+  const roles = Object.keys(ROLE_ICON_KEY) as GlyphRole[];
+  return Promise.all(
+    roles.map((role) =>
+      loadSvgBitmap(
+        liveAircraftSvg(role, {
+          halo: p.live.halo,
+          haloOpacity: p.live.haloOpacity,
+          size: MARKER_BITMAP,
+        }),
+        MARKER_BITMAP,
+      ),
+    ),
+  );
+}
+
+function prefersReducedMotion(): boolean {
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
+}
 
 async function loadSvgBitmap(svg: string, size: number): Promise<ImageBitmap> {
   const blob = new Blob([svg], { type: "image/svg+xml" });
@@ -130,6 +177,7 @@ export default function RadarMap({
   onLeaveView,
   onMapReady,
   cameraLocked = false,
+  palette: initialPalette,
 }: {
   aircraft: Aircraft[];
   rider: RiderPos | null;
@@ -151,7 +199,17 @@ export default function RadarMap({
   /** History mode fits the camera to past flights; once set, the rider
    *  auto-zoom and 5 s auto-recenter stand down (same as a region pick). */
   cameraLocked?: boolean;
+  /** Palette the server rendered with (ss_palette cookie); sets the
+   *  live-marker halo. The rider can change it from the layers panel. */
+  palette?: PaletteId;
 }) {
+  const [pal] = useRadarPalette(initialPalette);
+  const palRef = useRef<RadarPalette>(pal);
+  palRef.current = pal;
+  // Palette the registered marker bitmaps were drawn with.
+  const markerPaletteRef = useRef<PaletteId | null>(null);
+  // Removes the prefers-reduced-motion listener startPulse() adds.
+  const motionCleanupRef = useRef<(() => void) | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MaplibreMap | null>(null);
   const readyRef = useRef(false);
@@ -255,7 +313,7 @@ export default function RadarMap({
     // first visit) so there is no fly-in on load.
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${key}`,
+      style: basemapStyleUrl(key),
       bounds: toLngLatBounds(
         boundsForView(viewIdRef.current, dataExtentRef.current),
       ),
@@ -269,20 +327,19 @@ export default function RadarMap({
       // Load all four role glyphs in parallel + the rider dot. The map's
       // symbol layer expression picks the right one per feature via
       // properties.icon = "aircraft-${role}".
-      const roleEntries = Object.entries(ROLE_ICON_KEY) as Array<
-        [GlyphRole, string]
-      >;
-      const [riderImg, ...roleImgs] = await Promise.all([
+      applyNeutralBasemap(map);
+      const roleKeys = Object.values(ROLE_ICON_KEY);
+      const markerPal = palRef.current;
+      const [riderImg, roleImgs] = await Promise.all([
         loadSvgBitmap(RIDER_SVG, 48),
-        ...roleEntries.map(([role]) =>
-          loadSvgBitmap(aircraftSvg(role, { size: AIRCRAFT_ICON_SIZE }), AIRCRAFT_ICON_SIZE),
-        ),
+        markerBitmaps(markerPal),
       ]);
       if (!mapRef.current) return; // guard — unmounted while loading
       map.addImage("rider-dot", riderImg);
-      roleEntries.forEach(([, key], i) => {
-        map.addImage(key, roleImgs[i]!);
+      roleKeys.forEach((key, i) => {
+        map.addImage(key, roleImgs[i]!, { pixelRatio: MARKER_PIXEL_RATIO });
       });
+      markerPaletteRef.current = markerPal.id;
 
       // Distance rings — sit beneath the rider so the dot stays on top.
       // Toggleable via showDistanceRings prop; visibility flips without
@@ -363,7 +420,7 @@ export default function RadarMap({
           "icon-rotation-alignment": "map",
           "icon-allow-overlap": true,
           "icon-ignore-placement": true,
-          "icon-size": 0.85,
+          "icon-size": AIRCRAFT_ICON_SCALE,
           // Tail label sits 4-6 px above the chevron. Hidden below z9 so
           // the regional view doesn't clutter; tail-only at z9-11; tail
           // plus nickname at z12+ for city zoom. Sky-blue mono matches
@@ -371,7 +428,7 @@ export default function RadarMap({
           // chevron + heat halo.
           //
           // Font stack matches distance-rings-labels (the only other text
-          // layer on this map) since MapTiler streets-v2-dark glyphs
+          // layer on this map) since MapTiler dataviz-dark glyphs
           // ship Open Sans + Arial Unicode but not JetBrains Mono.
           "text-field": [
             "step",
@@ -399,7 +456,7 @@ export default function RadarMap({
             18,
             13,
           ],
-          "text-offset": [0, -1.6],
+          "text-offset": [0, -2.2],
           "text-anchor": "bottom",
           "text-allow-overlap": false,
           "text-ignore-placement": false,
@@ -409,6 +466,27 @@ export default function RadarMap({
           "text-color": SS_TOKENS.sky,
           "text-halo-color": SS_TOKENS.bg0,
           "text-halo-width": 1.5,
+        },
+      });
+
+      // Police pulse: a thin alert-orange ring that breathes out from
+      // the marker. Added ABOVE the aircraft layer so the heat, routes
+      // and trails (all inserted before "aircraft") never sit on top of
+      // it; it is hollow, so it never covers the glyph. Other missions
+      // get no pulse. Static (hidden) under prefers-reduced-motion.
+      map.addLayer({
+        id: PULSE_LAYER,
+        type: "circle",
+        source: "aircraft",
+        filter: ["==", ["get", "alert"], 1],
+        layout: { visibility: "none" },
+        paint: {
+          "circle-radius": MARKER_RING_PX,
+          "circle-opacity": 0,
+          "circle-stroke-width": 2,
+          "circle-stroke-color": LIVE_GLYPH.alertRing,
+          "circle-stroke-opacity": 0,
+          "circle-pitch-alignment": "map",
         },
       });
 
@@ -432,6 +510,7 @@ export default function RadarMap({
         });
       }
       startPulse();
+      refreshMarkers(); // a pick that landed while the map loaded
       onMapReadyRef.current?.(map);
     };
     map.on("load", onLoad);
@@ -510,7 +589,7 @@ export default function RadarMap({
         closeButton: true,
         closeOnClick: false,
         closeOnMove: false,
-        offset: 18,
+        offset: 24,
         className: "ss-plane-popup",
       })
         .setLngLat(pos)
@@ -550,6 +629,8 @@ export default function RadarMap({
       readyRef.current = false;
       if (animRef.current) cancelAnimationFrame(animRef.current);
       if (pulseRef.current) cancelAnimationFrame(pulseRef.current);
+      motionCleanupRef.current?.();
+      motionCleanupRef.current = null;
       map.off("load", onLoad);
       map.off("dragstart", onUserInteract);
       map.off("zoomstart", onUserInteract);
@@ -661,22 +742,83 @@ export default function RadarMap({
     return () => clearInterval(id);
   }, [rider]);
 
+  // Rider dot breathes (1.6 s) and the police ring pulses out (1.8 s).
+  // Both stop, and the ring hides, under prefers-reduced-motion; the
+  // static ring baked into the marker still carries the identity.
   function startPulse() {
     const map = mapRef.current;
     if (!map) return;
-    const start = Date.now();
-    const tick = () => {
-      const phase = (Date.now() - start) / 1600; // 1.6s loop
-      const sized = 0.5 + 0.15 * (Math.sin(phase * Math.PI * 2) + 1);
-      try {
-        map.setLayoutProperty("rider", "icon-size", sized);
-      } catch {
-        // Layer may not exist yet; ignore.
+    const run = () => {
+      if (pulseRef.current) cancelAnimationFrame(pulseRef.current);
+      pulseRef.current = null;
+      if (prefersReducedMotion()) {
+        try {
+          map.setLayoutProperty("rider", "icon-size", 0.6);
+          map.setLayoutProperty(PULSE_LAYER, "visibility", "none");
+        } catch {
+          /* layers not attached */
+        }
+        containerRef.current?.setAttribute("data-live-pulse", "off");
+        return;
       }
+      try {
+        map.setLayoutProperty(PULSE_LAYER, "visibility", "visible");
+      } catch {
+        /* layer not attached */
+      }
+      containerRef.current?.setAttribute("data-live-pulse", "on");
+      const start = Date.now();
+      const tick = () => {
+        const now = Date.now() - start;
+        const phase = now / 1600;
+        const sized = 0.5 + 0.15 * (Math.sin(phase * Math.PI * 2) + 1);
+        const t = (now % PULSE_MS) / PULSE_MS; // 0 -> 1, ring grows and fades
+        try {
+          map.setLayoutProperty("rider", "icon-size", sized);
+          map.setPaintProperty(PULSE_LAYER, "circle-radius", MARKER_RING_PX + 10 * t);
+          map.setPaintProperty(PULSE_LAYER, "circle-stroke-opacity", 0.55 * (1 - t));
+        } catch {
+          // Layer may not exist yet; ignore.
+        }
+        pulseRef.current = requestAnimationFrame(tick);
+      };
       pulseRef.current = requestAnimationFrame(tick);
     };
-    pulseRef.current = requestAnimationFrame(tick);
+    run();
+    try {
+      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+      mq.addEventListener("change", run);
+      motionCleanupRef.current = () => mq.removeEventListener("change", run);
+    } catch {
+      /* matchMedia unavailable */
+    }
   }
+
+  // Palette pick: redraw the marker bitmaps with the new halo in place
+  // (same size, so updateImage swaps them without touching the layer).
+  function refreshMarkers() {
+    const map = mapRef.current;
+    const want = palRef.current;
+    if (!map || !readyRef.current) return;
+    if (markerPaletteRef.current === want.id) return;
+    void markerBitmaps(want).then((imgs) => {
+      // A newer pick landed while these rasterised; that call wins.
+      if (mapRef.current !== map || palRef.current.id !== want.id) return;
+      Object.values(ROLE_ICON_KEY).forEach((key, i) => {
+        try {
+          if (map.hasImage(key)) map.updateImage(key, imgs[i]!);
+        } catch {
+          /* map torn down */
+        }
+      });
+      markerPaletteRef.current = want.id;
+      map.triggerRepaint();
+    });
+  }
+  useEffect(() => {
+    refreshMarkers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pal]);
 
   function applyDistanceRings(pos: RiderPos | null) {
     const map = mapRef.current;
@@ -834,6 +976,8 @@ export default function RadarMap({
           tail,
           icon: meta.icon,
           track: meta.track,
+          // 1 = police (alert glyph): drives the pulse layer filter.
+          alert: ALERT_ICON_KEYS.has(meta.icon) ? 1 : 0,
         };
         // Only include nickname when present so the layer's `["has",
         // "nickname"]` expression cleanly toggles between "tail" and

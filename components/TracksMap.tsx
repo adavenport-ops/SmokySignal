@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import maplibregl, { Map as MaplibreMap } from "maplibre-gl";
+import { applyNeutralBasemap, basemapStyleUrl } from "@/lib/basemap";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { TrackPoint } from "@/lib/tracks";
@@ -31,7 +32,7 @@ export default function TracksMap({ samples }: { samples: TrackPoint[] }) {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${key}`,
+      style: basemapStyleUrl(key),
       center: coords[0]!,
       zoom: 11,
       attributionControl: { compact: true },
@@ -39,6 +40,7 @@ export default function TracksMap({ samples }: { samples: TrackPoint[] }) {
     mapRef.current = map;
 
     map.on("load", () => {
+      applyNeutralBasemap(map);
       // Polyline of the flight.
       map.addSource("track", {
         type: "geojson",

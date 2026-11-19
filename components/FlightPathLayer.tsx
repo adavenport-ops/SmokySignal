@@ -1,7 +1,7 @@
 "use client";
 
 // Flight-path polyline overlay. Threads each tail-day's track samples
-// as a thin amber line beneath the hot-zone heatmap layer — corridors
+// as a thin palette-coloured line beneath the hot-zone heatmap layer — corridors
 // (I-5 transit, lake-patrol orbits) read as actual lines instead of
 // blob density. Pairs with HotZoneLayer.tsx; visibility tracks its own
 // `ss_flight_paths_visible` localStorage key so riders can dim the
@@ -29,12 +29,9 @@ import {
   readRadarFilter,
   type RadarFilter as Filter,
 } from "@/lib/radar-filter";
-import {
-  ROUTE_OPACITY_STOPS,
-  ROUTE_WIDTH_STOPS,
-  zoomInterpolate,
-  ROUTE_COLOR,
-} from "@/lib/radar-zoom";
+import { ROUTE_WIDTH_STOPS, zoomInterpolate } from "@/lib/radar-zoom";
+import type { PaletteId, RadarPalette } from "@/lib/radar-palettes";
+import { useRadarPalette } from "@/lib/hooks/useRadarPalette";
 import { extentOfPoints } from "@/lib/radar-view";
 import {
   FLIGHT_PATHS_VISIBLE_KEY,
@@ -66,9 +63,14 @@ type Props = {
   map: MaplibreMap | null;
   /** History mode is on: hide the 30-day threads, keep the saved pref. */
   suppressed?: boolean;
+  /** Palette the server rendered with (ss_palette cookie). */
+  initialPalette?: PaletteId;
 };
 
-export function FlightPathLayer({ map, suppressed = false }: Props) {
+export function FlightPathLayer({ map, suppressed = false, initialPalette }: Props) {
+  const [palette] = useRadarPalette(initialPalette);
+  const paletteRef = useRef<RadarPalette>(palette);
+  paletteRef.current = palette;
   const [enabled, setEnabled] = useState<boolean>(true);
   const [filter, setFilter] = useState<Filter>(DEFAULT_RADAR_FILTER);
   const [features, setFeatures] = useState<GeoJSON.Feature[] | null>(null);
@@ -184,10 +186,11 @@ export function FlightPathLayer({ map, suppressed = false }: Props) {
               "line-join": "round",
             },
             paint: {
-              // Cool thread: history, not a live bird (lib/radar-zoom.ts).
-              "line-color": ROUTE_COLOR,
+              // Palette thread (lib/radar-palettes.ts): lighter or darker
+              // than the heat midpoint, never only a different hue.
+              "line-color": paletteRef.current.route.color,
               "line-width": zoomInterpolate(ROUTE_WIDTH_STOPS),
-              "line-opacity": zoomInterpolate(ROUTE_OPACITY_STOPS),
+              "line-opacity": zoomInterpolate(paletteRef.current.route.opacity),
             },
           },
           beforeId,
@@ -237,6 +240,18 @@ export function FlightPathLayer({ map, suppressed = false }: Props) {
     }
     src.setData({ type: "FeatureCollection", features });
   }, [map, features]);
+
+  // Palette pick: repaint the threads in place.
+  useEffect(() => {
+    if (!map) return;
+    try {
+      if (!map.getLayer(LAYER_ID)) return;
+      map.setPaintProperty(LAYER_ID, "line-color", palette.route.color);
+      map.setPaintProperty(LAYER_ID, "line-opacity", zoomInterpolate(palette.route.opacity));
+    } catch {
+      /* layer not yet attached; addLayerOnce reads paletteRef */
+    }
+  }, [map, palette]);
 
   // Mirror enabled to the layer's visibility.
   useEffect(() => {

@@ -3,6 +3,7 @@ import { SS_TOKENS, TYPE } from "@/lib/tokens";
 import { BackLink } from "@/components/BackLink";
 import { ScreenAwakeToggle } from "@/components/ScreenAwake";
 import { SpeedWarningSettings } from "@/components/SpeedWarningSettings";
+import { PaletteSetting } from "@/components/PaletteSetting";
 
 export const metadata = {
   title: "Settings",
@@ -115,6 +116,10 @@ export default function SettingsHub() {
       <section aria-label="Display" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <span className="ss-eyebrow">Screen</span>
         <ScreenAwakeToggle variant="row" />
+        <span className="ss-eyebrow" style={{ marginTop: 8 }}>
+          Map
+        </span>
+        <PaletteSetting />
       </section>
 
       <section aria-label="Speed warning" style={{ display: "flex", flexDirection: "column", gap: 8 }}>

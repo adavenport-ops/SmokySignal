@@ -6,12 +6,11 @@
 
 import { test } from "node:test";
 import assert from "node:assert";
+import { BASEMAP } from "./basemap";
+import { LIVE_GLYPH } from "./brand/aircraft-glyphs";
+import { composite, contrast } from "./color-math";
+import { PALETTES, PALETTE_IDS, heatColorExpressionFor } from "./radar-palettes";
 import {
-  HEAT_COLOR_STOPS,
-  HEAT_SWATCH,
-  ROUTE_COLOR,
-  heatColorExpression,
-  isWarmRgba,
   HEAT_INTENSITY_STOPS,
   HEAT_OPACITY_STOPS,
   HEAT_RADIUS_STOPS,
@@ -127,35 +126,39 @@ test("routes are thin, low-opacity threads at state zoom", () => {
   );
 });
 
-// Orange is reserved for live aircraft. The heat ramp and route threads
-// are 30 days of history and must stay cool.
-test("heat colour stops start at 0, end at 1, strictly ascending", () => {
-  assert.equal(HEAT_COLOR_STOPS[0]![0], 0);
-  assert.equal(HEAT_COLOR_STOPS[HEAT_COLOR_STOPS.length - 1]![0], 1);
-  for (let i = 1; i < HEAT_COLOR_STOPS.length; i++) {
-    assert.ok(HEAT_COLOR_STOPS[i]![0] > HEAT_COLOR_STOPS[i - 1]![0]);
+// Colour rule, revised with the palette picker: heat MAY be warm (Ember,
+// the default, runs deep red to amber). What must hold is that a live
+// aircraft is never lost in any palette's heat. The marker is a
+// near-white glyph on a dark halo disc with an identity ring; at every
+// heat stop either the disc or the glyph clears 3:1 against the heat,
+// and the glyph always clears 7:1 against its own disc. Full palette
+// coverage lives in lib/radar-palettes.test.ts; this pins the rule next
+// to the zoom curves it depends on (heat opacity tops out at z4).
+test("heat may be warm; live aircraft stay distinguishable from every palette's heat", () => {
+  const heatOpacity = Math.max(...HEAT_OPACITY_STOPS.map(([, v]) => v));
+  for (const id of PALETTE_IDS) {
+    const p = PALETTES[id];
+    for (const [d, c] of p.heat) {
+      for (const ground of [BASEMAP.land, BASEMAP.water]) {
+        const heat = composite(c, ground, heatOpacity);
+        const disc = composite(p.live.halo, heat, p.live.haloOpacity);
+        const glyphOnDisc = contrast(LIVE_GLYPH.fill, disc);
+        const marker = Math.max(contrast(disc, heat), contrast(LIVE_GLYPH.fill, heat));
+        assert.ok(glyphOnDisc >= 7, `${id} d${d}: glyph on disc ${glyphOnDisc.toFixed(2)}`);
+        assert.ok(marker >= 3, `${id} d${d}: marker vs heat ${marker.toFixed(2)}`);
+      }
+    }
   }
 });
 
-test("heat ramp, swatch and route colour carry no warm (alert) hue", () => {
-  for (const [d, c] of HEAT_COLOR_STOPS) {
-    assert.ok(!isWarmRgba(c), `stop ${d} ${c} is warm`);
+test("every palette heat ramp is a valid heatmap-color interpolate", () => {
+  for (const id of PALETTE_IDS) {
+    const stops = PALETTES[id].heat;
+    assert.equal(stops[0]![0], 0, id);
+    assert.equal(stops[stops.length - 1]![0], 1, id);
+    for (let i = 1; i < stops.length; i++) assert.ok(stops[i]![0] > stops[i - 1]![0], id);
+    const e = heatColorExpressionFor(PALETTES[id]) as unknown[];
+    assert.deepEqual(e.slice(0, 3), ["interpolate", ["linear"], ["heatmap-density"]]);
+    assert.equal(e.length, 3 + stops.length * 2);
   }
-  assert.ok(!isWarmRgba(HEAT_SWATCH));
-  const hex = ROUTE_COLOR.replace("#", "");
-  const rgb = `rgb(${parseInt(hex.slice(0, 2), 16)},${parseInt(hex.slice(2, 4), 16)},${parseInt(hex.slice(4, 6), 16)})`;
-  assert.ok(!isWarmRgba(rgb), `route ${ROUTE_COLOR} is warm`);
-});
-
-test("isWarmRgba flags the alert orange and the old amber ramp", () => {
-  assert.ok(isWarmRgba("rgb(255,122,26)"));
-  assert.ok(isWarmRgba("rgba(245,184,64,0.45)"));
-  assert.ok(isWarmRgba("rgba(220,38,38,0.65)"));
-  assert.ok(!isWarmRgba("rgba(0,0,0,0)"));
-});
-
-test("heatColorExpression interleaves density/colour pairs", () => {
-  const e = heatColorExpression() as unknown[];
-  assert.deepEqual(e.slice(0, 3), ["interpolate", ["linear"], ["heatmap-density"]]);
-  assert.equal(e.length, 3 + HEAT_COLOR_STOPS.length * 2);
 });

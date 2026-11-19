@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import maplibregl, { Map as MaplibreMap } from "maplibre-gl";
+import { applyNeutralBasemap, basemapStyleUrl } from "@/lib/basemap";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { StoredSpot } from "@/lib/spots";
@@ -35,7 +36,7 @@ export default function SpotsMap({ spots }: { spots: StoredSpot[] }) {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${key}`,
+      style: basemapStyleUrl(key),
       center: [spots[0]!.lon, spots[0]!.lat],
       zoom: 9,
       attributionControl: { compact: true },
@@ -43,6 +44,7 @@ export default function SpotsMap({ spots }: { spots: StoredSpot[] }) {
     mapRef.current = map;
 
     map.on("load", () => {
+      applyNeutralBasemap(map);
       map.addSource("spots", {
         type: "geojson",
         data: { type: "FeatureCollection", features },

@@ -12,10 +12,10 @@ import {
   HEAT_INTENSITY_STOPS,
   HEAT_OPACITY_STOPS,
   HEAT_RADIUS_STOPS,
-  heatColorExpression,
   zoomInterpolate,
   type ZoomStops,
 } from "./radar-zoom";
+import { getPalette, heatColorExpressionFor, type RadarPalette } from "./radar-palettes";
 
 export const HISTORY_LINE_SOURCE = "history-lines";
 export const HISTORY_HEAT_SOURCE = "history-heat";
@@ -51,7 +51,11 @@ const EMPTY: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: 
  * false while the style is not ready (the caller retries on the next
  * `data` / `styledata` event, the pattern HotZoneLayer uses).
  */
-export function ensureHistoryLayers(map: MaplibreMap, opts: { heat: boolean }): boolean {
+export function ensureHistoryLayers(
+  map: MaplibreMap,
+  opts: { heat: boolean; palette?: RadarPalette },
+): boolean {
+  const palette = opts.palette ?? getPalette(null);
   if (map.getSource(HISTORY_LINE_SOURCE) && map.getLayer(HISTORY_SELECTED_LAYER)) return true;
   try {
     const before = map.getLayer(AIRCRAFT_LAYER_ID) ? AIRCRAFT_LAYER_ID : undefined;
@@ -69,7 +73,7 @@ export function ensureHistoryLayers(map: MaplibreMap, opts: { heat: boolean }): 
           source: HISTORY_HEAT_SOURCE,
           layout: { visibility: "none" },
           paint: {
-            // Same weighting and cool ramp as the 30-day heat
+            // Same weighting and palette ramp as the 30-day heat
             // (HotZoneLayer.tsx), so the two read as one system.
             "heatmap-weight": [
               "interpolate",
@@ -82,7 +86,7 @@ export function ensureHistoryLayers(map: MaplibreMap, opts: { heat: boolean }): 
             ],
             "heatmap-intensity": zoomInterpolate(HEAT_INTENSITY_STOPS),
             "heatmap-radius": zoomInterpolate(HEAT_RADIUS_STOPS),
-            "heatmap-color": heatColorExpression(),
+            "heatmap-color": heatColorExpressionFor(palette),
             // Dimmer than the 30-day heat: here the lines are the subject.
             "heatmap-opacity": zoomInterpolate(HISTORY_HEAT_OPACITY_STOPS),
           },
@@ -138,6 +142,17 @@ export function ensureHistoryLayers(map: MaplibreMap, opts: { heat: boolean }): 
     return true;
   } catch {
     return false;
+  }
+}
+
+/** Repaint the history heat for a new palette, in place. */
+export function setHistoryPalette(map: MaplibreMap, palette: RadarPalette): void {
+  try {
+    if (map.getLayer(HISTORY_HEAT_LAYER)) {
+      map.setPaintProperty(HISTORY_HEAT_LAYER, "heatmap-color", heatColorExpressionFor(palette));
+    }
+  } catch {
+    /* torn down */
   }
 }
 
