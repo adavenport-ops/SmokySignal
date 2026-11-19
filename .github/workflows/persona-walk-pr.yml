@@ -16,10 +16,11 @@ name: Persona walk on PR
 # secrets (same pair used by deploy-watchdog.yml). Auto-skips with a
 # warning when those are missing.
 
+# Disabled on PRs (2026-11-18): this is a side project that iterates on
+# prod. Persona walks run against https://smokysignal.app via the nightly
+# sweep and after-merge checks. Kept runnable by hand.
 on:
-  pull_request:
-    types: [opened, synchronize]
-    branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: persona-walk-pr-${{ github.event.pull_request.number }}
