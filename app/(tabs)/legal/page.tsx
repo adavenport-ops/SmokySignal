@@ -66,6 +66,11 @@ export default function LegalPage() {
         </p>
       </section>
 
+      <p style={{ fontSize: 14, lineHeight: 1.55, color: SS_TOKENS.fg1, margin: 0 }}>
+        Who flies, in what, and how it works:{" "}
+        <Link href="/program" className="ss-mono" style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}>/program</Link>.
+      </p>
+
       <DataFlowSection />
 
       <section

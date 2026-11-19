@@ -68,6 +68,9 @@ export default async function AboutPage() {
           gap: 8,
         }}
       >
+        <HubLink href="/program" label="What's flying: agencies, airframes, how it works">
+          What&rsquo;s flying
+        </HubLink>
         <HubLink href="/settings/alerts" label="Settings">
           Settings
         </HubLink>

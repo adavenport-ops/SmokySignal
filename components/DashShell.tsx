@@ -16,6 +16,7 @@ import { StatusPill } from "./StatusPill";
 import { Card } from "./Card";
 import { AlertsOptInCard } from "./AlertsOptInCard";
 import { ProximityFlash } from "./ProximityFlash";
+import { ShareStatusButton } from "./ShareStatusButton";
 import type { Aircraft, Snapshot } from "@/lib/types";
 import type { ActivityEntry } from "@/lib/activity";
 
@@ -208,6 +209,10 @@ export function DashShell({ initial, initialActivity, mockOn = false }: Props) {
         airborneCount={airborne.length}
         nearest={nearest}
       />
+
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <ShareStatusButton snapshot={snap} />
+      </div>
 
       <ActivityFeed entries={activity} />
 
