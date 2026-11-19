@@ -1501,4 +1501,102 @@ test.describe("p14 live-prod audit", () => {
       screenshot,
     });
   });
+
+  test("40. /relay renders the create form and is linked from /about (Relay)", async ({
+    page,
+  }) => {
+    await page.goto("/relay", { waitUntil: "networkidle" });
+    const screenshot = await shot(page, "40-relay");
+    const body = await page.locator("body").innerText();
+    const checks = {
+      heading: /Relay\./.test(body),
+      urlField: (await page.locator('input[name="url"]').count()) > 0,
+      armButton: (await page.getByRole("button", { name: "Arm relay" }).count()) > 0,
+      missionsDefault: /Default is Smokey only/.test(body),
+      feeds: /\/feed\.xml/.test(body) && /\/rss\.xml/.test(body),
+      siri: /status\.txt/.test(body),
+      noExclamation: !/[A-Za-z]!/.test(body),
+    };
+    await page.goto("/about", { waitUntil: "domcontentloaded" });
+    const aboutLink = await page
+      .locator('nav[aria-label="Site sections"] a[href="/relay"]')
+      .count();
+    const pass = Object.values(checks).every(Boolean) && aboutLink > 0;
+    record({
+      claim: "/relay renders the webhook form, Smokey-only default, feed + Siri recipes; /about links to it",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `${JSON.stringify(checks)} aboutLink=${aboutLink}`,
+      screenshot,
+    });
+  });
+
+  test("41. /feed.xml is Atom with entries; /rss.xml is RSS; both s-maxage=60 (Relay)", async ({
+    request,
+    page,
+  }) => {
+    const atom = await request.get("/feed.xml");
+    const atomText = atom.ok() ? await atom.text() : "";
+    const entries = (atomText.match(/<entry>/g) ?? []).length;
+    const atomCc = atom.headers()["cache-control"] ?? "";
+    const atomType = atom.headers()["content-type"] ?? "";
+    const okAtom =
+      atom.ok() &&
+      atomType.startsWith("application/atom+xml") &&
+      /^<\?xml version="1\.0" encoding="utf-8"\?>\s*<feed xmlns="http:\/\/www\.w3\.org\/2005\/Atom">/.test(atomText) &&
+      atomText.trimEnd().endsWith("</feed>") &&
+      entries > 0 &&
+      entries === (atomText.match(/<\/entry>/g) ?? []).length &&
+      !/&(?!(amp|lt|gt|quot|apos);)/.test(atomText) &&
+      /s-maxage=60/.test(atomCc);
+    // Parse it as XML in the browser too: DOMParser flags any well-formedness error.
+    await page.goto("/about", { waitUntil: "domcontentloaded" });
+    const parseOk = await page.evaluate((xml) => {
+      const doc = new DOMParser().parseFromString(xml, "application/xml");
+      return doc.getElementsByTagName("parsererror").length === 0 && doc.documentElement.localName === "feed";
+    }, atomText);
+    const rss = await request.get("/rss.xml");
+    const rssText = rss.ok() ? await rss.text() : "";
+    const okRss =
+      rss.ok() &&
+      /<rss version="2\.0"/.test(rssText) &&
+      /s-maxage=60/.test(rss.headers()["cache-control"] ?? "");
+    const alternate = await page
+      .locator('link[rel="alternate"][type="application/atom+xml"]')
+      .count();
+    const firstTitle = /<entry>[\s\S]*?<title>([^<]*)<\/title>/.exec(atomText)?.[1] ?? "";
+    const pass = okAtom && parseOk && okRss && alternate > 0;
+    record({
+      claim: "/feed.xml is well-formed Atom with >=1 entry, /rss.xml is RSS 2.0, s-maxage=60, advertised via <link rel=alternate>",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: `atom HTTP ${atom.status()} type=${atomType} entries=${entries} parse=${parseOk} cache="${atomCc}" first="${firstTitle}" · rss HTTP ${rss.status()} ok=${okRss} · alternate=${alternate}`,
+    });
+  });
+
+  test("42. POST /api/relay with an invalid webhook returns 400 (Relay)", async ({
+    request,
+  }) => {
+    const cases = [
+      { url: "https://127.0.0.1/hook" },
+      { url: "http://hooks.example.com/hook" },
+      { url: "https://discord.com/api/channels/1/messages" },
+    ];
+    const statuses: number[] = [];
+    const errors: string[] = [];
+    for (const data of cases) {
+      const r = await request.post("/api/relay", { data });
+      statuses.push(r.status());
+      errors.push(((await r.json().catch(() => ({}))) as { error?: string }).error ?? "");
+    }
+    // Shape checks run before the per-IP create limiter, so repeat audit
+    // runs keep getting 400s rather than 429s.
+    const pass = statuses.every((s) => s === 400);
+    record({
+      claim: "Relay create refuses private-IP, plain-http, and wrong-shape Discord URLs with a 400 (nothing stored)",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: `statuses=${statuses.join(",")} errors=${errors.join(",")}`,
+    });
+  });
 });

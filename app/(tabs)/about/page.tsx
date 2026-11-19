@@ -95,6 +95,9 @@ export default async function AboutPage() {
         <HubLink href="/board" label="Departures board for the shop TV">
           Board
         </HubLink>
+        <HubLink href="/relay" label="Relay: takeoffs to Discord, webhooks, feeds">
+          Relay
+        </HubLink>
         <HubLink href="/help" label="Help and FAQ">
           Help
         </HubLink>
