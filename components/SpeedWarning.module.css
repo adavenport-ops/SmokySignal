@@ -138,3 +138,77 @@
     max-width: 26ch;
   }
 }
+
+.fullActions {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Banner variant (pages with a map): a strip at the top in the same warn
+   orange. The page under it stays visible and usable. */
+.banner {
+  --sw-bg: #ff7a1a;
+  --sw-ink: #0b0d10;
+
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top));
+  left: max(8px, env(safe-area-inset-left));
+  right: max(8px, env(safe-area-inset-right));
+  z-index: 1000;
+  max-width: 560px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border: 3px solid var(--sw-ink);
+  border-radius: 14px;
+  background: var(--sw-bg);
+  color: var(--sw-ink);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 45%);
+}
+
+.bannerText {
+  flex: 1 1 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bannerEyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.banner .detail {
+  max-width: none;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.bannerMeta {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.bannerActions {
+  display: flex;
+  gap: 8px;
+}
+
+.banner .mute {
+  margin-top: 0;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 15px;
+}
