@@ -8,9 +8,13 @@
 // Top: wordmark, a live status block on the shared /api/aircraft poll
 // (lib/hooks/useAircraft.ts, no second poller), the search field (⌘K).
 // Then the six sections from lib/nav.ts, with active-route highlighting
-// and NEW badges, and the recently-up tails under Aircraft.
+// and NEW badges, and the recently-up tails under Aircraft (three rows).
+//
+// Alerts and Settings are pinned in the footer row beside Collapse, so
+// they are one click away at any window height; the list above scrolls
+// on its own and fades out at the bottom while there is more below.
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Logo } from "./brand/Logo";
@@ -48,6 +52,35 @@ function useIsDesktop(): boolean {
   return desktop;
 }
 
+/** Pinned in the footer row instead of the scrolling list. */
+const FOOT_IDS = ["alerts", "settings"] as const;
+
+/** Sets data-overflow="more" on the scroller's wrapper while rows sit
+ *  below the fold (app/nav.css fades the bottom edge then). */
+function useOverflowCue(): React.RefObject<HTMLElement> {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const sync = () => {
+      const more = el.scrollTop + el.clientHeight < el.scrollHeight - 4;
+      (el.parentElement ?? el).setAttribute("data-overflow", more ? "more" : "end");
+    };
+    sync();
+    el.addEventListener("scroll", sync, { passive: true });
+    window.addEventListener("resize", sync);
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(sync) : null;
+    ro?.observe(el);
+    for (const child of Array.from(el.children)) ro?.observe(child);
+    return () => {
+      el.removeEventListener("scroll", sync);
+      window.removeEventListener("resize", sync);
+      ro?.disconnect();
+    };
+  }, []);
+  return ref;
+}
+
 function readCollapsed(): boolean {
   return document.documentElement.getAttribute("data-ss-nav") === "collapsed";
 }
@@ -55,7 +88,23 @@ function readCollapsed(): boolean {
 function SidebarView({ search }: { search: string }) {
   const pathname = usePathname() ?? "/";
   const desktop = useIsDesktop();
-  const sections = useMemo(() => navSections(), []);
+  const allSections = useMemo(() => navSections(), []);
+  const sections = useMemo(
+    () =>
+      allSections.map((s) => ({
+        ...s,
+        items: s.items.filter((i) => !(FOOT_IDS as ReadonlyArray<string>).includes(i.id)),
+      })),
+    [allSections],
+  );
+  const footItems = useMemo(
+    () =>
+      FOOT_IDS.map((id) => allSections.flatMap((s) => s.items).find((i) => i.id === id)).filter(
+        (i): i is NavItem => Boolean(i),
+      ),
+    [allSections],
+  );
+  const scrollRef = useOverflowCue();
   const activeId = activeNavId(pathname, search);
   const [seen, markSeen, seenReady] = useNavSeen();
   const [collapsed, setCollapsed] = useState(false);
@@ -113,7 +162,8 @@ function SidebarView({ search }: { search: string }) {
         </button>
       </div>
 
-      <nav aria-label="Site" className="ss-sb-scroll">
+      <div className="ss-sb-scrollwrap" data-overflow="more">
+      <nav aria-label="Site" className="ss-sb-scroll" ref={scrollRef}>
         {sections.map((s) => {
           const onRail = s.items.some((i) => i.rail);
           return (
@@ -146,8 +196,24 @@ function SidebarView({ search }: { search: string }) {
           );
         })}
       </nav>
+      </div>
 
       <div className="ss-sb-foot">
+        {footItems.map((it) => (
+          <Link
+            key={it.id}
+            href={it.href}
+            prefetch={false}
+            className="ss-sb-pin"
+            data-nav-id={it.id}
+            aria-current={it.id === activeId ? "page" : undefined}
+            onClick={() => markSeen(it.id)}
+            title={it.label}
+          >
+            <NavIcon name={it.icon} size={18} />
+            <span className="ss-sb-pin-label">{it.label}</span>
+          </Link>
+        ))}
         <button
           type="button"
           className="ss-sb-toggle"
@@ -156,9 +222,8 @@ function SidebarView({ search }: { search: string }) {
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           data-testid="sidebar-toggle"
         >
-          <span className="ss-sb-toggle-close">
-            <NavIcon name="chevron-left" size={16} />
-            <span>Collapse</span>
+          <span className="ss-sb-toggle-close" title="Collapse sidebar">
+            <NavIcon name="chevron-left" size={18} />
           </span>
           <span className="ss-sb-toggle-open">
             <NavIcon name="chevron-right" size={18} />

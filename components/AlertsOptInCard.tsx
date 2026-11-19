@@ -129,8 +129,20 @@ export function AlertsOptInCard() {
           lineHeight: 1.45,
         }}
       >
-        We&rsquo;ll only ping when an alert-class bird goes up. Tweak later
-        in /settings/alerts.
+        We&rsquo;ll only ping when an alert-class bird goes up.{" "}
+        <Link
+          href="/settings/alerts"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            minHeight: 44,
+            color: SS_TOKENS.fg0,
+            textDecoration: "underline",
+          }}
+        >
+          Change this in Alerts
+        </Link>
+        .
       </p>
       {error && (
         <p

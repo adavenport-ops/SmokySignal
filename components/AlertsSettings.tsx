@@ -190,8 +190,8 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
     <main
       className="ss-page"
       style={{
-        // No 100dvh min-height: the time-format, contrast and region
-        // cards render after this <main>, and a full-viewport main left
+        // No 100dvh min-height: the other-channels card and the display
+        // link render after this <main>, and a full-viewport main left
         // a screen of dead space above them on short states.
         // Tab bar + safe-area clearance comes from .ss-tabs-shell in
         // the (tabs) layout; the install prompt no longer floats.
@@ -216,6 +216,13 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
         </h1>
         <p style={{ fontSize: 14, color: SS_TOKENS.fg1, lineHeight: 1.5, margin: 0 }}>
           Get a ping when the bird&rsquo;s up.
+        </p>
+        <p
+          data-testid="alerts-channel-19-note"
+          style={{ fontSize: 13, color: SS_TOKENS.fg1, lineHeight: 1.5, margin: 0 }}
+        >
+          Channel 19 was the truckers&rsquo; CB channel for calling out Smokey.
+          This is ours.
         </p>
       </header>
 

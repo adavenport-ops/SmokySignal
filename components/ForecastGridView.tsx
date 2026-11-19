@@ -8,6 +8,7 @@ import { SS_TOKENS } from "@/lib/tokens";
 import type { ForecastGrid, ForecastCell } from "@/lib/predictor";
 import { pacificNow } from "@/lib/time";
 import { ScrollX } from "./ScrollX";
+import { displayNickname } from "@/lib/nickname-display";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
@@ -226,7 +227,7 @@ function CellDetail({ cell, hour12 }: { cell: ForecastCell | null; hour12: boole
           style={{ fontSize: 12, color: SS_TOKENS.fg1, lineHeight: 1.6 }}
         >
           {cell.common_tails
-            .map((t) => `${t.nickname ?? t.tail} (${t.count})`)
+            .map((t) => `${displayNickname(t.nickname) ?? t.tail} (${t.count})`)
             .join(" · ")}
         </div>
       )}

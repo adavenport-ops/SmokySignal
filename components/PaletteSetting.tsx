@@ -12,10 +12,10 @@ import { paletteFromCookieHeader } from "@/lib/radar-palettes";
 import { useRadarPalette } from "@/lib/hooks/useRadarPalette";
 import { PaletteChips } from "./PaletteChips";
 
-export function PaletteSetting() {
+export function PaletteSetting({ contrastHigh = false }: { contrastHigh?: boolean }) {
   const [palette, choose] = useRadarPalette();
-  // Explicit pick on record? Without one, high contrast picks the sun
-  // palette, which the note below explains.
+  // Explicit pick on record? Without one, high contrast picks the High
+  // contrast palette, which the note below explains.
   const [picked, setPicked] = useState(true);
   useEffect(() => {
     setPicked(paletteFromCookieHeader(document.cookie) !== null);
@@ -57,7 +57,7 @@ export function PaletteSetting() {
         >
           Hot zones and flight paths on the radar. A live Smokey stays white
           with an orange ring whatever you pick.
-          {picked ? "" : " With high contrast on, the sun palette is used until you choose one."}
+          {contrastHigh && !picked ? " With contrast set to High, the map uses High contrast until you pick one." : ""}
         </p>
       </div>
       <PaletteChips active={palette.id} onPick={choose} />

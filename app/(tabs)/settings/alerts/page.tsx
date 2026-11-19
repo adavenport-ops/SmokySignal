@@ -1,11 +1,7 @@
 import Link from "next/link";
 import { AlertsSettings } from "@/components/AlertsSettings";
-import { ContrastSetting } from "@/components/ContrastSetting";
-import { TimeFormatSetting } from "@/components/TimeFormatSetting";
-import { RegionSetting } from "@/components/RegionSetting";
-import { ResetPreferencesButton } from "@/components/ResetPreferencesButton";
-import { getContrastPref, getTimeFormatPref } from "@/lib/user-prefs";
 import { getRegistry } from "@/lib/registry";
+import { displayNickname } from "@/lib/nickname-display";
 import { SS_TOKENS } from "@/lib/tokens";
 import { pageMeta } from "@/lib/seo/site";
 
@@ -19,17 +15,13 @@ export const metadata = pageMeta({
 export const dynamic = "force-dynamic";
 
 export default async function AlertsPage() {
-  const [timeFormat, contrast, registry] = await Promise.all([
-    Promise.resolve(getTimeFormatPref()),
-    Promise.resolve(getContrastPref()),
-    getRegistry(),
-  ]);
+  const registry = await getRegistry();
   return (
     <>
       <AlertsSettings
         tails={registry.map((f) => ({
           tail: f.tail,
-          nickname: f.nickname,
+          nickname: displayNickname(f.nickname),
           operator: f.operator,
           role: f.role,
         }))}
@@ -37,10 +29,7 @@ export default async function AlertsPage() {
       {/* Same column as the alerts card above (.ss-page). */}
       <div className="ss-page" style={{ minHeight: 0, paddingTop: 16 }}>
         <OtherChannels />
-        <TimeFormatSetting current={timeFormat} />
-        <ContrastSetting current={contrast} />
-        <RegionSetting />
-        <ResetPreferencesButton />
+        <DisplayMoved />
       </div>
     </>
   );
@@ -85,5 +74,32 @@ function OtherChannels() {
         Discord and webhooks →
       </Link>
     </section>
+  );
+}
+
+// Time format, contrast, map colors and region moved to the Display
+// section on /settings. One line points there so nobody hunts.
+function DisplayMoved() {
+  return (
+    <p
+      data-testid="alerts-display-link"
+      style={{ fontSize: 14, lineHeight: 1.5, color: SS_TOKENS.fg1, margin: 0 }}
+    >
+      Time format, contrast, map colors and region live in{" "}
+      <Link
+        href="/settings#display"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          minHeight: 44,
+          color: SS_TOKENS.fg0,
+          fontWeight: 600,
+          textDecoration: "underline",
+        }}
+      >
+        Settings, Display
+      </Link>
+      .
+    </p>
   );
 }

@@ -49,8 +49,8 @@ const TOOLTIP: Record<Mission, string> = {
 
 /** Short blurb for the /about group headings and the settings list. */
 const BLURB: Record<Mission, string> = {
-  police: "WSP, county sheriffs, and neighbors on mutual aid. These flip the pill.",
-  federal_le: "Customs and Border Protection. Up near the border; never flips the pill.",
+  police: "WSP, county sheriffs, and neighbors on mutual aid. One of these up turns the status orange.",
+  federal_le: "Customs and Border Protection. Up near the border. Never turns the status orange.",
   sar: "Rescue runs.",
   wildfire: "DNR and fire districts on fire duty.",
   medevac: "Air ambulances.",

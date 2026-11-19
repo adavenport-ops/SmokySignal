@@ -21,7 +21,7 @@ export const metadata = pageMeta({
   description: HOME_DESCRIPTION,
   path: "/",
   inheritImage: true,
-  socialDescription: "Live Washington State Patrol and sheriff aircraft over Washington state. Know when Smokey's up.",
+  socialDescription: "Live Washington State Patrol and sheriff aircraft over Washington state. Know when Smokey’s up.",
 });
 
 type SP = { mock?: string };

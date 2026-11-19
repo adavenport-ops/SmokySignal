@@ -26,6 +26,17 @@ import type { Mission } from "./types";
 
 /** First Pacific date with permanent track history on record. */
 export const HISTORY_FLOOR = "2026-10-16";
+const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "2026-10-16" -> "16 Oct 2026", the brand's date style. Input echoed
+ *  back when it is not a YYYY-MM-DD date. */
+export function formatDayMonYear(ymd: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  const mon = m ? MONTH_SHORT[Number(m[2]) - 1] : undefined;
+  if (!m || !mon) return ymd;
+  return `${Number(m[3])} ${mon} ${m[1]}`;
+}
+
 /** Longest range the API serves (lib/history-core.ts MAX_RANGE_DAYS). */
 export const HISTORY_MAX_DAYS = 366;
 /** Most tails one request may name (lib/history-core.ts MAX_TAILS). */

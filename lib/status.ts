@@ -148,7 +148,7 @@ export function computeStatus(
       kind: "alert",
       pill: "SMOKEY UP",
       pillSub: alertCount > 1 ? `${alertCount} up` : undefined,
-      headline: "Smokey's up.",
+      headline: "Smokey’s up.",
       body: alertBody(lead),
       footnote: buildAlertFootnote(ordered, lead),
       lead,
@@ -163,7 +163,7 @@ export function computeStatus(
     return {
       kind: "clear",
       pill: "ALL CLEAR",
-      headline: "Smokey's down.",
+      headline: "Smokey’s down.",
       body: "No bird up over Washington. Send it.",
       footnote: describeClearUp(lead),
       lead,
@@ -176,7 +176,7 @@ export function computeStatus(
   return {
     kind: "clear",
     pill: "ALL CLEAR",
-    headline: "Smokey's down.",
+    headline: "Smokey’s down.",
     body: "No bird up over Washington. Send it.",
     lead: null,
     alertCount: 0,

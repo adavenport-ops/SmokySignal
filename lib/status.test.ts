@@ -49,7 +49,7 @@ test("WSP up: SMOKEY UP, alert, count 1", () => {
   const s = computeStatus(snap([{ tail: "N305DK" }]), fleet);
   assert.equal(s.kind, "alert");
   assert.equal(s.pill, "SMOKEY UP");
-  assert.equal(s.headline, "Smokey's up.");
+  assert.equal(s.headline, "Smokey’s up.");
   assert.equal(s.alertCount, 1);
 });
 

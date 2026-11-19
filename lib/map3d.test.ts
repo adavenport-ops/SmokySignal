@@ -9,12 +9,14 @@ import assert from "node:assert";
 import {
   BEARING_STEP,
   GESTURE_HINT,
+  HINT_MS,
   HINT_STORAGE_KEY,
   ORBIT_DEG_PER_S,
   ORBIT_MAX_DT_MS,
   OrbitController,
   PITCH_STEPS,
   applyAction,
+  compassAriaLabel,
   compassResetTarget,
   enable3DGestures,
   gestureHint,
@@ -81,6 +83,14 @@ test("compass resets to north up at the view's own pitch", () => {
   assert.strictEqual(headingLabel(-0.2), "000");
 });
 
+test("compass accessible name carries the live heading and the action", () => {
+  assert.strictEqual(compassAriaLabel(-18), "Compass, heading 342°. Tap to face north.");
+  assert.strictEqual(compassAriaLabel(0), "Compass, heading 0°. Tap to face north.");
+  assert.strictEqual(compassAriaLabel(5.2), "Compass, heading 5°. Tap to face north.");
+  assert.strictEqual(compassAriaLabel(359.7), "Compass, heading 0°. Tap to face north.");
+  assert.ok(!compassAriaLabel(90).includes("North up"));
+});
+
 test("Q / E rotate and W / S tilt; modifier chords are ignored", () => {
   assert.strictEqual(keyAction({ key: "q" }), "rotate-left");
   assert.strictEqual(keyAction({ key: "E" }), "rotate-right");
@@ -134,6 +144,7 @@ test("gesture hint copy per pointer type", () => {
   assert.strictEqual(gestureHint(false), "Right-drag or Ctrl-drag to rotate · Shift-drag to tilt");
   assert.strictEqual(gestureHint(true), "Two fingers to rotate and tilt");
   for (const s of Object.values(GESTURE_HINT)) assert.ok(!s.includes("!"), "no exclamation marks");
+  assert.strictEqual(HINT_MS, 4000, "the hint hides itself after 4 s");
 });
 
 test("gesture hint shows once per device and never throws", () => {

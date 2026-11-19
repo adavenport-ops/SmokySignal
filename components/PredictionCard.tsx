@@ -13,6 +13,7 @@ import { SS_TOKENS } from "@/lib/tokens";
 import type { PredictorOutput, PredictionWindow } from "@/lib/predictor";
 import { LEARNING_THRESHOLD_DAYS, type LearningState } from "@/lib/learning";
 import { formatTs, formatTsBare } from "@/lib/time";
+import { displayNickname } from "@/lib/nickname-display";
 
 const MIN_TOTAL_EVENTS_FOR_PREDICTION = 10;
 
@@ -137,7 +138,7 @@ export function PredictionCard({
           }}
         >
           {top.common_tails
-            .map((t) => t.nickname ?? t.tail)
+            .map((t) => displayNickname(t.nickname) ?? t.tail)
             .join(" · ")}
         </div>
       )}

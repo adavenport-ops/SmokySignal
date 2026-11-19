@@ -42,8 +42,8 @@ function pill(d: EmbedDisplay | null): string {
 
 function headline(d: EmbedDisplay | null): string {
   if (!d) return "Reading the sky.";
-  if (d.kind === "up") return "Smokey's up.";
-  if (d.kind === "down") return "Smokey's down.";
+  if (d.kind === "up") return "Smokey’s up.";
+  if (d.kind === "down") return "Smokey’s down.";
   return "Feed's quiet.";
 }
 

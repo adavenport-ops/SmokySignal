@@ -6,9 +6,11 @@
 
 import { test } from "node:test";
 import assert from "node:assert";
+import { navSections } from "./nav";
 import {
   buildNavIndex,
   compact,
+  filterNavSections,
   placeEntries,
   roadEntries,
   scoreText,
@@ -157,13 +159,23 @@ test("a town name finds its /near page first and /seen second", () => {
   assert.ok(townEntries().length >= 25);
 });
 
-test("settings anchors: contrast, palette, time format, speed warning, zones", () => {
-  assert.strictEqual(top("contrast"), "/settings/alerts#contrast");
-  assert.strictEqual(top("palette"), "/settings#map-palette");
-  assert.strictEqual(top("map colors"), "/settings#map-palette");
-  assert.strictEqual(top("colorblind"), "/settings#map-palette");
-  assert.strictEqual(top("time format"), "/settings/alerts#time-format");
-  assert.strictEqual(top("24-hour"), "/settings/alerts#time-format");
+test("settings anchors: display settings land on /settings#display", () => {
+  for (const q of [
+    "display",
+    "time format",
+    "24-hour",
+    "contrast",
+    "high contrast",
+    "palette",
+    "map colors",
+    "colorblind",
+    "keep screen awake",
+    "screen awake",
+    "wake lock",
+    "default region",
+  ]) {
+    assert.strictEqual(top(q), "/settings#display", q);
+  }
   for (const q of ["speed warning", "ease off", "speeding", "speed limit", "over the limit"]) {
     assert.strictEqual(top(q), "/settings#speed-warning", q);
   }
@@ -198,4 +210,33 @@ test("results never carry the banned words in rendered copy", () => {
     const shown = `${e.title} ${e.subtitle ?? ""}`;
     assert.ok(!/police|\bcop|law enforcement|drone|!/i.test(shown), shown);
   }
+});
+
+test("More filter: an empty query keeps every section", () => {
+  const all = navSections(NOW);
+  assert.deepStrictEqual(filterNavSections(all, "  ").map((s) => s.id), all.map((s) => s.id));
+});
+
+test("More filter: keeps matching rows in their sections and drops empty sections", () => {
+  const all = navSections(NOW);
+  const radar = filterNavSections(all, "radar");
+  const ids = radar.flatMap((s) => s.items.map((i) => i.id));
+  assert.ok(ids.includes("radar"), ids.join(","));
+  assert.ok(ids.includes("radar-history"), ids.join(","));
+  assert.ok(!ids.includes("blog"));
+  assert.ok(radar.every((s) => s.items.length > 0));
+  // Section order is the sidebar order.
+  const order = all.map((s) => s.id);
+  const kept = radar.map((s) => s.id);
+  assert.deepStrictEqual(kept, order.filter((id) => kept.includes(id)));
+});
+
+test("More filter: synonyms count, nonsense and tails match no section", () => {
+  const all = navSections(NOW);
+  const tg = filterNavSections(all, "telegram").flatMap((s) => s.items.map((i) => i.href));
+  assert.strictEqual(tg[0], "/relay#telegram");
+  const csv = filterNavSections(all, "csv").flatMap((s) => s.items.map((i) => i.id));
+  assert.deepStrictEqual(csv, ["data"]);
+  assert.deepStrictEqual(filterNavSections(all, "qqxzv"), []);
+  assert.deepStrictEqual(filterNavSections(all, "N305DK"), []);
 });

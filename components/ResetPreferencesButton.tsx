@@ -27,6 +27,7 @@ const LOCAL_STORAGE_KEYS = [
   "ss_post_install_dismissed",
   "ss_first_standalone_visit",
   "ss_distance_rings_visible",
+  "ss_wake_lock",
 ] as const;
 
 function clearLocalStorage(): void {
@@ -103,7 +104,7 @@ export function ResetPreferencesButton() {
         >
           Clears every preference on this device — display, audio,
           alerts, zones, region. Push subscriptions stay armed until
-          you disarm them above.
+          you disarm them on Alerts.
         </p>
       </div>
 

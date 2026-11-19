@@ -145,7 +145,7 @@ export function buildStatusEmbed(v: StatusView): DiscordEmbed {
     });
     return {
       title: "SMOKEY UP",
-      description: `Smokey's up. ${code(String(n))} airborne. ${md(v.status.body)}`,
+      description: `Smokey’s up. ${code(String(n))} airborne. ${md(v.status.body)}`,
       url: `${SITE_URL}/`,
       color: EMBED_COLOR.alert,
       fields: fields.length > 0 ? fields : undefined,
@@ -157,7 +157,7 @@ export function buildStatusEmbed(v: StatusView): DiscordEmbed {
   const foot = v.status.footnote ? ` ${md(v.status.footnote)}` : "";
   return {
     title: "ALL CLEAR",
-    description: `Smokey's down. No bird up over Washington.${foot}`,
+    description: `Smokey’s down. No bird up over Washington.${foot}`,
     url: `${SITE_URL}/`,
     color: EMBED_COLOR.clear,
     footer,

@@ -1,7 +1,7 @@
 "use client";
 
 import { missionLabel } from "@/lib/role-display";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import nextDynamic from "next/dynamic";
 import Link from "next/link";
 import type { Map as MaplibreMap } from "maplibre-gl";
@@ -20,7 +20,14 @@ import {
   HistoryOverlay,
   HistoryPill,
 } from "./HistoryOverlay";
-import { addUserZone } from "@/lib/user-zones";
+import { removeUserZone, type UserZone } from "@/lib/user-zones";
+import { AddZoneSheet } from "./AddZoneSheet";
+import {
+  zoneRadiusMi,
+  zoneToRemoveOnUndo,
+  zoneUndoReducer,
+  type ZoneUndo,
+} from "@/lib/zone-draft";
 import {
   detectProximityHits,
   fireProximityNotifications,
@@ -32,8 +39,10 @@ import { Tooltip } from "./Tooltip";
 import { FreshnessLabel } from "./FreshnessLabel";
 import { RegionSelector } from "./RegionSelector";
 import { REGION_CHANGE_EVENT, getRegion } from "@/lib/region-pref";
+import type { LeaveReason } from "./RadarMap";
 import {
   DEFAULT_RADAR_VIEW,
+  isRadarViewId,
   unionBounds,
   type Bounds,
   type RadarViewId,
@@ -50,6 +59,7 @@ import type { LearningState } from "@/lib/learning";
 import type { PaletteId } from "@/lib/radar-palettes";
 import { LIVE_VIEW_PARAM, parseMapView, withMapView } from "@/lib/history-3d";
 import { Pill3D, hasWebGL2 } from "./View3DToggle";
+import { displayNickname } from "@/lib/nickname-display";
 
 export type RiderPos = { lat: number; lon: number };
 
@@ -90,6 +100,8 @@ function useTabbarHeight(): number {
 }
 /** Top of the region picker + freshness row, just under the header. */
 const PICKER_TOP = 60;
+/** Street zoom the map opens at on the rider (RadarMap RIDER_ZOOM). */
+const NEAR_ME_ZOOM = 11;
 
 type Props = {
   initial: Snapshot;
@@ -143,15 +155,29 @@ export function RadarShell({
   const pillKind = status.kind;
   const pillTooltip =
     status.kind === "alert"
-      ? `${status.alertCount} Smokey up. Only Smokey-class tails flip the pill.`
+      ? `${status.alertCount} Smokey up. Only Smokey-class tails turn the status orange.`
       : status.lead
-        ? `Nothing alerting. ${status.lead.entry.nickname ?? status.lead.aircraft.tail} is up, classed ${missionLabel(status.lead.entry.role)}.`
+        ? `Nothing alerting. ${displayNickname(status.lead.entry.nickname) ?? status.lead.aircraft.tail} is up, classed ${missionLabel(status.lead.entry.role)}.`
         : `Nothing in our ${total}-tail registry is up.`;
   const counterColor =
     status.alertCount > 0 ? SS_TOKENS.alert : SS_TOKENS.fg1;
 
   const [rider, setRider] = useState<RiderPos | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  // + opens the add-zone sheet; a save leaves an undo toast.
+  const [addZoneOpen, setAddZoneOpen] = useState(false);
+  const [zoneUndo, dispatchZoneUndo] = useReducer(
+    zoneUndoReducer,
+    { kind: "idle" } as ZoneUndo,
+  );
+  useEffect(() => {
+    if (zoneUndo.kind === "idle") return;
+    const id = setTimeout(
+      () => dispatchZoneUndo({ type: "tick", now: Date.now() }),
+      Math.max(0, zoneUndo.until - Date.now()),
+    );
+    return () => clearTimeout(id);
+  }, [zoneUndo]);
   const [map, setMap] = useState<MaplibreMap | null>(null);
   const [showRings, setShowRings] = useState(false);
   // Region = camera preset (lib/radar-view.ts), never a data filter.
@@ -161,6 +187,11 @@ export function RadarShell({
   // view instead of flying there from the default.
   const [viewId, setViewId] = useState<RadarViewId>(DEFAULT_RADAR_VIEW);
   const [viewCustom, setViewCustom] = useState(false);
+  // The camera left the pick to centre on the rider: the picker reads
+  // "Near me" rather than "Custom".
+  const [viewNearMe, setViewNearMe] = useState(false);
+  // ?region=<id> opened this view: hold it, no rider auto-zoom.
+  const [viewFromUrl, setViewFromUrl] = useState(false);
   const [fitNonce, setFitNonce] = useState(0);
   const [viewHydrated, setViewHydrated] = useState(false);
   const [dataExtent, setDataExtent] = useState<Bounds | null>(null);
@@ -180,6 +211,7 @@ export function RadarShell({
     if (was && !historyOn && historyMovedCameraRef.current) {
       historyMovedCameraRef.current = false;
       setViewCustom(false);
+      setViewNearMe(false);
       setFitNonce((n) => n + 1);
     }
   }, [historyOn]);
@@ -205,13 +237,26 @@ export function RadarShell({
   // Hydrate the rings pref + region from localStorage on mount.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setShowRings(window.localStorage.getItem("ss_distance_rings_visible") === "1");
-    setViewId(getRegion());
+    try {
+      setShowRings(window.localStorage.getItem("ss_distance_rings_visible") === "1");
+    } catch {
+      /* storage blocked: rings start off */
+    }
+    // ?region=puget_sound opens on that region for this visit (a shared
+    // link), without changing the rider's saved default.
+    const fromUrl = new URLSearchParams(window.location.search).get("region");
+    if (isRadarViewId(fromUrl)) {
+      setViewId(fromUrl);
+      setViewFromUrl(true);
+    } else {
+      setViewId(getRegion());
+    }
     setViewHydrated(true);
     const onChange = (e: Event) => {
       const detail = (e as CustomEvent<{ id: RadarViewId }>).detail;
       setViewId(detail?.id ?? getRegion());
       setViewCustom(false);
+      setViewNearMe(false);
       setFitNonce((n) => n + 1);
     };
     // Heat + route layers report their data extent; the union is what
@@ -237,13 +282,19 @@ export function RadarShell({
       window.removeEventListener(RADAR_DATA_EXTENT_EVENT, onExtent);
     };
   }, []);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(
-      "ss_distance_rings_visible",
-      showRings ? "1" : "0",
-    );
-  }, [showRings]);
+  // Persist on the rider's tap only. A mount-time write raced the read
+  // above and could store "0" over a saved "1".
+  const toggleRings = () => {
+    setShowRings((v) => {
+      const next = !v;
+      try {
+        window.localStorage.setItem("ss_distance_rings_visible", next ? "1" : "0");
+      } catch {
+        /* storage blocked: the choice lasts for this page only */
+      }
+      return next;
+    });
+  };
 
   // Foreground proximity alerts. Runs whenever snap.aircraft changes
   // (every poll cycle from useAircraft) — when a tracked alert-tier
@@ -315,6 +366,9 @@ export function RadarShell({
 
   return (
     <main
+      // app/globals.css lifts the map attribution above the tab bar here.
+      className="ss-radar-shell"
+      data-history={historyOn ? "on" : "off"}
       style={{
         position: "fixed",
         inset: 0,
@@ -330,9 +384,13 @@ export function RadarShell({
           fitNonce={fitNonce}
           dataExtent={dataExtent}
           insets={fitInsets}
-          onLeaveView={() => setViewCustom(true)}
+          onLeaveView={(reason: LeaveReason) => {
+            setViewCustom(true);
+            setViewNearMe(reason === "rider");
+          }}
           onMapReady={setMap}
           cameraLocked={historyOn}
+          viewLocked={viewFromUrl}
           palette={palette}
         />
       )}
@@ -357,6 +415,9 @@ export function RadarShell({
         // 3D draws neither heat nor 30-day paths, so their row steps aside.
         suppressed={historyOn || live3d}
         initialPalette={palette}
+        // LAYERS sits under the + in the top-left column.
+        layersTop={PICKER_TOP + 44 + 52}
+        layersBottomReserve={`calc(${rowBottom + 88 + 12}px + var(--ss-install-prompt-h, 0px))`}
       />
       <FlightPathLayer map={map} suppressed={historyOn || live3d} initialPalette={palette} />
       <UserZoneLayer map={map} />
@@ -370,6 +431,7 @@ export function RadarShell({
           // History moved the camera off the picked region.
           historyMovedCameraRef.current = true;
           setViewCustom(true);
+          setViewNearMe(false);
         }}
         insets={historyInsets}
         bannerTop={PICKER_TOP}
@@ -381,12 +443,31 @@ export function RadarShell({
         // Under the freshness chip (top 60, ~34 px tall), so a long
         // "SAMPLE UNKNOWN" label never runs over it on a phone.
         top={PICKER_TOP + 44 + topShift}
-        rider={rider}
-        onAdded={(label) => flashToast(setToast, `Zone "${label}" added`)}
+        open={addZoneOpen}
+        onClick={() => setAddZoneOpen((v) => !v)}
       />
+      {addZoneOpen && (
+        <AddZoneSheet
+          map={map}
+          rider={rider}
+          top={PICKER_TOP + 44 + topShift}
+          bottom={TABBAR_CSS}
+          onClose={() => setAddZoneOpen(false)}
+          onSaved={(z: UserZone) => {
+            setAddZoneOpen(false);
+            dispatchZoneUndo({
+              type: "added",
+              zoneId: z.id,
+              name: z.label,
+              radiusMi: zoneRadiusMi(z),
+              now: Date.now(),
+            });
+          }}
+        />
+      )}
       <DistanceRingsToggle
         active={showRings}
-        onToggle={() => setShowRings((v) => !v)}
+        onToggle={toggleRings}
         bottom={`calc(${
           16 + (airborne.length > 0 ? 130 : 0)
         }px + ${TABBAR_CSS} + var(--ss-install-prompt-h, 0px))`}
@@ -458,6 +539,24 @@ export function RadarShell({
           zIndex: 10,
         }}
       >
+        <div
+          // History mode: the HISTORY banner is the state. The live pill
+          // and counter step back so they don't read as the past's status.
+          aria-hidden={historyOn || undefined}
+          data-testid="radar-live-status"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            flex: "1 1 auto",
+            minWidth: 0,
+            opacity: historyOn ? 0.32 : 1,
+            filter: historyOn ? "grayscale(1)" : undefined,
+            pointerEvents: historyOn ? "none" : undefined,
+            transition: "opacity 240ms ease-out",
+          }}
+        >
         <StatusPill
           kind={pillKind}
           label={status.pill}
@@ -485,25 +584,44 @@ export function RadarShell({
             </span>
           </Tooltip>
         </div>
+        </div>
       </header>
 
       {/* Region picker: a camera control in the map's top-right
           corner, under the header. Jumps the view; never filters the
           heat or routes. */}
-      <div
-        style={{
-          position: "absolute",
-          top: PICKER_TOP + topShift,
-          right: 12,
-          zIndex: 10,
-        }}
-      >
-        <RegionSelector
-          value={viewId}
-          custom={viewCustom}
-          style={{ maxWidth: 190 }}
-        />
-      </div>
+      {/* Hidden in history mode: history frames its own flights and
+          locks the camera, so a live region pick means nothing there. */}
+      {!historyOn && (
+        <div
+          style={{
+            position: "absolute",
+            top: PICKER_TOP + topShift,
+            right: 12,
+            zIndex: 10,
+          }}
+        >
+          <RegionSelector
+            value={viewId}
+            custom={viewCustom}
+            nearMe={viewCustom && viewNearMe && !!rider}
+            onNearMe={
+              rider
+                ? () => {
+                    setViewCustom(true);
+                    setViewNearMe(true);
+                    map?.flyTo({
+                      center: [rider.lon, rider.lat],
+                      zoom: NEAR_ME_ZOOM,
+                      duration: 900,
+                    });
+                  }
+                : undefined
+            }
+            style={{ maxWidth: 190 }}
+          />
+        </div>
+      )}
 
       {/* 3D carries its own compass (Map3DControls); a fixed "north is
           up" mark would be wrong once the rider rotates. */}
@@ -511,7 +629,9 @@ export function RadarShell({
         <CompassN top={PICKER_TOP + 52 + topShift} />
       )}
 
+      {!historyOn && (
       <div
+        data-testid="radar-freshness"
         style={{
           position: "absolute",
           top: 60 + topShift,
@@ -527,12 +647,33 @@ export function RadarShell({
       >
         <FreshnessLabel lastSampleMs={lastSampleMs} />
       </div>
+      )}
 
       {airborne.length > 0 && <Carousel airborne={airborne} />}
 
-      <SpottedButton airborne={airborne} />
+      <SpottedButton airborne={airborne} toastTop={TOAST_TOP_CSS(topShift)} />
 
-      {toast && <Toast message={toast} hasCarousel={airborne.length > 0} />}
+      {zoneUndo.kind !== "idle" ? (
+        <Toast
+          message={zoneUndo.text}
+          top={TOAST_TOP_CSS(topShift)}
+          testId="zone-undo-toast"
+          action={
+            zoneUndo.kind === "added"
+              ? {
+                  label: "Undo",
+                  onClick: () => {
+                    const id = zoneToRemoveOnUndo(zoneUndo, Date.now());
+                    if (id) removeUserZone(id);
+                    dispatchZoneUndo({ type: "undo", now: Date.now() });
+                  },
+                }
+              : undefined
+          }
+        />
+      ) : (
+        toast && <Toast message={toast} top={TOAST_TOP_CSS(topShift)} />
+      )}
     </main>
   );
 }
@@ -546,42 +687,34 @@ function flashToast(
   setTimeout(() => setter(null), durationMs);
 }
 
-// "+" floating button — drops a 5nm geofence at the rider's current
-// position. Disabled until geolocation resolves so we never save a
-// zone at the default Puget Sound centroid by accident. Long-tap is
-// intentionally not used here since the radar map below already swallows
-// long-press gestures for chevron interactions.
+// Toasts sit at the top of the map, under the picker row and between
+// the + and the compass, so they never cover the bottom pill rows
+// (HOT ZONES, RINGS, TRAIL) or the SPOTTED button.
+function TOAST_TOP_CSS(topShift: number): string {
+  return `${PICKER_TOP + 52 + topShift}px`;
+}
+
+// "+" floating button: opens the add-zone sheet (components/
+// AddZoneSheet.tsx), where the rider names the zone, picks a radius and
+// a centre (GPS or a dropped pin) before anything is saved.
 function AddZoneButton({
   top,
-  rider,
-  onAdded,
+  open,
+  onClick,
 }: {
   top: number;
-  rider: RiderPos | null;
-  onAdded: (label: string) => void;
+  open: boolean;
+  onClick: () => void;
 }) {
-  const disabled = !rider;
   return (
-    <Tooltip side="right" content="Add a 5nm zone at your location">
+    <Tooltip side="right" content="Add a zone: alerts when Smokey goes up near it">
       <button
         type="button"
-        disabled={disabled}
-        onClick={() => {
-          if (!rider) return;
-          const label =
-            window.prompt(
-              "Zone label (e.g. Home, Meeting point):",
-              "Zone",
-            )?.trim() || "Zone";
-          const z = addUserZone({
-            lat: rider.lat,
-            lon: rider.lon,
-            radiusNm: 5,
-            label,
-          });
-          onAdded(z.label);
-        }}
-        aria-label="Add geofence at your location"
+        onClick={onClick}
+        aria-label="Add a zone"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        data-testid="radar-add-zone"
         style={{
           position: "absolute",
           top,
@@ -589,16 +722,15 @@ function AddZoneButton({
           width: 44,
           height: 44,
           borderRadius: "50%",
-          border: `.5px solid ${SS_TOKENS.hairline2}`,
-          background: "rgba(11,13,16,.7)",
+          border: `.5px solid ${open ? SS_TOKENS.fg1 : SS_TOKENS.hairline2}`,
+          background: open ? "rgba(30,34,41,0.94)" : "rgba(11,13,16,.7)",
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
-          color: disabled ? SS_TOKENS.fg2 : SS_TOKENS.fg0,
+          color: SS_TOKENS.fg0,
           fontSize: 18,
           fontWeight: 700,
           lineHeight: 1,
-          opacity: disabled ? 0.5 : 1,
-          cursor: disabled ? "not-allowed" : "pointer",
+          cursor: "pointer",
           zIndex: 10,
           touchAction: "manipulation",
           WebkitTapHighlightColor: "transparent",
@@ -612,35 +744,70 @@ function AddZoneButton({
 
 function Toast({
   message,
-  hasCarousel,
+  top,
+  action,
+  testId,
 }: {
   message: string;
-  hasCarousel: boolean;
+  top: string;
+  action?: { label: string; onClick: () => void };
+  testId?: string;
 }) {
-  // Sit just above whatever's currently anchored to the bottom — carousel
-  // when present, tab bar otherwise.
-  const bottomOffset = `calc(${TABBAR_CSS} + ${hasCarousel ? 130 : 16}px)`;
   return (
     <div
       role="status"
+      data-testid={testId ?? "radar-toast"}
       style={{
         position: "absolute",
-        left: "50%",
-        transform: "translateX(-50%)",
-        bottom: bottomOffset,
-        padding: "8px 14px",
-        borderRadius: 8,
-        background: SS_TOKENS.bg2,
-        border: `.5px solid ${SS_TOKENS.hairline}`,
-        color: SS_TOKENS.fg1,
-        fontFamily: "var(--font-mono)",
-        fontSize: 12,
-        letterSpacing: ".04em",
+        // Between the + (left 12, 44 wide) and the compass (right 20).
+        left: 64,
+        right: 56,
+        top,
         zIndex: 20,
-        whiteSpace: "nowrap",
+        display: "flex",
+        justifyContent: "center",
+        pointerEvents: "none",
       }}
     >
-      {message}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          maxWidth: 420,
+          padding: action ? "0 0 0 12px" : "10px 12px",
+          minHeight: action ? 44 : undefined,
+          borderRadius: 10,
+          background: "rgba(21,24,29,0.96)",
+          border: `.5px solid ${SS_TOKENS.hairline2}`,
+          color: SS_TOKENS.fg0,
+          fontSize: 13,
+          lineHeight: 1.3,
+          pointerEvents: "auto",
+        }}
+      >
+        <span>{message}</span>
+        {action && (
+          <button
+            type="button"
+            onClick={action.onClick}
+            style={{
+              minHeight: 44,
+              minWidth: 44,
+              padding: "0 12px",
+              background: "transparent",
+              border: 0,
+              color: SS_TOKENS.sky,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+              touchAction: "manipulation",
+            }}
+          >
+            {action.label}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -754,7 +921,7 @@ function PlaneCard({ p }: { p: Aircraft }) {
         </span>
         {p.nickname && (
           <span style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
-            &ldquo;{p.nickname}&rdquo;
+            &ldquo;{displayNickname(p.nickname)}&rdquo;
           </span>
         )}
       </div>
@@ -855,7 +1022,7 @@ function DistanceRingsToggle({
       content={
         disabled
           ? "Distance rings need your location. Allow location access on /radar."
-          : "5 / 10 / 15 nm rings around your position. Tap to toggle."
+          : "5, 10 and 15 mi rings around your position. Tap to toggle."
       }
     >
       <button
@@ -867,7 +1034,8 @@ function DistanceRingsToggle({
         aria-disabled={disabled}
         className="ss-mono"
         style={{
-          padding: "8px 12px",
+          minHeight: 44,
+          padding: "0 14px",
           borderRadius: 999,
           background: "rgba(11,13,16,0.78)",
           border: `.5px solid ${SS_TOKENS.hairline2}`,

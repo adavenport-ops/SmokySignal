@@ -5,7 +5,7 @@
 // time-scrubber settings) can mount alongside the existing radar
 // filters without bloating the heatmap layer module.
 //
-// Four rows post-P19.5:
+// Rows, top to bottom (Colors first since walk-a, the most-used pick):
 //   Missions   — Everything + one chip per mission (default Smokey only)
 //   Operators  — multi-select chips per registry operator
 //   Tails      — typeahead + chip set, follow a single tail
@@ -24,7 +24,7 @@
 // lib/role-display.ts. Default is Smokey only; "Everything" selects
 // every mission. Removing the last chip falls back to Smokey.
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SS_TOKENS } from "@/lib/tokens";
 import {
   OPERATORS,
@@ -40,12 +40,14 @@ import {
 } from "@/lib/radar-filter";
 import type { PaletteId } from "@/lib/radar-palettes";
 import { PaletteChips } from "./PaletteChips";
+import { displayNickname } from "@/lib/nickname-display";
 
 type Props = {
-  /** Final CSS bottom value — accepts a number (px) or a string
-   *  (e.g. a calc expression that includes the iOS install-prompt
-   *  height var so the panel clears that overlay). */
-  bottom: number | string;
+  /** Top of the panel, px: it drops down from the LAYERS button. */
+  top: number;
+  /** Tallest the panel may grow (CSS length), so it stops above the
+   *  bottom pill rows and the tab bar. It scrolls inside. */
+  maxHeight: string;
   filter: Filter;
   onChange: (f: Filter) => void;
   onClose: () => void;
@@ -59,7 +61,8 @@ type Props = {
 };
 
 export function FilterPanel({
-  bottom,
+  top,
+  maxHeight,
   filter,
   onChange,
   onClose,
@@ -97,27 +100,47 @@ export function FilterPanel({
     onChange({ ...filter, tailSet: [...filter.tailSet, tail] });
   };
 
+  // Bottom fade while more of the panel sits below the fold; gone once
+  // the rider scrolls to the end.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [moreBelow, setMoreBelow] = useState(false);
+  const syncFade = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setMoreBelow(el.scrollHeight - el.scrollTop - el.clientHeight > 4);
+  }, []);
+  useEffect(() => {
+    syncFade();
+    const el = scrollRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(syncFade);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    return () => ro.disconnect();
+  }, [syncFade]);
+
   return (
     <div
+      data-testid="radar-layers-panel"
+      role="dialog"
+      aria-label="Layers and filters"
       style={{
         position: "absolute",
         left: 12,
-        bottom,
+        top,
+        maxHeight,
         zIndex: 13,
-        width: 280,
+        width: 300,
         maxWidth: "calc(100vw - 24px)",
-        maxHeight: "60vh",
-        overflowY: "auto",
-        padding: "12px 14px",
         borderRadius: 14,
-        background: "rgba(11,13,16,0.92)",
+        background: "rgba(11,13,16,0.94)",
         border: `.5px solid ${SS_TOKENS.hairline2}`,
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
         color: SS_TOKENS.fg0,
         display: "flex",
         flexDirection: "column",
-        gap: 12,
+        overflow: "hidden",
       }}
     >
       <div
@@ -125,86 +148,125 @@ export function FilterPanel({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          padding: "2px 2px 0 14px",
         }}
       >
         <span
           className="ss-mono"
           style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".1em" }}
         >
-          FILTERS
+          LAYERS · FILTERS
         </span>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close filter panel"
+          aria-label="Close layers panel"
           style={{
+            width: 44,
+            height: 44,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
             background: "transparent",
             border: 0,
-            color: SS_TOKENS.fg2,
+            borderRadius: 10,
+            color: SS_TOKENS.fg1,
             cursor: "pointer",
-            fontSize: 16,
+            fontSize: 22,
             lineHeight: 1,
             padding: 0,
             touchAction: "manipulation",
+            WebkitTapHighlightColor: "transparent",
           }}
         >
-          ×
+          <span aria-hidden>×</span>
         </button>
       </div>
+      <div style={{ position: "relative", minHeight: 0, flex: "1 1 auto", display: "flex", flexDirection: "column" }}>
+        <div
+          ref={scrollRef}
+          onScroll={syncFade}
+          style={{
+            minHeight: 0,
+            flex: "1 1 auto",
+            overflowY: "auto",
+            overscrollBehavior: "contain",
+            padding: "0 14px 14px",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {palette && onPaletteChange && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span
+                  className="ss-mono"
+                  style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".1em" }}
+                >
+                  Colors
+                </span>
+                <PaletteChips active={palette} onPick={onPaletteChange} />
+              </div>
+            )}
 
-      <Group label="Missions">
-        <Pill active={everything} onClick={onEverything}>
-          Everything
-        </Pill>
-        {RIDER_BUCKETS.map((b) => (
-          <Pill
-            key={b.id}
-            active={filter.buckets.includes(b.id)}
-            onClick={() => toggleBucket(b.id)}
-          >
-            {b.label}
-          </Pill>
-        ))}
-      </Group>
+            <Group label="Layers">
+              <Pill active={hotZonesEnabled} onClick={onToggleHotZones}>
+                Hot zones
+              </Pill>
+              <Pill active={flightPathsEnabled} onClick={onToggleFlightPaths}>
+                Flight paths
+              </Pill>
+            </Group>
 
-      <Group label="Operators">
-        {OPERATORS.map((op) => (
-          <Pill
-            key={op}
-            active={filter.operatorSet.includes(op)}
-            onClick={() => toggleOperator(op)}
-          >
-            {op}
-          </Pill>
-        ))}
-      </Group>
+            <Group label="Missions">
+              <Pill active={everything} onClick={onEverything}>
+                Everything
+              </Pill>
+              {RIDER_BUCKETS.map((b) => (
+                <Pill
+                  key={b.id}
+                  active={filter.buckets.includes(b.id)}
+                  onClick={() => toggleBucket(b.id)}
+                >
+                  {b.label}
+                </Pill>
+              ))}
+            </Group>
 
-      <TailGroup
-        selected={filter.tailSet}
-        onAdd={addTail}
-        onRemove={removeTail}
-      />
+            <Group label="Operators">
+              {OPERATORS.map((op) => (
+                <Pill
+                  key={op}
+                  active={filter.operatorSet.includes(op)}
+                  onClick={() => toggleOperator(op)}
+                >
+                  {op}
+                </Pill>
+              ))}
+            </Group>
 
-      <Group label="Layers">
-        <Pill active={hotZonesEnabled} onClick={onToggleHotZones}>
-          Hot zones
-        </Pill>
-        <Pill active={flightPathsEnabled} onClick={onToggleFlightPaths}>
-          Flight paths
-        </Pill>
-      </Group>
-
-      {palette && onPaletteChange && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <span
-            className="ss-mono"
-            style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".1em" }}
-          >
-            Colors
-          </span>
-          <PaletteChips active={palette} onPick={onPaletteChange} />
+            <TailGroup
+              selected={filter.tailSet}
+              onAdd={addTail}
+              onRemove={removeTail}
+            />
+          </div>
         </div>
-      )}
+        <div
+          aria-hidden
+          data-testid="radar-layers-fade"
+          data-on={moreBelow ? "true" : "false"}
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 40,
+            pointerEvents: "none",
+            background: "linear-gradient(to bottom, rgba(11,13,16,0), rgba(11,13,16,0.96))",
+            opacity: moreBelow ? 1 : 0,
+            transition: "opacity 160ms ease-out",
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -263,8 +325,9 @@ function TailGroup({
           background: SS_TOKENS.bg2,
           border: `.5px solid ${SS_TOKENS.hairline2}`,
           color: SS_TOKENS.fg0,
-          fontSize: 12,
-          padding: "6px 8px",
+          fontSize: 16,
+          minHeight: 44,
+          padding: "0 10px",
           borderRadius: 8,
           outline: "none",
         }}
@@ -285,7 +348,8 @@ function TailGroup({
                 background: "transparent",
                 border: `.5px solid ${SS_TOKENS.hairline2}`,
                 borderRadius: 6,
-                padding: "5px 8px",
+                minHeight: 44,
+                padding: "0 10px",
                 color: SS_TOKENS.fg1,
                 fontSize: 12,
                 cursor: "pointer",
@@ -294,7 +358,7 @@ function TailGroup({
               }}
             >
               {s.tail}
-              {s.nickname ? ` · ${s.nickname}` : ""}
+              {s.nickname ? ` · ${displayNickname(s.nickname)}` : ""}
               <span style={{ color: SS_TOKENS.fg2, marginLeft: 6 }}>
                 {s.operator}
               </span>

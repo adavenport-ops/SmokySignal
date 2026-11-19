@@ -314,3 +314,11 @@ test("layer paint stops are valid MapLibre interpolations", async () => {
   assert.ok(stopsAreValid(HISTORY_LINE_WIDTH_STOPS));
   for (const [, v] of HISTORY_HEAT_OPACITY_STOPS) assert.ok(v > 0 && v < 1);
 });
+
+test("record-start date reads in the brand style: 16 Oct 2026", async () => {
+  const { formatDayMonYear, HISTORY_FLOOR } = await import("./history-view");
+  assert.strictEqual(formatDayMonYear(HISTORY_FLOOR), "16 Oct 2026");
+  assert.strictEqual(formatDayMonYear("2026-01-05"), "5 Jan 2026");
+  assert.strictEqual(formatDayMonYear("not a date"), "not a date");
+  assert.strictEqual(formatDayMonYear("2026-13-01"), "2026-13-01");
+});

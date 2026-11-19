@@ -4,6 +4,7 @@ import Link from "next/link";
 import { fleetHex } from "@/lib/seed";
 import { getRegistry } from "@/lib/registry";
 import { SS_TOKENS, TYPE } from "@/lib/tokens";
+import { displayNickname } from "@/lib/nickname-display";
 import { Tooltip } from "@/components/Tooltip";
 import { BackLink } from "@/components/BackLink";
 import {
@@ -66,7 +67,7 @@ export default async function AircraftPage() {
         <p style={{ fontSize: 14, lineHeight: 1.55, color: SS_TOKENS.fg1, margin: 0 }}>
           The {fleet.length} tails this app watches, grouped by job. Each one
           is checked against the FAA registry and, where we found one, an
-          agency or press source. Only Smokey flips the pill. Who flies them
+          agency or press source. Only a Smokey up turns the status orange. Who flies them
           and why is on{" "}
           <Link href="/program" style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}>
             the program
@@ -180,7 +181,7 @@ function TailRow({ entry, first }: { entry: FleetEntry; first: boolean }) {
             whiteSpace: "nowrap",
           }}
         >
-          {entry.nickname ? `“${entry.nickname}” · ` : ""}
+          {entry.nickname ? `“${displayNickname(entry.nickname)}” · ` : ""}
           {entry.operator} · {entry.model}
         </span>
       </Link>

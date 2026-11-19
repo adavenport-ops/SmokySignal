@@ -28,7 +28,10 @@ type WakeLockNavigator = Navigator & {
 
 type AwakeState = { supported: boolean; enabled: boolean; active: boolean };
 
-const SERVER_STATE: AwakeState = { supported: false, enabled: true, active: false };
+// Default OFF: holding the screen on drains a phone battery fast, so it
+// is opt-in. Riders who switched it on keep it (stored "on"); riders who
+// never chose start off.
+const SERVER_STATE: AwakeState = { supported: false, enabled: false, active: false };
 let state: AwakeState = SERVER_STATE;
 let booted = false;
 const listeners = new Set<() => void>();
@@ -42,11 +45,11 @@ function boot() {
   if (booted || typeof window === "undefined") return;
   booted = true;
   const supported = Boolean((navigator as WakeLockNavigator).wakeLock);
-  let enabled = true;
+  let enabled = false;
   try {
-    if (window.localStorage.getItem(STORAGE_KEY) === PREF_OFF) enabled = false;
+    enabled = window.localStorage.getItem(STORAGE_KEY) === PREF_ON;
   } catch {
-    // storage blocked: default to on
+    // storage blocked: default to off
   }
   state = { supported, enabled, active: false };
 }
@@ -163,7 +166,7 @@ export function ScreenAwakeToggle({ variant = "icon" }: { variant?: "icon" | "ro
           alignItems: "center",
           justifyContent: "space-between",
           gap: 12,
-          padding: "14px 16px",
+          padding: "16px 18px",
           borderRadius: 12,
           border: `.5px solid ${SS_TOKENS.hairline2}`,
           background: SS_TOKENS.bg1,
@@ -175,7 +178,7 @@ export function ScreenAwakeToggle({ variant = "icon" }: { variant?: "icon" | "ro
           </div>
           <div style={{ fontSize: 13, color: SS_TOKENS.fg1, lineHeight: 1.5, marginTop: 2 }}>
             {supported
-              ? "The screen stays on while SmokySignal is open. Handy on a mount."
+              ? "Off by default to save battery. On keeps the screen lit while SmokySignal is open. Handy on a mount."
               : "This browser can't hold the screen on. Your phone's display settings still apply."}
           </div>
         </div>

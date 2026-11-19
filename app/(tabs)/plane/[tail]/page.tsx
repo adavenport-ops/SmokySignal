@@ -6,6 +6,7 @@ import { getSnapshot } from "@/lib/snapshot";
 import { applyMockState, parseMockState } from "@/lib/mock-state";
 import { getMostRecentFlightForTail, flightIdFromTs } from "@/lib/flights";
 import { SS_TOKENS } from "@/lib/tokens";
+import { displayNickname, displayNicknameText, isOlderAirframe } from "@/lib/nickname-display";
 import { StatusPill } from "@/components/StatusPill";
 import { Card } from "@/components/Card";
 import { fmtAgo, fmtAgoTs, fmtAloft, formatTs } from "@/lib/time";
@@ -88,7 +89,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const entry = (await getRegistry()).find((f) => f.tail === tail);
   if (!entry) return { title: "Unknown tail", robots: { index: false, follow: false } };
   const agency = agencyName(entry.operator);
-  const nick = entry.nickname ? ` "${entry.nickname}"` : "";
+  const nick = entry.nickname ? ` "${displayNickname(entry.nickname)}"` : "";
   const model = entry.model.replace(/\s*\(.*\)\s*$/, "");
   return pageMeta({
     // Short form for the title (operator code, model without the
@@ -203,7 +204,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
           </h1>
           {entry.nickname && (
             <span style={{ fontSize: 14, color: SS_TOKENS.fg1, fontStyle: "italic" }}>
-              &ldquo;{entry.nickname}&rdquo;
+              &ldquo;{displayNickname(entry.nickname)}&rdquo;
             </span>
           )}
         </div>
@@ -213,6 +214,15 @@ export default async function PlanePage({ params, searchParams }: Props) {
         >
           {entry.operator} · {entry.model} · {entry.base}
         </div>
+        {isOlderAirframe(entry.nickname) && (
+          <p
+            data-testid="plane-older-airframe"
+            style={{ fontSize: 13, color: SS_TOKENS.fg1, lineHeight: 1.5, margin: "8px 0 0" }}
+          >
+            The older of two airframes that fly as Guardian One. Same
+            callsign, a different tail.
+          </p>
+        )}
         <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           <StatusPill
             kind={up && isAlertMission(entry.role) ? "alert" : "clear"}
@@ -681,7 +691,7 @@ function ClassificationCard({ entry }: { entry: FleetEntry }) {
         </dl>
         {entry.roleNote && (
           <p style={{ fontSize: 12, color: SS_TOKENS.fg1, margin: "10px 0 0", lineHeight: 1.45 }}>
-            {entry.roleNote}
+            {displayNicknameText(entry.roleNote)}
           </p>
         )}
         <div className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg2, letterSpacing: ".08em", marginTop: 12 }}>

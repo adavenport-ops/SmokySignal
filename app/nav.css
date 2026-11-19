@@ -145,12 +145,37 @@
   color: var(--ss-fg1);
   white-space: nowrap;
 }
+/* The list scrolls inside this box; the footer below it never overlaps
+   it. While rows sit below the fold (data-overflow="more", set by
+   Sidebar.tsx) the bottom edge fades out as a "more below" cue. */
+.ss-sb-scrollwrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ss-sb-scrollwrap::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 8px;
+  bottom: 0;
+  height: 48px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(11, 13, 16, 0), var(--ss-bg0) 85%);
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+.ss-sb-scrollwrap[data-overflow="more"]::after {
+  opacity: 1;
+}
 .ss-sb-scroll {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0 12px 12px;
+  padding: 0 12px 24px;
   scrollbar-width: thin;
   scrollbar-color: var(--ss-bg2) transparent;
 }
@@ -181,6 +206,11 @@
   font-weight: 500;
   text-decoration: none;
   touch-action: manipulation;
+}
+@media (pointer: coarse) {
+  .ss-sb-item {
+    min-height: 44px;
+  }
 }
 .ss-sb-item:hover {
   background: var(--ss-bg1);
@@ -280,17 +310,53 @@
   font-size: var(--ss-type-floor);
   color: var(--ss-fg1);
 }
+/* Footer row: Alerts and Settings pinned beside Collapse. */
 .ss-sb-foot {
-  padding: 6px 12px 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px 10px;
   border-top: 0.5px solid var(--ss-hairline);
+}
+.ss-sb-pin {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 6px;
+  border-radius: 8px;
+  color: var(--ss-fg1);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.ss-sb-pin:hover {
+  background: var(--ss-bg1);
+  color: var(--ss-fg0);
+}
+.ss-sb-pin[aria-current="page"] {
+  background: var(--ss-bg2);
+  color: var(--ss-fg0);
+  font-weight: 600;
+}
+.ss-sb-pin-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .ss-sb-toggle {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  width: 100%;
+  margin-left: auto;
+  flex: 0 0 44px;
+  width: 44px;
   min-height: 44px;
-  padding: 0 10px;
+  padding: 0;
   border-radius: 8px;
   background: transparent;
   border: 0;
@@ -376,6 +442,28 @@
     font-weight: 600;
     line-height: 1;
     white-space: nowrap;
+  }
+  /* Rail footer: Alerts, Settings, expand, stacked, icon over label. */
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-pin {
+    flex: 0 0 auto;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    min-height: 54px;
+    padding: 4px 2px;
+  }
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-pin-label {
+    font-size: var(--ss-type-floor);
+    font-weight: 600;
+    line-height: 1;
+  }
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-toggle {
+    flex: 0 0 auto;
+    width: 100%;
   }
 }
 
@@ -539,6 +627,18 @@
   text-transform: uppercase;
   color: var(--ss-fg1);
 }
+/* Jump-offs under the first tail match (lib/search-actions.ts). */
+.ss-search-action {
+  min-height: 44px;
+  padding-left: 40px;
+}
+.ss-search-action-label {
+  font-size: 14px;
+  color: var(--ss-fg0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .ss-search-empty {
   padding: 14px 12px;
   font-size: 13px;
@@ -570,6 +670,15 @@
    More sheet (/about): search, recently up, then the same six sections
    as the sidebar. Rows are >= 48px for gloved thumbs.
    --------------------------------------------------------------------- */
+.ss-more-empty {
+  margin: -8px 0 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--ss-bg1);
+  border: 0.5px solid var(--ss-hairline);
+  font-size: 14px;
+  color: var(--ss-fg1);
+}
 .ss-more-recent-list {
   display: grid;
   grid-template-columns: 1fr;
@@ -679,6 +788,56 @@
 #logbook,
 #map-palette,
 #speed-warning,
-#flight-history {
+#flight-history,
+#display {
   scroll-margin-top: 16px;
+}
+
+/* ---------------------------------------------------------------------
+   Home on desktop. From 1024px the sidebar carries the wordmark, so the
+   page header drops its copy. The recent-activity card fills the left
+   column under the hero in the two-column console (>= 1280px).
+   --------------------------------------------------------------------- */
+.ss-home-brand {
+  display: inline-flex;
+}
+@media (min-width: 1024px) {
+  .ss-home-brand {
+    display: none;
+  }
+}
+.ss-home-recent {
+  display: none;
+}
+@media (min-width: 1280px) {
+  .ss-home-recent {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    border-radius: 16px;
+    background: var(--ss-bg1);
+    border: 0.5px solid var(--ss-hairline);
+  }
+}
+.ss-home-recent-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ss-home-recent-more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px;
+  margin: -12px -4px;
+  color: var(--ss-fg0);
+  font-size: 13px;
+  text-decoration: underline;
+  text-decoration-color: var(--ss-hairline-2);
+  text-underline-offset: 3px;
+}
+.ss-home-recent .ss-more-recent-list {
+  grid-template-columns: 1fr;
 }

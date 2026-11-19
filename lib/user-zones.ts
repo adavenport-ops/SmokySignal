@@ -8,6 +8,10 @@ export type UserZone = {
   radiusNm: number;
   label: string;
   createdAt: number;
+  /** Nearest place when the zone was made ("Fife"), for the zones list. */
+  place?: string;
+  /** The radius chip the rider picked, statute miles (radiusNm is canonical). */
+  radiusMi?: number;
 };
 
 const KEY = "ss_user_zones";
@@ -22,7 +26,9 @@ function isUserZone(v: unknown): v is UserZone {
     typeof z.lon === "number" &&
     typeof z.radiusNm === "number" &&
     typeof z.label === "string" &&
-    typeof z.createdAt === "number"
+    typeof z.createdAt === "number" &&
+    (z.place === undefined || typeof z.place === "string") &&
+    (z.radiusMi === undefined || typeof z.radiusMi === "number")
   );
 }
 
@@ -91,6 +97,8 @@ export function addUserZone(input: {
   lon: number;
   radiusNm: number;
   label: string;
+  place?: string;
+  radiusMi?: number;
 }): UserZone {
   const zone: UserZone = {
     id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
@@ -109,7 +117,7 @@ export function removeUserZone(id: string): void {
 
 export function updateUserZone(
   id: string,
-  patch: Partial<Pick<UserZone, "label" | "radiusNm">>,
+  patch: Partial<Pick<UserZone, "label" | "radiusNm" | "radiusMi">>,
 ): void {
   writeAll(
     readUserZones().map((z) => (z.id === id ? { ...z, ...patch } : z)),

@@ -10,6 +10,7 @@ import maplibregl, {
 import { applyNeutralBasemap, basemapStyleUrl } from "@/lib/basemap";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { SS_TOKENS } from "@/lib/tokens";
+import { ringFeatures } from "@/lib/distance-rings";
 import type { Aircraft, FleetRole } from "@/lib/types";
 import {
   LIVE_GLYPH,
@@ -29,6 +30,7 @@ import {
   type Padding,
   type RadarViewId,
 } from "@/lib/radar-view";
+import { displayNickname } from "@/lib/nickname-display";
 
 // Camera ease when the rider picks a region. Short: it is a jump, not
 // a tour.
@@ -36,31 +38,10 @@ const VIEW_FIT_MS = 700;
 // Street-level zoom used the first time the rider's geolocation resolves
 // — opens the map on the rider's actual neighborhood instead of the
 // whole Puget Sound region.
-const RIDER_ZOOM = 11;
+export const RIDER_ZOOM = 11;
 
-// 1 nautical mile in degrees latitude (constant). Longitude varies with
-// latitude — use cos(lat) to scale per-ring.
-const NM_PER_DEG_LAT = 1 / 60;
-const RING_SEGMENTS = 64;
-
-function nmToDegLat(nm: number): number {
-  return nm * NM_PER_DEG_LAT;
-}
-
-function circleRingCoords(
-  centerLat: number,
-  centerLon: number,
-  radiusNm: number,
-): Array<[number, number]> {
-  const dLat = nmToDegLat(radiusNm);
-  const dLon = dLat / Math.max(0.01, Math.cos((centerLat * Math.PI) / 180));
-  const out: Array<[number, number]> = [];
-  for (let i = 0; i <= RING_SEGMENTS; i++) {
-    const theta = (i / RING_SEGMENTS) * 2 * Math.PI;
-    out.push([centerLon + dLon * Math.sin(theta), centerLat + dLat * Math.cos(theta)]);
-  }
-  return out;
-}
+/** Why the camera left the picked view; see leaveView(). */
+export type LeaveReason = "rider" | "other";
 
 // Aircraft glyphs are role-keyed images in MapLibre's image atlas. We
 // load one per role at map-init and the symbol layer's icon-image
@@ -177,6 +158,7 @@ export default function RadarMap({
   onLeaveView,
   onMapReady,
   cameraLocked = false,
+  viewLocked = false,
   palette: initialPalette,
 }: {
   aircraft: Aircraft[];
@@ -194,7 +176,10 @@ export default function RadarMap({
   insets: Padding;
   /** Fired when the camera moves off the picked view (rider gesture,
    *  rider auto-zoom, auto-recenter, follow-a-plane). */
-  onLeaveView?: () => void;
+  onLeaveView?: (reason: LeaveReason) => void;
+  /** The view came from the URL (?region=): keep it, skip the rider
+   *  auto-zoom and auto-recenter, as after a pick. */
+  viewLocked?: boolean;
   onMapReady?: (map: MaplibreMap | null) => void;
   /** History mode fits the camera to past flights; once set, the rider
    *  auto-zoom and 5 s auto-recenter stand down (same as a region pick). */
@@ -247,13 +232,18 @@ export default function RadarMap({
   // rider auto-zoom and the 5 s auto-recenter, which would otherwise
   // drag the camera off the view they just asked for.
   const viewLockedRef = useRef(false);
-  if (cameraLocked) viewLockedRef.current = true;
+  if (cameraLocked || viewLocked) viewLockedRef.current = true;
+  // Why the camera last left the picked view: "rider" when we centred it
+  // on the rider (the picker then reads "Near me"), "other" for a
+  // gesture or a followed plane ("Custom"). Re-fires when that changes.
+  const leftReasonRef = useRef<LeaveReason | null>(null);
 
-  const leaveView = () => {
-    if (!onViewRef.current) return;
+  const leaveView = (reason: LeaveReason = "other") => {
+    if (!onViewRef.current && leftReasonRef.current === reason) return;
     onViewRef.current = false;
-    containerRef.current?.setAttribute("data-view", "custom");
-    onLeaveViewRef.current?.();
+    leftReasonRef.current = reason;
+    containerRef.current?.setAttribute("data-view", reason === "rider" ? "near-me" : "custom");
+    onLeaveViewRef.current?.(reason);
   };
 
   const currentPadding = (): Padding => {
@@ -282,6 +272,7 @@ export default function RadarMap({
     if (!map) return;
     const b = boundsForView(viewIdRef.current, dataExtentRef.current);
     onViewRef.current = true;
+    leftReasonRef.current = null;
     containerRef.current?.setAttribute("data-view", viewIdRef.current);
     map.fitBounds(toLngLatBounds(b), {
       padding: currentPadding(),
@@ -356,15 +347,18 @@ export default function RadarMap({
         layout: {
           visibility: showDistanceRingsRef.current ? "visible" : "none",
         },
+        // Light dashed 2 px stroke: the old 0.75 px grey at 40% vanished
+        // on the dark basemap. Dash lengths are in line widths.
         paint: {
-          "line-color": SS_TOKENS.fg2,
-          "line-opacity": 0.4,
-          "line-width": 0.75,
-          "line-dasharray": [4, 4],
+          "line-color": SS_TOKENS.fg1,
+          "line-opacity": 0.9,
+          "line-width": 2,
+          "line-dasharray": [3, 2],
         },
       });
-      // Tiny mono labels at the top of each ring ("5nm" / "10nm" / "15nm")
-      // sit on a separate symbol layer so we can keep the line layer pure.
+      // A label at the top of each ring ("5 mi" / "10 mi" / "15 mi") on a
+      // separate symbol layer so the line layer stays pure. Always drawn:
+      // a ring without its distance is just a circle.
       map.addLayer({
         id: "distance-rings-labels",
         type: "symbol",
@@ -372,17 +366,17 @@ export default function RadarMap({
         layout: {
           visibility: showDistanceRingsRef.current ? "visible" : "none",
           "text-field": ["get", "label"],
-          "text-size": 9,
+          "text-size": 13,
           "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
-          "text-offset": [0, -0.6],
+          "text-offset": [0, -0.4],
           "text-anchor": "bottom",
-          "text-allow-overlap": false,
+          "text-allow-overlap": true,
+          "text-ignore-placement": true,
         },
         paint: {
-          "text-color": SS_TOKENS.fg2,
-          "text-opacity": 0.8,
+          "text-color": SS_TOKENS.fg0,
           "text-halo-color": SS_TOKENS.bg0,
-          "text-halo-width": 1.5,
+          "text-halo-width": 2,
         },
         // Only render labels for the line vertices we tag — the polygon
         // outlines have no `label` property so they're skipped.
@@ -503,7 +497,7 @@ export default function RadarMap({
         !viewLockedRef.current
       ) {
         didFirstRiderZoomRef.current = true;
-        leaveView();
+        leaveView("rider");
         map.flyTo({
           center: [riderRef.current.lon, riderRef.current.lat],
           zoom: RIDER_ZOOM,
@@ -570,7 +564,7 @@ export default function RadarMap({
       followedTailRef.current = tail;
       popupRef.current?.remove();
       const meta = stateRef.current.metaByTail.get(tail);
-      const label = meta?.nickname ?? tail;
+      const label = displayNickname(meta?.nickname) ?? tail;
       // Build with DOM nodes + textContent (never setHTML): the nickname
       // comes from the admin-editable registry and must not be parsed
       // as markup.
@@ -669,7 +663,7 @@ export default function RadarMap({
           Date.now() - userInteractedAtRef.current >= 15_000 &&
           !viewLockedRef.current
         ) {
-          leaveView();
+          leaveView("rider");
           mapRef.current.flyTo({
             center: [rider.lon, rider.lat],
             zoom: RIDER_ZOOM,
@@ -734,7 +728,7 @@ export default function RadarMap({
       if (viewLockedRef.current) return;
       const r = riderRef.current;
       if (!r) return;
-      leaveView();
+      leaveView("rider");
       mapRef.current.easeTo({
         center: [r.lon, r.lat],
         duration: 800,
@@ -830,26 +824,7 @@ export default function RadarMap({
       source.setData({ type: "FeatureCollection", features: [] });
       return;
     }
-    const RINGS_NM = [5, 10, 15] as const;
-    const features: GeoJSON.Feature[] = [];
-    for (const nm of RINGS_NM) {
-      features.push({
-        type: "Feature",
-        geometry: {
-          type: "LineString",
-          coordinates: circleRingCoords(pos.lat, pos.lon, nm),
-        },
-        properties: {},
-      });
-      // Label at the top (north) edge of each ring.
-      const labelLat = pos.lat + nmToDegLat(nm);
-      features.push({
-        type: "Feature",
-        geometry: { type: "Point", coordinates: [pos.lon, labelLat] },
-        properties: { label: `${nm}nm` },
-      });
-    }
-    source.setData({ type: "FeatureCollection", features });
+    source.setData(ringFeatures(pos));
   }
 
   function applyRider(pos: RiderPos | null) {
@@ -912,7 +887,7 @@ export default function RadarMap({
       newMeta.set(a.tail, {
         icon: iconForRole(a.role, a.model),
         track: a.heading ?? 0,
-        nickname: a.nickname,
+        nickname: displayNickname(a.nickname),
       });
       if (!newFrom.has(a.tail)) {
         // First time we see this plane — render it at its current position
@@ -1004,6 +979,8 @@ export default function RadarMap({
   return (
     <div
       ref={containerRef}
+      // app/globals.css lifts the attribution above the phone tab bar.
+      className="ss-radar-map"
       role="region"
       aria-label={`Live aircraft map, showing ${aircraft.length} airborne tail${aircraft.length === 1 ? "" : "s"}`}
       style={{

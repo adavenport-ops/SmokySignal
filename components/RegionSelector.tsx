@@ -9,6 +9,9 @@
 //   - controlled (radar): pass `value` and `custom`. When `custom` is
 //     true the rider has panned or zoomed off the last pick, so the
 //     control reads "Custom" and re-picking that same view refits.
+//     With `onNearMe` (location known) the list also offers "Near me";
+//     `nearMe` says the camera is centred on the rider right now, so the
+//     control reads "Near me" instead of "Custom".
 
 import { useEffect, useState } from "react";
 import {
@@ -27,6 +30,8 @@ import {
 import { SS_TOKENS } from "@/lib/tokens";
 
 const CUSTOM_VALUE = "custom";
+const NEAR_ME_VALUE = "near-me";
+export const NEAR_ME_LABEL = "Near me";
 
 type Props = {
   className?: string;
@@ -37,6 +42,10 @@ type Props = {
   custom?: boolean;
   /** Called after the pick is persisted + broadcast. */
   onPick?: (id: RadarViewId) => void;
+  /** Camera is centred on the rider (GPS): read "Near me". */
+  nearMe?: boolean;
+  /** Offer "Near me" in the list; called when it is picked. */
+  onNearMe?: () => void;
 };
 
 export function RegionSelector({
@@ -45,6 +54,8 @@ export function RegionSelector({
   value,
   custom = false,
   onPick,
+  nearMe = false,
+  onNearMe,
 }: Props) {
   // Start from the default on both server and first client render so
   // hydration matches, then read the stored pref.
@@ -61,13 +72,18 @@ export function RegionSelector({
   }, []);
 
   const current = value ?? own;
-  const selectValue = custom ? CUSTOM_VALUE : current;
+  const showNearMe = nearMe || !!onNearMe;
+  const selectValue = nearMe ? NEAR_ME_VALUE : custom ? CUSTOM_VALUE : current;
 
   return (
     <select
       value={selectValue}
       onChange={(e) => {
         const v = e.target.value;
+        if (v === NEAR_ME_VALUE) {
+          onNearMe?.();
+          return;
+        }
         if (!isRadarViewId(v)) return;
         setRegion(v);
         onPick?.(v);
@@ -89,7 +105,12 @@ export function RegionSelector({
         ...style,
       }}
     >
-      {custom && (
+      {showNearMe && (
+        <option value={NEAR_ME_VALUE} disabled={!onNearMe}>
+          {NEAR_ME_LABEL}
+        </option>
+      )}
+      {custom && !nearMe && (
         <option value={CUSTOM_VALUE} disabled>
           {CUSTOM_VIEW_LABEL}
         </option>

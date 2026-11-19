@@ -29,8 +29,9 @@ import {
   applyAction,
   compassResetTarget,
   enable3DGestures,
+  HINT_MS,
+  compassAriaLabel,
   gestureHint,
-  headingLabel,
   keyAction,
   markHintSeen,
   pitchFromDrag,
@@ -51,7 +52,6 @@ type Props = {
 
 const BTN = 44;
 const GAP = 8;
-const HINT_MS = 8000;
 /** Marks camera moves the orbit makes, so they never count as a rider's. */
 const ORBIT_TAG = { ssOrbit: true } as const;
 
@@ -266,11 +266,10 @@ export default function Map3DControls({ map, defaultPitch, top, right, bottomRes
   const columnH = count * BTN + (showOrbit ? 3 : 2) * GAP;
   const avail = frameH - top - bottomReserve;
   const layout: "column" | "grid" = frameH === 0 || avail >= columnH ? "column" : "grid";
-  const heading = headingLabel(cam.bearing);
 
   const compass = (
     <CtlButton
-      label={`Compass, heading ${heading}. North up`}
+      label={compassAriaLabel(cam.bearing)}
       testId="map3d-compass"
       onClick={resetNorth}
       round
@@ -381,11 +380,16 @@ export default function Map3DControls({ map, defaultPitch, top, right, bottomRes
         <div
           role="status"
           data-testid="map3d-hint"
+          // Top-centre of the frame, one row under the top of the control
+          // column (RESET VIEW sits level with it) and clear of the column
+          // on the right and the + on the left, so it never covers a
+          // button (tilt down used to hide under it on phones). Hides
+          // itself after HINT_MS.
           style={{
             position: "absolute",
-            left: 12,
-            right: 12,
-            bottom: bottomReserve + 8,
+            left: 64,
+            right: right + (layout === "column" ? BTN : 2 * BTN + 6) + 8,
+            top: top + BTN + GAP,
             zIndex: 3,
             display: "flex",
             justifyContent: "center",

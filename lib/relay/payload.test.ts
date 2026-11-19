@@ -42,8 +42,8 @@ test("placeLabel: corridor + place, region fallback, null without a fix", () => 
 });
 
 test("relayTitle: only police reads as Smokey; every other mission names itself", () => {
-  assert.equal(relayTitle({ type: "takeoff", role: "police" }), "Smokey's up.");
-  assert.equal(relayTitle({ type: "landing", role: "police" }), "Smokey's down.");
+  assert.equal(relayTitle({ type: "takeoff", role: "police" }), "Smokey’s up.");
+  assert.equal(relayTitle({ type: "landing", role: "police" }), "Smokey’s down.");
   assert.equal(relayTitle({ type: "takeoff", role: "federal_le" }), "Federal up.");
   assert.equal(relayTitle({ type: "takeoff", role: "sar" }), "SAR run.");
   assert.equal(relayTitle({ type: "takeoff", role: "wildfire" }), "Fire run.");
@@ -52,8 +52,8 @@ test("relayTitle: only police reads as Smokey; every other mission names itself"
   // "unknown" no longer alerts.
   assert.equal(relayTitle({ type: "takeoff", role: "unknown" }), "Unconfirmed bird up.");
   // Legacy role names map through the back-compat mapper.
-  assert.equal(relayTitle({ type: "takeoff", role: "smokey" }), "Smokey's up.");
-  assert.equal(relayTitle({ type: "takeoff", role: "patrol" }), "Smokey's up.");
+  assert.equal(relayTitle({ type: "takeoff", role: "smokey" }), "Smokey’s up.");
+  assert.equal(relayTitle({ type: "takeoff", role: "patrol" }), "Smokey’s up.");
 });
 
 test("feedTitle: 'Smokey 4 up · I-5 · Fife · 14:22 PT'", () => {
@@ -68,10 +68,10 @@ test("discord payload: brand embed, no mentions, share card with cache-buster", 
   const p = buildDiscordPayload(evt(), SITE);
   assert.equal(p.username, "SmokySignal");
   assert.deepEqual(p.allowed_mentions, { parse: [] });
-  assert.equal(p.content, "Smokey's up. I-5 · Fife. 14:22 PT.");
+  assert.equal(p.content, "Smokey’s up. I-5 · Fife. 14:22 PT.");
   assert.equal(p.embeds.length, 1);
   const e = p.embeds[0];
-  assert.equal(e.title, "Smokey's up.");
+  assert.equal(e.title, "Smokey’s up.");
   assert.equal(e.url, "https://smokysignal.app/plane/N305DK");
   assert.equal(e.color, DISCORD_ALERT_COLOR);
   assert.equal(e.color, 0xff7a1a);
@@ -100,7 +100,7 @@ test("discord payload: neutral colour for landings and non-alert roles", () => {
     "**Smokey 4** · `N305DK`",
   );
   const t = buildDiscordPayload(evt(), SITE, { test: true });
-  assert.equal(t.embeds[0].title, "Test signal. Smokey's up.");
+  assert.equal(t.embeds[0].title, "Test signal. Smokey’s up.");
 });
 
 test("discord payload: nickname markdown and mentions are neutered", () => {

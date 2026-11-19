@@ -657,3 +657,41 @@ body {
 .ss-lightbox-stage picture {
   display: contents;
 }
+
+/* /radar map attribution (components/RadarMap.tsx, .ss-radar-map). The map
+   runs under the phone tab bar, so MapLibre's bottom-right corner sat
+   behind it. Lift it above the tab bar (--ss-tabbar-h) and above the stack the
+   radar keeps there: SPOTTED (tab bar + 30..86px), the history summary
+   chip (to about +140) and the live 3D note, so the (i) never sits on a
+   control. The toggle grows from 24px to a 44px target. */
+.ss-radar-shell .ss-radar-map .maplibregl-ctrl-bottom-right {
+  right: 22px;
+  bottom: calc(var(--ss-tabbar-h, 66px) + 150px);
+}
+.ss-radar-shell .ss-radar-map .maplibregl-ctrl-bottom-right > .maplibregl-ctrl {
+  margin: 0;
+}
+.ss-radar-shell .ss-radar-map .maplibregl-ctrl-attrib.maplibregl-compact {
+  min-height: 44px;
+  padding: 0 44px 0 0;
+  border-radius: 22px;
+}
+.ss-radar-shell .ss-radar-map .maplibregl-ctrl-attrib.maplibregl-compact-show {
+  padding: 0 48px 0 12px;
+}
+/* Top-left of the button sits where MapLibre expects a 24px one. */
+.ss-radar-shell .ss-radar-map .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button {
+  top: 0;
+  right: 0;
+}
+.ss-radar-shell .ss-radar-map .maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner {
+  padding: 12px 0;
+  line-height: 20px;
+}
+.ss-radar-shell .ss-radar-map .maplibregl-ctrl-attrib-button {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
