@@ -35,7 +35,7 @@ test("sections are Now, History, Aircraft, Alerts & sharing, Modes, About, in th
 test("each section carries the pages the owner asked for, in order", () => {
   const byId = Object.fromEntries(navSections(NOW).map((s) => [s.id, s.items.map((i) => i.href)]));
   assert.deepStrictEqual(byId.now, ["/", "/radar", "/flights", "/circling", "/seen"]);
-  assert.deepStrictEqual(byId.history, ["/radar?h=1", "/forecast", "/stats", "/road", "/wrap/2026", "/data"]);
+  assert.deepStrictEqual(byId.history, ["/radar?h=1", "/forecast", "/stats", "/road", "/near", "/wrap/2026", "/data"]);
   assert.deepStrictEqual(byId.aircraft, ["/aircraft"]);
   assert.deepStrictEqual(byId.alerts, [
     "/settings/alerts",

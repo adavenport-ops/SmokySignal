@@ -3375,3 +3375,86 @@ test.describe("p14 live-prod audit · 3D camera controls and road tint", () => {
     });
   });
 });
+
+// Town pages and IndexNow (feat/seo-growth). Read-only HTTP checks.
+// The IndexNow key is public by design; it must match lib/seo/indexnow.ts.
+const INDEXNOW_KEY = "74864c72b65ddcc4a5f5631c3d17b7fd";
+
+function jsonLdBlocks(html: string): Record<string, any>[] {
+  return [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].flatMap((m) => {
+    try {
+      const v = JSON.parse(m[1]!);
+      return Array.isArray(v) ? v : [v];
+    } catch {
+      return [];
+    }
+  });
+}
+
+test.describe("p14 live-prod audit · towns + IndexNow", () => {
+  test("89. /near/puyallup renders the town page with Place JSON-LD (geo) and a BreadcrumbList", async ({ request }) => {
+    const r = await request.get("/near/puyallup");
+    const html = await r.text();
+    const blocks = jsonLdBlocks(html);
+    const place = blocks.find((b) => b?.["@type"] === "Place");
+    const crumbs = blocks.find((b) => b?.["@type"] === "BreadcrumbList");
+    const pass =
+      r.status() === 200 &&
+      !!place &&
+      place.geo?.["@type"] === "GeoCoordinates" &&
+      Number.isFinite(place.geo?.latitude) &&
+      !!crumbs &&
+      /Anything up near Puyallup right now\?/.test(html) &&
+      /<title>[^<]*Puyallup[^<]*<\/title>/.test(html) &&
+      /rel="canonical" href="https:\/\/www\.smokysignal\.app\/near\/puyallup"/.test(html);
+    record({
+      claim: "/near/puyallup is a 200 with Place JSON-LD (GeoCoordinates), BreadcrumbList, the live question and a canonical",
+      category: pass ? "working_as_designed" : r.status() === 404 ? "unshipped" : "confirmed_bug",
+      pass,
+      evidence: `HTTP ${r.status()} · blocks=${blocks.map((b) => b?.["@type"]).join(",")} · geo=${place?.geo?.latitude},${place?.geo?.longitude}`,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("90. /near lists at least 10 towns, each linking to /near/[town]", async ({ request }) => {
+    const r = await request.get("/near");
+    const html = await r.text();
+    const towns = new Set([...html.matchAll(/href="\/near\/([a-z0-9-]+)"/g)].map((m) => m[1]!));
+    const pass = r.status() === 200 && towns.size >= 10 && towns.has("puyallup") && towns.has("fife");
+    record({
+      claim: "/near lists at least 10 town pages, Puyallup and Fife among them",
+      category: pass ? "working_as_designed" : r.status() === 404 ? "unshipped" : "confirmed_bug",
+      pass,
+      evidence: `HTTP ${r.status()} · ${towns.size} towns: ${[...towns].slice(0, 6).join(",")}…`,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("87. the IndexNow key file returns the key", async ({ request }) => {
+    const r = await request.get(`/${INDEXNOW_KEY}.txt`);
+    const body = (await r.text()).trim();
+    const pass = r.status() === 200 && body === INDEXNOW_KEY;
+    record({
+      claim: `/${INDEXNOW_KEY}.txt serves the IndexNow key`,
+      category: pass ? "working_as_designed" : r.status() === 404 ? "unshipped" : "confirmed_bug",
+      pass,
+      evidence: `HTTP ${r.status()} · ${r.headers()["content-type"]} · body=${body.slice(0, 40)}`,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("88. /sitemap.xml lists /near and /near/fife", async ({ request }) => {
+    const r = await request.get("/sitemap.xml");
+    const xml = await r.text();
+    const locs = [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((m) => m[1]!);
+    const pass =
+      r.status() === 200 && locs.some((u) => u.endsWith("/near/fife")) && locs.some((u) => u.endsWith("/near"));
+    record({
+      claim: "/sitemap.xml lists /near and /near/fife",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `HTTP ${r.status()} · ${locs.length} URLs · ${locs.filter((u) => u.includes("/near")).length} town URLs`,
+    });
+    expect(pass).toBe(true);
+  });
+});

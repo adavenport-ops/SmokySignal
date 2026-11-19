@@ -14,6 +14,7 @@ import {
   scoreText,
   searchNav,
   tailEntries,
+  townEntries,
   type NavIndexTail,
 } from "./nav-index";
 
@@ -138,6 +139,22 @@ test("towns go to /seen at that place", () => {
   assert.strictEqual(fife?.href, "/seen?place=Fife");
   const fw = searchNav(INDEX, "federal way").find((r) => r.kind === "place");
   assert.strictEqual(fw?.href, "/seen?place=Federal%20Way");
+});
+
+test("a town name finds its /near page first and /seen second", () => {
+  for (const [q, slug, place] of [
+    ["Puyallup", "puyallup", "Puyallup"],
+    ["fife", "fife", "Fife"],
+    ["federal way", "federal-way", "Federal%20Way"],
+    ["Spokane Valley", "spokane-valley", "Spokane%20Valley"],
+  ] as const) {
+    const r = searchNav(INDEX, q).map((x) => x.href);
+    assert.strictEqual(r[0], `/near/${slug}`, `${q}: ${r.join(",")}`);
+    assert.strictEqual(r[1], `/seen?place=${place}`, `${q}: ${r.join(",")}`);
+  }
+  // Towns off the corridors (no gazetteer entry) still get a /seen entry.
+  assert.ok(placeEntries().some((e) => e.href === "/seen?place=Bellingham"));
+  assert.ok(townEntries().length >= 25);
 });
 
 test("settings anchors: contrast, palette, time format, speed warning, zones", () => {

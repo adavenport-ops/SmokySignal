@@ -71,6 +71,12 @@ const PATHS: Record<NavIconName | "search" | "chevron-left" | "chevron-right" | 
       <path d="M18 17v-9" />
     </>
   ),
+  town: (
+    <>
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </>
+  ),
   road: (
     <>
       <path d="M8 3 4 21" />

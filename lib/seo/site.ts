@@ -124,6 +124,7 @@ export const STATIC_ROUTES: readonly StaticRoute[] = [
   { path: "/program", changeFrequency: "weekly", priority: 0.9 },
   { path: "/aircraft", changeFrequency: "weekly", priority: 0.8 },
   { path: "/road", changeFrequency: "daily", priority: 0.7 },
+  { path: "/near", changeFrequency: "daily", priority: 0.7 },
   { path: "/forecast", changeFrequency: "daily", priority: 0.7 },
   { path: "/stats", changeFrequency: "daily", priority: 0.6 },
   { path: "/data", changeFrequency: "daily", priority: 0.7 },

@@ -2,7 +2,9 @@
 // sidebar search field, the search on the phone More sheet).
 //
 // Pure and client-safe. The static part (pages, settings anchors, roads,
-// towns) is built here from lib/nav.ts, lib/corridor.ts and lib/places.ts;
+// town pages, places) is built here from lib/nav.ts, lib/corridor.ts,
+// lib/towns.ts and the /seen gazetteer; a town name finds its
+// /near/[town] page first and "what flew over" at /seen second;
 // registry tails arrive later from GET /api/nav-index and are folded in
 // with tailEntries().
 //
@@ -12,11 +14,12 @@
 // "sr512"). Multi-word queries also match word by word in any order.
 
 import { CORRIDORS } from "./corridor";
-import { PLACES } from "./places";
+import { SEEN_PLACES } from "./seen-view";
+import { TOWNS } from "./towns";
 import { allNavItems } from "./nav";
 import { missionLabel } from "./role-display";
 
-export type SearchKind = "page" | "setting" | "road" | "aircraft" | "place";
+export type SearchKind = "page" | "setting" | "road" | "aircraft" | "town" | "place";
 
 export type SearchEntry = {
   id: string;
@@ -46,7 +49,8 @@ export const KIND_LABEL: Record<SearchKind, string> = {
   setting: "Setting",
   road: "Road",
   aircraft: "Aircraft",
-  place: "Town",
+  town: "Town",
+  place: "Flew over",
 };
 
 const KIND_ORDER: Record<SearchKind, number> = {
@@ -54,7 +58,9 @@ const KIND_ORDER: Record<SearchKind, number> = {
   setting: 1,
   road: 2,
   aircraft: 3,
-  place: 4,
+  // Same title as the place entry; the town page wins the tie.
+  town: 4,
+  place: 5,
 };
 
 // ─── Entries ───────────────────────────────────────────────────────────
@@ -193,7 +199,19 @@ export function roadEntries(): SearchEntry[] {
   });
 }
 
-/** Towns → "what flew over" at that place. */
+/** Town pages: /near/[town], ahead of /seen for the same name. */
+export function townEntries(): SearchEntry[] {
+  return TOWNS.map((t) => ({
+    id: `town:${t.slug}`,
+    kind: "town" as const,
+    title: t.name,
+    subtitle: `Live and 30-day history · ${t.county} County`,
+    href: `/near/${t.slug}`,
+    keywords: [],
+  }));
+}
+
+/** Places → "what flew over" at that place. */
 export function placeEntries(): SearchEntry[] {
   const roadsByPlace = new Map<string, string[]>();
   for (const c of CORRIDORS) {
@@ -203,7 +221,7 @@ export function placeEntries(): SearchEntry[] {
       roadsByPlace.set(p.name, list);
     }
   }
-  return PLACES.map((p) => {
+  return SEEN_PLACES.map((p) => {
     const roads = roadsByPlace.get(p.name) ?? [];
     return {
       id: `place:${p.name}`,
@@ -243,6 +261,7 @@ export function buildNavIndex(opts: { nowMs?: number; tails?: ReadonlyArray<NavI
     ...SETTING_ENTRIES,
     ...roadEntries(),
     ...tailEntries(opts.tails ?? []),
+    ...townEntries(),
     ...placeEntries(),
   ];
 }

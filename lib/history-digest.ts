@@ -1,5 +1,5 @@
 // One read of the last 30 days of tracks, folded into everything the road
-// pages and the coverage caveat need. Cached for 5 minutes in the Next
+// pages, the town pages (/near/[town]) and the coverage caveat need. Cached for 5 minutes in the Next
 // data cache, so a burst of visitors costs one pass over KV.
 //
 // Reads are deterministic: registry tails × the last 31 UTC day keys
@@ -22,6 +22,9 @@ import {
   type RoadPass,
   type RoadSummary,
 } from "./road";
+import { TOWNS } from "./towns";
+import { emptyTownSummary, groupByUtcDay, passesForTown, summarizeTown, type TownPass, type TownSummary } from "./town-stats";
+import { devHistoryBase, readPublicHistoryTracks } from "./dev-history-source";
 import {
   COVERAGE_WINDOW_DAYS,
   detectDropouts,
@@ -43,6 +46,8 @@ export type HistoryDigest = {
   /** Tails that had at least one point in the window. */
   tailsHeard: number;
   roads: Record<string, RoadSummary>;
+  /** One summary per town page, keyed by slug. */
+  towns: Record<string, TownSummary>;
   coverage: CoverageSummary;
   /** Weakest coverage area near each corridor, else null. */
   roadCoverage: Record<string, string | null>;
@@ -55,11 +60,14 @@ export function emptyDigest(nowMs: number): HistoryDigest {
     roads[c.id] = emptyRoadSummary(c);
     roadCoverage[c.id] = null;
   }
+  const towns: Record<string, TownSummary> = {};
+  for (const t of TOWNS) towns[t.slug] = emptyTownSummary(t);
   return {
     builtAt: nowMs,
     windowDays: ROAD_WINDOW_DAYS,
     tailsHeard: 0,
     roads,
+    towns,
     coverage: summarizeCoverage([], COVERAGE_WINDOW_DAYS),
     roadCoverage,
   };
@@ -92,15 +100,19 @@ export async function buildHistoryDigest(nowMs: number): Promise<HistoryDigest> 
   const nowS = Math.floor(nowMs / 1000);
   // 31 day keys: the window's oldest UTC day is partial.
   const dates = lastUtcDays(nowMs, ROAD_WINDOW_DAYS + 1);
+  const devBase = devHistoryBase();
   const [tracks, activity] = await Promise.all([
-    readTrackDays(
-      registry.map((r) => r.tail),
-      dates,
-    ),
-    readActivity(sinceMs, nowMs),
+    devBase
+      ? readPublicHistoryTracks(devBase, sinceMs, nowMs)
+      : readTrackDays(
+          registry.map((r) => r.tail),
+          dates,
+        ),
+    devBase ? Promise.resolve([] as ActivityEntry[]) : readActivity(sinceMs, nowMs),
   ]);
 
   const passes = new Map<string, RoadPass[]>(CORRIDORS.map((c) => [c.id, []]));
+  const townPasses = new Map<string, TownPass[]>(TOWNS.map((t) => [t.slug, []]));
   const sampleTimes = sampleTimesOf(tracks.values());
   const dropouts: Dropout[] = [];
   let tailsHeard = 0;
@@ -113,6 +125,10 @@ export async function buildHistoryDigest(nowMs: number): Promise<HistoryDigest> 
     tailsHeard++;
     for (const c of CORRIDORS) {
       passes.get(c.id)!.push(...passesForTrack(entry, pts, c));
+    }
+    const dayPoints = groupByUtcDay(all);
+    for (const t of TOWNS) {
+      townPasses.get(t.slug)!.push(...passesForTown(entry, pts, t, { dayPoints }));
     }
     dropouts.push(...detectDropouts(entry.tail, pts, nowS, { sampleTimes }));
   }
@@ -127,11 +143,15 @@ export async function buildHistoryDigest(nowMs: number): Promise<HistoryDigest> 
     roadCoverage[c.id] = dropoutsByArea(near)[0]?.name ?? null;
   }
 
+  const towns: Record<string, TownSummary> = {};
+  for (const t of TOWNS) towns[t.slug] = summarizeTown(t, townPasses.get(t.slug)!, nowMs);
+
   return {
     builtAt: nowMs,
     windowDays: ROAD_WINDOW_DAYS,
     tailsHeard,
     roads,
+    towns,
     coverage,
     roadCoverage,
   };
@@ -139,7 +159,7 @@ export async function buildHistoryDigest(nowMs: number): Promise<HistoryDigest> 
 
 const cachedDigest = unstable_cache(
   async () => buildHistoryDigest(Date.now()),
-  ["history-digest-v1"],
+  ["history-digest-v2"],
   { revalidate: HISTORY_CACHE_SECONDS },
 );
 

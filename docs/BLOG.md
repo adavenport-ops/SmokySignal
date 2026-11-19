@@ -27,6 +27,12 @@ captured by a script from public prod and committed with the post.
 5. **Commit** the post, the capture manifest and `public/blog/media/<slug>/`
    together. `npm test` checks that every reference resolves, every file
    exists and the folder fits the budget.
+6. **Ping IndexNow** once the post is live on production:
+   `npm run seo:indexnow -- --since <last week's ref>` (add `--dry-run`
+   first to see the URL list). It submits the new post, `/blog` and any
+   page whose file changed since that ref. The daily rollup cron also
+   pings new posts, so a missed run catches up the next morning.
+   Details: `docs/seo/PLAYBOOK.md`.
 
 6. **Social pack.** `npm run marketing:social -- --post <slug>` reads the post
    and its `public/blog/media/<slug>/manifest.json` and writes

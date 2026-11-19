@@ -12,6 +12,7 @@
 
 import type { FleetEntry } from "../types";
 import type { Corridor } from "../corridor";
+import type { Town } from "../towns";
 import { agencyName } from "../agencies";
 import { missionLabel } from "../role-display";
 import { LOG_START_DATE } from "../rollup-sessions";
@@ -237,6 +238,41 @@ export function roadPageJsonLd(c: Corridor): JsonLdObject {
       ...(towns.length > 0 ? { description: `Passes ${towns.join(", ")}.` } : {}),
     },
   };
+}
+
+/**
+ * /near/[town]: the town as a Place with a point, tied to the page that
+ * describes what flies over it.
+ */
+export function townPlaceJsonLd(t: Pick<Town, "slug" | "name" | "county" | "lat" | "lon">, flights30d?: number): JsonLdObject {
+  const url = absUrl(`/near/${t.slug}`);
+  return {
+    "@context": CONTEXT,
+    "@type": "Place",
+    "@id": `${url}#place`,
+    name: `${t.name}, Washington`,
+    url,
+    geo: { "@type": "GeoCoordinates", latitude: round5(t.lat), longitude: round5(t.lon) },
+    containedInPlace: {
+      "@type": "AdministrativeArea",
+      name: `${t.county} County, Washington, USA`,
+    },
+    subjectOf: {
+      "@type": "WebPage",
+      "@id": url,
+      url,
+      name: `Aircraft over ${t.name}, last 30 days`,
+      description:
+        flights30d != null
+          ? `${flights30d} tracked flight${flights30d === 1 ? "" : "s"} within about 9 mi of ${t.name} in the last 30 days, from public ADS-B, plus a live check.`
+          : `Tracked flights within about 9 mi of ${t.name} in the last 30 days, from public ADS-B, plus a live check.`,
+      isPartOf: { "@id": WEBSITE_ID },
+    },
+  };
+}
+
+function round5(n: number): number {
+  return Math.round(n * 1e5) / 1e5;
 }
 
 export function flightPageJsonLd(opts: {

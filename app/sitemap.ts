@@ -1,4 +1,4 @@
-// /sitemap.xml: static pages, one page per tail and per corridor, the
+// /sitemap.xml: static pages, one page per tail, per corridor and per town, the
 // season wraps, the blog (index, every post, its Atom feed), and up to 500 flight
 // share pages from the last 30 days. Regenerated hourly.
 //
@@ -12,6 +12,7 @@ import type { MetadataRoute } from "next";
 import { unstable_cache } from "next/cache";
 import { getRegistry } from "@/lib/registry";
 import { CORRIDORS } from "@/lib/corridor";
+import { TOWNS } from "@/lib/towns";
 import { hasKv } from "@/lib/cache";
 import { loadHistory } from "@/lib/history";
 import { parseHistoryQuery } from "@/lib/history-core";
@@ -72,6 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     builtAt: BUILT_AT,
     tails: fleet.map((f) => f.tail),
     corridorIds: CORRIDORS.map((c) => c.id),
+    townSlugs: TOWNS.map((t) => t.slug),
     wrapYears,
     blog,
     sessions,

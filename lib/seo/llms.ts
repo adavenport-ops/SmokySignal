@@ -18,6 +18,7 @@ import { CSV_COLUMNS } from "../ledger";
 import { fleetStats, keyFacts, joinAnd } from "./facts";
 import { PROGRAM_FAQ, type FaqEntry } from "./faq";
 import { SITE_URL, GITHUB_URL } from "./site";
+import { TOWNS, TOWN_RADIUS_MI } from "../towns";
 import { CSV_PATH, ODBL_URL } from "./jsonld";
 
 type Link = { path: string; title: string; note: string };
@@ -31,6 +32,7 @@ export const KEY_PAGES: readonly Link[] = [
   { path: "/program", title: "The program", note: "Who flies over Puget Sound, in what, and how aerial speed enforcement works in Washington." },
   { path: "/aircraft", title: "All aircraft", note: "Every tracked tail grouped by mission, with the public source for each." },
   { path: "/road", title: "Road history", note: "Thirty days of tracked flights over I-5, I-405, SR-167, SR-512 and other corridors." },
+  { path: "/near", title: "Towns", note: "One page per town (Puyallup, Fife, Tacoma, Kent, Everett, Spokane and more): a live check and thirty days of tracked flights within about 9 miles." },
   { path: "/forecast", title: "Forecast", note: "Hour-by-weekday odds of a takeoff, from the flight log." },
   { path: "/stats", title: "Stats", note: "Daily flight hours for every tracked tail." },
   { path: "/data", title: "Data and CSV", note: "Open monthly flight-hours dataset, ODbL 1.0." },
@@ -146,6 +148,7 @@ function header(fleet: readonly FleetEntry[]): string[] {
     ...KEY_PAGES.map(link),
     `- [Aircraft pages](${SITE_URL}/plane/N305DK): one page per tail at /plane/{TAIL}, e.g. N305DK (WSP, Smokey 4) and N422CT (King County Sheriff, Guardian One).`,
     `- [Road pages](${SITE_URL}/road/i-5): one page per corridor at /road/{id}, e.g. i-5, i-405, sr-512.`,
+    `- [Town pages](${SITE_URL}/near/puyallup): one page per town at /near/{town}, e.g. puyallup, fife, lakewood, spokane-valley.`,
     "",
     "## Machine-readable endpoints",
     "",
@@ -199,10 +202,18 @@ export function buildLlmsFullTxt(
     }),
     "",
   ];
+  const towns = [
+    "## Towns",
+    "",
+    `Town pages count tracked flights that came within about ${TOWN_RADIUS_MI} miles of the town over the last 30 days, with a live check of what is up near it now.`,
+    "",
+    ...TOWNS.map((t) => `- [${t.name}](${SITE_URL}/near/${t.slug}): ${t.county} County.`),
+    "",
+  ];
   const qa = [
     "## FAQ",
     "",
     ...faq.flatMap((e) => [`### ${e.question}`, "", e.answer, ""]),
   ];
-  return [...header(fleet), ...postLines(posts), ...registry, ...roads, ...qa].join("\n");
+  return [...header(fleet), ...postLines(posts), ...registry, ...roads, ...towns, ...qa].join("\n");
 }
