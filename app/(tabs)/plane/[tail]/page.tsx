@@ -14,6 +14,8 @@ import type { Aircraft } from "@/lib/types";
 import type { RecentFlightForTail } from "@/lib/flights";
 import type { TrackPoint } from "@/lib/tracks";
 import { BackLink } from "@/components/BackLink";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { PlaneRelated } from "@/components/NavRelated";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { FlightIntel } from "@/components/FlightIntel";
 import { Logbook } from "@/components/Logbook";
@@ -136,6 +138,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
         gap: 16,
       }}
     >
+      <Breadcrumbs items={[{ label: "Aircraft", href: "/aircraft" }, { label: entry.tail }]} />
       <div
         style={{
           display: "flex",
@@ -311,6 +314,15 @@ export default async function PlanePage({ params, searchParams }: Props) {
       </section>
 
       <FleetMeta tail={entry.tail} hex={fleetHex(entry).toUpperCase()} role={entry.roleDescription} />
+
+      <PlaneRelated
+        tail={entry.tail}
+        latestFlight={
+          recentFlight
+            ? { id: flightIdFromTs(recentFlight.session.start_ts), startTs: recentFlight.session.start_ts }
+            : null
+        }
+      />
     </main>
   );
 }

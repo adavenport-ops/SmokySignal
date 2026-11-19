@@ -14,6 +14,9 @@ import { SS_TOKENS } from "@/lib/tokens";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { SaveFlightCardButton } from "@/components/SaveFlightCardButton";
 import { BackLink } from "@/components/BackLink";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { FlightRelated } from "@/components/NavRelated";
+import { crumbDate } from "@/lib/nav";
 import FlightMapView from "@/components/FlightMapView";
 import { fmtDurationHuman, formatTs } from "@/lib/time";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
@@ -104,6 +107,13 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
             { name: entry.tail, path: `/plane/${entry.tail}` },
             { name: `Flight ${params.flightId}`, path: `/flight/${entry.tail}/${params.flightId}` },
           ]),
+        ]}
+      />
+      <Breadcrumbs
+        items={[
+          { label: "Aircraft", href: "/aircraft" },
+          { label: entry.tail, href: `/plane/${entry.tail}` },
+          { label: `Flight ${crumbDate(session.start_ts)}` },
         ]}
       />
       <BackLink href={`/plane/${entry.tail}`} label="Back to plane" />
@@ -258,6 +268,14 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
           View live tracker →
         </Link>
       </footer>
+
+      <FlightRelated
+        tail={entry.tail}
+        nickname={entry.nickname}
+        flightId={params.flightId}
+        view={initialView}
+        points={points}
+      />
     </main>
   );
 }

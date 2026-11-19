@@ -16,11 +16,12 @@ import {
   fmtMinutes,
 } from "@/components/RoadParts";
 import styles from "@/components/pattern-pages.module.css";
-import { BackLink } from "@/components/BackLink";
 import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbJsonLd, roadPageJsonLd } from "@/lib/seo/jsonld";
 import { joinAnd } from "@/lib/seo/facts";
 import { pageMeta } from "@/lib/seo/site";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { RoadRelated } from "@/components/NavRelated";
 
 // Cookies (time-format pref) make the route dynamic; the 30-day digest
 // behind it is cached for 5 minutes (lib/history-digest.ts).
@@ -64,7 +65,7 @@ export default async function RoadPage({ params }: Props) {
           ]),
         ]}
       />
-      <BackLink href="/road" label="Road history" />
+      <Breadcrumbs items={[{ label: "Road history", href: "/road" }, { label: c.name }]} />
       <span className="ss-eyebrow">SmokySignal · Road history</span>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -120,6 +121,8 @@ export default async function RoadPage({ params }: Props) {
           </section>
         </aside>
       </div>
+
+      <RoadRelated corridorId={c.id} />
     </main>
   );
 }

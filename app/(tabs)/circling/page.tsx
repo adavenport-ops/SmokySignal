@@ -10,6 +10,7 @@ import { CoverageNote } from "@/components/CoverageNote";
 import styles from "@/components/pattern-pages.module.css";
 import { BackLink } from "@/components/BackLink";
 import { pageMeta } from "@/lib/seo/site";
+import { Related } from "@/components/Related";
 
 // Cookies (time-format pref) make the route dynamic; the live read behind
 // it is cached for 15 s, matching /api/circling.
@@ -129,6 +130,15 @@ export default async function CirclingPage() {
           </section>
         </aside>
       </div>
+
+      <Related
+        links={[
+          { href: "/seen", label: "What flew over?", blurb: "Already gone? Pick a time and place", icon: "seen" },
+          { href: "/program#coverage", label: "Coverage", blurb: "Where receivers hear the bird, and where they go quiet", icon: "program" },
+          { href: "/road", label: "Road history", blurb: "Thirty days of passes over each corridor", icon: "road" },
+          { href: "/radar", label: "Radar", blurb: "Every tail on the live map", icon: "radar" },
+        ]}
+      />
     </main>
   );
 }

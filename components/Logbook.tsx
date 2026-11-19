@@ -73,7 +73,7 @@ export async function Logbook({
   }
 
   return (
-    <section aria-label="Logbook" data-testid="logbook">
+    <section id="logbook" aria-label="Logbook" data-testid="logbook">
       <Card>
         <div className="ss-eyebrow">Logbook</div>
         <p style={{ fontSize: 12.5, color: SS_TOKENS.fg2, margin: "2px 0 0", lineHeight: 1.45 }}>

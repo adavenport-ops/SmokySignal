@@ -11,6 +11,8 @@ import {
 import { formatTs, fmtDurationHuman } from "@/lib/time";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 import { BackLink } from "@/components/BackLink";
+import { Related } from "@/components/Related";
+import { wrapYearFor } from "@/lib/nav";
 import { ScrollX } from "@/components/ScrollX";
 import { SeasonWrapCard } from "@/components/SeasonWrapCard";
 import { pageMeta } from "@/lib/seo/site";
@@ -89,6 +91,14 @@ export default async function StatsPage() {
       {empty ? <EmptyState /> : <StatsBody stats={stats!} hour12={hour12} known={known} />}
 
       <SeasonWrapCard />
+
+      <Related
+        links={[
+          { href: `/wrap/${wrapYearFor(Date.now())}`, label: `Season wrap ${wrapYearFor(Date.now())}`, blurb: "The season in one card", icon: "wrap" },
+          { href: "/data", label: "Data and CSV", blurb: "Monthly flight hours, open data", icon: "data" },
+          { href: "/radar?h=1", label: "Radar history", blurb: "Replay any day of flights on the map", icon: "history" },
+        ]}
+      />
     </main>
   );
 }

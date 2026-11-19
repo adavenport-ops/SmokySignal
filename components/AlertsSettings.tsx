@@ -316,7 +316,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
           </Card>
 
           {/* Mission picker: multi-select, Smokey only by default */}
-          <Section eyebrow="What pings you">
+          <Section id="missions" eyebrow="What pings you">
             <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: 0, lineHeight: 1.45 }}>
               Smokey only by default. Add any other class you want to hear
               about.
@@ -340,7 +340,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
 
           {/* Tails — optional allow-list. Empty = all tails (subject to other
               filters). Each row toggles a tail in/out of prefs.tails. */}
-          <Section eyebrow="Tails">
+          <Section id="tails" eyebrow="Tails">
             <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: 0, lineHeight: 1.45 }}>
               Pick specific tails to follow. Leave all unchecked to hear about
               every bird in the classes above.
@@ -445,7 +445,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
           </Section>
 
           {/* Zones (placeholder — per-zone opt-in needs hot-zone load; today is 'any') */}
-          <Section eyebrow="Zones">
+          <Section id="zones" eyebrow="Zones">
             <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: 0, lineHeight: 1.45 }}>
               For now, pings cover every corridor. Zone-only pings come
               once we&rsquo;ve watched your stretch of sky long enough.
@@ -482,7 +482,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
               notification when an alert-tier tail enters the threshold
               while the app is open + GPS granted. No server-side rider
               position; pure client logic. */}
-          <Section eyebrow="Proximity">
+          <Section id="proximity" eyebrow="Proximity">
             <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: 0, lineHeight: 1.45 }}>
               While the app is open and GPS is granted, ping me when a
               tracked bird gets within range.
@@ -551,7 +551,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
               is open, speak the body via speechSynthesis. iOS needs a
               user gesture before the first speak() works; the toggle
               click + the test-notification flow both prime the API. */}
-          <Section eyebrow="Voice">
+          <Section id="voice" eyebrow="Voice">
             <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: 0, lineHeight: 1.45 }}>
               Read alerts aloud while the page is open. Useful with helmet
               audio. Closed-tab background pings don't speak.
@@ -598,7 +598,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
           </Section>
 
           {/* Quiet hours */}
-          <Section eyebrow="Quiet hours">
+          <Section id="quiet-hours" eyebrow="Quiet hours">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <HourInput
                 value={prefs.quiet_start_h}
@@ -628,7 +628,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
           </Section>
 
           {/* Test button */}
-          <Section eyebrow="Test">
+          <Section id="test" eyebrow="Test">
             <button
               type="button"
               onClick={onTest}
@@ -686,14 +686,17 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
 }
 
 function Section({
+  id,
   eyebrow,
   children,
 }: {
+  /** Anchor the search palette links to (/settings/alerts#voice). */
+  id?: string;
   eyebrow: string;
   children: React.ReactNode;
 }) {
   return (
-    <Card>
+    <Card id={id}>
       <div className="ss-eyebrow" style={{ marginBottom: 12 }}>
         {eyebrow}
       </div>
@@ -704,9 +707,10 @@ function Section({
   );
 }
 
-function Card({ children }: { children: React.ReactNode }) {
+function Card({ id, children }: { id?: string; children: React.ReactNode }) {
   return (
     <section
+      id={id}
       style={{
         background: SS_TOKENS.bg1,
         border: `.5px solid ${SS_TOKENS.hairline}`,

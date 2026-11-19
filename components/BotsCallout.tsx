@@ -54,7 +54,7 @@ export function BotsCallout({ telegramEnabled, telegramUsername, discordInstallU
   return (
     <>
       {telegramEnabled ? (
-        <section style={card} data-bot="telegram">
+        <section id="telegram" style={card} data-bot="telegram">
           <div className="ss-eyebrow" style={{ marginBottom: 8 }}>
             Telegram · read aloud
           </div>

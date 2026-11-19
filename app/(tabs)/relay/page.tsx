@@ -4,6 +4,7 @@ import { BotsCallout } from "@/components/BotsCallout";
 import { getBotsPublicInfo } from "@/lib/bots/public-info";
 import { BackLink } from "@/components/BackLink";
 import { pageMeta } from "@/lib/seo/site";
+import { Related } from "@/components/Related";
 
 // /relay: get Smokey takeoff alerts into the tools riders and clubs
 // already use. A Discord channel or any HTTPS webhook, plus zero-setup
@@ -156,6 +157,15 @@ export default async function RelayPage() {
           Full schema and a verify snippet: <a href={DOCS_URL} style={linkStyle}>docs/relay.md</a>.
         </p>
       </Explainer>
+
+      <Related
+        links={[
+          { href: "/embed/help", label: "Embed", blurb: "Status widget for club sites and forums", icon: "embed" },
+          { href: "/calendar.ics", label: "Calendar feed", blurb: "Busy windows in your calendar app", icon: "calendar", file: true },
+          { href: "/feed.xml", label: "RSS feed", blurb: "Takeoffs and landings as a feed", icon: "rss", file: true },
+          { href: "/settings/alerts", label: "Alerts", blurb: "Push on this device", icon: "bell" },
+        ]}
+      />
     </main>
   );
 }
