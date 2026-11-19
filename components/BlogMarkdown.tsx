@@ -14,6 +14,7 @@ import rehypeSlug from "rehype-slug";
 import { SS_TOKENS } from "@/lib/tokens";
 import { resolveBlogMedia, type MediaManifest, type MediaRender } from "@/lib/blog-media-core";
 import { BlogVideo } from "./BlogVideo";
+import { BlogZoomImage } from "./BlogLightbox";
 
 const BODY = { fontSize: 16, color: SS_TOKENS.fg1, lineHeight: 1.7 } as const;
 const LINK = {
@@ -42,6 +43,17 @@ function BlogFigure({ m }: { m: MediaRender }) {
               background: SS_TOKENS.bg1,
             }}
           >
+            <BlogZoomImage
+              media={{
+                kind: "image",
+                webp: m.webp,
+                png: m.png,
+                alt: m.alt,
+                width: m.width,
+                height: m.height,
+                caption: m.caption,
+              }}
+            >
             <picture>
               <source srcSet={m.webp} type="image/webp" />
               {/* eslint-disable-next-line @next/next/no-img-element -- static, pre-sized, already optimised */}
@@ -55,6 +67,7 @@ function BlogFigure({ m }: { m: MediaRender }) {
                 style={{ display: "block", width: "100%", height: "auto" }}
               />
             </picture>
+            </BlogZoomImage>
           </div>
           {m.caption ? (
             <figcaption style={{ fontSize: 13, lineHeight: 1.5, color: SS_TOKENS.fg1, marginTop: 8 }}>{m.caption}</figcaption>

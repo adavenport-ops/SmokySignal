@@ -3,10 +3,22 @@ import { SS_TOKENS, TYPE } from "@/lib/tokens";
 import { BLOG_KINDS, filterByKind, formatPostDate, KIND_LABEL, type BlogKind } from "@/lib/blog-core";
 import { getAllPosts } from "@/lib/blog";
 import { BackLink } from "@/components/BackLink";
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo/site";
+import { JsonLd } from "@/components/JsonLd";
+import { simplePageJsonLd } from "@/lib/seo/jsonld";
 
-export const metadata = {
-  title: "Blog",
-  description: "What shipped on SmokySignal, and a weekly log of when the bird flew.",
+const BLOG_DESCRIPTION =
+  "Release notes for SmokySignal and a weekly log of when Washington patrol aircraft flew: flights, hours aloft, roads worked and what changed on the site.";
+
+const BASE_META = pageMeta({
+  title: "Blog: release notes and the weekly Smokey log",
+  description: BLOG_DESCRIPTION,
+  path: "/blog",
+});
+
+export const metadata: Metadata = {
+  ...BASE_META,
   alternates: {
     canonical: "/blog",
     types: { "application/atom+xml": [{ url: "/blog/feed.xml", title: "SmokySignal blog (Atom)" }] },
@@ -25,6 +37,14 @@ export default function BlogIndex({ searchParams }: { searchParams: { kind?: str
 
   return (
     <main className="ss-page" style={{ gap: 22 }}>
+      <JsonLd
+        data={simplePageJsonLd({
+          path: "/blog",
+          name: "Blog: release notes and the weekly Smokey log",
+          description: BLOG_DESCRIPTION,
+          crumb: "Blog",
+        })}
+      />
       <BackLink />
       <span className="ss-eyebrow">SmokySignal · Blog</span>
 

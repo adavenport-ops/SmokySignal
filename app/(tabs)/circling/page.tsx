@@ -1,3 +1,5 @@
+import { JsonLd } from "@/components/JsonLd";
+import { simplePageJsonLd } from "@/lib/seo/jsonld";
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { SS_TOKENS } from "@/lib/tokens";
@@ -44,6 +46,14 @@ export default async function CirclingPage() {
 
   return (
     <main className="ss-page">
+      <JsonLd
+        data={simplePageJsonLd({
+          path: "/circling",
+          name: "What's that plane circling over Tacoma?",
+          description: "Every tracked aircraft working a pattern over Washington right now, in plain words: who flies it, what it is, which road it is over, and for how long.",
+          crumb: "Circling",
+        })}
+      />
       <BackLink />
       <span className="ss-eyebrow">SmokySignal · What&rsquo;s circling</span>
 

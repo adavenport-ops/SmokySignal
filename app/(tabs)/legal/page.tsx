@@ -1,3 +1,5 @@
+import { JsonLd } from "@/components/JsonLd";
+import { simplePageJsonLd } from "@/lib/seo/jsonld";
 import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 import { BackLink } from "@/components/BackLink";
@@ -15,6 +17,14 @@ const GITHUB_URL = "https://github.com/adavenport-ops/SmokySignal";
 export default function LegalPage() {
   return (
     <main className="ss-page">
+      <JsonLd
+        data={simplePageJsonLd({
+          path: "/legal",
+          name: "Legal: privacy, disclaimers and data attribution",
+          description: "What SmokySignal stores and what it does not, disclaimers, and attribution for the adsb.fi and adsb.lol (ODbL) data behind it.",
+          crumb: "Legal",
+        })}
+      />
       <BackLink />
       <h1 className="ss-eyebrow" style={{ margin: 0, fontWeight: "inherit" }}>
         SmokySignal · Legal
@@ -107,6 +117,7 @@ export default function LegalPage() {
           Source:{" "}
           <a
             href={GITHUB_URL}
+            className="ss-tap"
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
@@ -237,6 +248,7 @@ function DataFlowList({
         {title}
       </p>
       <ul
+        className="ss-tap-list"
         style={{
           margin: 0,
           paddingLeft: 18,

@@ -122,6 +122,43 @@ test("dates: calendar formatting and a timestamp that stays on the PT day", () =
   assert.equal(pt, "2026-07-04");
 });
 
+test("postTimestamp: 00:00 Pacific on the post date, both sides of DST", () => {
+  const far = Date.UTC(2030, 0, 1);
+  // PST (-8): midnight is 08:00 UTC.
+  assert.equal(new Date(postTimestamp("2026-11-19", far)).toISOString(), "2026-11-19T08:00:00.000Z");
+  // PDT (-7): midnight is 07:00 UTC.
+  assert.equal(new Date(postTimestamp("2026-07-04", far)).toISOString(), "2026-07-04T07:00:00.000Z");
+  // DST change days: midnight comes before the 02:00 flip, so it keeps the old offset.
+  assert.equal(new Date(postTimestamp("2026-03-08", far)).toISOString(), "2026-03-08T08:00:00.000Z");
+  assert.equal(new Date(postTimestamp("2026-11-01", far)).toISOString(), "2026-11-01T07:00:00.000Z");
+});
+
+test("postTimestamp: a post shipped on its own date is never in the future", () => {
+  // The launch post shipped the morning of 19 Nov PT (09:30 PST). The old
+  // noon-PT stamp (20:00Z) sat hours ahead of that deploy.
+  const deploy = Date.UTC(2026, 10, 19, 17, 30);
+  assert.ok(postTimestamp("2026-11-19", deploy) <= deploy);
+  assert.ok(postTimestamp("2026-11-19", deploy) < Date.parse("2026-11-19T20:00:00Z"));
+  const justAfterMidnight = Date.UTC(2026, 10, 19, 8, 1);
+  assert.ok(postTimestamp("2026-11-19", justAfterMidnight) <= justAfterMidnight);
+  // A future-dated post clamps to now instead of pointing ahead.
+  const now = Date.UTC(2026, 10, 19, 12);
+  assert.equal(postTimestamp("2026-12-25", now), now);
+});
+
+test("postTimestamp: JSON-LD and Atom agree on the same instant", () => {
+  const r = parsePost("2026-11-19-the-big-update.md", SRC);
+  assert.ok(r.ok);
+  if (!r.ok) return;
+  const iso = new Date(postTimestamp(r.post.date)).toISOString();
+  assert.equal(iso, "2026-11-19T08:00:00.000Z");
+  const ld = articleJsonLd(r.post, "https://www.smokysignal.app");
+  assert.equal(ld.datePublished, iso);
+  assert.equal(ld.dateModified, iso);
+  const [entry] = blogAtomEntries([r.post], "https://www.smokysignal.app");
+  assert.equal(new Date(entry!.ts).toISOString(), iso);
+});
+
 test("routeLabel", () => {
   assert.equal(routeLabel("/stats"), "Stats");
   assert.equal(routeLabel("/wrap/2026"), "Season wrap 2026");
@@ -131,11 +168,11 @@ test("routeLabel", () => {
 
 test("articleJsonLd: Article with publisher, image and canonical url; script-safe", () => {
   const p = { ...post("2026-11-19-the-big-update", "launch"), title: "A </script> title" };
-  const ld = articleJsonLd(p, "https://smokysignal.app");
+  const ld = articleJsonLd(p, "https://www.smokysignal.app");
   assert.equal(ld["@type"], "Article");
-  assert.equal(ld.url, "https://smokysignal.app/blog/2026-11-19-the-big-update");
-  assert.deepEqual(ld.image, ["https://smokysignal.app/blog/2026-11-19-the-big-update/og"]);
-  assert.equal(ld.datePublished, "2026-11-19T20:00:00.000Z");
+  assert.equal(ld.url, "https://www.smokysignal.app/blog/2026-11-19-the-big-update");
+  assert.deepEqual(ld.image, ["https://www.smokysignal.app/blog/2026-11-19-the-big-update/og"]);
+  assert.equal(ld.datePublished, "2026-11-19T08:00:00.000Z");
   const s = jsonLdScript(ld);
   assert.ok(!s.includes("</script>"));
   assert.equal(JSON.parse(s).headline, "A </script> title");
@@ -143,19 +180,19 @@ test("articleJsonLd: Article with publisher, image and canonical url; script-saf
 
 test("blog Atom feed: entries, alternate link, escaped category", () => {
   const sorted = sortPosts([post("2026-11-18-week-47"), post("2026-11-19-the-big-update", "launch")]);
-  const xml = buildAtom(blogAtomEntries(sorted, "https://smokysignal.app"), {
-    siteUrl: "https://smokysignal.app",
-    selfUrl: "https://smokysignal.app/blog/feed.xml",
-    alternateUrl: "https://smokysignal.app/blog",
+  const xml = buildAtom(blogAtomEntries(sorted, "https://www.smokysignal.app"), {
+    siteUrl: "https://www.smokysignal.app",
+    selfUrl: "https://www.smokysignal.app/blog/feed.xml",
+    alternateUrl: "https://www.smokysignal.app/blog",
     title: "SmokySignal · Blog",
     subtitle: "s",
     nowMs: 0,
   });
   assert.match(xml, /<feed xmlns="http:\/\/www.w3.org\/2005\/Atom">/);
-  assert.match(xml, /<link rel="alternate" type="text\/html" href="https:\/\/smokysignal.app\/blog"\/>/);
-  assert.match(xml, /<updated>2026-11-19T20:00:00.000Z<\/updated>/);
+  assert.match(xml, /<link rel="alternate" type="text\/html" href="https:\/\/www.smokysignal.app\/blog"\/>/);
+  assert.match(xml, /<updated>2026-11-19T08:00:00.000Z<\/updated>/);
   assert.equal((xml.match(/<entry>/g) ?? []).length, 2);
-  assert.match(xml, /<id>tag:smokysignal.app,2026-11-19:blog\/2026-11-19-the-big-update<\/id>/);
+  assert.match(xml, /<id>tag:www.smokysignal.app,2026-11-19:blog\/2026-11-19-the-big-update<\/id>/);
   assert.match(xml, /<category term="launch"\/>/);
 });
 

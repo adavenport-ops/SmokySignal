@@ -3457,4 +3457,54 @@ test.describe("p14 live-prod audit · towns + IndexNow", () => {
     });
     expect(pass).toBe(true);
   });
+
+  test("91. /board tiles sit on whole pixels and settled tiles carry no transform", async ({ page }) => {
+    const sizes = [
+      { width: 1920, height: 1080 },
+      { width: 1280, height: 720 },
+    ];
+    const results: string[] = [];
+    let pass = true;
+    for (const vp of sizes) {
+      await page.setViewportSize(vp);
+      await page.goto("/board", { waitUntil: "networkidle" });
+      await page.waitForTimeout(2000);
+      const m = await page.evaluate(() => {
+        const tiles = [...document.querySelectorAll("main[data-board-state] ol li [class*='tile_']")];
+        const frac = (v: number) => Math.abs(v - Math.round(v)) > 0.01;
+        let fractional = 0;
+        let transformed = 0;
+        for (const t of tiles) {
+          const r = t.getBoundingClientRect();
+          if (frac(r.x) || frac(r.y) || frac(r.width) || frac(r.height)) fractional++;
+          for (const el of [t, ...t.querySelectorAll("*")]) {
+            if (getComputedStyle(el).transform !== "none") transformed++;
+          }
+        }
+        return { tiles: tiles.length, fractional, transformed };
+      });
+      if (m.tiles === 0 || m.fractional > 0 || m.transformed > 0) pass = false;
+      results.push(`${vp.width}x${vp.height}: ${m.tiles} tiles, ${m.fractional} fractional, ${m.transformed} transformed`);
+    }
+    record({
+      claim: "/board tiles have integer x/y/width/height and settled tiles have transform none (1080p + 720p)",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: results.join(" · "),
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("92. /favicon.ico returns an icon", async ({ request }) => {
+    const r = await request.get("/favicon.ico");
+    const type = r.headers()["content-type"] ?? "";
+    const pass = r.status() === 200 && /icon/.test(type);
+    record({
+      claim: "/favicon.ico returns 200 with an icon content type",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `HTTP ${r.status()} · ${type}`,
+    });
+    expect(pass).toBe(true);
+  });
 });

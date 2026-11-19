@@ -19,6 +19,7 @@ import { insideQuietHours } from "./dispatcher";
 import { defaultPushDeps, sendToSubscriptions, type PushDeps } from "./send";
 import { parsePushSubscription } from "./validate";
 import type { StoredSubscription } from "./types";
+import { SITE_URL } from "../seo/site";
 
 export const TITLE_MAX = 60;
 export const BODY_MAX = 140;
@@ -68,7 +69,7 @@ export function isSameOriginPath(u: string): boolean {
   if (u.length > URL_MAX) return false;
   if (!/^\/(?![/\\])[^\s\\]*$/.test(u)) return false;
   try {
-    return new URL(u, "https://smokysignal.app").origin === "https://smokysignal.app";
+    return new URL(u, SITE_URL).origin === SITE_URL;
   } catch {
     return false;
   }

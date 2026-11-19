@@ -360,7 +360,7 @@ export default async function ProgramPage() {
           Full data flow on{" "}
           <Link
             href="/legal"
-            className="ss-mono"
+            className="ss-mono ss-tap"
             style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
           >
             /legal
@@ -432,7 +432,7 @@ function Unknowns() {
       ))}
       <span style={{ fontSize: 12, color: SS_TOKENS.fg2, lineHeight: 1.5 }}>
         Public program details:{" "}
-        <ExtLink href={WSP_AVIATION_URL}>WSP Aviation Section, 2023</ExtLink>.
+        <ExtLink href={WSP_AVIATION_URL} standalone>WSP Aviation Section, 2023</ExtLink>.
       </span>
     </div>
   );
@@ -474,8 +474,8 @@ function AgencyCard({ group }: { group: AgencyGroup }) {
         style={{
           display: "flex",
           flexWrap: "wrap",
-          gap: "4px 12px",
-          marginTop: 8,
+          gap: "0 12px",
+          marginTop: 4,
         }}
       >
         {group.entries.map((e) => (
@@ -488,7 +488,7 @@ function AgencyCard({ group }: { group: AgencyGroup }) {
               fontSize: 12.5,
               color: SS_TOKENS.fg0,
               textDecoration: "none",
-              minHeight: 28,
+              minHeight: 44,
               display: "inline-flex",
               alignItems: "center",
               gap: 4,
@@ -593,10 +593,20 @@ function List({ title, items }: { title: string; items: string[] }) {
   );
 }
 
-function ExtLink({ href, children }: { href: string; children: React.ReactNode }) {
+function ExtLink({
+  href,
+  children,
+  standalone = false,
+}: {
+  href: string;
+  children: React.ReactNode;
+  /** Alone on its row (a source line), so it gets a 44px touch hit area. */
+  standalone?: boolean;
+}) {
   return (
     <a
       href={href}
+      className={standalone ? "ss-tap" : undefined}
       target="_blank"
       rel="noopener noreferrer"
       style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}

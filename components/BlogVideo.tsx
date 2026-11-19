@@ -19,7 +19,8 @@
 // The server HTML has no autoplay attribute, so a reduced-motion reader
 // never sees a frame move before this hydrates.
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { MediaLightbox } from "./BlogLightbox";
 import { SS_TOKENS } from "@/lib/tokens";
 
 type Props = {
@@ -38,6 +39,22 @@ export function BlogVideo({ mp4, webm, poster, width, height, label, caption }: 
   const [playing, setPlaying] = useState(false);
   const userPaused = useRef(false);
   const inView = useRef(false);
+  const [expanded, setExpanded] = useState(false);
+  const resumeAfter = useRef(false);
+
+  // Tap the clip (or Expand) to open it full screen. The inline copy
+  // pauses meanwhile and picks up again on close if it was playing.
+  const expand = () => {
+    const v = ref.current;
+    resumeAfter.current = Boolean(v && !v.paused);
+    v?.pause();
+    setExpanded(true);
+  };
+  const collapse = useCallback(() => {
+    setExpanded(false);
+    const v = ref.current;
+    if (v && resumeAfter.current && !userPaused.current) v.play().catch(() => setPlaying(false));
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -112,8 +129,9 @@ export function BlogVideo({ mp4, webm, poster, width, height, label, caption }: 
           aria-label={label}
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
+          onClick={expand}
           data-testid="blog-video"
-          style={{ display: "block", width: "100%", height: "auto", background: SS_TOKENS.bg1 }}
+          style={{ display: "block", width: "100%", height: "auto", background: SS_TOKENS.bg1, cursor: "zoom-in" }}
         >
           <source src={webm} type="video/webm" />
           <source src={mp4} type="video/mp4" />
@@ -153,8 +171,47 @@ export function BlogVideo({ mp4, webm, poster, width, height, label, caption }: 
             </svg>
           )}
         </button>
-        <span style={{ fontSize: 13, lineHeight: 1.5, color: SS_TOKENS.fg1, paddingTop: 2 }}>{caption}</span>
+        <span style={{ flex: "1 1 auto", fontSize: 13, lineHeight: 1.5, color: SS_TOKENS.fg1, paddingTop: 2 }}>{caption}</span>
+        <button
+          type="button"
+          onClick={expand}
+          aria-label="Expand clip"
+          aria-haspopup="dialog"
+          data-testid="blog-video-expand"
+          className="ss-blog-video-btn"
+          style={{
+            flex: "0 0 auto",
+            width: 44,
+            height: 44,
+            borderRadius: 999,
+            border: `.5px solid ${SS_TOKENS.hairline2}`,
+            background: SS_TOKENS.bg1,
+            color: SS_TOKENS.fg0,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            touchAction: "manipulation",
+            WebkitTapHighlightColor: "transparent",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden>
+            <path
+              d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </figcaption>
+      <MediaLightbox
+        media={{ kind: "clip", mp4, webm, poster, alt: label, width, height, caption }}
+        open={expanded}
+        onClose={collapse}
+      />
     </>
   );
 }

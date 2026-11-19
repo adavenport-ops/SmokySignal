@@ -168,6 +168,11 @@ body {
   position: absolute;
   top: 8px;
   left: 8px;
+  /* 44px tall: a thumb-sized target once it pops in. */
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 44px;
   padding: 8px 14px;
   z-index: 100;
   background: var(--ss-bg1);
@@ -185,6 +190,18 @@ body {
 .ss-skip-link:focus,
 .ss-skip-link:focus-visible {
   transform: translateY(0);
+}
+
+/* Touch hit areas for links in link lists (.ss-tap-list) and for
+   standalone links that sit alone on a row (a.ss-tap). Vertical padding
+   on an inline box grows its hit area without moving the line box, so
+   the text layout is unchanged; it only reaches 44px on touch screens.
+   Links inside running sentences in paragraphs are left alone. */
+@media (pointer: coarse) {
+  .ss-tap-list li a,
+  a.ss-tap {
+    padding-block: 15px;
+  }
 }
 
 /* Responsive page-width container — mobile-first 460 px column that
@@ -565,4 +582,78 @@ body {
 .ss-escape:focus-visible {
   opacity: 1;
   color: var(--ss-fg0);
+}
+
+/* Blog tap-to-expand (components/BlogLightbox.tsx). The zoom button is
+   an invisible wrapper around the inline picture. The lightbox is a
+   modal <dialog> filling the viewport; no transitions, so nothing moves
+   for prefers-reduced-motion readers. */
+.ss-blog-zoom {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: zoom-in;
+  line-height: 0;
+}
+.ss-blog-zoom:focus-visible {
+  outline: 2px solid var(--ss-fg0);
+  outline-offset: 2px;
+}
+.ss-lightbox {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(5, 6, 8, 0.96);
+  color: var(--ss-fg0);
+  overflow: hidden;
+}
+.ss-lightbox::backdrop {
+  background: rgba(5, 6, 8, 0.96);
+}
+.ss-lightbox-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.ss-lightbox-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: max(8px, env(safe-area-inset-top)) 12px 8px;
+}
+.ss-lightbox-caption {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ss-fg1);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.ss-lightbox-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 0 8px max(8px, env(safe-area-inset-bottom));
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.ss-lightbox-stage picture {
+  display: contents;
 }

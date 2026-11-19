@@ -17,6 +17,7 @@ import https from "node:https";
 import { isIP } from "node:net";
 import type { LookupAddress } from "node:dns";
 import { isPrivateAddress } from "./validate";
+import { SITE_URL } from "../seo/site";
 
 export class PrivateAddressError extends Error {
   code = "ERELAYPRIVATE";
@@ -91,7 +92,7 @@ export type PostJsonFn = (
 ) => Promise<HttpResult>;
 
 const MAX_RESPONSE_BYTES = 8 * 1024;
-const USER_AGENT = "SmokySignal-Relay/1 (+https://smokysignal.app/relay)";
+const USER_AGENT = `SmokySignal-Relay/1 (+${SITE_URL}/relay)`;
 
 /**
  * POST a JSON body with a hard deadline. Never throws; network errors and

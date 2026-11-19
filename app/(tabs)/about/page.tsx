@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SS_TOKENS, TYPE } from "@/lib/tokens";
 import { Tooltip } from "@/components/Tooltip";
 import { Logo } from "@/components/brand/Logo";
-import { pageMeta } from "@/lib/seo/site";
+import { absUrl, pageMeta } from "@/lib/seo/site";
 import { getRegistry } from "@/lib/registry";
 import { JsonLd } from "@/components/JsonLd";
 import { KeyFacts } from "@/components/KeyFacts";
@@ -156,7 +156,7 @@ export default async function AboutPage() {
           Got your ears on?
         </span>
         Found a bug or a wrong tail?{" "}
-        <a href="mailto:feedback@smokysignal.app" style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}>
+        <a href="mailto:feedback@smokysignal.app" className="ss-tap" style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}>
           feedback@smokysignal.app
         </a>
       </footer>
@@ -201,8 +201,7 @@ function Section({
 }
 
 function EmbedBadgeCallout() {
-  const snippet =
-    '<a href="https://smokysignal.app">\n  <img src="https://smokysignal.app/api/badge.svg" alt="SmokySignal status">\n</a>';
+  const snippet = `<a href="${absUrl("/")}">\n  <img src="${absUrl("/api/badge.svg")}" alt="SmokySignal status">\n</a>`;
   return (
     <section style={CALLOUT}>
       <div className="ss-eyebrow" style={{ marginBottom: 8 }}>

@@ -1,3 +1,5 @@
+import { JsonLd } from "@/components/JsonLd";
+import { simplePageJsonLd } from "@/lib/seo/jsonld";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/seo/site";
@@ -101,6 +103,15 @@ export default async function FlightsPage({ searchParams }: { searchParams: SP }
   const mockState = parseMockState(mock);
   const initial = applyMockState(real, mockState);
   return (
+    <>
+      <JsonLd
+        data={simplePageJsonLd({
+          path: "/flights",
+          name: "Flights: patrol aircraft up now and recent takeoffs",
+          description: "Which Washington State Patrol and sheriff aircraft are up right now, the nearest ones to you, and the latest takeoffs and landings across Washington.",
+          crumb: "Flights",
+        })}
+      />
     <DashShell
       initial={initial}
       mockOn={mockState !== null}
@@ -108,5 +119,6 @@ export default async function FlightsPage({ searchParams }: { searchParams: SP }
       switcher={switcher}
       speedWarningAvailable={speedWarningAvailable}
     />
+    </>
   );
 }

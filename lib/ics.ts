@@ -8,6 +8,7 @@
 
 import { PT_TZ } from "./time";
 import type { ForecastCell, ForecastGrid } from "./predictor";
+import { SITE_URL } from "./seo/site";
 
 const CRLF = "\r\n";
 
@@ -246,7 +247,7 @@ export function busyEvents(
         summary: busySummary(dow, w.startHour, w.endHour),
         description:
           `History, not a forecast of any one day. ${w.samples} takeoffs logged in this window on past ${DOW_NAMES[dow]}s. ` +
-          `Smokey can be up at any hour. No hour is a safe one. Live status: https://smokysignal.app`,
+          `Smokey can be up at any hour. No hour is a safe one. Live status: ${SITE_URL}`,
       });
     }
   }
