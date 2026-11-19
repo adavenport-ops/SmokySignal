@@ -51,6 +51,10 @@ const SOURCE_ID = "hotzones";
 const LAYER_ID = "hotzones-heat";
 const AIRCRAFT_LAYER_ID = "aircraft";
 const TABBAR_HEIGHT = 66;
+// Empty-state cards clear the whole bottom chip stack: HOT ZONES row (0),
+// RINGS / HISTORY / 3D row (44) and the TRAIL badge (88, ~32 tall) in
+// RadarShell, plus a 12 px gap.
+const EMPTY_STATE_LIFT = 132;
 export const LAYER_VISIBILITY_CHANGE_EVENT = "ss-radar-layer-visibility-change";
 /** Broadcast by the heat and route layers when their data lands, with
  *  detail `{ source, bounds }`. RadarShell unions the bounds so the
@@ -469,7 +473,7 @@ export function HotZoneLayer({
             position: "absolute",
             left: 12,
             right: 12,
-            bottom: offsetCss(56),
+            bottom: offsetCss(EMPTY_STATE_LIFT),
             zIndex: 11,
             maxWidth: 380,
             margin: "0 auto",
@@ -482,7 +486,7 @@ export function HotZoneLayer({
             position: "absolute",
             left: 12,
             right: 12,
-            bottom: offsetCss(56),
+            bottom: offsetCss(EMPTY_STATE_LIFT),
             zIndex: 11,
             maxWidth: 380,
             margin: "0 auto",
@@ -519,7 +523,7 @@ export function HotZoneLayer({
             position: "absolute",
             left: 12,
             right: 12,
-            bottom: offsetCss(56),
+            bottom: offsetCss(EMPTY_STATE_LIFT),
             zIndex: 11,
             maxWidth: 380,
             margin: "0 auto",
