@@ -2,6 +2,9 @@
 // routes. Deterministic — same query param yields the same response
 // shape, no randomness, no time-of-day drift.
 //
+// Ignored on the production deployment (VERCEL_ENV=production): see
+// mockStatesEnabled(). Works in `next dev` and on preview deploys.
+//
 // Snapshot-level states: up, down, eyes-up, multiple, stale.
 // Data-layer states: learning (forecast empty + Day 0 of 30),
 // full-data (predictor confident + learning panel hidden).
@@ -124,8 +127,32 @@ function liftAirborne(
   };
 }
 
-export function parseMockState(value: string | null | undefined): MockState | null {
+/**
+ * True when ?mock= may change what a page or API returns. Off on the
+ * production deployment (VERCEL_ENV === "production"), so nobody can share
+ * a smokysignal.app link that shows a fake "all clear" or a fake bird.
+ * Development and preview deploys keep the state machine for QA.
+ *
+ * Takes the env as an argument so tests can pin it; callers use the default.
+ */
+export function mockStatesEnabled(
+  env: Readonly<Record<string, string | undefined>> = process.env,
+): boolean {
+  return env.VERCEL_ENV !== "production";
+}
+
+/**
+ * Validates a ?mock= value. Returns null for unknown values, and always
+ * returns null in production (see mockStatesEnabled), which turns every
+ * caller (pages, /api/aircraft, the beacon, board, glance, embed) into a
+ * no-op there without each one checking the env.
+ */
+export function parseMockState(
+  value: string | null | undefined,
+  env: Readonly<Record<string, string | undefined>> = process.env,
+): MockState | null {
   if (!value) return null;
+  if (!mockStatesEnabled(env)) return null;
   return (MOCK_STATES as readonly string[]).includes(value) ? (value as MockState) : null;
 }
 

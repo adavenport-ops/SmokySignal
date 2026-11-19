@@ -1,11 +1,16 @@
-// Prompt 14 live-prod truth audit. Hits the live site (smokysignal.app)
+// Prompt 14 live-prod truth audit. Hits the live site (www.smokysignal.app)
 // and validates each claim with explicit Pass/Fail evidence written to
 // /tmp/p14-audit/findings.json. Does NOT modify code; produces evidence
-// only. Run with: npx playwright test specs/p14-live-prod-audit.spec.ts
+// only. Preferred entry point: `npm run verify-prod` from the repo root.
+// Direct: npx playwright test specs/p14-live-prod-audit.spec.ts
 //   --project=chromium-mobile  (rider context)
 //   --project=chromium-desktop (desktop responsiveness)
+//
+// ?mock= is ignored on production, so claims that need a mocked state
+// record "indeterminate (mock disabled in prod)" there and run fully
+// against `next dev` or a preview (SS_VISUAL_BASE_URL=...).
 
-import { test, expect, devices, type Page } from "@playwright/test";
+import { test, expect, devices, type APIRequestContext, type Page } from "@playwright/test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -29,30 +34,96 @@ type Finding = {
   screenshot?: string;
 };
 
-const findings: Finding[] = [];
+// Findings are appended to findings.jsonl as they are recorded, tagged with
+// the project and the run id (playwright.config.ts sets SS_AUDIT_RUN once
+// per invocation). A worker restarts after any failed test and every
+// project runs in its own worker, so an in-memory array written in
+// afterAll used to lose or overwrite findings. afterAll rebuilds
+// findings.json from this run's lines; scripts/verify-prod.zsh does the
+// same once the whole run is over.
+const RUN_ID = process.env.SS_AUDIT_RUN ?? "adhoc";
+const JSONL = path.join(AUDIT_DIR, "findings.jsonl");
+
+type Logged = Finding & { project: string; run: string; test: string };
+
 function record(f: Finding) {
-  findings.push(f);
-  console.log(
-    `[${f.pass ? "PASS" : "FAIL"}] ${f.claim} (${f.category}) — ${f.evidence}`,
-  );
+  const info = test.info();
+  const line: Logged = { ...f, project: info.project.name, run: RUN_ID, test: info.title };
+  fs.appendFileSync(JSONL, JSON.stringify(line) + "\n");
+  const tag = f.category === "indeterminate" ? "INDETERMINATE" : f.pass ? "PASS" : "FAIL";
+  console.log(`[${tag}] [${line.project}] ${f.claim} (${f.category}) — ${f.evidence}`);
+}
+
+function thisRunFindings(): Logged[] {
+  if (!fs.existsSync(JSONL)) return [];
+  const out: Logged[] = [];
+  for (const l of fs.readFileSync(JSONL, "utf8").split("\n")) {
+    if (!l) continue;
+    try {
+      const x = JSON.parse(l) as Logged;
+      if (x.run === RUN_ID) out.push(x);
+    } catch {
+      /* partial line from a killed worker */
+    }
+  }
+  return out;
 }
 
 test.afterAll(async () => {
   fs.writeFileSync(
     path.join(AUDIT_DIR, "findings.json"),
-    JSON.stringify(findings, null, 2),
+    JSON.stringify(thisRunFindings(), null, 2),
   );
 });
 
+// ─── ?mock= gate ──────────────────────────────────────────────────────
+// ?mock= is ignored on the production deployment (lib/mock-state.ts,
+// VERCEL_ENV=production). Claims that need a mocked state probe once per
+// worker; against prod they record "indeterminate" instead of failing,
+// and against dev or a preview deploy they run as before.
+const MOCK_OFF = "indeterminate (mock disabled in prod)";
+let mockProbe: Promise<boolean> | null = null;
+function mockHonored(request: APIRequestContext): Promise<boolean> {
+  mockProbe ??= (async () => {
+    const r = await request.get("/api/aircraft?mock=stale");
+    if (!r.ok()) return false;
+    const d = (await r.json().catch(() => null)) as { source?: string } | null;
+    return d?.source === "mock";
+  })();
+  return mockProbe;
+}
+function recordMockOff(claim: string, screenshot?: string) {
+  record({ claim, category: "indeterminate", pass: true, evidence: MOCK_OFF, screenshot });
+}
+
+// Vercel's edge consumes s-maxage / stale-while-revalidate and forwards
+// only "public" (claim 22), so from the client a route set to
+// "public, s-maxage=60" reads as "public". Accept either: an explicit
+// s-maxage within the bound (dev / next start), or a public response with
+// no no-store / private (prod edge).
+function edgeCacheable(cc: string, sMaxMax?: number): boolean {
+  if (/no-store|private/i.test(cc)) return false;
+  const m = /s-maxage=(\d+)/.exec(cc);
+  if (m) return sMaxMax == null || Number(m[1]) <= sMaxMax;
+  return /\bpublic\b/i.test(cc);
+}
+
+// Evidence only: a screenshot that times out (a busy WebGL canvas under
+// SwiftShader can stall a full-page capture) falls back to the viewport,
+// and never fails the claim it illustrates.
 async function shot(page: Page, name: string): Promise<string> {
   const p = path.join(AUDIT_DIR, `${name}.png`);
-  await page.screenshot({ path: p, fullPage: true });
+  try {
+    await page.screenshot({ path: p, fullPage: true, timeout: 15_000 });
+  } catch {
+    await page.screenshot({ path: p, timeout: 10_000 }).catch(() => {});
+  }
   return p;
 }
 
 async function inspectMaplibreLayers(page: Page) {
   return await page.evaluate(() => {
-    // @ts-expect-error — runtime introspection
+    // Runtime introspection: the map instance is not a typed global.
     const map = (window as any).__ssMap || null;
     if (!map) {
       // Fallback: walk maplibre-gl-canvas elements; the map instance
@@ -87,32 +158,49 @@ test.describe("p14 live-prod audit", () => {
   });
 
   test("2. trail line behind aircraft on /radar", async ({ page, context }) => {
+    test.setTimeout(120_000);
     await context.grantPermissions(["geolocation"]);
     await context.setGeolocation(TACOMA);
     // ?mock=up forces an airborne fleet so we can check the trail layer
-    // even when the live fleet is grounded.
-    await page.goto("/radar?mock=up", { waitUntil: "networkidle" });
-    await page.waitForTimeout(3000);
+    // even when the live fleet is grounded. Prod ignores ?mock=, so there
+    // this reads the live fleet.
+    const mock = await mockHonored(page.request);
+    await page.goto(mock ? "/radar?mock=up" : "/radar", { waitUntil: "networkidle" });
+    // The map instance is not exposed and MapLibre paints to canvas, so
+    // the old style/HTML probe could never see the layer. RadarShell
+    // renders TrailStatusBadge beside it, reading the same /api/trails
+    // feed: "TRAIL · N TAILS · M POINTS", "TRAIL · NO AIRBORNE TAILS",
+    // or "TRAIL · ERR <status>".
+    // The badge flips to FETCHING on every 10s poll, so sample it until it
+    // settles on a result (or 30s pass).
+    const badge = page.locator("text=/^TRAIL · /").first();
+    let label = "";
+    const until = Date.now() + 30_000;
+    while (Date.now() < until) {
+      label = ((await badge.innerText().catch(() => "")) || "").trim();
+      if (label && !/FETCHING|IDLE/.test(label)) break;
+      await page.waitForTimeout(500);
+    }
     const screenshot = await shot(page, "02-radar-trail");
-    const html = await page.content();
-    const hasTrailLayer =
-      /aircraft-trail|aircraft_trail|trail-line/.test(html) ||
-      // Inspect the live MapLibre style if the project exposes it
-      (await page.evaluate(() => {
-        const win = window as any;
-        const map = win.__ssMap;
-        if (!map?.getStyle) return false;
-        return (map.getStyle().layers ?? []).some((l: any) =>
-          /trail/i.test(l.id),
-        );
-      }));
+    const m = /^TRAIL · (\d+) TAILS · (\d+) POINTS$/.exec(label);
+    const claim = "Trail line behind airborne aircraft on /radar (trail feed reaches the radar)";
+    if (/NO AIRBORNE TAILS/.test(label)) {
+      // Nothing up and (on prod) no ?mock=up to force a fleet.
+      record({
+        claim,
+        category: "indeterminate",
+        pass: true,
+        evidence: `badge="${label}"${mock ? "" : ` — ${MOCK_OFF}`}`,
+        screenshot,
+      });
+      return;
+    }
+    const pass = m != null;
     record({
-      claim: "Trail line behind airborne aircraft on /radar",
-      category: hasTrailLayer ? "working_as_designed" : "unshipped",
-      pass: !!hasTrailLayer,
-      evidence: hasTrailLayer
-        ? "trail layer detected in style"
-        : "no aircraft-trail layer in style — feature unshipped",
+      claim,
+      category: pass ? "working_as_designed" : label ? "confirmed_bug" : "unshipped",
+      pass,
+      evidence: label ? `badge="${label}"` : "no TRAIL status badge on /radar",
       screenshot,
     });
   });
@@ -154,9 +242,7 @@ test.describe("p14 live-prod audit", () => {
     const screenshot = await shot(page, "04-radar-heat");
     // Try the API directly — if /api/hotzones returns 200, the pipeline
     // is alive. Empty zones array = correct learning state, not bug.
-    const apiRes = await page.request.get(
-      "https://smokysignal.app/api/hotzones?region_id=puget_sound",
-    );
+    const apiRes = await page.request.get("/api/hotzones?region_id=puget_sound");
     const apiOk = apiRes.ok();
     const body = apiOk ? await apiRes.json() : null;
     const zoneCount = Array.isArray(body?.zones) ? body.zones.length : 0;
@@ -180,6 +266,9 @@ test.describe("p14 live-prod audit", () => {
     page,
     context,
   }) => {
+    // Three full-page radar captures plus two camera moves run past 60s on
+    // the tablet viewport.
+    test.setTimeout(120_000);
     await context.grantPermissions(["geolocation"]);
     await context.setGeolocation(TACOMA);
     await page.goto("/radar", { waitUntil: "networkidle" });
@@ -221,7 +310,8 @@ test.describe("p14 live-prod audit", () => {
   test("6. click-to-follow plane on /radar", async ({ page, context }) => {
     await context.grantPermissions(["geolocation"]);
     await context.setGeolocation(TACOMA);
-    await page.goto("/radar?mock=up", { waitUntil: "networkidle" });
+    const mock = await mockHonored(page.request);
+    await page.goto(mock ? "/radar?mock=up" : "/radar", { waitUntil: "networkidle" });
     await page.waitForTimeout(3500);
     const screenshot = await shot(page, "06-radar-followable");
     // Mock-up data should include airborne aircraft. Look for the
@@ -245,28 +335,47 @@ test.describe("p14 live-prod audit", () => {
   });
 
   test("7. Also-up card click target", async ({ page }) => {
-    await page.goto("/?mock=up", { waitUntil: "networkidle" });
+    const claim =
+      'Also-up rows are whole-row links to /plane/<tail> with a "View … details" label and a chevron affordance';
+    const mock = await mockHonored(page.request);
+    await page.goto(mock ? "/?mock=up" : "/", { waitUntil: "networkidle" });
     await page.waitForTimeout(2500);
     const screenshot = await shot(page, "07-home-alsoup");
-    // Look for "Also up" cards — may be inside a "Others" component.
-    const cards = await page
-      .locator(
-        '[data-testid*="also-up"], a[href^="/plane/"]:not(:has(svg))',
-      )
-      .count();
+    // components/Glanceable.tsx renders each row as one <Link> with
+    // data-testid="also-up-row", an aria-label and a trailing chevron SVG.
+    const rows = page.locator('[data-testid="also-up-row"]');
+    const n = await rows.count();
+    if (n === 0) {
+      // Rows only render when 2+ aircraft are up. Without ?mock=up (prod)
+      // the live sky decides.
+      if (!mock) recordMockOff(`${claim} (no also-up rows in the live sky)`, screenshot);
+      else
+        record({ claim, category: "confirmed_bug", pass: false, evidence: "?mock=up rendered no also-up rows", screenshot });
+      return;
+    }
+    const rowInfo = await rows.evaluateAll((els) =>
+      els.map((e) => ({
+        href: e.getAttribute("href") ?? "",
+        label: e.getAttribute("aria-label") ?? "",
+        chevron: e.querySelector("svg polyline") != null,
+      })),
+    );
+    const pass = rowInfo.every(
+      (r) => /^\/plane\/[A-Z0-9]+$/.test(r.href) && /^View .+ details\./.test(r.label) && r.chevron,
+    );
     record({
-      claim: 'Also-up card has separate "more info" affordance',
-      category: cards > 0 ? "polish_needed" : "feature_gap",
-      pass: false, // even when cards exist, the spec asks for a separate "more info" button
-      evidence: `found ${cards} plane links on home; no separate info chevron in current Others component`,
+      claim,
+      category: pass ? "working_as_designed" : "polish_needed",
+      pass,
+      evidence: `${n} row(s): ${JSON.stringify(rowInfo.slice(0, 3))}`,
       screenshot,
     });
   });
 
-  test("8a. desktop responsiveness — home @ 1280", async ({ browser }) => {
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  test("8a. desktop responsiveness — home @ 1280", async ({ browser, baseURL }) => {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, baseURL });
     const page = await ctx.newPage();
-    await page.goto("https://smokysignal.app/", { waitUntil: "networkidle" });
+    await page.goto("/", { waitUntil: "networkidle" });
     await page.waitForTimeout(2000);
     const screenshot = await shot(page, "08a-home-1280");
     const main = page.locator("main").first();
@@ -315,23 +424,27 @@ test.describe("p14 live-prod audit", () => {
     // The ArmAlertsCallout component shows one of three surfaces:
     //   1. The Arm CTA              (Notification.permission === "default")
     //   2. The "Browser blocked"    (Notification.permission === "denied")
-    //   3. NULL on iOS Safari       (Notification API absent — by design)
+    //   3. NULL on an iPhone/iPad UA outside an installed PWA
+    //      (needsIOSInstall(), or the Notification API is absent)
     //
-    // The chromium-mobile project emulates iPhone 15 Pro, which strips
-    // the Notification API from window — matching real iOS Safari. So
-    // case 3 (component correctly self-hides) is the rider-realistic
-    // outcome here, NOT a bug. The IOSInstallPrompt component covers
-    // the rider in that case, with its own "Arm alerts" instructional
-    // text inside the install dialog.
+    // The iPhone-emulating projects send an iOS Safari UA, so case 3
+    // (component correctly self-hides) is the rider-realistic outcome
+    // there, NOT a bug, whether or not the engine exposes Notification
+    // (WebKit strips it; Chromium with an iPhone UA keeps it). The
+    // IOSInstallPrompt card covers the rider in that case with its
+    // "Add to Home Screen" steps.
     //
     // Probe + accept any of the three valid surfaces.
-    const hasNotif = await page.evaluate(() => {
+    const { hasNotif, iosUa } = await page.evaluate(() => {
+      let hasNotif = false;
       try {
-        return typeof Notification !== "undefined";
+        hasNotif = typeof Notification !== "undefined";
       } catch (_) {
-        return false;
+        hasNotif = false;
       }
+      return { hasNotif, iosUa: /iPhone|iPad|iPod/.test(navigator.userAgent) };
     });
+    const iosPath = iosUa || !hasNotif;
     const armLink = await page
       .locator('a[href="/settings/alerts"]:has-text("Arm")')
       .count();
@@ -348,16 +461,15 @@ test.describe("p14 live-prod audit", () => {
     const visible =
       armLink > 0 ||
       blockedText > 0 ||
-      // On iOS-class UAs without Notification, IOSInstallPrompt is
-      // the rider-correct surface.
-      (!hasNotif && iosInstructions > 0);
+      // On iOS-class UAs, IOSInstallPrompt is the rider-correct surface.
+      (iosPath && iosInstructions > 0);
     const evidence =
       armLink > 0
         ? `${armLink} "Arm" CTA(s) found linking to /settings/alerts`
         : blockedText > 0
           ? "blocked-state surface rendered (permission denied)"
-          : !hasNotif && iosInstructions > 0
-            ? "iOS install instructions rendered (Notification API absent — correct for iOS Safari)"
+          : iosPath && iosInstructions > 0
+            ? `iOS install instructions rendered (iOS UA=${iosUa}, Notification API=${hasNotif} — correct for iOS Safari)`
             : 'no "Arm" CTA, blocked-state, or iOS install instructions found';
     record({
       claim: "Arm-alerts CTA visible on / for new visitors",
@@ -421,14 +533,21 @@ test.describe("p14 live-prod audit", () => {
     const hasOldCopy = html.includes("LEARNING YOUR SKY");
     const hasNewCopy = html.includes("LEARNING THE SKY");
     const pass = !hasOldCopy && hasNewCopy;
+    // The panel only renders while the forecast is still learning
+    // (app/(tabs)/forecast/page.tsx showLearning). Once the 30-day window
+    // and the event floor are met it is gone, so neither eyebrow shows;
+    // ?mock=learning (non-prod, claim 17) covers the copy then.
+    const panelHidden = !hasOldCopy && !hasNewCopy;
     record({
       claim:
         'Learning panel eyebrow reads "LEARNING THE SKY" (not "YOUR SKY") to defuse the user-watching ambiguity',
-      category: pass ? "working_as_designed" : "confirmed_bug",
-      pass,
+      category: pass ? "working_as_designed" : panelHidden ? "indeterminate" : "confirmed_bug",
+      pass: pass || panelHidden,
       evidence: pass
         ? '"LEARNING THE SKY" rendered, "LEARNING YOUR SKY" absent'
-        : `hasOld=${hasOldCopy} hasNew=${hasNewCopy} — copy fix did not ship or panel not rendered`,
+        : panelHidden
+          ? "learning panel not rendered (learning window complete); old copy absent"
+          : `hasOld=${hasOldCopy} hasNew=${hasNewCopy} — old copy is back`,
       screenshot,
     });
   });
@@ -467,13 +586,20 @@ test.describe("p14 live-prod audit", () => {
     await page.goto("/", { waitUntil: "networkidle" });
     await page.waitForTimeout(1500);
     const screenshot = await shot(page, "13a-home-freshness-pt");
-    const body = await page.locator("main").innerText();
-    // Pattern: "LAST SAMPLE — JUST NOW · 15:37 PT" or "LAST SAMPLE — 12m AGO · 15:25 PT"
+    // Pattern: "LAST SAMPLE — JUST NOW · 15:37 PT" or "LAST SAMPLE — 12m AGO · 15:25 PT".
+    // On narrow phones CSS hides the full text and shows "12m AGO · 15:25"
+    // (components/FreshnessLabel.tsx), so innerText misses it there; read
+    // textContent plus the aria-label ("Last sample 12m ago, 15:25 Pacific").
+    const body = (await page.locator("main").textContent()) ?? "";
+    const aria = (
+      await page
+        .locator('[aria-label^="Last sample"]')
+        .evaluateAll((els) => els.map((e) => e.getAttribute("aria-label") ?? ""))
+    ).join(" | ");
     const hasFreshnessPt =
-      /LAST SAMPLE\s+—\s+(JUST NOW|\d+m AGO)\s+·\s+\d{2}:\d{2}\s+PT/i.test(
-        body,
-      );
-    const hasUnknown = /LAST SAMPLE\s+—\s+UNKNOWN/i.test(body);
+      /LAST SAMPLE\s+—\s+(JUST NOW|\d+m AGO)\s+·\s+\d{2}:\d{2}\s+PT/i.test(body) ||
+      /Last sample (just now|\d+m ago), \d{2}:\d{2} Pacific/i.test(aria);
+    const hasUnknown = /LAST SAMPLE\s+—\s+UNKNOWN/i.test(body) || /Last sample unknown/i.test(aria);
     const pass = hasFreshnessPt || hasUnknown;
     record({
       claim:
@@ -552,6 +678,12 @@ test.describe("p14 live-prod audit", () => {
   test("15. ?mock=eyes-up returns sheriff airborne, no WSP (P20 4.1)", async ({
     request,
   }) => {
+    if (!(await mockHonored(request))) {
+      recordMockOff(
+        "?mock=eyes-up forces a non-WSP police airframe (sheriff) airborne with no WSP — still reads SMOKEY UP",
+      );
+      return;
+    }
     const r = await request.get("/api/aircraft?mock=eyes-up");
     const ok = r.ok();
     let evidence = `HTTP ${r.status()}`;
@@ -578,6 +710,12 @@ test.describe("p14 live-prod audit", () => {
   test("16. ?mock=stale returns old fetched_at (P20 4.1)", async ({
     request,
   }) => {
+    if (!(await mockHonored(request))) {
+      recordMockOff(
+        "?mock=stale returns fetched_at >15min ago with source='mock' — flips FreshnessLabel amber",
+      );
+      return;
+    }
     const r = await request.get("/api/aircraft?mock=stale");
     let evidence = `HTTP ${r.status()}`;
     let pass = false;
@@ -599,6 +737,10 @@ test.describe("p14 live-prod audit", () => {
   test("17. ?mock=learning shows the learning panel on /forecast (P21 2.1)", async ({
     page,
   }) => {
+    if (!(await mockHonored(page.request))) {
+      recordMockOff("?mock=learning forces /forecast into Day 0 of 30 — learning panel visible");
+      return;
+    }
     await page.goto("/forecast?mock=learning", { waitUntil: "networkidle" });
     await page.waitForTimeout(1500);
     const screenshot = await shot(page, "17-forecast-mock-learning");
@@ -621,6 +763,12 @@ test.describe("p14 live-prod audit", () => {
   test("18. ?mock=full-data hides the learning panel on /forecast (P21 2.2)", async ({
     page,
   }) => {
+    if (!(await mockHonored(page.request))) {
+      recordMockOff(
+        "?mock=full-data hides the LearningPanel on /forecast — predictor confident, no learning eyebrow",
+      );
+      return;
+    }
     await page.goto("/forecast?mock=full-data", { waitUntil: "networkidle" });
     await page.waitForTimeout(1500);
     const screenshot = await shot(page, "18-forecast-mock-full-data");
@@ -655,7 +803,7 @@ test.describe("p14 live-prod audit", () => {
     //      without a session)
     const passcodeMissing = /ADMIN_PASSCODE/.test(body);
     const redirectedToAdmin = /\/admin/.test(url) && /next=qa/.test(url);
-    const dashboardRendered = /QA dashboard/.test(body) && /Mac Mini heartbeat/.test(body);
+    const dashboardRendered = /QA dashboard/.test(body) && /Last fleet refresh/i.test(body);
     const pass = passcodeMissing || redirectedToAdmin || dashboardRendered;
     record({
       claim:
@@ -713,38 +861,40 @@ test.describe("p14 live-prod audit", () => {
     });
   });
 
-  test("19. /api/health surfaces last_heartbeat fields (P22 5)", async ({
+  test("19. /api/health reports last_refresh_age_s under 10 min (helm pinger liveness)", async ({
     request,
   }) => {
+    // The GitHub heartbeat workflow was retired: the helm pinger refreshes
+    // the snapshot every 30s, so /api/health derives liveness from the
+    // snapshot age (or the last feed sample). Same 10-minute threshold as
+    // .github/workflows/feed-health.yml.
     const r = await request.get("/api/health");
     let evidence = `HTTP ${r.status()}`;
     let pass = false;
     let category: Finding["category"] = "confirmed_bug";
     if (r.ok()) {
       const data = (await r.json()) as {
-        last_heartbeat_iso: string | null;
-        last_heartbeat_age_s: number | null;
+        last_refresh_age_s?: number | null;
+        snapshot_age_s?: number | null;
+        last_heartbeat_age_s?: number | null;
       };
-      const fieldsPresent =
-        "last_heartbeat_iso" in data && "last_heartbeat_age_s" in data;
-      const fresh =
-        typeof data.last_heartbeat_age_s === "number" &&
-        data.last_heartbeat_age_s < 5400;
-      pass = fieldsPresent;
-      category = fieldsPresent
-        ? fresh
-          ? "working_as_designed"
-          : "indeterminate"
-        : "confirmed_bug";
-      evidence = fieldsPresent
-        ? data.last_heartbeat_iso == null
-          ? "fields present; heartbeat not yet written (workflow has not fired)"
-          : `heartbeat ${data.last_heartbeat_age_s}s old (${data.last_heartbeat_iso})`
-        : "expected fields missing from /api/health response";
+      const age = data.last_refresh_age_s;
+      if (!("last_refresh_age_s" in data)) {
+        // Deploy lag: prod still serves the pre-retirement shape.
+        pass = "last_heartbeat_age_s" in data;
+        category = pass ? "indeterminate" : "confirmed_bug";
+        evidence = pass
+          ? `last_refresh_age_s not deployed yet (snapshot_age_s=${data.snapshot_age_s})`
+          : "neither last_refresh_age_s nor the legacy heartbeat fields are present";
+      } else {
+        pass = typeof age === "number" && age < 600;
+        category = pass ? "working_as_designed" : "confirmed_bug";
+        evidence = `last_refresh_age_s=${age} snapshot_age_s=${data.snapshot_age_s} legacy_heartbeat_field=${"last_heartbeat_age_s" in data}`;
+      }
     }
     record({
       claim:
-        "/api/health surfaces last_heartbeat_iso + last_heartbeat_age_s — Mac Mini heartbeat freshness",
+        "/api/health reports last_refresh_age_s (snapshot age, or the last feed sample) under 10 min",
       category,
       pass,
       evidence,
@@ -948,6 +1098,12 @@ test.describe("p14 live-prod audit", () => {
   test("26. /board?mock=stale reads 'Feed quiet. Last read HH:MM' (Board)", async ({
     page,
   }) => {
+    if (!(await mockHonored(page.request))) {
+      recordMockOff(
+        "/board?mock=stale flips the header to FEED QUIET with 'Feed quiet. Last read HH:MM' — stale never reads as all clear",
+      );
+      return;
+    }
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto("/board?mock=stale", { waitUntil: "networkidle" });
     await page.waitForTimeout(800);
@@ -1000,10 +1156,10 @@ test.describe("p14 live-prod audit", () => {
       const cc = r.headers()["cache-control"] ?? "";
       const etag = r.headers()["etag"] ?? "";
       const ctype = r.headers()["content-type"] ?? "";
+      // lib/beacon.ts sets "public, s-maxage=15, stale-while-revalidate=15";
+      // the Vercel edge forwards it as "public".
       const okCache =
-        state === "stale"
-          ? cc.includes("no-store")
-          : cc.includes("s-maxage=15") && cc.includes("stale-while-revalidate=15");
+        state === "stale" ? cc.includes("no-store") : edgeCacheable(cc, 15);
       pass = okState && okFields && okCache && etag.length > 0 && ctype.startsWith("text/plain");
       evidence = `state=${state} fields=${okFields} cache="${cc}" etag=${etag || "none"} type=${ctype}`;
     }
@@ -1060,6 +1216,12 @@ test.describe("p14 live-prod audit", () => {
   test("30. /api/status.txt?mock=stale reads stale with no-store (Beacon)", async ({
     request,
   }) => {
+    if (!(await mockHonored(request))) {
+      recordMockOff(
+        "Beacon reports stale (never down) when the read is >2 min old, and is not edge-cached",
+      );
+      return;
+    }
     const r = await request.get("/api/status.txt?mock=stale");
     const text = r.ok() ? await r.text() : "";
     const cc = r.headers()["cache-control"] ?? "";
@@ -1095,14 +1257,13 @@ test.describe("p14 live-prod audit", () => {
       const w = isPng ? body.readUInt32BE(16) : 0;
       const h = isPng ? body.readUInt32BE(20) : 0;
       const cc = r.headers()["cache-control"] ?? "";
-      const sMax = Number(/s-maxage=(\d+)/.exec(cc)?.[1] ?? NaN);
+      // s-maxage=60 is set by the route; the edge forwards "public, max-age=0".
       pass =
         r.ok() &&
         isPng &&
         w === 1200 &&
         h === 630 &&
-        Number.isFinite(sMax) &&
-        sMax <= 60 &&
+        edgeCacheable(cc, 60) &&
         /\/twitter-image/.test(twUrl ?? "");
       fs.writeFileSync(path.join(AUDIT_DIR, "21-og-status-card.png"), body);
       evidence += ` · HTTP ${r.status()} ${w}x${h} cache-control="${cc}"`;
@@ -1282,7 +1443,10 @@ test.describe("p14 live-prod audit", () => {
       baseURL,
     });
     const page = await ctx.newPage();
-    await page.goto("/radar?mock=up", { waitUntil: "networkidle" });
+    // The install bar check does not need an airborne fleet; ?mock=up only
+    // adds markers when the deploy honours it.
+    const mock = await mockHonored(page.request);
+    await page.goto(mock ? "/radar?mock=up" : "/radar", { waitUntil: "networkidle" });
     await page.waitForTimeout(2500);
     const screenshot = await shot(page, "35-radar-no-install-bar");
     const result = await page.evaluate(() => {
@@ -1341,7 +1505,19 @@ test.describe("p14 live-prod audit", () => {
   test("36. up-state hero uses alert orange #FF7A1A (design pass)", async ({
     page,
   }) => {
-    await page.goto("/?mock=up", { waitUntil: "networkidle" });
+    const claim =
+      "Up-state hero headline renders in --alert #FF7A1A (orange means only 'Smokey is up')";
+    if (!(await mockHonored(page.request))) {
+      // Prod ignores ?mock=up: assert only when the live sky is up.
+      const beacon = await page.request.get("/api/status.json");
+      const live = beacon.ok() ? ((await beacon.json()) as { state?: string }).state : null;
+      if (live !== "up") {
+        recordMockOff(`${claim} (live state=${live ?? "unknown"})`);
+        return;
+      }
+    }
+    const mock = await mockHonored(page.request);
+    await page.goto(mock ? "/?mock=up" : "/", { waitUntil: "networkidle" });
     await page.waitForTimeout(1500);
     const screenshot = await shot(page, "36-home-up-hero-orange");
     const color = await page
@@ -1352,7 +1528,7 @@ test.describe("p14 live-prod audit", () => {
     // #FF7A1A = rgb(255, 122, 26). The old amber was rgb(245, 184, 64).
     const pass = color.replace(/\s+/g, "") === "rgb(255,122,26)";
     record({
-      claim: "Up-state hero headline renders in --alert #FF7A1A (orange means only 'Smokey is up')",
+      claim,
       category: pass ? "working_as_designed" : "confirmed_bug",
       pass,
       evidence: `hero color=${color}`,
@@ -1364,8 +1540,10 @@ test.describe("p14 live-prod audit", () => {
     page,
   }) => {
     const results: Record<string, { min: number; text: string | null }> = {};
-    for (const mock of ["up", "down"]) {
-      await page.goto(`/?mock=${mock}`, { waitUntil: "networkidle" });
+    // Prod ignores ?mock=: measure the live home once instead of up + down.
+    const states = (await mockHonored(page.request)) ? ["up", "down"] : ["live"];
+    for (const mock of states) {
+      await page.goto(mock === "live" ? "/" : `/?mock=${mock}`, { waitUntil: "networkidle" });
       await page.waitForTimeout(2000);
       results[mock] = await page.evaluate(() => {
         let min = Infinity;
@@ -1395,7 +1573,7 @@ test.describe("p14 live-prod audit", () => {
     const screenshot = await shot(page, "37-home-type-floor");
     const pass = Object.values(results).every((r) => r.min >= 12);
     record({
-      claim: "Home (up + down) renders no text below the 12px type floor",
+      claim: `Home (${states.join(" + ")}) renders no text below the 12px type floor`,
       category: pass ? "working_as_designed" : "polish_needed",
       pass,
       evidence: JSON.stringify(results),
@@ -1675,7 +1853,7 @@ test.describe("p14 live-prod audit", () => {
       entries > 0 &&
       entries === (atomText.match(/<\/entry>/g) ?? []).length &&
       !/&(?!(amp|lt|gt|quot|apos);)/.test(atomText) &&
-      /s-maxage=60/.test(atomCc);
+      edgeCacheable(atomCc, 60);
     // Parse it as XML in the browser too: DOMParser flags any well-formedness error.
     await page.goto("/about", { waitUntil: "domcontentloaded" });
     const parseOk = await page.evaluate((xml) => {
@@ -1687,7 +1865,7 @@ test.describe("p14 live-prod audit", () => {
     const okRss =
       rss.ok() &&
       /<rss version="2\.0"/.test(rssText) &&
-      /s-maxage=60/.test(rss.headers()["cache-control"] ?? "");
+      edgeCacheable(rss.headers()["cache-control"] ?? "", 60);
     const alternate = await page
       .locator('link[rel="alternate"][type="application/atom+xml"]')
       .count();
@@ -2056,7 +2234,8 @@ test.describe("p14 live-prod audit", () => {
       r.ok() &&
       tails.includes("N305DK") &&
       body?.data?.status === "ok" &&
-      /s-maxage=300/.test(cc) &&
+      // /api/seen sets s-maxage=300; the Vercel edge forwards "public".
+      edgeCacheable(cc, 300) &&
       typeof hit?.closest?.distance_mi === "number" &&
       /^\/flight\/N305DK\/\d{8}T\d{4}$/.test(hit?.flight?.href ?? "");
 
@@ -2088,6 +2267,33 @@ test.describe("p14 live-prod audit", () => {
       pass,
       evidence: `api HTTP ${r.status()} cc="${cc}" tails=${tails.join(",") || "none"} flight=${hit?.flight?.href ?? "none"} · page h1="${h1}" state=${state} card=${card} map=${map} og=${og ?? "none"}`,
       screenshot,
+    });
+  });
+
+  test("62. ?mock= is ignored on production (no shareable fake all-clear)", async ({
+    request,
+    baseURL,
+  }) => {
+    // lib/mock-state.ts returns null for every ?mock= value when
+    // VERCEL_ENV=production. Against prod the API, the beacon and the
+    // board must all ignore it; against dev or a preview it stays on.
+    const isProd = /^https:\/\/(www\.)?smokysignal\.app\/?$/.test(baseURL ?? "");
+    const api = await request.get("/api/aircraft?mock=stale");
+    const apiData = api.ok() ? ((await api.json()) as { source?: string; fetched_at?: number }) : null;
+    const apiAgeMin = apiData?.fetched_at ? Math.floor((Date.now() - apiData.fetched_at) / 60_000) : null;
+    const beacon = await request.get("/api/status.txt?mock=up");
+    const beaconPlain = await request.get("/api/status.txt");
+    const beaconState = beacon.ok() ? (await beacon.text()).split("\n")[0] : "";
+    const plainState = beaconPlain.ok() ? (await beaconPlain.text()).split("\n")[0] : "";
+    const ignored = apiData != null && apiData.source !== "mock" && beaconState === plainState;
+    const pass = isProd ? ignored : apiData?.source === "mock";
+    record({
+      claim: isProd
+        ? "Production ignores ?mock=: /api/aircraft?mock=stale serves the real snapshot and /api/status.txt?mock=up matches the plain beacon"
+        : "Non-production deploy honours ?mock= (QA states still work off prod)",
+      category: pass ? "working_as_designed" : isProd ? "unshipped" : "confirmed_bug",
+      pass,
+      evidence: `base=${baseURL} api source=${apiData?.source} age=${apiAgeMin}m · beacon?mock=up="${beaconState}" plain="${plainState}"`,
     });
   });
 });
@@ -2156,7 +2362,11 @@ test.describe("p14 live-prod audit · 3D flight view", () => {
     let ownBrowser: Awaited<ReturnType<typeof playwright.chromium.launch>> | null = null;
     let page = projectPage;
     if (browserName === "chromium") {
-      ownBrowser = await playwright.chromium.launch({ args: GL_ARGS });
+      ownBrowser = await playwright.chromium.launch({
+        args: GL_ARGS,
+        // Same override as playwright.config.ts (SS_CHROMIUM_EXECUTABLE_PATH).
+        executablePath: process.env.SS_CHROMIUM_EXECUTABLE_PATH || undefined,
+      });
       const ctx = await ownBrowser.newContext({
         baseURL,
         viewport,

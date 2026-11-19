@@ -1,3 +1,5 @@
+> Archived 2026-11-18. Historical hand-off material from the first build; paths in it are from that time. Current operating context: `AGENTS.md`.
+
 # SmokySignal — Claude Code Kickoff Prompt
 
 > Paste this entire file as your first message to Claude Code, working in the `smokysignal-app/` directory.

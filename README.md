@@ -33,7 +33,7 @@ npm run env:pull
 npm run dev
 ```
 
-Full setup: see `HOW_TO_HAND_OFF.md` §2.5.
+Full setup: see `docs/archive/HOW_TO_HAND_OFF.md` §2.5 (archived; may be dated).
 
 ---
 

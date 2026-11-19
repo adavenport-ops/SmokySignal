@@ -150,7 +150,8 @@ export async function getTrackSummary(tail: string): Promise<TrackSummary> {
   }
 
   // Sum LLEN across each day. Done sequentially — at most 35 days
-  // (matches our 35-day TTL on track keys), so 35 round-trips worst case.
+  // (the window this summary covers; keys themselves are permanent), so
+  // 35 round-trips worst case.
   let total = 0;
   for (const date of dates) {
     try {

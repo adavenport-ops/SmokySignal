@@ -67,7 +67,7 @@ export default async function TracksOverviewPage({
         }}
       >
         Position-history time-series — one Redis list per tail per UTC day,
-        35-day TTL, written by getSnapshot every cache regen while a tail is
+        kept permanently (no TTL), written by getSnapshot every cache regen while a tail is
         airborne. Tails with no samples are dimmed.
       </p>
 

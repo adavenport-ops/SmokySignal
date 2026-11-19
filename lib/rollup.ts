@@ -1,4 +1,4 @@
-// IO half of the permanent daily rollup. Reads the 35-day tracks:* tank
+// IO half of the permanent daily rollup. Reads the (now permanent) tracks:* tank
 // through the existing helpers, folds one UTC day into a DailyRollup
 // (lib/rollup-core.ts), and writes it with NO TTL:
 //

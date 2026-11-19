@@ -15,8 +15,9 @@ several GitHub Actions workflows; this file is the canonical surface for
 | `triage-finding.yml` | issue opened/labeled | applies `auto-fixable` / `needs-human` / `personalization-gap` |
 | `autofix-issue.yml` | issue labeled `auto-fixable` | opens PR with Sonnet-generated diff |
 | `close-issue-on-merge.yml` | PR merged | comments back-pointer on linked issues |
-| `heartbeat.yml` | cron hourly | KV write — Mac Mini liveness |
-| `build.yml` | every PR + push to main | tsc + Next.js build |
+| `feed-health.yml` | cron hourly | reads `/api/health`; opens or closes one `infra-alert` issue when the feed, snapshot age, adsb.fi or KV goes bad |
+| `deploy-watchdog.yml` | cron hourly | fails when the latest prod deploy is in ERROR |
+| `build.yml` | every PR + push to main | tsc + ESLint + unit tests + Next.js build |
 | `verify-prod` | manual / pre-push | `tests/visual/specs/p14-live-prod-audit.spec.ts` |
 
 ## What lives where
@@ -24,7 +25,9 @@ several GitHub Actions workflows; this file is the canonical surface for
 - **Persona files:** `tests/visual/personas/persona-files/persona-*.md` — 9 personas including `low-vision-rider` (P21).
 - **Mock state machine:** `lib/mock-state.ts` — `?mock=up|down|eyes-up|multiple|stale|learning|full-data`.
 - **Voice rules:** `.github/scripts/voice-gate.mjs` (banned vocab, emoji, exclamation marks). Source of truth: `design/BRAND.md` §3 + §8.
-- **Verify-prod spec:** `tests/visual/specs/p14-live-prod-audit.spec.ts` — 19 assertions as of P22.
+- **Mock state machine is off in production:** `?mock=` is ignored when `VERCEL_ENV=production`. Use `npm run dev` or a preview deploy.
+- **Verify-prod spec:** `tests/visual/specs/p14-live-prod-audit.spec.ts` — `npm run verify-prod` writes `/tmp/p14-audit/findings.json`.
+- **Liveness:** the helm pinger (`scripts/helm-pinger/`) refreshes the snapshot every 30s. `/api/health` reports `last_refresh_age_s`; the GitHub heartbeat workflow was retired.
 - **Visual diff:** `.github/scripts/visual-diff.sh` — ImageMagick-based, 5% pixel-ratio threshold.
 
 ## Manual checks the dashboard doesn't replace
@@ -36,7 +39,8 @@ several GitHub Actions workflows; this file is the canonical surface for
 
 ## Phase-4 v1 scope
 
-This page renders the Mac Mini heartbeat live, plus this static body. Auto-
+This page renders the last fleet refresh live (age of the cached health
+snapshot), plus this static body. Auto-
 regeneration of the body from issue counts + workflow run statistics is a
 follow-up — the data sources are all reachable (`gh` API, GitHub Actions
 runs API, `/api/health`), but wiring them into a live page renderer adds

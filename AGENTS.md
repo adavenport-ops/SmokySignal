@@ -11,6 +11,9 @@ Audience: Puget Sound motorcyclists. Brand voice: dark theme, mono numerics,
 - `npm run dev` — local dev server
 - `npm run build` — production build (must pass before push)
 - `npx tsc --noEmit` — type check
+- `npm test` — node:test units (`lib/**/*.test.ts` + `.github/scripts/**/*.test.mjs`)
+- `npm run lint` — ESLint flat config (`eslint.config.mjs`, next/core-web-vitals)
+- `npm run verify-prod` — live-prod audit (see below)
 - `cd tests/visual && npx playwright test` — visual + coherence specs
 
 ## Verification habits
@@ -24,10 +27,15 @@ Audience: Puget Sound motorcyclists. Brand voice: dark theme, mono numerics,
   DOM evidence from prod after the Vercel auto-deploy completes.
 - `npm run verify-prod` runs the canonical live-prod audit
   (`tests/visual/specs/p14-live-prod-audit.spec.ts`) against
-  smokysignal.app and writes findings + screenshots to
-  `/tmp/p14-audit/`. Add new claims to that spec when you ship a
-  user-visible feature, so the next audit catches regressions
-  automatically.
+  www.smokysignal.app and writes findings + screenshots to
+  `/tmp/p14-audit/` (`findings.json`, `run.log`). `-- desktop` adds
+  chromium-desktop, `-- all` runs every chromium project, `-- webkit`
+  adds webkit-mobile. It runs `npm ci` in tests/visual on first use but
+  never downloads browsers; set `SS_CHROMIUM_EXECUTABLE_PATH` to reuse an
+  installed Chromium. Exit 0 = no failures (indeterminate allowed),
+  1 = a claim failed, 2 = the run broke. Add new claims to that spec
+  when you ship a user-visible feature, so the next audit catches
+  regressions automatically.
 - Run `npm run build` before pushing — CI mirrors it.
 - Type-check via `npx tsc --noEmit` for fast feedback during edits.
 - For UI changes, manually exercise the page in dev — type checks don't
@@ -48,7 +56,9 @@ Four GitHub Actions / spec layers run in addition to `npm run verify-prod`:
   regex/wordlist (no LLM, no auth) checking rider-facing copy against
   `design/BRAND.md` §3+§8. Fails on banned vocab, emoji, exclamation
   marks. Posts P1 nudges as a comment. Source of truth: the rule lists
-  in `.github/scripts/voice-gate.mjs`.
+  in `.github/scripts/voice-gate.mjs` (tests + fixtures beside it;
+  "cop" is a whole-word match for cop/cops/copper so "helicopter",
+  "copy" and "scope" pass).
 - **PR persona walks** (`.github/workflows/persona-walk-pr.yml`) —
   every PR with rider-facing changes. Walks 3 personas (sport-bike-rider,
   skeptic, lurker) × routes inferred from the diff against the Vercel
@@ -70,10 +80,19 @@ JSON action log per (persona, route). Run alongside the static specs.
 
 ### Mock state machine
 
-`?mock=<state>` query param drives reproducible UI states for QA and
-persona walks. States: `up`, `down`, `eyes-up`, `multiple`, `stale`.
-Source: `lib/mock-state.ts`. Use these to validate copy/UX without
-waiting for a live event.
+`?mock=<state>` query param drives reproducible UI states for QA.
+States: `up`, `down`, `eyes-up`, `multiple`, `stale` (snapshot) and
+`learning`, `full-data` (forecast). Source: `lib/mock-state.ts`.
+
+**Off in production.** `parseMockState()` returns null whenever
+`VERCEL_ENV === "production"` (`mockStatesEnabled()`), so every page and
+API that reads it (home, radar, flights, forecast, plane, `/api/aircraft`,
+the beacon `/api/status.{txt,json}`, `/board`, `/glance`, `/embed`)
+ignores `?mock=` on smokysignal.app. Nobody can share a fake "all clear"
+link. It still works under `npm run dev` and on preview deploys; point
+specs at those with `SS_VISUAL_BASE_URL=...`. Against prod, p14 claims
+that need a mocked state record "indeterminate (mock disabled in prod)",
+and claim 62 asserts the gate itself.
 
 ## Architecture quick-reference
 
@@ -98,7 +117,7 @@ waiting for a live event.
 - `lib/bots/*` — Telegram DM alerts (read aloud in-car), Discord `/smokey`, Bluesky autopost. Env-gated, 503 `not_configured` until set; `dispatchBots()` rides the push `waitUntil` in `lib/activity.ts`. Setup: `docs/bots.md`
 - `lib/storage-keys.ts` — canonical KV key formatter (NX7 foundation; route all `tracks:*`/`spots:*`/`hotzones:*`/`flights:*` through this)
 - `components/FilterPanel.tsx` — radar filter UI (extracted from HotZoneLayer P16); multi-select roles supported
-- `app/(tabs)/` — main app routes (home, radar, dash, plane, settings, etc.)
+- `app/(tabs)/` — main app routes (home, radar, flights, plane, settings, etc.; /dash and /activity redirect to /flights)
 - `app/api/cron/` — scheduled refreshes (snapshot, hotzones, predictor)
 - `public/sw.js` — service worker (push + minimal offline shell: `/offline`, hashed chunks, icons; never API JSON or HTML)
 - `app/embed` (framable status widget, only path with `frame-ancestors *`), `app/glance` (handlebar screen), `app/calendar.ics` (busy-window feed), `lib/ics.ts`, `lib/glance.ts`, `lib/embed.ts`
@@ -120,8 +139,23 @@ waiting for a live event.
 
 - OpenSky was removed 2026-11 (integration, backfill scripts and
   `OPENSKY_*` env vars). adsb.fi has no historical equivalent, so the
-  track tank fills forward via the live cron only. Stored points tagged
+  track tank fills forward via the live feeds only. Stored points tagged
   `src: "os"` stay readable (`StoredFeedSrc` in `lib/types.ts`).
+- Data sources: adsb.fi + adsb.lol merged by ICAO hex (#153),
+  airplanes.live behind `SS_FEED_APL=1`. Track history is permanent:
+  `tracks:*` daily keys have no TTL since 2026-11-18 (#149; the legacy
+  35-day TTL was stripped).
+- Snapshot cadence: the helm launchd pinger (`scripts/helm-pinger/`,
+  #138) hits `/api/cron/refresh-snapshot` every 30s; the Vercel cron in
+  `vercel.json` is daily only (Hobby). Liveness is the snapshot age:
+  `/api/health` reports `snapshot_age_s` and `last_refresh_age_s`. The
+  GitHub `heartbeat.yml` workflow (and `last_heartbeat_*` fields) was
+  retired; it never had its KV secrets.
+- Feed-down alerting: `.github/workflows/feed-health.yml` (hourly) reads
+  `/api/health` and opens one `infra-alert` issue when `ok` is false,
+  `snapshot_age_s` > 600, `feeds.fi` is not ok, or `kv` is not ok, then
+  closes it on recovery. Rules: `.github/scripts/feed-health.mjs`.
+  `deploy-watchdog.yml` covers failed prod deploys.
 - Vercel preview-scope env vars for VAPID + ADMIN_PASSCODE are
   intentionally empty — `vercel env pull` cannot decrypt sensitive
   vars from production. Generate fresh values manually if you need

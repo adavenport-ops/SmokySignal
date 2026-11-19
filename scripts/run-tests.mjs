@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// `npm test` entry point. Collects every lib/**/*.test.ts file and hands
-// the explicit list to `tsx --test`.
+// `npm test` entry point. Collects every lib/**/*.test.ts file plus the CI
+// script tests (.github/scripts/**/*.test.mjs) and hands the explicit list
+// to `tsx --test`.
 //
 // Why not `tsx --test lib/**/*.test.ts` in package.json: npm runs scripts
 // through /bin/sh, which has no `**`, so the unquoted glob silently skips
@@ -11,17 +12,20 @@ import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 
-function collect(dir) {
+function collect(dir, suffix) {
   const out = [];
   for (const name of readdirSync(dir)) {
     const p = join(dir, name);
-    if (statSync(p).isDirectory()) out.push(...collect(p));
-    else if (name.endsWith(".test.ts")) out.push(p);
+    if (statSync(p).isDirectory()) out.push(...collect(p, suffix));
+    else if (name.endsWith(suffix)) out.push(p);
   }
   return out;
 }
 
-const files = collect("lib").sort();
+const files = [
+  ...collect("lib", ".test.ts"),
+  ...collect(join(".github", "scripts"), ".test.mjs"),
+].sort();
 if (files.length === 0) {
   console.error("run-tests: no lib/**/*.test.ts files found");
   process.exit(1);
