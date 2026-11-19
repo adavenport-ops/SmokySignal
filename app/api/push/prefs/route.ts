@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { updatePrefs } from "@/lib/push/store";
 import { validatePrefsInput } from "@/lib/push/validate";
 
@@ -9,6 +10,8 @@ export const dynamic = "force-dynamic";
 const SUB_ID_RE = /^[0-9a-f]{24}$/;
 
 export async function POST(req: Request) {
+  const limited = await enforceRateLimit(req, "push-prefs");
+  if (limited) return limited;
   let body: unknown;
   try {
     body = await req.json();

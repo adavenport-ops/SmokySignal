@@ -376,6 +376,21 @@ export default function RadarMap({
       popupRef.current?.remove();
       const meta = stateRef.current.metaByTail.get(tail);
       const label = meta?.nickname ?? tail;
+      // Build with DOM nodes + textContent (never setHTML): the nickname
+      // comes from the admin-editable registry and must not be parsed
+      // as markup.
+      const content = document.createElement("div");
+      content.style.font = "600 12px/1.4 ui-monospace,Menlo,monospace";
+      content.style.color = SS_TOKENS.bg0;
+      const labelEl = document.createElement("div");
+      labelEl.textContent = label;
+      const link = document.createElement("a");
+      link.href = `/plane/${encodeURIComponent(tail)}`;
+      link.textContent = "View detail";
+      link.style.color = SS_TOKENS.sky;
+      link.style.textDecoration = "underline";
+      link.style.fontWeight = "400";
+      content.append(labelEl, link);
       const popup = new maplibregl.Popup({
         closeButton: true,
         closeOnClick: false,
@@ -384,12 +399,7 @@ export default function RadarMap({
         className: "ss-plane-popup",
       })
         .setLngLat(pos)
-        .setHTML(
-          `<div style="font:600 12px/1.4 ui-monospace,Menlo,monospace;color:${SS_TOKENS.bg0}">` +
-            `<div>${label}</div>` +
-            `<a href="/plane/${tail}" style="color:${SS_TOKENS.sky};text-decoration:underline;font-weight:400">View detail</a>` +
-            `</div>`,
-        )
+        .setDOMContent(content)
         .addTo(map);
       popup.on("close", () => {
         if (followedTailRef.current === tail) {

@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 // a malformed query renders the same scope as a fresh-install client.
 function resolveBbox(url: URL): { regionId: RegionId; bbox: RegionBbox } {
   const idParam = url.searchParams.get("region_id");
-  if (idParam && idParam in REGIONS) {
+  if (idParam && Object.hasOwn(REGIONS, idParam)) {
     const id = idParam as RegionId;
     return { regionId: id, bbox: REGIONS[id].bbox };
   }

@@ -7,24 +7,13 @@ import { getRedis } from "@/lib/cache";
 import { isAdminAuthed, isAdminPasscodeConfigured } from "@/lib/admin-auth";
 import { LoginForm } from "../LoginForm";
 import { SS_TOKENS } from "@/lib/tokens";
+import { toViewRow, type DryRunViewRow } from "@/lib/dryrun-payload";
+import { dryrunWarningsKey } from "@/lib/storage-keys";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "SmokySignal · Admin · Dry-run warnings",
   robots: { index: false, follow: false },
-};
-
-type DryRunRecord = {
-  ts: number;
-  riderLat: number;
-  riderLon: number;
-  riderSpeedMph: number;
-  postedLimitMph: number;
-  riderOverLimitBy: number;
-  nearestZoneMi: number | null;
-  nearestBirdMi: number | null;
-  nearestTail: string | null;
-  reason: string;
 };
 
 function utcDateKey(d: Date): string {
@@ -34,25 +23,25 @@ function utcDateKey(d: Date): string {
   return `${y}${m}${day}`;
 }
 
-function parse(raw: unknown): DryRunRecord | null {
+function parse(raw: unknown): DryRunViewRow | null {
   if (raw == null) return null;
   if (typeof raw === "string") {
     try {
-      return JSON.parse(raw) as DryRunRecord;
+      return toViewRow(JSON.parse(raw));
     } catch {
       return null;
     }
   }
-  return raw as DryRunRecord;
+  return toViewRow(raw);
 }
 
-async function fetchToday(): Promise<DryRunRecord[]> {
+async function fetchToday(): Promise<DryRunViewRow[]> {
   const redis = await getRedis();
   if (!redis) return [];
-  const key = `dryrun-warnings:${utcDateKey(new Date())}`;
+  const key = dryrunWarningsKey(utcDateKey(new Date()));
   try {
     const raw = (await redis.lrange(key, 0, -1)) as unknown[];
-    return raw.map(parse).filter((r): r is DryRunRecord => r !== null);
+    return raw.map(parse).filter((r): r is DryRunViewRow => r !== null);
   } catch {
     return [];
   }
@@ -95,6 +84,12 @@ export default async function DryRunPage() {
           tracked bird was within 5 nm. No rider-facing surface yet —
           this is the data we&rsquo;ll tune the threshold against.
         </p>
+        <p style={{ color: SS_TOKENS.fg2, fontSize: 12, marginTop: 6 }}>
+          Records hold only coarse buckets: over-limit band, hot-zone
+          cell, tail, and distance to 0.5 nm. Rider speed and position
+          are not stored. Rows marked legacy predate this format and are
+          shown bucketed.
+        </p>
       </header>
 
       {records.length === 0 ? (
@@ -118,7 +113,7 @@ export default async function DryRunPage() {
   );
 }
 
-function Table({ records }: { records: DryRunRecord[] }) {
+function Table({ records }: { records: DryRunViewRow[] }) {
   return (
     <div
       style={{
@@ -140,12 +135,11 @@ function Table({ records }: { records: DryRunRecord[] }) {
         <thead style={{ background: SS_TOKENS.bg2 }}>
           <tr>
             <Th>UTC time</Th>
-            <Th align="right">Speed</Th>
-            <Th align="right">Limit</Th>
-            <Th align="right">Over by</Th>
-            <Th align="right">Zone nm</Th>
+            <Th align="right">Over by (mph)</Th>
+            <Th>Zone cell</Th>
             <Th align="right">Bird nm</Th>
             <Th>Tail</Th>
+            <Th>Format</Th>
           </tr>
         </thead>
         <tbody>
@@ -162,16 +156,13 @@ function Table({ records }: { records: DryRunRecord[] }) {
                     .toISOString()
                     .slice(11, 19)}
                 </Td>
-                <Td align="right">{r.riderSpeedMph.toFixed(0)}</Td>
-                <Td align="right">{r.postedLimitMph.toFixed(0)}</Td>
-                <Td align="right">{r.riderOverLimitBy.toFixed(0)}</Td>
+                <Td align="right">{r.overLimitBy ?? "—"}</Td>
+                <Td>{r.nearestZoneId ?? "—"}</Td>
                 <Td align="right">
-                  {r.nearestZoneMi == null ? "—" : r.nearestZoneMi.toFixed(2)}
-                </Td>
-                <Td align="right">
-                  {r.nearestBirdMi == null ? "—" : r.nearestBirdMi.toFixed(2)}
+                  {r.nearestBirdNm == null ? "—" : r.nearestBirdNm.toFixed(1)}
                 </Td>
                 <Td>{r.nearestTail ?? "—"}</Td>
+                <Td>{r.legacy ? "legacy" : "v2"}</Td>
               </tr>
             ))}
         </tbody>

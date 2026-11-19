@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { SubscriberCapError, saveSubscription } from "@/lib/push/store";
 import { parsePushSubscription, validatePrefsInput } from "@/lib/push/validate";
 
@@ -6,6 +7,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const limited = await enforceRateLimit(req, "push-subscribe");
+  if (limited) return limited;
   let body: unknown;
   try {
     body = await req.json();

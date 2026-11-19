@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { checkRateLimit, clientIpFrom } from "@/lib/rate-limit";
 import {
   setAdminCookie,
   clearAdminCookie,
@@ -54,7 +56,14 @@ const VALID_NEXT_TARGETS: Record<string, string> = {
 export async function authenticateAction(formData: FormData) {
   const passcode = s(formData, "passcode");
   const nextRaw = s(formData, "next");
-  if (!passcode || !verifyPasscode(passcode)) {
+  // Brute-force guard: 5 attempts per IP per 15 min (lib/rate-limit.ts).
+  // A throttled attempt gets the same generic "invalid" bounce as a wrong
+  // passcode, and the passcode is not checked at all while throttled.
+  const limit = await checkRateLimit(
+    "admin-login",
+    clientIpFrom(headers()),
+  );
+  if (!limit.ok || !passcode || !verifyPasscode(passcode)) {
     const errPath = VALID_NEXT_TARGETS[nextRaw] ?? "/admin";
     const params = new URLSearchParams({ error: "invalid" });
     if (nextRaw && VALID_NEXT_TARGETS[nextRaw]) {

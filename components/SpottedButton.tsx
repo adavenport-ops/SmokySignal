@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { SS_TOKENS } from "@/lib/tokens";
 import { haversineNm } from "@/lib/geo";
+import { roundDecimals } from "@/lib/input-validation";
+import { SPOT_COORD_DECIMALS } from "@/lib/spot-payload";
 import type { Aircraft } from "@/lib/types";
 import { Tooltip } from "./Tooltip";
 
@@ -102,9 +104,11 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
       const r = await fetch("/api/spot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // Coarsen on-device too; the server re-rounds before storing
+        // (lib/spot-payload.ts), so this is defense in depth.
         body: JSON.stringify({
-          lat: riderLat,
-          lon: riderLon,
+          lat: roundDecimals(riderLat, SPOT_COORD_DECIMALS),
+          lon: roundDecimals(riderLon, SPOT_COORD_DECIMALS),
           ts,
           airborne_tails: payloadTails,
         }),
