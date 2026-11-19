@@ -57,6 +57,7 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
           SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
@@ -65,8 +66,13 @@ jobs:
             exit 0
           fi
           for i in $(seq 1 24); do
-            RESP=$(curl -fsS -H "Authorization: Bearer $VERCEL_TOKEN" \
-              "https://api.vercel.com/v6/deployments?projectId=$VERCEL_PROJECT_ID&meta-githubCommitSha=$SHA&limit=1" || true)
+            TEAM_Q=""; [ -n "$VERCEL_TEAM_ID" ] && TEAM_Q="&teamId=$VERCEL_TEAM_ID"
+            RESP=$(curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v6/deployments?projectId=$VERCEL_PROJECT_ID$TEAM_Q&meta-githubCommitSha=$SHA&limit=1" || true)
+            if echo "$RESP" | jq -e '.error' >/dev/null 2>&1; then
+              echo "::error::Vercel API: $(echo "$RESP" | jq -c '.error | {code, message, invalidToken}')"
+              exit 1
+            fi
             STATE=$(echo "$RESP" | jq -r '.deployments[0].state // ""')
             URL=$(echo "$RESP" | jq -r '.deployments[0].url // ""')
             echo "[try $i] state=$STATE url=$URL"
@@ -95,6 +101,7 @@ jobs:
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
           if [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
             echo "::warning::Neither CLAUDE_CODE_OAUTH_TOKEN nor ANTHROPIC_API_KEY set — running --no-review."

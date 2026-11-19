@@ -13,6 +13,14 @@ export default defineConfig({
   ],
   use: {
     baseURL: BASE,
+    // Preview deploys are behind Vercel Authentication; CI passes the
+    // automation bypass secret. No-op against prod.
+    extraHTTPHeaders: process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+      ? {
+          "x-vercel-protection-bypass": process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+          "x-vercel-set-bypass-cookie": "true",
+        }
+      : undefined,
     screenshot: "on",
     trace: "retain-on-failure",
     video: "off",
