@@ -21,7 +21,7 @@ import {
   parseMissionsParam,
 } from "./mission";
 import { missionLabel } from "./role-display";
-import { ROUTE_COLOR } from "./radar-zoom";
+import { DEFAULT_PALETTE, PALETTES, assignPaletteTailColors, type RadarPalette } from "./radar-palettes";
 import type { Mission } from "./types";
 
 /** First Pacific date with permanent track history on record. */
@@ -311,38 +311,28 @@ export function sameHistoryState(a: HistoryState | null, b: HistoryState | null)
 // ─── colours ─────────────────────────────────────────────────────────
 
 /**
- * Per-tail history line colours. Cool and low-saturation on purpose:
- * orange means a live Smokey (lib/tokens.ts), green means all clear, and
- * the rider's dot is sky blue, so history stays in slate / teal / violet
- * territory where nothing reads as live. Slot 0 is the radar's route
- * colour so a single tail matches the 30-day threads.
+ * Per-tail history line colours come from the rider's radar palette
+ * (lib/radar-palettes.ts): six distinct colours that stay out of that
+ * palette's heat hues and away from alert orange, all-clear green and
+ * the rider's sky-blue dot. These two constants are the default (Ember)
+ * set, kept for callers that have no palette in hand.
  */
-export const HISTORY_TAIL_PALETTE = [
-  ROUTE_COLOR, // slate blue
-  "#7FC8C2", // muted teal
-  "#B9A3E3", // lavender
-  "#8EC5E8", // powder blue
-  "#D6A3DA", // orchid
-  "#C3CCDA", // steel
-] as const;
+export const HISTORY_TAIL_PALETTE = PALETTES[DEFAULT_PALETTE].history.tails;
 
 /** One colour for every line once more than PER_TAIL_COLOR_MAX tails show. */
-export const HISTORY_SINGLE_COLOR = ROUTE_COLOR;
+export const HISTORY_SINGLE_COLOR = PALETTES[DEFAULT_PALETTE].history.many;
 
 /**
  * Tail → line colour. Tails are de-duped and sorted so the mapping is
  * stable across reloads and shared links. Six or fewer → one palette slot
- * each; more → all HISTORY_SINGLE_COLOR (a legend of 20 near-identical
- * pastels helps nobody).
+ * each; more → all the palette's "many" colour (a legend of 20
+ * near-identical colours helps nobody).
  */
-export function assignTailColors(tails: readonly string[]): Record<string, string> {
-  const uniq = [...new Set(tails.map((t) => t.toUpperCase()))].sort();
-  const out: Record<string, string> = {};
-  const perTail = uniq.length <= PER_TAIL_COLOR_MAX;
-  uniq.forEach((t, i) => {
-    out[t] = perTail ? HISTORY_TAIL_PALETTE[i]! : HISTORY_SINGLE_COLOR;
-  });
-  return out;
+export function assignTailColors(
+  tails: readonly string[],
+  palette: RadarPalette = PALETTES[DEFAULT_PALETTE],
+): Record<string, string> {
+  return assignPaletteTailColors(palette, tails, PER_TAIL_COLOR_MAX);
 }
 
 /** Hue in degrees (0-360) of a #rrggbb colour; null for greys. */

@@ -55,12 +55,15 @@ import { fitPadding, type Padding } from "@/lib/radar-view";
 import {
   historyLineAt,
   setHistoryData,
+  setHistoryPalette,
   setHistorySelected,
   setHistoryVisible,
   type HistoryLineKey,
 } from "@/lib/history-layers";
 import { useHistory } from "@/lib/hooks/useHistory";
 import { useHistoryLayers } from "@/lib/hooks/useHistoryLayers";
+import { useRadarPalette } from "@/lib/hooks/useRadarPalette";
+import type { PaletteId } from "@/lib/radar-palettes";
 import type { Mission } from "@/lib/types";
 import { Chip, Eyebrow, FlightMiniCard, PeriodPicker, useIsDesktop } from "./HistoryControls";
 
@@ -115,6 +118,8 @@ type Props = {
   bannerTop: number;
   /** CSS bottom for the summary chip / flight card, above the pill row. */
   chipBottom: string;
+  /** Palette the server rendered with (ss_palette cookie). */
+  initialPalette?: PaletteId;
 };
 
 function defaultState(today: string): HistoryState {
@@ -131,7 +136,9 @@ export function HistoryOverlay({
   insets,
   bannerTop,
   chipBottom,
+  initialPalette,
 }: Props) {
+  const [palette] = useRadarPalette(initialPalette);
   const [today, setToday] = useState<string | null>(null);
   const [applied, setApplied] = useState<HistoryState | null>(null);
   const [selected, setSelected] = useState<HistoryLineKey | null>(null);
@@ -174,13 +181,19 @@ export function HistoryOverlay({
   const body = hist.status === "ready" && hist.query === query ? hist.body : null;
 
   const colors = useMemo(
-    () => (body ? assignTailColors(body.polylines.map((p) => p.tail)) : {}),
-    [body],
+    () => (body ? assignTailColors(body.polylines.map((p) => p.tail), palette) : {}),
+    [body, palette],
   );
   const lines = useMemo(() => (body ? polylinesToGeoJSON(body.polylines, colors) : null), [body, colors]);
   const heat = useMemo(() => (body ? heatToGeoJSON(body.heat.cells) : null), [body]);
 
   const layersReady = useHistoryLayers(map, { heat: true });
+
+  // Heat in history mode follows the rider's palette too.
+  useEffect(() => {
+    if (!map || !layersReady) return;
+    setHistoryPalette(map, palette);
+  }, [map, layersReady, palette]);
 
   // Push data + visibility. Loading and error states clear the lines so
   // the banner's range never sits over a different range's tracks.

@@ -19,6 +19,7 @@ import maplibregl, {
   type StyleSpecification,
   type SourceSpecification,
 } from "maplibre-gl";
+import { applyNeutralBasemap, basemapStyleUrl } from "@/lib/basemap";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { WebMercatorViewport, type Layer } from "@deck.gl/core";
@@ -819,7 +820,7 @@ export default function Flight3D({
       map = new maplibregl.Map({
         container: el,
         style: key
-          ? `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${key}`
+          ? basemapStyleUrl(key)
           : bareStyle(),
         center,
         zoom: 9,
@@ -898,6 +899,7 @@ export default function Flight3D({
 
     map.on("load", async () => {
       loaded = true;
+      applyNeutralBasemap(map);
       const key = demKey;
       const layers = map.getStyle().layers ?? [];
       const firstSymbol = layers.find((l) => l.type === "symbol")?.id;
@@ -911,7 +913,7 @@ export default function Flight3D({
           paint: {
             "hillshade-exaggeration": 0.55,
             "hillshade-shadow-color": "#000000",
-            "hillshade-highlight-color": "#4a5364",
+            "hillshade-highlight-color": "#4c4c4c",
             "hillshade-accent-color": "#0B0D10",
             "hillshade-illumination-direction": 315,
           },

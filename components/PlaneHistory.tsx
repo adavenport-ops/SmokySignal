@@ -15,6 +15,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import maplibregl, { Map as MaplibreMap, NavigationControl } from "maplibre-gl";
+import { applyNeutralBasemap, basemapStyleUrl } from "@/lib/basemap";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { HistoryBody } from "@/lib/history-core";
@@ -40,6 +41,7 @@ import {
 } from "@/lib/history-layers";
 import { useHistory } from "@/lib/hooks/useHistory";
 import { useHistoryLayers } from "@/lib/hooks/useHistoryLayers";
+import { useRadarPalette } from "@/lib/hooks/useRadarPalette";
 import { FlightMiniCard, PeriodPicker, Stat } from "./HistoryControls";
 
 const MAP_HEIGHT = 260;
@@ -163,7 +165,7 @@ function HistoryMap({
     if (!key) return;
     const m = new maplibregl.Map({
       container: containerRef.current,
-      style: `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${key}`,
+      style: basemapStyleUrl(key),
       center: PUGET_SOUND,
       zoom: 7,
       attributionControl: { compact: true },
@@ -171,7 +173,10 @@ function HistoryMap({
     });
     m.addControl(new NavigationControl({ showCompass: false }), "top-right");
     m.touchZoomRotate.disableRotation();
-    const onLoad = () => setMap(m);
+    const onLoad = () => {
+      applyNeutralBasemap(m);
+      setMap(m);
+    };
     m.on("load", onLoad);
     return () => {
       m.off("load", onLoad);
@@ -181,7 +186,8 @@ function HistoryMap({
   }, []);
 
   const ready = useHistoryLayers(map, { heat: false });
-  const colors = useMemo(() => assignTailColors([tail]), [tail]);
+  const [palette] = useRadarPalette();
+  const colors = useMemo(() => assignTailColors([tail], palette), [tail, palette]);
   const lines = useMemo(() => (body ? polylinesToGeoJSON(body.polylines, colors) : null), [body, colors]);
 
   useEffect(() => {

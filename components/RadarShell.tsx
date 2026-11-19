@@ -47,6 +47,7 @@ import {
 } from "@/lib/radar-filter";
 import type { Aircraft, FleetEntry, Snapshot } from "@/lib/types";
 import type { LearningState } from "@/lib/learning";
+import type { PaletteId } from "@/lib/radar-palettes";
 
 export type RiderPos = { lat: number; lon: number };
 
@@ -63,7 +64,24 @@ const RadarMap = nextDynamic(() => import("./RadarMap"), {
   ),
 });
 
+// Phone tab bar height. From 1024 px the bar becomes a left rail
+// (app/globals.css sets --ss-tabbar-h to 0 there), so bottom overlays
+// drop to the screen edge instead of floating over an empty band.
 const TABBAR_HEIGHT = 66;
+const TABBAR_CSS = "var(--ss-tabbar-h, 66px)";
+const RAIL_QUERY = "(min-width: 1024px)";
+
+function useTabbarHeight(): number {
+  const [h, setH] = useState(TABBAR_HEIGHT);
+  useEffect(() => {
+    const mq = window.matchMedia(RAIL_QUERY);
+    const sync = () => setH(mq.matches ? 0 : TABBAR_HEIGHT);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  return h;
+}
 /** Top of the region picker + freshness row, just under the header. */
 const PICKER_TOP = 60;
 
@@ -73,6 +91,8 @@ type Props = {
   learning?: LearningState;
   /** ms-since-epoch of the most recent track sample. null = unknown. */
   lastSampleMs?: number | null;
+  /** Radar colour palette from the ss_palette cookie (lib/user-prefs.ts). */
+  palette?: PaletteId;
 };
 
 export function RadarShell({
@@ -80,6 +100,7 @@ export function RadarShell({
   mockOn = false,
   learning,
   lastSampleMs = null,
+  palette,
 }: Props) {
   const snap = useAircraft(initial, mockOn);
   const fleetMap = useMemo(
@@ -242,17 +263,18 @@ export function RadarShell({
   // first time their position resolves (the picker then reads Custom).
 
   const bottomBoost = airborne.length > 0 ? 130 : 0;
+  const tabbarH = useTabbarHeight();
   // Overlay space the fit keeps the region box clear of: header on top;
   // tab bar + pill row (+ carousel when planes are up) at the bottom.
   const fitInsets = useMemo(
     () => ({
       // Header + the picker row under it.
       top: PICKER_TOP + 44 + 12,
-      bottom: TABBAR_HEIGHT + 16 + 44 + 12 + bottomBoost,
+      bottom: tabbarH + 16 + 44 + 12 + bottomBoost,
       left: 16,
       right: 16,
     }),
-    [bottomBoost],
+    [bottomBoost, tabbarH],
   );
   const historyInsets = useMemo(
     () => ({
@@ -264,17 +286,14 @@ export function RadarShell({
     }),
     [fitInsets],
   );
-  const rowBottom = TABBAR_HEIGHT + 16 + bottomBoost;
+  const rowBottom = tabbarH + 16 + bottomBoost;
 
   return (
     <main
-      // ss-type-floor lifts sub-12px overlay text from shared panels
-      // (LearningPanel) to the 12px floor.
-      className="ss-type-floor"
       style={{
         position: "fixed",
         inset: 0,
-        paddingBottom: TABBAR_HEIGHT,
+        paddingBottom: TABBAR_CSS,
       }}
     >
       {viewHydrated && (
@@ -289,6 +308,7 @@ export function RadarShell({
           onLeaveView={() => setViewCustom(true)}
           onMapReady={setMap}
           cameraLocked={historyOn}
+          palette={palette}
         />
       )}
       <HotZoneLayer
@@ -296,8 +316,9 @@ export function RadarShell({
         bottomBoost={airborne.length > 0 ? 130 : 0}
         learning={learning}
         suppressed={historyOn}
+        initialPalette={palette}
       />
-      <FlightPathLayer map={map} suppressed={historyOn} />
+      <FlightPathLayer map={map} suppressed={historyOn} initialPalette={palette} />
       <UserZoneLayer map={map} />
       <AircraftTrailLayer map={map} airborne={airborne} hidden={historyOn} />
       <HistoryOverlay
@@ -313,9 +334,12 @@ export function RadarShell({
         insets={historyInsets}
         bannerTop={PICKER_TOP}
         chipBottom={`calc(${rowBottom + 80}px + var(--ss-install-prompt-h, 0px))`}
+        initialPalette={palette}
       />
       <AddZoneButton
-        top={52 + topShift}
+        // Under the freshness chip (top 60, ~34 px tall), so a long
+        // "SAMPLE UNKNOWN" label never runs over it on a phone.
+        top={PICKER_TOP + 44 + topShift}
         rider={rider}
         onAdded={(label) => flashToast(setToast, `Zone "${label}" added`)}
       />
@@ -323,8 +347,8 @@ export function RadarShell({
         active={showRings}
         onToggle={() => setShowRings((v) => !v)}
         bottom={`calc(${
-          TABBAR_HEIGHT + 16 + (airborne.length > 0 ? 130 : 0)
-        }px + var(--ss-install-prompt-h, 0px))`}
+          16 + (airborne.length > 0 ? 130 : 0)
+        }px + ${TABBAR_CSS} + var(--ss-install-prompt-h, 0px))`}
         disabled={!rider}
         raised={!historyOn}
         trailing={
@@ -347,8 +371,8 @@ export function RadarShell({
             position: "absolute",
             left: 12,
             bottom: `calc(${
-              TABBAR_HEIGHT + 16 + (airborne.length > 0 ? 130 : 0) + 88
-            }px + var(--ss-install-prompt-h, 0px))`,
+              16 + (airborne.length > 0 ? 130 : 0) + 88
+            }px + ${TABBAR_CSS} + var(--ss-install-prompt-h, 0px))`,
             zIndex: 12,
           }}
         >
@@ -501,7 +525,7 @@ function AddZoneButton({
         style={{
           position: "absolute",
           top,
-          left: 56,
+          left: 12,
           width: 44,
           height: 44,
           borderRadius: "50%",
@@ -535,7 +559,7 @@ function Toast({
 }) {
   // Sit just above whatever's currently anchored to the bottom — carousel
   // when present, tab bar otherwise.
-  const bottomOffset = hasCarousel ? TABBAR_HEIGHT + 130 : TABBAR_HEIGHT + 16;
+  const bottomOffset = `calc(${TABBAR_CSS} + ${hasCarousel ? 130 : 16}px)`;
   return (
     <div
       role="status"
@@ -603,7 +627,7 @@ function Carousel({ airborne }: { airborne: Aircraft[] }) {
         position: "absolute",
         left: 0,
         right: 0,
-        bottom: TABBAR_HEIGHT,
+        bottom: TABBAR_CSS,
         padding: "8px 16px 12px",
         background:
           "linear-gradient(to top, rgba(11,13,16,.92) 60%, rgba(11,13,16,0))",

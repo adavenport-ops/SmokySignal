@@ -2270,7 +2270,7 @@ test.describe("p14 live-prod audit", () => {
     });
   });
 
-  test("62. ?mock= is ignored on production (no shareable fake all-clear)", async ({
+  test("58. ?mock= is ignored on production (no shareable fake all-clear)", async ({
     request,
     baseURL,
   }) => {
@@ -2296,6 +2296,58 @@ test.describe("p14 live-prod audit", () => {
       evidence: `base=${baseURL} api source=${apiData?.source} age=${apiAgeMin}m · beacon?mock=up="${beaconState}" plain="${plainState}"`,
     });
   });
+
+  test("59. /radar Colors picker repaints the heat in place and the cookie survives a reload (radar palettes)", async ({
+    page,
+    context,
+  }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    page.on("console", (m) => {
+      if (m.type() === "error" && /maplibre|layer|source|style|paint/i.test(m.text())) errors.push(m.text());
+    });
+    await context.clearCookies({ name: "ss_palette" }).catch(() => {});
+    await page.goto("/radar", { waitUntil: "domcontentloaded" });
+    // HotZoneLayer stamps the map container with the palette id and the
+    // heatmap-color it reads back from MapLibre after each paint call.
+    const heatColor = () =>
+      page.locator("[data-heat-color]").first().getAttribute("data-heat-color").catch(() => null);
+    const paletteAttr = () =>
+      page.locator("[data-heat-color]").first().getAttribute("data-palette").catch(() => null);
+    await page.waitForSelector("[data-heat-color]", { timeout: 30_000 }).catch(() => {});
+    const before = await heatColor();
+    const beforeId = await paletteAttr();
+    const target = beforeId === "magma" ? "mono" : "magma";
+    const label = target === "magma" ? "Magma colors" : "Mono colors";
+    await page.getByRole("button", { name: "Radar filters" }).click().catch(() => {});
+    await page.getByRole("button", { name: label }).click().catch(() => {});
+    await page
+      .waitForFunction(
+        (id) => document.querySelector("[data-heat-color]")?.getAttribute("data-palette") === id,
+        target,
+        { timeout: 10_000 },
+      )
+      .catch(() => {});
+    const after = await heatColor();
+    const cookie = (await context.cookies()).find((c) => c.name === "ss_palette")?.value ?? null;
+    const screenshot = await shot(page, "62-radar-palette");
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForSelector("[data-heat-color]", { timeout: 30_000 }).catch(() => {});
+    const reloadedId = await paletteAttr();
+    const reloadedColor = await heatColor();
+    const repainted = !!before && !!after && before !== after;
+    const persisted = cookie === target && reloadedId === target && reloadedColor === after;
+    const pass = repainted && persisted && errors.length === 0;
+    record({
+      claim:
+        "Picking a palette in the /radar layers panel changes the heat layer's heatmap-color without a reload, and the ss_palette cookie keeps it across a reload",
+      category: pass ? "working_as_designed" : before ? "confirmed_bug" : "unshipped",
+      pass,
+      evidence: `before=${beforeId} target=${target} repainted=${repainted} cookie=${cookie} reloaded=${reloadedId} sameColorAfterReload=${reloadedColor === after} errors=${errors.length}${errors.length ? `: ${errors.slice(0, 2).join(" | ")}` : ""}`,
+      screenshot,
+    });
+    await context.clearCookies({ name: "ss_palette" }).catch(() => {});
+  });
 });
 
 // 3D flight view needs a WebGL2 context. Headless Chromium only exposes one
@@ -2310,7 +2362,7 @@ const GL_ARGS = [
 ];
 
 test.describe("p14 live-prod audit · 3D flight view", () => {
-  test("56. /flight/<tail>/<id>?view=3d renders a WebGL2 canvas with no console errors", async ({
+  test("60. /flight/<tail>/<id>?view=3d renders a WebGL2 canvas with no console errors", async ({
     page: projectPage,
     request,
     playwright,
@@ -2469,7 +2521,7 @@ async function minFontSize(page: Page): Promise<{ min: number; text: string | nu
 }
 
 test.describe("p14 live-prod audit · navigation", () => {
-  test("58. the tab bar has exactly 5 items: Home, Radar, Flights, Alerts, More", async ({ page }) => {
+  test("61. the tab bar has exactly 5 items: Home, Radar, Flights, Alerts, More", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     const items = page.locator('nav[aria-label="Main"] > a, nav[aria-label="Main"] > button');
     const labels = (await items.allInnerTexts()).map((t) => t.trim());
@@ -2491,7 +2543,7 @@ test.describe("p14 live-prod audit · navigation", () => {
     expect(pass).toBe(true);
   });
 
-  test("59. /dash and /activity redirect to /flights, keeping ?mock", async ({ page, request }) => {
+  test("62. /dash and /activity redirect to /flights, keeping ?mock", async ({ page, request }) => {
     const dash = await request.get("/dash?mock=up", { maxRedirects: 0 });
     const act = await request.get("/activity", { maxRedirects: 0 });
     const dashLoc = dash.headers()["location"] ?? "";
@@ -2516,7 +2568,7 @@ test.describe("p14 live-prod audit · navigation", () => {
     expect(pass).toBe(true);
   });
 
-  test("60. the desktop rail is present on /radar at 1440 and the map clears it", async ({ browser }) => {
+  test("63. the desktop rail is present on /radar at 1440 and the map clears it", async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await ctx.newPage();
     try {
@@ -2545,7 +2597,7 @@ test.describe("p14 live-prod audit · navigation", () => {
     }
   });
 
-  test("61. /about and /flights render no text below 12px at 390 wide", async ({ browser }) => {
+  test("64. /about and /flights render no text below 12px at 390 wide", async ({ browser }) => {
     const ctx = await browser.newContext({
       viewport: { width: 390, height: 844 },
       deviceScaleFactor: 3,
@@ -2573,7 +2625,7 @@ test.describe("p14 live-prod audit · navigation", () => {
     }
   });
 
-  test("62. /settings shows the Speed warning toggle, default off, with the on-device explainer (N1b)", async ({
+  test("65. /settings shows the Speed warning toggle, default off, with the on-device explainer (N1b)", async ({
     browser,
   }) => {
     // Fresh context: no localStorage, so this is the first-visit default.

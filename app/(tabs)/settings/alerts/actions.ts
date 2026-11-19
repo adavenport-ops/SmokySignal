@@ -8,6 +8,7 @@ import {
   type ContrastMode,
   type TimeFormat,
 } from "@/lib/user-prefs";
+import { PALETTE_COOKIE } from "@/lib/radar-palettes";
 
 const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60;
 
@@ -51,5 +52,6 @@ export async function resetPreferenceCookiesAction(): Promise<void> {
   const jar = cookies();
   jar.delete(TIME_FORMAT_COOKIE);
   jar.delete(CONTRAST_COOKIE);
+  jar.delete(PALETTE_COOKIE);
   revalidatePath("/", "layout");
 }

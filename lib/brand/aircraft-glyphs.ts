@@ -199,6 +199,66 @@ export function aircraftSvg(
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" data-role="${role}">${inner}</svg>`;
 }
 
+// ── LIVE MARKER (radar) ──────────────────────────────────────────────────
+// With warm heat palettes (Ember, Magma) an orange-stroked glyph can sit
+// on orange heat. The live marker on /radar wraps the glyph so it never
+// gets lost: a near-white glyph on a dark halo disc, ringed by its
+// identity colour. Police (alert glyphs) get the alert-orange ring and a
+// pulse; every other mission gets a neutral ring and no pulse. The disc
+// colour comes from the rider's palette (lib/radar-palettes.ts, `live`);
+// the ring colours never change with the palette.
+export const LIVE_GLYPH = {
+  /** Glyph fill for every live tail. */
+  fill: "#FFFFFF",
+  /** Non-police glyphs: still light, a step down from police white. */
+  mutedFill: "#C9CED6",
+  /** Police ring and pulse. */
+  alertRing: ALERT_STROKE,
+  /** Every other mission. */
+  neutralRing: "#8A919C",
+} as const;
+
+/** Live marker canvas in CSS px (the glyph's 24-unit box sits inside). */
+export const LIVE_MARKER_SIZE = 44;
+const LIVE_DISC_R = 17;
+const LIVE_RING_W = 2.4;
+
+export type LiveMarkerOpts = {
+  /** Halo disc colour + opacity (palette `live`). */
+  halo: string;
+  haloOpacity: number;
+  /** Output pixel size; defaults to LIVE_MARKER_SIZE. Render at 2x for
+   *  a crisp bitmap and pass pixelRatio 2 to map.addImage. */
+  size?: number;
+};
+
+/** Glyph keys that get the alert (police) treatment. */
+export function isAlertGlyph(role: GlyphRole): boolean {
+  return ROLES[role].alert;
+}
+
+/** SVG for a live radar marker: halo disc, identity ring, near-white
+ *  glyph. North-up like the bare glyph; the map rotates it by track. */
+export function liveAircraftSvg(role: GlyphRole, opts: LiveMarkerOpts): string {
+  const r = ROLES[role];
+  const size = opts.size ?? LIVE_MARKER_SIZE;
+  const c = LIVE_MARKER_SIZE / 2;
+  const ring = r.alert ? LIVE_GLYPH.alertRing : LIVE_GLYPH.neutralRing;
+  const glyph =
+    r.family === "plane"
+      ? r.alert
+        ? planeBody(LIVE_GLYPH.fill, ALERT_STROKE) + planeBlip()
+        : planeBody(LIVE_GLYPH.mutedFill, null)
+      : r.alert
+        ? heliBody(LIVE_GLYPH.fill, ALERT_STROKE) + heliBlip()
+        : heliBody(LIVE_GLYPH.mutedFill, null);
+  // Glyph drawn at 28 of the 44 units (its 24-unit box scaled 7/6) so it
+  // reads the same size as the bare 27 px glyph it replaces.
+  const GLYPH = 28;
+  const off = c - GLYPH / 2;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${LIVE_MARKER_SIZE} ${LIVE_MARKER_SIZE}" width="${size}" height="${size}" data-role="${role}"><circle cx="${c}" cy="${c}" r="${LIVE_DISC_R}" fill="${opts.halo}" fill-opacity="${opts.haloOpacity}"/><circle cx="${c}" cy="${c}" r="${LIVE_DISC_R + LIVE_RING_W / 2}" fill="none" stroke="${ring}" stroke-width="${LIVE_RING_W}"/><g transform="translate(${off} ${off}) scale(${GLYPH / 24})">${glyph}</g></svg>`;
+}
+
 /**
  * Conservative legacy fallback when a call site has only a model string and
  * no role. Used by surfaces that haven't been migrated to role-aware data

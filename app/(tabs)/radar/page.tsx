@@ -3,6 +3,7 @@ import { getSnapshot } from "@/lib/snapshot";
 import { applyMockState, parseMockState } from "@/lib/mock-state";
 import { getLearningState } from "@/lib/learning";
 import { getFreshness } from "@/lib/freshness";
+import { getPalettePref } from "@/lib/user-prefs";
 
 export const metadata = {
   title: "Radar",
@@ -34,6 +35,7 @@ export default async function RadarPage({
         mockOn={mockOn}
         learning={learning}
         lastSampleMs={freshness.lastSampleMs}
+        palette={getPalettePref()}
       />
     </div>
   );

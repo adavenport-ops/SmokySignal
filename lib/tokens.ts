@@ -9,7 +9,10 @@
 //                   up chips, live-aircraft dots and tracks on maps.
 //                   Never a CTA, never a link colour, never a "selected"
 //                   state, never decoration. If the sky is clear, nothing
-//                   on the page should be orange.
+//                   on the page should be orange. One exception: the
+//                   /radar heat palette the rider picks (Ember, the
+//                   default, runs red to amber; lib/radar-palettes.ts).
+//                   On the map, alert orange is the live police ring.
 //   warn            Alias of alert for the speed-warning path ("EASE OFF").
 //                   Same hue on purpose: BRAND.md gives orange both jobs.
 //   clear  #5DD9A7  Means one thing: nothing is up. All-clear hero, clear

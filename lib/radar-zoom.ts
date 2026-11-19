@@ -59,8 +59,11 @@ export const ROUTE_WIDTH_STOPS: ZoomStops = [
   [18, 2.5],
 ];
 
-/** Flight-path opacity. Higher when zoomed out, where the lines carry
- *  the "where they fly" pattern; lower up close, where the heat does. */
+/** Reference flight-path opacity curve (the original cool threads).
+ *  Higher zoomed out, where the lines carry the "where they fly"
+ *  pattern; lower up close, where the heat does. Each palette in
+ *  lib/radar-palettes.ts carries its own route opacity, tuned so the
+ *  thread clears 3:1 on the basemap. */
 export const ROUTE_OPACITY_STOPS: ZoomStops = [
   [4, 0.3],
   [7, 0.26],
@@ -70,49 +73,9 @@ export const ROUTE_OPACITY_STOPS: ZoomStops = [
   [18, 0.2],
 ];
 
-/** Heat ramp over heatmap-density, [density, rgba] with density strictly
- *  ascending from 0. Cool on purpose: indigo at low density through blue
- *  and teal to ice at peak. Orange (--alert) is reserved for live
- *  aircraft, so 30 days of history must never read as "Smokey is up".
- *  Kept clear of the rider's sky-blue dot by staying indigo/teal and
- *  topping out near-white rather than at #5BB6FF. */
-export const HEAT_COLOR_STOPS: ReadonlyArray<readonly [number, string]> = [
-  [0, "rgba(0,0,0,0)"],
-  [0.05, "rgba(72,74,170,0.16)"],
-  [0.35, "rgba(70,110,215,0.38)"],
-  [0.7, "rgba(64,190,210,0.52)"],
-  [1.0, "rgba(205,240,255,0.65)"],
-];
-
-/** Historical flight-path threads. Cool slate-blue, not alert orange. */
-export const ROUTE_COLOR = "#8FA9E0";
-
-/** Swatch for UI that labels the heat layer (the HOT ZONES pill). */
-export const HEAT_SWATCH = "rgb(64,190,210)";
-
-/** MapLibre `["interpolate", ["linear"], ["heatmap-density"], d0, c0, ...]`. */
-export function heatColorExpression(): ExpressionSpecification {
-  const out: unknown[] = ["interpolate", ["linear"], ["heatmap-density"]];
-  for (const [d, c] of HEAT_COLOR_STOPS) out.push(d, c);
-  return out as ExpressionSpecification;
-}
-
-/** True when a colour string is a warm hue (red..yellow, 0-70 degrees or
- *  >= 330). Used by tests to keep the heat ramp off the alert palette. */
-export function isWarmRgba(color: string): boolean {
-  const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(color);
-  if (!m) return false;
-  const [r, g, b] = [Number(m[1]) / 255, Number(m[2]) / 255, Number(m[3]) / 255];
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  if (max === min) return false; // grey/black/white has no hue
-  let h: number;
-  if (max === r) h = ((g - b) / (max - min)) % 6;
-  else if (max === g) h = (b - r) / (max - min) + 2;
-  else h = (r - g) / (max - min) + 4;
-  h = (h * 60 + 360) % 360;
-  return h <= 70 || h >= 330;
-}
+// Colours (heat ramp, route colour, history colours, live halo) live in
+// lib/radar-palettes.ts so the rider can pick a palette. This module
+// keeps only the zoom geometry every palette shares.
 
 /** MapLibre `["interpolate", ["linear"], ["zoom"], z0, v0, ...]`. */
 export function zoomInterpolate(stops: ZoomStops): ExpressionSpecification {

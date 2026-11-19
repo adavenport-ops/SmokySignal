@@ -192,7 +192,7 @@ test("ptDate: Pacific calendar day, not UTC", () => {
 
 // ─── colours ─────────────────────────────────────────────────────────
 
-test("colours: palette is cool, distinct, never alert orange", () => {
+test("colours: default (Ember) history set is distinct, never alert orange", () => {
   assert.strictEqual(HISTORY_TAIL_PALETTE.length, PER_TAIL_COLOR_MAX);
   assert.strictEqual(new Set(HISTORY_TAIL_PALETTE.map((c) => c.toLowerCase())).size, PER_TAIL_COLOR_MAX);
   for (const c of [...HISTORY_TAIL_PALETTE, HISTORY_SINGLE_COLOR]) {
