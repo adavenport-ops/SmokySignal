@@ -96,6 +96,43 @@ Hex: no wrong hexes. All 20 seed FAA tails match FAA live; null-hex tails (N2446
 
 Government-registered WA records I did not include: WDFW DJI Agras T40 (N3393W); UW fixed-wing research UAS (N609BS, N631VW, N632UW, N828UW, N842RW); DOE Tigershark UAS (N168PC, N177DE); mosquito and diking district Agras drones and Grant County Mosquito Control Thrush/337 (N6215M, N77DN); Green River College and Metro Parks Tacoma drones; trainers owned by Big Bend CC, Central WA University, Clover Park Technical College (incl. UH-1V N772CP), South Seattle College, Spokane community colleges. Easy to add if wanted.
 
+## Idaho and Oregon border units
+
+Method: full FAA bulk registry (ReleasableAircraft.zip, downloaded 2026-11-18) filtered to owners in ID and OR matching police, sheriff, state, county and city terms (owner and other-name fields, valid registrations), then agency and press sources. Mode S hex is the FAA `MODE S CODE HEX`. All new records are `mission: police_enforcement`, `scope: mutual_aid`, confidence `tentative`.
+
+### Added (5)
+
+| Tail | Agency | Hex | Model | Confidence | Note |
+|---|---|---|---|---|---|
+| N2181N | Oregon State Police (FAA owner STATE OF OREGON, other name Dept of State Police) | A1D9C2 | Cessna 182T | tentative | Oregon-focused; no WA activity sourced |
+| N427AM | Oregon State Police (FAA owner STATE OF OREGON, other name OSP) | A515AC | Cessna T182T | tentative | Same |
+| N425EJ | Portland Police Bureau Air Support Unit (FAA owner CITY OF PORTLAND) | A50E9F | Cessna 182T (2015) | tentative | Newer PPB airplane; sister N2163J documented over Vancouver and Clark County |
+| N575RW | Washington County (OR) Sheriff, Hillsboro | A76288 | Cessna R172K | tentative | FAA owner names the county only; sheriff link from Oregon Aviation Watch and KPTV (Air 5, no tail) |
+| N4343Z | Hood River County Sheriff | A534D3 | Piper PA-18-150 | tentative | Registry owner only; no program or use found |
+
+OSP now has four FAA airframes (N17386, N2237S, N2181N, N427AM), matching a third-party description of a four-plane Cessna fleet (185, 206, two 182s). OSP's unit is Fish & Wildlife focused; no source shows routine traffic enforcement or WA flights.
+
+### Idaho: no police airframes found
+
+- **Idaho State Police:** no aircraft are registered to ISP in the FAA registry. Press and ITD material (2009 to 2019, old) say ISP's King Air 200 came via federal surplus and is operated by the Idaho Transportation Department Aeronautics Division. ITD owns N20MB (B200GT, 2018), N9438M (TU206G) and N239KQ (Kodiak). These are state transport and aeronautics aircraft, not Smokey candidates; I did not add records. ISP drones are not aviation records.
+- **Kootenai County:** only N67176 (already recorded). The Kootenai nonprofit has helped Bonner, Benewah, Shoshone and Latah counties and Spokane County. KOOTENAI BUSINESS PROPERTIES LLC (Post Falls) owns an AS350B3 (N63RC), Kodiak (N82HK) and PC-12 (N856GR); private LLC, no police link found, excluded.
+- **Nez Perce County:** the Sheriff's Air Posse (volunteer nonprofit, Cessna 172XP per press) has no registry record under Air Posse, Nez Perce or sheriff names. Tail unknown.
+- **Bonner, Boundary, Latah counties; Coeur d'Alene, Post Falls, Lewiston, Moscow police; Ada, Canyon:** no aircraft in the FAA registry under these owners. Canyon County Sheriff holds only drones (N549WG, N862GC). Nothing found that crosses into WA.
+
+### Oregon: remaining checks
+
+- **Umatilla, Wasco:** no sheriff-owned aircraft in the registry (Umatilla weed department drone only). Not found.
+- **Clark-adjacent:** PPB aircraft are the documented Clark County overflights (July 2021, N2163J). Multnomah N910TW and Clackamas N931EM were already recorded.
+- **N9000V** (STATE OF OREGON, Dept of Forestry, P68 Observer) is forestry, excluded.
+
+### Unverifiable
+
+- Which OSP tail is the 185, 206 or 182s, and bases.
+- Whether N4343Z is operated for law enforcement at all.
+- N575RW to Air 5 mapping.
+- Current ISP/ITD aircraft use by ISP; sources are dated.
+- allthingsosp.org could not be fetched directly (search summary only); PPB fleet details come from a search summary of a May 2024 release.
+
 ## Open questions
 
 1. Should the WSP King Air show as Smokey? Recommend no (transport).
@@ -108,4 +145,4 @@ Government-registered WA records I did not include: WDFW DJI Agras T40 (N3393W);
 8. CBP: need an agency or FOIA source for the Bellingham and Spokane roster; UH-60 identifier.
 9. WSP: confirm callsign numbers per tail, and whether the new T206Hs have FLIR and have replaced two 182s (N3532K sold; others still FAA-valid).
 10. County pages for Spokane and Pierce were not directly readable; recheck from a browser.
-11. Idaho State Police and Washington-adjacent Oregon units not searched; mutual-aid list is a lead list.
+11. Idaho and Oregon border units: searched in the section above; Nez Perce Air Posse tail and ISP aircraft use remain open.
