@@ -156,7 +156,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
         </div>
         <div
           className="ss-mono"
-          style={{ fontSize: 11, color: SS_TOKENS.fg2, marginTop: 6, letterSpacing: ".04em" }}
+          style={{ fontSize: 12, color: SS_TOKENS.fg2, marginTop: 6, letterSpacing: ".04em" }}
         >
           {entry.operator} · {entry.model} · {entry.base}
         </div>
@@ -233,7 +233,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
             <div className="ss-eyebrow">Where this plane patrols</div>
             <div
               style={{
-                fontSize: 11.5,
+                fontSize: 12,
                 color: SS_TOKENS.fg2,
                 marginTop: 2,
               }}
@@ -304,7 +304,7 @@ function LiveDataBlock({
       <div
         className="ss-mono"
         style={{
-          fontSize: 11,
+          fontSize: 12,
           color: SS_TOKENS.fg2,
           marginTop: 12,
           letterSpacing: ".04em",
@@ -362,7 +362,7 @@ function KV({
       <div
         className="ss-mono"
         style={{
-          fontSize: 9.5,
+          fontSize: 12,
           color: SS_TOKENS.fg2,
           letterSpacing: ".1em",
         }}
@@ -415,7 +415,7 @@ function SquawkKV({ squawk }: { squawk: string | null }) {
       <div
         className="ss-mono"
         style={{
-          fontSize: 9.5,
+          fontSize: 12,
           color: SS_TOKENS.fg2,
           letterSpacing: ".1em",
         }}
@@ -437,7 +437,7 @@ function SquawkKV({ squawk }: { squawk: string | null }) {
         <div
           className="ss-mono"
           style={{
-            fontSize: 9,
+            fontSize: 12,
             color,
             marginTop: 2,
             letterSpacing: ".1em",
@@ -562,7 +562,7 @@ function RecentTrackStats({
         </div>
         <div
           style={{
-            fontSize: 11,
+            fontSize: 12,
             color: SS_TOKENS.fg2,
             marginTop: 12,
             lineHeight: 1.45,
@@ -608,7 +608,7 @@ function ClassificationCard({ entry }: { entry: FleetEntry }) {
         >
           {rows.map(([k, v]) => (
             <div key={k} style={{ display: "contents" }}>
-              <dt className="ss-mono" style={{ fontSize: 10.5, color: SS_TOKENS.fg2, letterSpacing: ".08em" }}>
+              <dt className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg2, letterSpacing: ".08em" }}>
                 {k}
               </dt>
               <dd className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg0, margin: 0 }}>
@@ -622,7 +622,7 @@ function ClassificationCard({ entry }: { entry: FleetEntry }) {
             {entry.roleNote}
           </p>
         )}
-        <div className="ss-mono" style={{ fontSize: 10.5, color: SS_TOKENS.fg2, letterSpacing: ".08em", marginTop: 12 }}>
+        <div className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg2, letterSpacing: ".08em", marginTop: 12 }}>
           SOURCES
         </div>
         {entry.sources.length === 0 ? (
@@ -639,7 +639,7 @@ function ClassificationCard({ entry }: { entry: FleetEntry }) {
                   rel="noopener noreferrer"
                   className="ss-mono"
                   style={{
-                    fontSize: 11.5,
+                    fontSize: 12,
                     color: SS_TOKENS.fg1,
                     textDecoration: "underline",
                     display: "inline-flex",
@@ -671,7 +671,7 @@ function FleetMeta({
     <div
       className="ss-mono"
       style={{
-        fontSize: 10.5,
+        fontSize: 12,
         // fg2 instead of fg3 — fg3 (#3f4651) fails WCAG AA 4.5:1 against
         // bg-0 for body text. fg2 reads at ~5.2:1.
         color: SS_TOKENS.fg2,
