@@ -15,6 +15,9 @@ import { applyNeutralBasemap, basemapStyleUrl } from "@/lib/basemap";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { HotZone } from "@/lib/hotzones";
+import { releaseMap } from "@/lib/webgl";
+import { MapBoundary, useReportMapLoss } from "./MapBoundary";
+import { MapListFallback } from "./TrackSvgFallback";
 
 const PUGET_SOUND: [number, number] = [-122.3, 47.6];
 const DEFAULT_ZOOM = 8;
@@ -25,10 +28,29 @@ type State =
   | { kind: "error"; message: string }
   | { kind: "ready"; zones: HotZone[] };
 
+/** WebGL-gated; without it the panel says so and the page carries on. */
 export default function PerPlaneHeatLayer({ tail }: { tail: string }) {
+  return (
+    <MapBoundary
+      name="plane-heat"
+      placeholder={<div aria-hidden style={{ height: PANEL_HEIGHT, borderRadius: 12, background: SS_TOKENS.bg0 }} />}
+      fallback={
+        <MapListFallback
+          note="Map needs WebGL, so the heat map is off in this browser. Flight history below lists every flight."
+          rows={[]}
+        />
+      }
+    >
+      <PerPlaneHeatLayerInner tail={tail} />
+    </MapBoundary>
+  );
+}
+
+function PerPlaneHeatLayerInner({ tail }: { tail: string }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MaplibreMap | null>(null);
   const [state, setState] = useState<State>({ kind: "loading" });
+  const reportLoss = useReportMapLoss();
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +86,7 @@ export default function PerPlaneHeatLayer({ tail }: { tail: string }) {
       interactive: true,
     });
     mapRef.current = map;
+    map.on("webglcontextlost", reportLoss);
 
     map.on("load", () => {
       applyNeutralBasemap(map);
@@ -115,9 +138,10 @@ export default function PerPlaneHeatLayer({ tail }: { tail: string }) {
     });
 
     return () => {
-      map.remove();
+      releaseMap(map);
       mapRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   if (state.kind === "loading") {

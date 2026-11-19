@@ -5,9 +5,20 @@ import maplibregl, { Map as MaplibreMap } from "maplibre-gl";
 import { applyNeutralBasemap, basemapStyleUrl } from "@/lib/basemap";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { SS_TOKENS } from "@/lib/tokens";
+import { releaseMap } from "@/lib/webgl";
+import { MapBoundary } from "./MapBoundary";
+import { MapListFallback } from "./TrackSvgFallback";
 import type { StoredSpot } from "@/lib/spots";
 
 export default function SpotsMap({ spots }: { spots: StoredSpot[] }) {
+  return (
+    <MapBoundary name="SpotsMap" fallback={<div style={{ position: "absolute", inset: 0 }}><MapListFallback note="Map needs WebGL. The spot list below has every report." rows={[]} /></div>}>
+      <SpotsMapInner spots={spots} />
+    </MapBoundary>
+  );
+}
+
+function SpotsMapInner({ spots }: { spots: StoredSpot[] }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MaplibreMap | null>(null);
 
@@ -89,7 +100,7 @@ export default function SpotsMap({ spots }: { spots: StoredSpot[] }) {
     });
 
     return () => {
-      map.remove();
+      releaseMap(map);
       mapRef.current = null;
     };
   }, [spots]);

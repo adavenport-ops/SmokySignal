@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import nextDynamic from "next/dynamic";
 import { SS_TOKENS } from "@/lib/tokens";
+import { supportsWebGL2 } from "@/lib/webgl";
 import type { TrackPoint } from "@/lib/tracks";
 import type { Flight3DPath } from "./Flight3D";
 import { ShareLinkButton } from "./ShareLinkButton";
@@ -47,11 +48,7 @@ function MapPlaceholder({ height, label }: { height: number | string; label?: st
 }
 
 function hasWebGL2(): boolean {
-  try {
-    return !!document.createElement("canvas").getContext("webgl2");
-  } catch {
-    return false;
-  }
+  return supportsWebGL2();
 }
 
 type Props = {

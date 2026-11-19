@@ -126,3 +126,19 @@ test("plan: empty KV writes the seed", () => {
   assert.equal(plan.changed, true);
   assert.equal(plan.counts.add, FLEET.length);
 });
+
+test("a stale seed role note in KV reads the current seed note", async () => {
+  const { FLEET } = await import("./seed");
+  const seed = FLEET.find((f) => f.tail === "N305DK")!;
+  const stored = {
+    ...seed,
+    roleNote: "WSP FLIR 206; Smokey 4 per earlier seed, tail mapping unverified",
+  };
+  const rows = normalizeRegistryRows([stored], FLEET)!;
+  assert.equal(rows[0]!.roleConfidence, "confirmed");
+  assert.equal(rows[0]!.roleNote, seed.roleNote);
+  assert.ok(!/unverified/.test(rows[0]!.roleNote ?? ""));
+  // An admin-written note is left alone.
+  const custom = normalizeRegistryRows([{ ...seed, roleNote: "Admin note" }], FLEET)!;
+  assert.equal(custom[0]!.roleNote, "Admin note");
+});

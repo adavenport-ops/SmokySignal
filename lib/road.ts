@@ -79,9 +79,14 @@ export function stretchFor(lat: number, lon: number, c: Corridor): string | null
   return best;
 }
 
+/** Shorter brushes with a road or town are noise and are not listed or counted. */
+export const MIN_PASS_S = 60;
+
 export type RoadPass = {
   tail: string;
   name: string;
+  /** Registry operator code ("WSP"); empty when unknown. */
+  operator?: string;
   mission: Mission;
   /** First / last point over the road, ms. */
   startTs: number;
@@ -103,7 +108,7 @@ export type RoadPass = {
  * sample is not a pass.
  */
 export function passesForTrack(
-  entry: { tail: string; nickname?: string | null; role: unknown },
+  entry: { tail: string; nickname?: string | null; operator?: string | null; role: unknown },
   points: ReadonlyArray<TrackPoint>,
   c: Corridor,
   opts: { bufferNm?: number; sinceS?: number } = {},
@@ -128,13 +133,15 @@ export function passesForTrack(
       const place = stretchFor(p.lat, p.lon, c);
       if (place) places[place] = (places[place] ?? 0) + w / 60;
     }
-    if (over.length < 2) continue;
+    // Under a minute over the road reads "0m": a clipped corner, not a pass.
+    if (over.length < 2 || seconds < MIN_PASS_S) continue;
     let top: string | null = null;
     for (const [k, v] of Object.entries(places)) if (!top || v > places[top]!) top = k;
     for (const k of Object.keys(places)) places[k] = round1(places[k]!);
     out.push({
       tail: entry.tail,
       name,
+      operator: entry.operator ?? "",
       mission,
       startTs: over[0]!.ts * 1000,
       endTs: over[over.length - 1]!.ts * 1000,
@@ -292,4 +299,14 @@ export function emptyRoadSummary(c: Corridor, windowDays = ROAD_WINDOW_DAYS): Ro
 /** Share-card headline: "Planes over SR-512 this week: 7 flights". */
 export function roadCardHeadline(name: string, flights7d: number): string {
   return `Planes over ${name} this week: ${flights7d} flight${flights7d === 1 ? "" : "s"}`;
+}
+
+/**
+ * Badge on a pass or event row: the agency code ("WSP", "CBP") when the
+ * registry has one, else the mission label ("Medevac"). The orange Smokey
+ * badge on every row said nothing the page title did not.
+ */
+export function passBadgeLabel(p: { operator?: string | null; mission: Mission | string }): string {
+  const op = p.operator?.trim();
+  return op ? op : missionLabel(p.mission);
 }

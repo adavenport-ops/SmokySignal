@@ -10,6 +10,7 @@ import { buildLedgerRows, type LedgerRow } from "./ledger";
 import { normalizeMission } from "./mission";
 import type { TailMeta } from "./rollup-sessions";
 import { summarizeWrap, type WrapSummary } from "./wrap";
+import { getDataSince } from "./data-since";
 
 const CACHE_SECONDS = 600;
 /** Rollup days read for the ledger. Five years of daily docs. */
@@ -37,13 +38,13 @@ export const loadLedgerRows = unstable_cache(
 export function loadWrap(year: number): Promise<WrapSummary> {
   return unstable_cache(
     async (): Promise<WrapSummary> => {
-      const [index, registry] = await Promise.all([getRollupIndex(), registryMeta()]);
+      const [index, registry, since] = await Promise.all([getRollupIndex(), registryMeta(), getDataSince()]);
       const lo = `${year - 1}1231`;
       const hi = `${year + 1}0101`;
       const docs = await getRollups(index.filter((d) => d >= lo && d <= hi));
-      return summarizeWrap(docs, year, Date.now(), registry);
+      return summarizeWrap(docs, year, Date.now(), registry, since);
     },
-    ["wrap-v1", String(year)],
+    ["wrap-v2", String(year)],
     { revalidate: CACHE_SECONDS },
   )();
 }

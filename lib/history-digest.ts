@@ -9,6 +9,7 @@
 import { unstable_cache } from "next/cache";
 import { getRegistry } from "./registry";
 import { getActivityRange, getRecentActivity, type ActivityEntry } from "./activity";
+import { dedupeActivity } from "./activity-diff";
 import { formatTs } from "./time";
 import { lastUtcDays, readTrackDays } from "./track-reader";
 import { CORRIDORS } from "./corridor";
@@ -82,15 +83,9 @@ async function readActivity(sinceMs: number, nowMs: number): Promise<ActivityEnt
     getActivityRange(formatTs(sinceMs, "date"), formatTs(nowMs, "date")).catch(() => []),
     getRecentActivity(500).catch(() => []),
   ]);
-  const seen = new Set<string>();
-  const out: ActivityEntry[] = [];
-  for (const e of [...archived, ...recent]) {
-    const k = `${e.tail}|${e.kind}|${e.ts}`;
-    if (seen.has(k)) continue;
-    seen.add(k);
-    out.push(e);
-  }
-  return out;
+  // Same transition in both sources, or written twice a few seconds
+  // apart: one row (tail, kind, within 2 min).
+  return dedupeActivity([...archived, ...recent]);
 }
 
 export async function buildHistoryDigest(nowMs: number): Promise<HistoryDigest> {

@@ -132,3 +132,33 @@ export function altitudeSparkline(points: ReadonlyArray<TrackPoint>, box: Box): 
   const area = `${d} L${r1(xy[xy.length - 1]!.x)} ${base} L${r1(xy[0]!.x)} ${base} Z`;
   return { d, area, max_alt_ft: max, min_alt_ft: min === Infinity ? 0 : min };
 }
+
+export type CardRoute = {
+  /** Big mono line: field codes, e.g. "S50 → KOLM" or just "S50". */
+  codes: string;
+  /** Plain line under it, e.g. "Auburn Municipal (S50) → landed off-field or out of range". */
+  names: string;
+};
+
+/**
+ * Route lines for the flight card. A field we could not place is said
+ * in rider terms ("off-field or out of range"), never as a dash or
+ * "not resolved".
+ */
+export function cardRoute(opts: {
+  dep: string | null;
+  arr: string | null;
+  inProgress: boolean;
+  nameOf: (id: string) => string | null;
+}): CardRoute {
+  const { dep, arr, inProgress, nameOf } = opts;
+  const field = (id: string) => {
+    const name = nameOf(id);
+    return name && name !== id ? `${name} (${id})` : id;
+  };
+  const from = dep ? field(dep) : "Took off off-field or out of range";
+  const to = inProgress ? "still up" : arr ? field(arr) : "landed off-field or out of range";
+  const codeParts = [dep, inProgress ? "UP" : arr].filter((c): c is string => Boolean(c));
+  const codes = dep && (inProgress || arr) ? codeParts.join(" → ") : codeParts.join(" ");
+  return { codes: codes || "Off-field", names: `${from} → ${to}` };
+}

@@ -68,90 +68,106 @@ export function SeenMap({
   const ringR = radiusNm * scale;
   const clipId = `seen-clip-${Math.round(closest.lat * 1e4)}-${Math.round(closest.lon * 1e4)}`;
 
+  // Labels are HTML over the SVG, not <text>: the SVG scales with the card,
+  // so viewBox text would shrink below 12px on a narrow card.
+  const labelStyle = (x: number, y: number, right: boolean) =>
+    ({
+      position: "absolute",
+      left: `${(x / W) * 100}%`,
+      top: `${(y / H) * 100}%`,
+      transform: right ? "translate(-100%, -100%)" : "translate(0, -100%)",
+      fontSize: 12,
+      lineHeight: 1,
+      color: SS_TOKENS.fg1,
+      textShadow: `0 0 3px ${SS_TOKENS.bg0}, 0 0 3px ${SS_TOKENS.bg0}`,
+      whiteSpace: "nowrap",
+      pointerEvents: "none",
+    }) as const;
+
   return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      width="100%"
-      role="img"
-      aria-label={label}
-      data-testid="seen-map"
-      style={{
-        display: "block",
-        background: SS_TOKENS.bg0,
-        borderRadius: 10,
-        border: `0.5px solid ${SS_TOKENS.hairline2}`,
-        aspectRatio: `${W} / ${H}`,
-      }}
-    >
-      <defs>
-        <clipPath id={clipId}>
-          <rect x="0" y="0" width={W} height={H} rx="10" />
-        </clipPath>
-      </defs>
-      <g clipPath={`url(#${clipId})`}>
-        {roads.map((r) => (
-          <polyline
-            key={r.id}
-            points={r.d}
+    <div style={{ position: "relative", overflow: "hidden", borderRadius: 10 }}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width="100%"
+        role="img"
+        aria-label={label}
+        data-testid="seen-map"
+        style={{
+          display: "block",
+          background: SS_TOKENS.bg0,
+          borderRadius: 10,
+          border: `0.5px solid ${SS_TOKENS.hairline2}`,
+          aspectRatio: `${W} / ${H}`,
+        }}
+      >
+        <defs>
+          <clipPath id={clipId}>
+            <rect x="0" y="0" width={W} height={H} rx="10" />
+          </clipPath>
+        </defs>
+        <g clipPath={`url(#${clipId})`}>
+          {roads.map((r) => (
+            <polyline
+              key={r.id}
+              points={r.d}
+              fill="none"
+              stroke={SS_TOKENS.fg3}
+              strokeWidth={2}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          ))}
+          <circle
+            cx={me[0]}
+            cy={me[1]}
+            r={ringR}
             fill="none"
             stroke={SS_TOKENS.fg3}
-            strokeWidth={2}
-            strokeLinejoin="round"
-            strokeLinecap="round"
+            strokeWidth={1.2}
+            strokeDasharray="4 4"
           />
-        ))}
-        <circle
-          cx={me[0]}
-          cy={me[1]}
-          r={ringR}
-          fill="none"
-          stroke={SS_TOKENS.fg3}
-          strokeWidth={1.2}
-          strokeDasharray="4 4"
-        />
-        {trackPts.length > 1 ? (
-          <polyline
-            points={trackPts.map(fmt).join(" ")}
-            fill="none"
-            stroke={SS_TOKENS.fg0}
-            strokeOpacity={0.85}
-            strokeWidth={1.6}
-            strokeLinejoin="round"
-            strokeLinecap="round"
+          {trackPts.length > 1 ? (
+            <polyline
+              points={trackPts.map(fmt).join(" ")}
+              fill="none"
+              stroke={SS_TOKENS.fg0}
+              strokeOpacity={0.85}
+              strokeWidth={1.6}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          ) : null}
+          <line
+            x1={me[0]}
+            y1={me[1]}
+            x2={cp[0]}
+            y2={cp[1]}
+            stroke={SS_TOKENS.fg1}
+            strokeWidth={1}
+            strokeDasharray="2 3"
           />
-        ) : null}
-        <line
-          x1={me[0]}
-          y1={me[1]}
-          x2={cp[0]}
-          y2={cp[1]}
-          stroke={SS_TOKENS.fg1}
-          strokeWidth={1}
-          strokeDasharray="2 3"
-        />
-        <circle cx={cp[0]} cy={cp[1]} r={6} fill="none" stroke={SS_TOKENS.fg0} strokeWidth={1.6} />
-        <circle cx={cp[0]} cy={cp[1]} r={2} fill={SS_TOKENS.fg0} />
-        <circle cx={me[0]} cy={me[1]} r={7} fill={SS_TOKENS.skyDim} />
-        <circle cx={me[0]} cy={me[1]} r={3.5} fill={SS_TOKENS.sky} />
-        {roads.slice(0, 3).map((r) => (
-          <text
+          <circle cx={cp[0]} cy={cp[1]} r={6} fill="none" stroke={SS_TOKENS.fg0} strokeWidth={1.6} />
+          <circle cx={cp[0]} cy={cp[1]} r={2} fill={SS_TOKENS.fg0} />
+          <circle cx={me[0]} cy={me[1]} r={7} fill={SS_TOKENS.skyDim} />
+          <circle cx={me[0]} cy={me[1]} r={3.5} fill={SS_TOKENS.sky} />
+        </g>
+      </svg>
+      {roads.slice(0, 3).map((r) => {
+        const right = r.labelAt![0] > W * 0.6;
+        return (
+          <span
             key={`${r.id}-label`}
-            x={r.labelAt![0] + 4}
-            y={r.labelAt![1] - 4}
-            fill={SS_TOKENS.fg1}
-            stroke={SS_TOKENS.bg0}
-            strokeWidth={3}
-            paintOrder="stroke"
-            fontSize={10}
-            fontFamily="JetBrains Mono, ui-monospace, monospace"
+            aria-hidden
+            className="ss-mono"
+            style={labelStyle(r.labelAt![0] + (right ? -4 : 4), r.labelAt![1] - 4, right)}
           >
             {r.name}
-          </text>
-        ))}
-        <text x={W - 10} y={16} textAnchor="end" fill={SS_TOKENS.fg2} fontSize={10} fontFamily="JetBrains Mono, ui-monospace, monospace">
-          N ↑
-        </text>
-      </g>
-    </svg>
+          </span>
+        );
+      })}
+      <span aria-hidden className="ss-mono" style={{ ...labelStyle(W - 10, 20, true), color: SS_TOKENS.fg1 }}>
+        N ↑
+      </span>
+    </div>
   );
 }

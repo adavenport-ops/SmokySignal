@@ -11,7 +11,7 @@
 import { ImageResponse } from "next/og";
 import { airportById } from "@/lib/airports";
 import { flightDetailFromPoints } from "@/lib/flight-detail";
-import { altitudeSparkline, projectTrack, subPath } from "@/lib/flight-card";
+import { altitudeSparkline, cardRoute, projectTrack, subPath } from "@/lib/flight-card";
 import { SESSION_GAP_MS, getFlightById } from "@/lib/flights";
 import { loadGoogleFont, type OgFont } from "@/lib/og/status-card";
 import { detectOrbits } from "@/lib/orbit";
@@ -58,17 +58,19 @@ export async function GET(_req: Request, { params }: Params): Promise<Response> 
     .join(" · ");
   const dep = detail.dep;
   const arr = inProgress ? null : detail.arr;
-  const route = `${dep ?? "—"} → ${arr ?? (inProgress ? "UP" : "—")}`;
-  const depName = dep ? (airportById(dep)?.name ?? dep) : "Field not resolved";
-  const arrName = inProgress ? "still up" : arr ? (airportById(arr)?.name ?? arr) : "field not resolved";
-  const routeNames = `${depName} to ${arrName}`;
+  const { codes: route, names: routeNames } = cardRoute({
+    dep,
+    arr,
+    inProgress,
+    nameOf: (id) => airportById(id)?.name ?? null,
+  });
   const when = `${formatTs(session.start_ts, "date")} ${formatTsBare(session.start_ts, "time")} to ${formatTsBare(session.end_ts, "time")} PT`;
   const duration = fmtDurationHuman(session.duration_s);
   const maxAlt = session.max_alt_ft > 0 ? `${session.max_alt_ft.toLocaleString("en-US")} ft` : "—";
   const orbitMin = Math.round(detail.orbit_s / 60);
   const patterns = orbits.length > 0 ? `${orbitMin} min` : "None";
   const patternSub = orbits.length > 0 ? `${orbits.length} pattern${orbits.length === 1 ? "" : "s"}` : "no orbits flown";
-  const corridor = detail.corridors[0]?.label ?? (orbits.length > 0 ? "Off the named roads" : "—");
+  const corridor = detail.corridors[0]?.label ?? (orbits.length > 0 ? "Off the named roads" : "No patterns");
   const status = inProgress ? `IN PROGRESS · AS OF ${formatTsBare(session.end_ts, "time")} PT` : "COMPLETED FLIGHT";
   const url = `smokysignal.app/flight/${tail}/${params.flightId}`;
 

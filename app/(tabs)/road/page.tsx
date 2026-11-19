@@ -39,7 +39,7 @@ export default async function RoadIndexPage() {
       <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <h1 className={styles.h1}>Road history</h1>
         <p className={styles.lede}>
-          Thirty days of tracked flights within about 2 nm of each corridor.
+          Thirty days of tracked flights within about 2 mi of each corridor.
           History, not a forecast.
         </p>
         <CoverageNote area={digest.coverage.weakest?.name ?? null} />

@@ -694,4 +694,223 @@ body {
   border-radius: 22px;
   background-position: center;
   background-repeat: no-repeat;
+
+/* Detail pages (/plane/[tail], /flight/[tail]/[id]): one column on a
+   phone, two at >= 1024px. The map / 3D column sits left and large; the
+   stats, logbook and related links sit right. Children of the two column
+   wrappers keep their phone order through `order` while the wrappers are
+   display: contents. */
+.ss-detail-page {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 460px;
+}
+.ss-detail-page.ss-detail-flight {
+  max-width: 720px;
+}
+.ss-detail-grid,
+.ss-detail-col {
+  display: contents;
+}
+@media (min-width: 1024px) {
+  .ss-detail-page,
+  .ss-detail-page.ss-detail-flight {
+    max-width: 1240px;
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+  }
+  .ss-detail-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .ss-detail-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+  /* The flat maps grow with the column. MapLibre tracks the resize. */
+  .ss-detail-tall .maplibregl-map {
+    height: clamp(420px, 62vh, 600px) !important;
+  }
+}
+
+/* Table rows whose tail cell links: the whole row is the link (the
+   anchor's ::after covers the row). Rows are 44px tall on touch. */
+.ss-row-link {
+  position: relative;
+}
+.ss-row-link a.ss-row-anchor::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.ss-row-link:hover td {
+  background: var(--ss-bg1);
+}
+@media (pointer: coarse) {
+  .ss-row-link td {
+    height: 44px;
+  }
+  /* Source links on /plane. */
+  .ss-source-link {
+    min-height: 44px !important;
+  }
+}
+
+/* MapLibre +/- and compass buttons are 29px by default. On touch screens
+   give them a 44px target; mouse users keep the compact control. */
+@media (pointer: coarse) {
+  /* Doubled class: maplibre-gl.css can load after this sheet. */
+  .maplibregl-ctrl.maplibregl-ctrl-group button {
+    width: 44px;
+    height: 44px;
+  }
+  .maplibregl-ctrl.maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+    background-size: 29px 29px;
+  }
+}
+
+/* /aircraft: search + filters, then the tail rows. Two columns at
+   >= 1024px. */
+.ss-aircraft-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.ss-aircraft-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.ss-aircraft-field input,
+.ss-aircraft-field select {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 0.5px solid var(--ss-hairline-2);
+  background: var(--ss-bg1);
+  color: var(--ss-fg0);
+  font-size: 16px;
+  font-family: inherit;
+  width: 100%;
+}
+.ss-aircraft-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+.ss-aircraft-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 14px 4px;
+  background: var(--ss-bg1);
+  border: 0.5px solid var(--ss-hairline);
+  border-radius: 12px;
+  min-width: 0;
+}
+.ss-aircraft-stats {
+  display: flex;
+  gap: 18px;
+  margin: 2px 0 0;
+}
+.ss-aircraft-stats dt {
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ss-fg2);
+}
+.ss-aircraft-stats dd {
+  margin: 1px 0 0;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: 14px;
+  color: var(--ss-fg0);
+}
+@media (min-width: 1024px) {
+  .ss-page.ss-aircraft-page {
+    max-width: 1100px;
+  }
+  .ss-aircraft-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* /forecast tap row: touch only. The 7x24 grid cells stay small for the
+   glance; these 44px buttons select the same cells. */
+.ss-fc-taprow {
+  display: none;
+}
+@media (pointer: coarse) {
+  .ss-fc-taprow {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+.ss-fc-taprow-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.ss-fc-taprow-days button,
+.ss-fc-taprow-hours button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 0.5px solid var(--ss-hairline-2);
+  background: transparent;
+  color: var(--ss-fg1);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ss-fc-taprow-days button[aria-pressed="true"] {
+  background: var(--ss-bg2);
+  color: var(--ss-fg0);
+  border-color: var(--ss-fg1);
+}
+.ss-fc-taprow-hours {
+  display: flex;
+  gap: 4px;
+  padding: 2px;
+}
+.ss-fc-taprow-hours button {
+  flex: 0 0 44px;
+  width: 44px;
+  color: var(--ss-fg0);
+}
+
+/* /forecast mission picker: one choice at a time, 44px chips. */
+.ss-fc-missions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.ss-fc-missions button {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 0.5px solid var(--ss-hairline-2);
+  background: transparent;
+  color: var(--ss-fg1);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ss-fc-missions button[aria-checked="true"] {
+  background: var(--ss-alert);
+  border-color: var(--ss-alert);
+  color: var(--ss-bg0);
 }

@@ -23,9 +23,13 @@ export const SEEN_VERSION = 1 as const;
 /** First Pacific date with permanent track history (same floor as /radar history). */
 export const SEEN_EARLIEST_DATE = HISTORY_FLOOR;
 
-/** ± minutes around the time the rider saw it. */
+/** ± minutes around the time the rider saw it (the segmented control). */
 export const WINDOW_CHOICES = [15, 30, 60] as const;
-export type WindowMin = (typeof WINDOW_CHOICES)[number];
+/** ± minutes a part-of-day chip uses: 3 h either side covers 6 hours. */
+export const PERIOD_WINDOW_MIN = 180 as const;
+/** Every window the page and /api/seen accept. */
+export const ALL_WINDOW_CHOICES = [...WINDOW_CHOICES, PERIOD_WINDOW_MIN] as const;
+export type WindowMin = (typeof ALL_WINDOW_CHOICES)[number];
 export const DEFAULT_WINDOW_MIN: WindowMin = 30;
 
 /** Radius choices on the page, statute miles. */
@@ -232,6 +236,82 @@ export function nowPtTime(nowMs: number): string {
   return ptLocal(Math.floor(nowMs / 300_000) * 300_000).time;
 }
 
+// ─── quick chips ─────────────────────────────────────────────────────
+
+/** Calendar arithmetic on a YYYY-MM-DD date, no clock or zone involved. */
+export function addDaysToDate(date: string, n: number): string {
+  const [y, m, d] = date.split("-").map(Number) as [number, number, number];
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+
+export type DayChip = "today" | "yesterday";
+
+/**
+ * Pacific date for a day chip. "Yesterday" is the calendar day before
+ * today's Pacific date, not now minus 24 hours, so the 23- and 25-hour
+ * days at a DST change still land on the right date.
+ */
+export function dayChipDate(chip: DayChip, nowMs: number): string {
+  const today = todayPtDate(nowMs);
+  return chip === "today" ? today : addDaysToDate(today, -1);
+}
+
+export type PeriodChip = "morning" | "afternoon" | "evening";
+
+/** Part-of-day chips, Pacific wall clock, [start, end) hours. */
+export const PERIODS: ReadonlyArray<{ id: PeriodChip; label: string; startHour: number; endHour: number }> = [
+  { id: "morning", label: "Morning", startHour: 6, endHour: 12 },
+  { id: "afternoon", label: "Afternoon", startHour: 12, endHour: 18 },
+  { id: "evening", label: "Evening", startHour: 18, endHour: 24 },
+];
+
+/** "06–12", for the chip's small print. */
+export function periodHours(p: { startHour: number; endHour: number }): string {
+  return `${String(p.startHour).padStart(2, "0")}–${String(p.endHour).padStart(2, "0")}`;
+}
+
+/**
+ * Time + window for a part-of-day chip: the middle of the six hours, ±3 h.
+ * Every period sits after the 02:00 DST jump, so the six hours are six
+ * real hours on the change days too.
+ */
+export function periodChipState(id: PeriodChip): { time: string; w: WindowMin } {
+  const p = PERIODS.find((x) => x.id === id)!;
+  const mid = (p.startHour + p.endHour) / 2;
+  return { time: `${String(mid).padStart(2, "0")}:00`, w: PERIOD_WINDOW_MIN };
+}
+
+/** Which period chip a form state matches, or null. */
+export function activePeriod(s: Pick<SeenPageState, "time" | "w">): PeriodChip | null {
+  if (s.w !== PERIOD_WINDOW_MIN) return null;
+  for (const p of PERIODS) if (periodChipState(p.id).time === s.time) return p.id;
+  return null;
+}
+
+/** The [from, to) instants a page state asks about, or null when malformed. */
+export function seenStateWindowMs(s: Pick<SeenPageState, "date" | "time" | "w">): { fromMs: number; toMs: number } | null {
+  const t = ptLocalToMs(s.date, s.time);
+  if (t == null) return null;
+  return { fromMs: t - s.w * 60_000, toMs: t + s.w * 60_000 };
+}
+
+/**
+ * Why a picked time cannot be looked up yet, or null when it can. Checked
+ * in the browser before any request, so a date typed past the picker's
+ * max gets a plain answer instead of a server error.
+ */
+export function futurePickMessage(s: Pick<SeenPageState, "date" | "time" | "w">, nowMs: number): string | null {
+  const today = todayPtDate(nowMs);
+  if (isDateString(s.date) && s.date > today) {
+    return `That date is still ahead. Pick ${today} or earlier.`;
+  }
+  const win = seenStateWindowMs(s);
+  if (win && win.fromMs > nowMs) {
+    return "That time today has not come yet. Pick an earlier time.";
+  }
+  return null;
+}
+
 // ─── page URL state ──────────────────────────────────────────────────
 
 export type SeenPageState = {
@@ -283,7 +363,8 @@ export const POPULAR_PLACES = [
 export function searchPlaces(q: string, limit = 8) {
   const s = q.trim().toLowerCase();
   if (!s) {
-    return POPULAR_PLACES.map((n) => placeByName(n)).filter((p): p is NonNullable<typeof p> => p != null).slice(0, limit);
+    // Every popular town, whatever the limit: the list is short and fixed.
+    return POPULAR_PLACES.map((n) => placeByName(n)).filter((p): p is NonNullable<typeof p> => p != null);
   }
   const starts = PLACE_LIST.filter((p) => p.name.toLowerCase().startsWith(s));
   const contains = PLACE_LIST.filter(
@@ -332,7 +413,7 @@ export function parseSeenPageParams(
   const time = isTimeString(timeRaw) ? timeRaw : nowPtTime(nowMs);
   const wNum = Number(first(sp.w));
   const rNum = Number(first(sp.r));
-  const w = (WINDOW_CHOICES as readonly number[]).includes(wNum) ? (wNum as WindowMin) : DEFAULT_WINDOW_MIN;
+  const w = (ALL_WINDOW_CHOICES as readonly number[]).includes(wNum) ? (wNum as WindowMin) : DEFAULT_WINDOW_MIN;
   const r = (RADIUS_MI_CHOICES as readonly number[]).includes(rNum) ? (rNum as RadiusMi) : DEFAULT_RADIUS_MI;
   return { lat, lon, place: place?.name ?? null, date, time, w, r };
 }

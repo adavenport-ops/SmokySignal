@@ -249,6 +249,29 @@ export function planRollupDates(
   return out;
 }
 
+/**
+ * Every stored track day the cron should build. Yesterday is always
+ * (re)built; every older UTC day that has track keys and is not yet in
+ * the index is built too, however old (tracks are permanent, so the old
+ * 34-day window no longer bounds what can be rolled up). Today is never
+ * built. Newest first, so a deadline cut leaves the oldest days for the
+ * next run.
+ */
+export function planRollupBackfill(
+  nowMs: number,
+  indexed: ReadonlySet<string>,
+  storedDays: ReadonlyArray<string>,
+): string[] {
+  const today = utcDateKey(nowMs);
+  const yesterday = utcDateKey(nowMs - DAY_MS);
+  const out = new Set<string>([yesterday]);
+  for (const d of [...storedDays].sort().reverse()) {
+    if (!/^\d{8}$/.test(d) || d >= today) continue;
+    if (!indexed.has(d)) out.add(d);
+  }
+  return [...out].sort().reverse();
+}
+
 // ─── /stats summary ──────────────────────────────────────────────────
 
 export type StitchedSession = RollupSession & {

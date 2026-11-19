@@ -167,15 +167,8 @@ _Nothing picked yet._
 - **Acceptance:** first visit shows a one-line "Get a ping when Smokey goes up" link instead of the card; the card appears from the second visit or after a tap; closes #71.
 - **Blog line:** First-time visitors see the sky first and the alerts pitch second.
 
-### B19 · Desktop layout for plane and flight pages
-- **Why:** On a 1440 px screen /plane/[tail] and /flight/... sit in a narrow single column with the map, logbook and history stacked; the aviation crowd mostly reads these on desktop.
-- **Size:** S
-- **One weekly run:** yes
-- **Files:** `app/(tabs)/plane/[tail]/page.tsx`, `app/flight/[tail]/[flightId]/page.tsx`, `components/PlaneHistory.tsx` (layout only)
-- **Acceptance:** at ≥1024 px a two-column layout (map/3D left and wide, stats + logbook + related right), no horizontal scroll at 390 px, 12 px floor, the 3D controls still clear of content; screenshots at 1440x900 and iPhone 14.
-- **Blog line:** Plane and flight pages now use the whole screen on desktop: map on the left, the logbook beside it.
-
 ## Shipped
 
 <!-- The weekly job prepends one line per shipped item: - YYYY-MM-DD · B0x · Title · #PR -->
+- 2026-11-19 · B19 · Desktop layout for plane and flight pages · fix/walk-b
 - 2026-11-19 · B09 · Neighbourhood pages · #183

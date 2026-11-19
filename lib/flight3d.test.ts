@@ -272,3 +272,76 @@ test("hexToRgba", () => {
   assert.deepEqual(hexToRgba("#FF7A1A"), [255, 122, 26, 255]);
   assert.deepEqual(hexToRgba("5bb6ff", 80), [91, 182, 255, 80]);
 });
+
+// ─── Initial framing ─────────────────────────────────────────────────
+
+import {
+  CONTROLS_COLUMN_W,
+  MIN_REGIONAL_ZOOM,
+  clampFrameZoom,
+  framePadding,
+  spanKm,
+} from "./flight3d";
+
+test("framePadding keeps the controls column clear on desktop and phone", () => {
+  for (const [w, h] of [
+    [1100, 640],
+    [390, 560],
+  ] as const) {
+    const p = framePadding({ width: w, height: h, replay: false, controlsRight: 10 });
+    assert.ok(p.right >= CONTROLS_COLUMN_W + 10 + 12, `right ${p.right} at ${w}px`);
+    assert.ok(p.bottom >= 52, "gesture hint band");
+  }
+});
+
+test("framePadding reserves the readout and scrubber when replaying", () => {
+  const p = framePadding({ width: 800, height: 600, replay: true, controlsRight: 10 });
+  assert.ok(p.top >= 70);
+  assert.ok(p.bottom >= 64);
+});
+
+test("framePadding adds the parent's overlays and shrinks on a tiny frame", () => {
+  const p = framePadding({
+    width: 800,
+    height: 600,
+    replay: false,
+    controlsRight: 12,
+    parent: { top: 100, bottom: 50, left: 0, right: 60 },
+  });
+  assert.ok(p.top >= 100 + 12);
+  assert.ok(p.right >= 60);
+  const tiny = framePadding({
+    width: 200,
+    height: 150,
+    replay: true,
+    controlsRight: 10,
+    parent: { top: 80, bottom: 80, left: 40, right: 40 },
+  });
+  assert.ok(tiny.left + tiny.right <= 200 * 0.6 + 1);
+  assert.ok(tiny.top + tiny.bottom <= 150 * 0.6 + 1);
+});
+
+// Everett to Olympia: a month of I-5 patrols.
+const MONTH = { minLat: 47.04, maxLat: 47.98, minLon: -122.95, maxLon: -122.2 };
+
+test("spanKm measures the widest side", () => {
+  const km = spanKm(MONTH);
+  assert.ok(km > 100 && km < 110, `got ${km}`);
+});
+
+test("clampFrameZoom pulls a far-out regional fit back in", () => {
+  // The bug: a 105 km track opening at zoom ~6.8 (~300 km across a 420 px column).
+  const z = clampFrameZoom(6.8, { bounds: MONTH, frameW: 330, frameH: 420 });
+  assert.ok(z >= MIN_REGIONAL_ZOOM);
+  assert.ok(z > 7.5, `got ${z}`);
+  // ...but never zooms past the frame: at the floor the track spans 60 %
+  // of the short side, so a fit that already shows it closer is kept.
+  assert.equal(clampFrameZoom(8.4, { bounds: MONTH, frameW: 330, frameH: 420 }), 8.4);
+});
+
+test("clampFrameZoom leaves statewide extents and maxZoom alone", () => {
+  const wide = { minLat: 45.6, maxLat: 49.0, minLon: -124.5, maxLon: -117.0 };
+  assert.equal(clampFrameZoom(5.5, { bounds: wide, frameW: 800, frameH: 500 }), 5.5);
+  const dot = { minLat: 47.2, maxLat: 47.2001, minLon: -122.3, maxLon: -122.3001 };
+  assert.equal(clampFrameZoom(16, { bounds: dot, frameW: 400, frameH: 400 }), 14);
+});

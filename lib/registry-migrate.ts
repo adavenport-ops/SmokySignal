@@ -5,6 +5,7 @@
 // applies the rewrite with planTaxonomyMigration().
 
 import type { FleetEntry, RoleConfidence } from "./types";
+import { SUPERSEDED_ROLE_NOTES } from "./seed";
 import {
   isLegacyRole,
   isMission,
@@ -85,9 +86,13 @@ export function normalizeRegistryRow(
     entry.secondaryMission = e.secondaryMission;
   }
   if (isMissionScope(e.scope)) entry.scope = e.scope;
-  if (typeof e.roleNote === "string") entry.roleNote = e.roleNote;
-
   const seed = seedByTail?.get(tail);
+  if (typeof e.roleNote === "string") {
+    // A stale note an earlier seed wrote to KV reads the current seed's.
+    entry.roleNote =
+      seed?.roleNote && SUPERSEDED_ROLE_NOTES[tail]?.includes(e.roleNote) ? seed.roleNote : e.roleNote;
+  }
+
   if (seed && isLegacyRow(e)) {
     return withSeedTaxonomy(entry, seed);
   }

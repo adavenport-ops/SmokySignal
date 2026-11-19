@@ -121,7 +121,7 @@ test("intro names only agencies that flew here, with registry counts", () => {
   const text = townIntro(s, new Map([["WSP", 2], ["KCSO", 1], ["Pierce SO", 1]]), 9);
   assert.equal(
     text,
-    "In the last 30 days, 3 tracked flights by 2 aircraft came within about 9 mi of Fife. Who flew: Washington State Patrol (2 flights, 2 aircraft on our list), King County Sheriff's Office (1 flight, 1 aircraft on our list).",
+    "In the last 30 days, 2 aircraft we track made 3 tracked flights within about 9 mi of Fife. Who flew: Washington State Patrol (2 flights by 1 of its 2 aircraft on our list), King County Sheriff's Office (1 flight by its only aircraft on our list).",
   );
   assert.ok(!/Pierce/.test(text));
   assert.ok(!/police|cop\b|!/i.test(text));

@@ -31,6 +31,9 @@ import {
   type RadarViewId,
 } from "@/lib/radar-view";
 import { displayNickname } from "@/lib/nickname-display";
+import { releaseMap } from "@/lib/webgl";
+import { MapBoundary, useReportMapLoss } from "./MapBoundary";
+import { MapListFallback } from "./TrackSvgFallback";
 
 // Camera ease when the rider picks a region. Short: it is a jump, not
 // a tour.
@@ -147,7 +150,50 @@ const FOLLOW_EDGE_MARGIN_RATIO = 0.2;
 
 type RiderPos = { lat: number; lon: number };
 
-export default function RadarMap({
+type RadarMapProps = Parameters<typeof RadarMapInner>[0];
+
+/**
+ * WebGL-gated. Without it (or if the map throws while mounting) the
+ * slot lists what is airborne instead, so /radar and the home console
+ * keep working.
+ */
+export default function RadarMap(props: RadarMapProps) {
+  const up = props.aircraft.filter((a) => a.airborne);
+  return (
+    <MapBoundary
+      name="radar"
+      placeholder={<div aria-hidden style={{ position: "absolute", inset: 0, background: SS_TOKENS.bg0 }} />}
+      fallback={
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            paddingTop: props.insets.top,
+            paddingBottom: props.insets.bottom,
+            paddingLeft: Math.min(props.insets.left, 24),
+            paddingRight: Math.min(props.insets.right, 24),
+            background: SS_TOKENS.bg0,
+            overflowY: "auto",
+          }}
+        >
+          <MapListFallback
+            note="Map needs WebGL. Here is what is up, as a list."
+            empty="Nothing we track is airborne."
+            rows={up.map((a) => ({
+              key: a.tail,
+              label: a.nickname ? `${a.nickname} · ${a.tail}` : a.tail,
+              detail: typeof a.altitude_ft === "number" ? `${Math.round(a.altitude_ft).toLocaleString("en-US")} ft` : undefined,
+            }))}
+          />
+        </div>
+      }
+    >
+      <RadarMapInner {...props} />
+    </MapBoundary>
+  );
+}
+
+function RadarMapInner({
   aircraft,
   rider,
   showDistanceRings = false,
@@ -217,6 +263,9 @@ export default function RadarMap({
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const onMapReadyRef = useRef(onMapReady);
   onMapReadyRef.current = onMapReady;
+  const reportLoss = useReportMapLoss();
+  const reportLossRef = useRef(reportLoss);
+  reportLossRef.current = reportLoss;
   const onLeaveViewRef = useRef(onLeaveView);
   onLeaveViewRef.current = onLeaveView;
   const viewIdRef = useRef<RadarViewId>(viewId);
@@ -312,6 +361,8 @@ export default function RadarMap({
       attributionControl: { compact: true },
     });
     mapRef.current = map;
+    // Evicted while on screen (too many contexts open): show the list.
+    map.on("webglcontextlost", reportLossRef.current);
     containerRef.current.setAttribute("data-view", viewIdRef.current);
 
     const onLoad = async () => {
@@ -640,7 +691,7 @@ export default function RadarMap({
       popupRef.current?.remove();
       popupRef.current = null;
       onMapReadyRef.current?.(null);
-      map.remove();
+      releaseMap(map);
       mapRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -33,7 +33,7 @@ export const FLEET: FleetEntry[] = [
     role: "police",
     policeUnit: "wsp",
     roleConfidence: "confirmed",
-    roleNote: "WSP FLIR 206; Smokey 4 per earlier seed, tail mapping unverified",
+    roleNote: "WSP FLIR 206 on speed enforcement: the FAA owner record and WSP aviation pages agree. Smokey 4 is our name for it.",
     sources: [
       "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N305DK",
       "https://wsp.wa.gov/?p=74948",
@@ -51,7 +51,7 @@ export const FLEET: FleetEntry[] = [
     role: "police",
     policeUnit: "wsp",
     roleConfidence: "confirmed",
-    roleNote: "WSP FLIR 206; Smokey 3 per earlier seed, tail mapping unverified",
+    roleNote: "WSP FLIR 206 on speed enforcement: the FAA owner record and WSP aviation pages agree. Smokey 3 is our name for it.",
     sources: [
       "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N2446X",
       "https://wsp.wa.gov/?p=74948",
@@ -202,7 +202,7 @@ export const FLEET: FleetEntry[] = [
     policeUnit: "sheriff",
     secondaryMission: "sar",
     roleConfidence: "tentative",
-    roleNote: "Guardian Two per earlier seed, tail mapping unverified",
+    roleNote: "No public source ties the Guardian Two callsign to this tail yet.",
     sources: [
       "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N790RJ",
       "https://www.helis.com/database/sqd/King-County-Sheriff-Washington/",
@@ -331,7 +331,7 @@ export const FLEET: FleetEntry[] = [
     policeUnit: "sheriff",
     secondaryMission: "sar",
     roleConfidence: "tentative",
-    roleNote: "SnoHawk 10 per earlier seed, tail mapping unverified",
+    roleNote: "No public source ties the SnoHawk 10 callsign to this tail yet.",
     sources: [
       "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N815SC",
       "https://www.heraldnet.com/news/search-and-rescue-helicopter-back-and-better-than-ever",
@@ -1076,6 +1076,20 @@ export const FLEET: FleetEntry[] = [
  * policeUnit / secondaryMission / scope / sources fields; registry
  * research applied (see REMOVED_TAILS and docs/registry-research-2026-11.md).
  */
+/**
+ * Role notes that earlier seeds wrote into the KV registry and that no
+ * longer match the row's confidence (a CONFIRMED tail reading "tail
+ * mapping unverified"). lib/registry-migrate.ts swaps a stored note that
+ * matches one of these for the current seed note on read, so prod reads
+ * right without an admin rewrite.
+ */
+export const SUPERSEDED_ROLE_NOTES: Readonly<Record<string, readonly string[]>> = {
+  N305DK: ["WSP FLIR 206; Smokey 4 per earlier seed, tail mapping unverified"],
+  N2446X: ["WSP FLIR 206; Smokey 3 per earlier seed, tail mapping unverified"],
+  N790RJ: ["Guardian Two per earlier seed, tail mapping unverified"],
+  N815SC: ["SnoHawk 10 per earlier seed, tail mapping unverified"],
+};
+
 export const SEED_VERSION = 4;
 
 /**

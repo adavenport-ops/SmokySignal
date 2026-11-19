@@ -533,3 +533,95 @@ export function hexToRgba(hex: string, alpha = 255): [number, number, number, nu
   const v = parseInt(m[1]!, 16);
   return [(v >> 16) & 255, (v >> 8) & 255, v & 255, alpha];
 }
+
+// ─── Initial framing ─────────────────────────────────────────────────
+
+export type FramePad = { top: number; bottom: number; left: number; right: number };
+
+/** Width of the Map3DControls column (one 44 px button), px. */
+export const CONTROLS_COLUMN_W = 44;
+/** Air between the track and the controls column, px. */
+export const CONTROLS_AIR = 12;
+/** Top band the replay readout (time, ALT, GS) covers, px. */
+export const READOUT_H = 70;
+/** Bottom band the replay scrubber covers, px. */
+export const SCRUBBER_H = 64;
+/** Bottom band the one-line gesture hint covers when there is no scrubber, px. */
+export const HINT_H = 52;
+/** Padding never eats more than this share of the frame per axis. */
+const MAX_PAD_SHARE = 0.6;
+
+/**
+ * Screen padding for the initial fit. The controls column and RESET VIEW
+ * sit over the right edge on every width (desktop and phone), the replay
+ * readout over the top-left, the scrubber or the gesture hint over the
+ * bottom; `parent` adds what the page's own overlays cover. When a tiny
+ * frame cannot honour it all, the padding shrinks proportionally so the
+ * track still gets 40 % of each axis.
+ */
+export function framePadding(input: {
+  width: number;
+  height: number;
+  replay: boolean;
+  /** RESET VIEW / controls inset from the right edge, px. */
+  controlsRight: number;
+  parent?: FramePad | null;
+}): FramePad {
+  const { width, height, replay } = input;
+  const fp = input.parent ?? { top: 0, bottom: 0, left: 0, right: 0 };
+  const pad = Math.round(Math.min(width, height) * 0.07);
+  const raw: FramePad = {
+    top: pad + (replay ? READOUT_H : 12) + fp.top,
+    bottom: pad + (replay ? SCRUBBER_H : HINT_H) + fp.bottom,
+    left: pad + fp.left,
+    right: Math.max(pad + fp.right, CONTROLS_COLUMN_W + input.controlsRight + CONTROLS_AIR),
+  };
+  const fit = (a: number, b: number, size: number): [number, number] => {
+    const max = size * MAX_PAD_SHARE;
+    if (a + b <= max || a + b === 0) return [a, b];
+    const k = max / (a + b);
+    return [Math.floor(a * k), Math.floor(b * k)];
+  };
+  const [left, right] = fit(raw.left, raw.right, width);
+  const [top, bottom] = fit(raw.top, raw.bottom, height);
+  return { top, bottom, left, right };
+}
+
+/** Tracks up to this wide count as regional (Puget Sound and around). */
+export const REGIONAL_SPAN_KM = 250;
+/** Never open a regional track further out than this. */
+export const MIN_REGIONAL_ZOOM = 7;
+/** A regional track fills at least this share of the frame's short side. */
+const MIN_FILL = 0.6;
+const M_PER_PX_Z0 = 156543.03392;
+
+/** Widest extent of a bounds box, km (east-west at mid latitude, or north-south). */
+export function spanKm(b: Bounds): number {
+  const midLat = (b.minLat + b.maxLat) / 2;
+  const ew = haversineNm(midLat, b.minLon, midLat, b.maxLon);
+  const ns = haversineNm(b.minLat, b.minLon, b.maxLat, b.minLon);
+  return (Math.max(ew, ns) * NM_TO_M) / 1000;
+}
+
+/**
+ * Cap how far the initial fit may zoom out. The screen-space fit can go
+ * wide on a pitched view (far points near the horizon, label plates), and
+ * a month of regional flights then opens on half the state with the
+ * tracks in a corner. For a regional track the camera stays close enough
+ * that the track fills MIN_FILL of the frame's short side, and never
+ * wider than MIN_REGIONAL_ZOOM. Bigger extents keep the fit as is.
+ */
+export function clampFrameZoom(
+  zoom: number,
+  input: { bounds: Bounds; frameW: number; frameH: number; maxZoom?: number },
+): number {
+  const km = spanKm(input.bounds);
+  if (!Number.isFinite(zoom) || km > REGIONAL_SPAN_KM) return zoom;
+  const short = Math.max(1, Math.min(input.frameW, input.frameH));
+  const lat = (input.bounds.minLat + input.bounds.maxLat) / 2;
+  const mPerPxZ0 = M_PER_PX_Z0 * Math.cos((lat * Math.PI) / 180);
+  // Zoom at which `km` spans MIN_FILL of the short side, flat.
+  const fillZoom = km > 0 ? Math.log2(mPerPxZ0 / ((km * 1000) / (short * MIN_FILL))) : Infinity;
+  const floor = Math.max(MIN_REGIONAL_ZOOM, Math.min(fillZoom, input.maxZoom ?? 14));
+  return Math.min(input.maxZoom ?? 14, Math.max(zoom, floor));
+}

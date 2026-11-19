@@ -6,14 +6,13 @@
 
 import { SS_TOKENS } from "@/lib/tokens";
 import type { MapView } from "@/lib/history-3d";
+import { supportsWebGL2 } from "@/lib/webgl";
 
 /** True when the browser can give us a WebGL2 context (3D needs it). */
 export function hasWebGL2(): boolean {
-  try {
-    return !!document.createElement("canvas").getContext("webgl2");
-  } catch {
-    return false;
-  }
+  // Cached probe that releases its context (lib/webgl.ts): a bare
+  // getContext() here held one of the browser's context slots per call.
+  return supportsWebGL2();
 }
 
 /** Segmented 2D | 3D switch, 44px targets. */

@@ -103,7 +103,7 @@ function postLines(posts: readonly LlmsPost[]): string[] {
   ];
 }
 
-function header(fleet: readonly FleetEntry[]): string[] {
+function header(fleet: readonly FleetEntry[], since: string = LOG_START_DATE): string[] {
   const s = fleetStats(fleet);
   return [
     "# SmokySignal",
@@ -116,7 +116,7 @@ function header(fleet: readonly FleetEntry[]): string[] {
     "",
     "## Key facts",
     "",
-    ...keyFacts(fleet).map((f) => `- ${f}`),
+    ...keyFacts(fleet, since).map((f) => `- ${f}`),
     "",
     "## Who flies over Washington",
     "",
@@ -138,7 +138,7 @@ function header(fleet: readonly FleetEntry[]): string[] {
     "## Data sources and licences",
     "",
     "- Positions: public ADS-B position reports from the adsb.fi and adsb.lol volunteer receiver networks, merged by aircraft. These two are the only position sources. adsb.lol data is under the Open Database License (ODbL). Attribution is given on every data surface.",
-    `- The flight log starts ${LOG_START_DATE}. The monthly flight-hours dataset is published under ODbL 1.0 (${ODBL_URL}); attribute SmokySignal, adsb.fi and adsb.lol.`,
+    `- The flight log starts ${since}, the first day with a stored track; tracks are kept permanently. The monthly flight-hours dataset is published under ODbL 1.0 (${ODBL_URL}); attribute SmokySignal, adsb.fi and adsb.lol.`,
     "- The tail registry comes from FAA registration records and public agency or press sources, listed per tail on /aircraft.",
     "- Coverage gaps: aircraft flying low, in terrain or with the transponder off may not be heard. A quiet map is not proof of a quiet sky.",
     "",
@@ -163,9 +163,13 @@ function header(fleet: readonly FleetEntry[]): string[] {
   ];
 }
 
-export function buildLlmsTxt(fleet: readonly FleetEntry[], posts: readonly LlmsPost[] = []): string {
+export function buildLlmsTxt(
+  fleet: readonly FleetEntry[],
+  posts: readonly LlmsPost[] = [],
+  since: string = LOG_START_DATE,
+): string {
   return [
-    ...header(fleet),
+    ...header(fleet, since),
     ...postLines(posts.slice(0, 10)),
     "## Optional",
     "",
@@ -183,6 +187,7 @@ export function buildLlmsFullTxt(
   corridors: readonly Corridor[],
   faq: readonly FaqEntry[] = PROGRAM_FAQ,
   posts: readonly LlmsPost[] = [],
+  since: string = LOG_START_DATE,
 ): string {
   const registry = [
     "## Aircraft registry",
@@ -221,5 +226,5 @@ export function buildLlmsFullTxt(
     "",
     ...faq.flatMap((e) => [`### ${e.question}`, "", e.answer, ""]),
   ];
-  return [...header(fleet), ...postLines(posts), ...registry, ...roads, ...towns, ...qa].join("\n");
+  return [...header(fleet, since), ...postLines(posts), ...registry, ...roads, ...towns, ...qa].join("\n");
 }

@@ -56,6 +56,9 @@ import {
 import type { Flight3DPick } from "./Flight3D";
 import { FlightMiniCard, PeriodPicker, Stat } from "./HistoryControls";
 import { ViewToggle, hasWebGL2 } from "./View3DToggle";
+import { MapBoundary, useReportMapLoss } from "./MapBoundary";
+import { TrackSvgFallback } from "./TrackSvgFallback";
+import { releaseMap } from "@/lib/webgl";
 
 const MAP_HEIGHT = 260;
 const HEIGHT_3D = "clamp(380px, 62vh, 560px)";
@@ -82,7 +85,7 @@ const Flight3D = nextDynamic(() => import("./Flight3D"), {
 });
 const PUGET_SOUND: [number, number] = [-122.3, 47.6];
 
-export default function PlaneHistory({ tail }: { tail: string }) {
+export default function PlaneHistory({ tail, since }: { tail: string; since?: string }) {
   const [today, setToday] = useState<string | null>(null);
   const [range, setRange] = useState<DateRange | null>(null);
   const [selected, setSelected] = useState<HistoryLineKey | null>(null);
@@ -92,11 +95,11 @@ export default function PlaneHistory({ tail }: { tail: string }) {
   useEffect(() => {
     const t = ptDate(Date.now());
     setToday(t);
-    setRange(resolvePreset("last30", t) ?? { from: t, to: t });
+    setRange(resolvePreset("last30", t, since) ?? { from: t, to: t });
     const v = parseMapView(new URLSearchParams(window.location.search).get(HISTORY_VIEW_PARAM));
     setView(v);
     if (v === "3d" && !hasWebGL2()) setUnavailable("webgl2");
-  }, []);
+  }, [since]);
 
   const chooseView = useCallback((next: MapView) => {
     setView(next);
@@ -140,7 +143,7 @@ export default function PlaneHistory({ tail }: { tail: string }) {
   return (
     <div data-testid="plane-history" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ padding: "0 14px" }}>
-        <PeriodPicker today={today} value={range} onPick={setRange} />
+        <PeriodPicker today={today} value={range} onPick={setRange} floor={since} />
       </div>
       <div style={{ padding: "0 14px", display: "flex", flexDirection: "column", gap: 8 }}>
         <ViewToggle view={view} onChange={chooseView} label="Flight history view" />
@@ -167,7 +170,13 @@ export default function PlaneHistory({ tail }: { tail: string }) {
             />
           </div>
         ) : (
-          <HistoryMap tail={tail} body={body} selected={selected} onSelect={setSelected} />
+          <MapBoundary
+            name="plane-history"
+            placeholder={<div aria-hidden style={{ height: MAP_HEIGHT, background: SS_TOKENS.bg0 }} />}
+            fallback={<HistorySvgFallback body={body} />}
+          >
+            <HistoryMap tail={tail} body={body} selected={selected} onSelect={setSelected} />
+          </MapBoundary>
         )}
         {status && (
           <div
@@ -199,7 +208,7 @@ export default function PlaneHistory({ tail }: { tail: string }) {
       )}
       <div style={{ padding: "0 14px 14px" }}>
         <div className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".06em", marginBottom: 8 }}>
-          {tail} · {rangeLabel(range, today)}
+          {tail} · {rangeLabel(range, today, since)}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
           <Stat label="FLIGHTS" value={body ? String(body.summary.flights) : "—"} />
@@ -223,6 +232,20 @@ export default function PlaneHistory({ tail }: { tail: string }) {
   );
 }
 
+/** Flat drawing of the period's flights when the 2D map cannot run. */
+function HistorySvgFallback({ body }: { body: HistoryBody | null }) {
+  if (!body) return <div aria-hidden style={{ height: MAP_HEIGHT, background: SS_TOKENS.bg0 }} />;
+  return (
+    <TrackSvgFallback
+      height={MAP_HEIGHT}
+      tracks={body.polylines.map((l) => ({
+        id: `${l.tail}:${l.id}`,
+        points: l.points.map(([lat, lon, , ts]) => ({ lat, lon, ts })),
+      }))}
+    />
+  );
+}
+
 function shortDate(iso: string): string {
   const [, m, d] = iso.split("-").map(Number) as [number, number, number];
   return `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1]} ${d}`;
@@ -243,6 +266,7 @@ function HistoryMap({
   const [map, setMap] = useState<MaplibreMap | null>(null);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const reportLoss = useReportMapLoss();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -256,6 +280,7 @@ function HistoryMap({
       attributionControl: { compact: true },
       dragRotate: false,
     });
+    m.on("webglcontextlost", reportLoss);
     m.addControl(new NavigationControl({ showCompass: false }), "top-right");
     m.touchZoomRotate.disableRotation();
     const onLoad = () => {
@@ -266,9 +291,9 @@ function HistoryMap({
     return () => {
       m.off("load", onLoad);
       setMap(null);
-      m.remove();
+      releaseMap(m);
     };
-  }, []);
+  }, [reportLoss]);
 
   const ready = useHistoryLayers(map, { heat: false });
   const [palette] = useRadarPalette();

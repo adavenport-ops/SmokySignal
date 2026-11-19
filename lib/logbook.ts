@@ -9,7 +9,8 @@
 import { SESSION_GAP_MS, flightIdFromTs } from "./flights";
 import { corridorRoad, flightDetailFromPoints, type CorridorTime } from "./flight-detail";
 import { distributeMinutes, stitchSessions, type RollupSession } from "./rollup-core";
-import { LOG_START_DATE, dedupeSessions, lastMonths, ptMonth } from "./rollup-sessions";
+import { dedupeSessions, lastMonths, ptMonth } from "./rollup-sessions";
+import { DATA_SINCE_FALLBACK } from "./data-since-core";
 import type { TrackPoint } from "./tracks";
 
 export const LOGBOOK_MONTHS = 12;
@@ -43,6 +44,8 @@ export type CorridorWorked = { road: string; s: number; place: string | null };
 
 export type Logbook = {
   tail: string;
+  /** First Pacific date on record (lib/data-since.ts). */
+  since: string;
   months: LogbookMonth[];
   totals: { sorties: number; airborne_s: number };
   avg_sortie_s: number | null;
@@ -126,6 +129,8 @@ export function buildLogbook(input: {
   nowMs: number;
   months?: number;
   recent?: number;
+  /** First Pacific date on record; months before it are not listed. */
+  since?: string;
 }): Logbook {
   const { tail, nowMs } = input;
   const monthsN = input.months ?? LOGBOOK_MONTHS;
@@ -145,7 +150,8 @@ export function buildLogbook(input: {
   );
 
   // Months: the last N Pacific months, never before the log began.
-  const logStartMonth = LOG_START_DATE.slice(0, 7);
+  const since = input.since ?? DATA_SINCE_FALLBACK;
+  const logStartMonth = since.slice(0, 7);
   const monthKeys = lastMonths(ptMonth(nowMs), monthsN).filter((m) => m >= logStartMonth);
   const monthMap = new Map<string, LogbookMonth>(
     monthKeys.map((m) => [m, { month: m, sorties: 0, airborne_s: 0 }]),
@@ -213,6 +219,7 @@ export function buildLogbook(input: {
   const rounded = hourMinutes.map((m) => Math.round(m * 10) / 10);
   return {
     tail,
+    since,
     months: [...monthMap.values()],
     totals: { sorties: flights.length, airborne_s: totalS },
     avg_sortie_s: flights.length ? Math.round(totalS / flights.length) : null,

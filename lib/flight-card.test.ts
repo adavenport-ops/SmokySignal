@@ -6,7 +6,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { MAX_CARD_POINTS, altitudeSparkline, decimate, projectTrack, subPath } from "./flight-card";
+import { MAX_CARD_POINTS, altitudeSparkline, cardRoute, decimate, projectTrack, subPath } from "./flight-card";
 import type { TrackPoint } from "./tracks";
 
 function p(lat: number, lon: number, ts: number, alt: number | null = 1000): TrackPoint {
@@ -102,4 +102,23 @@ test("altitudeSparkline: time on x, 0 ft at the baseline, nulls skipped", () => 
   assert.equal(sp.min_alt_ft, 0);
   assert.match(sp.area, /Z$/);
   assert.equal(altitudeSparkline([p(47, -122, 0, 500)], { width: 10, height: 10 }).d, "");
+});
+
+test("cardRoute: unknown arrival reads in rider terms, never a dash", () => {
+  const nameOf = (id: string) => ({ S50: "Auburn Municipal", KOLM: "Olympia Regional" })[id] ?? null;
+  assert.deepEqual(cardRoute({ dep: "S50", arr: null, inProgress: false, nameOf }), {
+    codes: "S50",
+    names: "Auburn Municipal (S50) → landed off-field or out of range",
+  });
+  assert.deepEqual(cardRoute({ dep: "S50", arr: "KOLM", inProgress: false, nameOf }), {
+    codes: "S50 → KOLM",
+    names: "Auburn Municipal (S50) → Olympia Regional (KOLM)",
+  });
+  assert.deepEqual(cardRoute({ dep: "S50", arr: null, inProgress: true, nameOf }), {
+    codes: "S50 → UP",
+    names: "Auburn Municipal (S50) → still up",
+  });
+  const none = cardRoute({ dep: null, arr: null, inProgress: false, nameOf });
+  assert.equal(none.names, "Took off off-field or out of range → landed off-field or out of range");
+  assert.ok(!/—|not resolved/.test(none.codes + none.names));
 });

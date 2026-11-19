@@ -5,9 +5,20 @@ import maplibregl, { Map as MaplibreMap } from "maplibre-gl";
 import { applyNeutralBasemap, basemapStyleUrl } from "@/lib/basemap";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { SS_TOKENS } from "@/lib/tokens";
+import { releaseMap } from "@/lib/webgl";
+import { MapBoundary } from "./MapBoundary";
+import { TrackSvgFallback } from "./TrackSvgFallback";
 import type { TrackPoint } from "@/lib/tracks";
 
 export default function TracksMap({ samples }: { samples: TrackPoint[] }) {
+  return (
+    <MapBoundary name="TracksMap" fallback={<div style={{ position: "absolute", inset: 0, overflow: "auto" }}><TrackSvgFallback height="100%" tracks={[{ id: "track", points: samples }]} /></div>}>
+      <TracksMapInner samples={samples} />
+    </MapBoundary>
+  );
+}
+
+function TracksMapInner({ samples }: { samples: TrackPoint[] }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MaplibreMap | null>(null);
 
@@ -121,7 +132,7 @@ export default function TracksMap({ samples }: { samples: TrackPoint[] }) {
     });
 
     return () => {
-      map.remove();
+      releaseMap(map);
       mapRef.current = null;
     };
   }, [samples]);

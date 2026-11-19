@@ -23,9 +23,15 @@ import {
 import { missionLabel } from "./role-display";
 import { DEFAULT_PALETTE, PALETTES, assignPaletteTailColors, type RadarPalette } from "./radar-palettes";
 import type { Mission } from "./types";
+import { DATA_SINCE_FALLBACK } from "./data-since-core";
 
-/** First Pacific date with permanent track history on record. */
-export const HISTORY_FLOOR = "2026-10-16";
+/**
+ * First Pacific date with stored track history: the static fallback of
+ * the data-since value (lib/data-since.ts). Server pages pass the live
+ * value through as `floor`; this default is the same date.
+ */
+export const HISTORY_FLOOR = DATA_SINCE_FALLBACK;
+
 const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /** "2026-10-16" -> "16 Oct 2026", the brand's date style. Input echoed
@@ -153,18 +159,20 @@ export function historyMonths(today: string, floor = HISTORY_FLOOR): string[] {
 }
 
 /** Presets the sheet offers, in display order. */
-export function historyPresets(today: string): { id: HistoryPreset; label: string }[] {
+export function historyPresets(today: string, floor = HISTORY_FLOOR): { id: HistoryPreset; label: string }[] {
   return [
     { id: "last7", label: "Last 7 days" },
     { id: "last30", label: "Last 30 days" },
-    ...historyMonths(today).map((m) => ({ id: `month:${m}` as HistoryPreset, label: monthLongLabel(m) })),
+    ...historyMonths(today, floor).map((m) => ({ id: `month:${m}` as HistoryPreset, label: monthLongLabel(m) })),
   ];
 }
 
 /**
  * A preset → Pacific date range [from, to], inclusive. Rolling presets
- * end today; a month runs 1st through last day, clipped to the floor and
- * to today. null when the preset covers no day on record.
+ * always span their full 7 or 30 days ending today (days before the
+ * record simply hold nothing, and the label stays true); a month runs 1st
+ * through last day, clipped to the floor and to today. null when the
+ * preset covers no day on record.
  */
 export function resolvePreset(
   preset: HistoryPreset,
@@ -174,7 +182,7 @@ export function resolvePreset(
   if (!isIsoDate(today) || today < floor) return null;
   if (preset === "last7" || preset === "last30") {
     const span = preset === "last7" ? 7 : 30;
-    return { from: maxDate(shiftDate(today, -(span - 1)), floor), to: today };
+    return { from: shiftDate(today, -(span - 1)), to: today };
   }
   const month = preset.slice(6);
   if (!MONTH_RE.test(month)) return null;
@@ -192,7 +200,7 @@ export function presetForRange(
   today: string,
   floor = HISTORY_FLOOR,
 ): HistoryPreset | null {
-  for (const { id } of historyPresets(today)) {
+  for (const { id } of historyPresets(today, floor)) {
     const r = resolvePreset(id, today, floor);
     if (r && r.from === range.from && r.to === range.to) return id;
   }

@@ -147,24 +147,67 @@ export async function getMostRecentFlightForTail(
   nickname: string | null,
 ): Promise<RecentFlightForTail | null> {
   const dates = await listTrackKeys(tail); // newest first
-  for (const date of dates) {
+  for (let i = 0; i < dates.length; i++) {
+    const date = dates[i]!;
     const samples = await getTracksForDay(tail, date);
-    const sessions = sessionsFromDay(
-      { tail, nickname } as FleetEntry,
-      date,
-      samples,
-    );
-    if (sessions.length === 0) continue;
-
+    if (sessionsFromDay({ tail, nickname } as FleetEntry, date, samples).length === 0) continue;
+    // Read the day before too, so a flight that crossed 00:00 UTC is one
+    // session with its real takeoff, the same one the logbook lists.
+    const prev = utcDayBefore(date);
+    const prevSamples = dates.includes(prev) ? await getTracksForDay(tail, prev) : [];
+    const merged = mergeDaySamples([prevSamples, samples]);
+    const sessions = sessionsFromDay({ tail, nickname } as FleetEntry, date, merged);
     const last = sessions[sessions.length - 1]!;
-    // Reconstruct the points belonging to that session by replaying the
-    // gap-split logic — cheaper than threading point arrays through the
-    // session output type for the one caller that needs them.
-    const points = pointsForSession(samples, last);
+    const points = pointsForSession(merged, last);
     const inProgress = Date.now() - last.end_ts < SESSION_GAP_MS;
-    return { session: last, points, inProgress };
+    return { session: { ...last, date: utcDateKey(new Date(last.start_ts)) }, points, inProgress };
   }
   return null;
+}
+
+/** YYYYMMDD of the UTC day before / after a YYYYMMDD key. */
+export function utcDayBefore(dateKey: string): string {
+  return shiftUtcDay(dateKey, -1);
+}
+export function utcDayAfter(dateKey: string): string {
+  return shiftUtcDay(dateKey, 1);
+}
+function shiftUtcDay(dateKey: string, n: number): string {
+  const y = Number(dateKey.slice(0, 4));
+  const m = Number(dateKey.slice(4, 6));
+  const d = Number(dateKey.slice(6, 8));
+  return utcDateKey(new Date(Date.UTC(y, m - 1, d + n)));
+}
+
+/**
+ * Concatenate several UTC days of samples into one chronological run,
+ * dropping same-second repeats. sessionsFromDay over the result cuts
+ * sessions the same way the rollup does after stitching across 00:00
+ * UTC (lib/rollup-core.ts stitchSessions), so a flight page, the
+ * logbook and /stats agree on start, end and duration.
+ */
+export function mergeDaySamples(days: ReadonlyArray<ReadonlyArray<TrackPoint>>): TrackPoint[] {
+  return days
+    .flat()
+    .slice()
+    .sort((a, b) => a.ts - b.ts)
+    .filter((p, i, arr) => i === 0 || p.ts !== arr[i - 1]!.ts);
+}
+
+/**
+ * The session a public flightId names: the one that took off in that
+ * minute, or, for an old link minted from the 00:00 UTC half of a split
+ * flight, the session that was airborne at that minute.
+ */
+export function findFlightSession(
+  sessions: ReadonlyArray<FlightSession>,
+  flightTsMs: number,
+): FlightSession | null {
+  return (
+    sessions.find((s) => sessionMatchesFlightId(s.start_ts, flightTsMs)) ??
+    sessions.find((s) => s.start_ts <= flightTsMs && flightTsMs <= s.end_ts) ??
+    null
+  );
 }
 
 /**
@@ -183,8 +226,8 @@ function pointsForSession(
 /**
  * Compact UTC stamp at minute precision: "20260501T0629". Used as the
  * flightId in /flight/[tail]/[flightId] URLs so a flight has a stable,
- * shareable canonical address for as long as its underlying tracks
- * remain in KV (35-day TTL).
+ * shareable canonical address. Tracks are permanent (no TTL since
+ * 2026-11-18), so the address keeps working.
  */
 export function flightIdFromTs(tsMs: number): string {
   const d = new Date(tsMs);
@@ -223,8 +266,8 @@ export function sessionMatchesFlightId(startTsMs: number, flightTsMs: number): b
 
 /**
  * Look up a single flight session by its public flightId. Returns the
- * session (with its raw points + nickname) or null if the underlying
- * tracks have been pruned. Used by the public /flight/[tail]/[flightId]
+ * session (with its raw points + nickname) or null when no flight
+ * matches the id. Used by the public /flight/[tail]/[flightId]
  * share page.
  */
 export async function getFlightById(
@@ -236,17 +279,21 @@ export async function getFlightById(
   if (!parsed) return null;
   const { dateKey, tsMs } = parsed;
 
-  const samples = await getTracksForDay(tail, dateKey);
-  const sessions = sessionsFromDay(
-    { tail, nickname } as FleetEntry,
-    dateKey,
-    samples,
-  );
-  const match = sessions.find((s) => sessionMatchesFlightId(s.start_ts, tsMs));
+  // The flight can run past 00:00 UTC into the next track day, and an
+  // old id can point into the second half of a split flight: read both
+  // neighbours and cut sessions over the joined run.
+  const [prev, cur, next] = await Promise.all([
+    getTracksForDay(tail, utcDayBefore(dateKey)),
+    getTracksForDay(tail, dateKey),
+    getTracksForDay(tail, utcDayAfter(dateKey)),
+  ]);
+  const samples = mergeDaySamples([prev, cur, next]);
+  const sessions = sessionsFromDay({ tail, nickname } as FleetEntry, dateKey, samples);
+  const match = findFlightSession(sessions, tsMs);
   if (!match) return null;
   const points = pointsForSession(samples, match);
   return {
-    session: match,
+    session: { ...match, date: utcDateKey(new Date(match.start_ts)) },
     points,
     inProgress: false, // public share pages are always for completed flights
   };

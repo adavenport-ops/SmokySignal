@@ -133,6 +133,13 @@ export function rollupIndexKey(region?: Region): string {
   return `${regionPrefix(region)}rollup:index`;
 }
 
+// First Pacific date with stored track points. Written by
+// /api/cron/rollup (lib/data-since.ts), no TTL. Read through
+// getDataSince(), never inlined.
+export function dataSinceKey(region?: Region): string {
+  return `${regionPrefix(region)}meta:data_since`;
+}
+
 // ─── relay:* ─────────────────────────────────────────────────────────
 // Club relays (Discord / generic webhooks). Not region-scoped: a relay
 // carries its own region filter. See lib/relay/store.ts.

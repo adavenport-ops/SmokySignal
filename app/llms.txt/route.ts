@@ -4,13 +4,14 @@
 import { getRegistry } from "@/lib/registry";
 import { getAllPosts } from "@/lib/blog";
 import { buildLlmsTxt } from "@/lib/seo/llms";
+import { getDataSince } from "@/lib/data-since";
 
 export const runtime = "nodejs";
 export const revalidate = 3600;
 
 export async function GET(): Promise<Response> {
-  const fleet = await getRegistry();
-  return new Response(buildLlmsTxt(fleet, getAllPosts()), {
+  const [fleet, since] = await Promise.all([getRegistry(), getDataSince()]);
+  return new Response(buildLlmsTxt(fleet, getAllPosts(), since), {
     headers: {
       "Content-Type": "text/markdown; charset=utf-8",
       "Cache-Control": "public, max-age=3600, s-maxage=3600",

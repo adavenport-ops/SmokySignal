@@ -83,7 +83,7 @@ export default async function RoadPage({ params }: Props) {
           <section aria-label="Totals" className={styles.tiles}>
             <Tile label="This week" value={String(s.flights7d)} sub={`flight${s.flights7d === 1 ? "" : "s"} · 7 days`} />
             <Tile label="30 days" value={String(s.flights30d)} sub={`flight${s.flights30d === 1 ? "" : "s"}`} />
-            <Tile label="Time overhead" value={fmtMinutes(s.minutes30d)} sub="within ~2 nm · 30 days" />
+            <Tile label="Time overhead" value={fmtMinutes(s.minutes30d)} sub="within ~2 mi · 30 days" />
           </section>
 
           {quiet ? (
@@ -109,7 +109,7 @@ export default async function RoadPage({ params }: Props) {
           <section className={styles.card}>
             <h2 className={`ss-eyebrow ${styles.sectionTitle}`}>How this is counted</h2>
             <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: SS_TOKENS.fg1 }}>
-              A pass is one flight that spent time within about 2 nm of the
+              A pass is one flight that spent time within about 2 mi of the
               road, from the same public ADS-B tracks as the radar. A dropout
               can split one flight in two. Times are Pacific.
               {towns.length > 1 ? ` On this page, ${c.name} runs past ${joinAnd(towns)}.` : ""} Live now:{" "}

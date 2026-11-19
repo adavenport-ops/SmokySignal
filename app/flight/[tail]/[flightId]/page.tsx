@@ -13,7 +13,6 @@ import { getFlightById, parseFlightId } from "@/lib/flights";
 import { SS_TOKENS } from "@/lib/tokens";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { SaveFlightCardButton } from "@/components/SaveFlightCardButton";
-import { BackLink } from "@/components/BackLink";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { FlightRelated } from "@/components/NavRelated";
 import { crumbDate } from "@/lib/nav";
@@ -65,8 +64,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     socialTitle: `${tail}${niceName} · Flight ${params.flightId}`,
     socialDescription: "Flight track captured by SmokySignal.",
     ogType: "article",
-    // A pruned flight renders a "not available" note; keep it out of the
-    // index. ?view=3d is the same flight.
+    // A missing flight 404s (./not-found.tsx); keep it out of the index.
+    // ?view=3d is the same flight.
     noindex: !flight || params.tail !== tail || Object.keys(searchParams ?? {}).length > 0,
   });
 }
@@ -81,9 +80,8 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
   if (!parsed) notFound();
 
   const flight = await loadFlight(tail, entry.nickname, params.flightId);
-  if (!flight) {
-    return <Missing tail={tail} />;
-  }
+  // A real 404 (not a 200 with a note): ./not-found.tsx carries the copy.
+  if (!flight) notFound();
 
   const { session, points } = flight;
   const hour12 = isHour12(getTimeFormatPref());
@@ -92,11 +90,11 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
 
   return (
     <main
+      className="ss-detail-page ss-detail-flight"
+      data-testid="flight-page"
       style={{
         minHeight: "100dvh",
         padding: "16px 18px 40px",
-        maxWidth: 720,
-        margin: "0 auto",
         display: "flex",
         flexDirection: "column",
         gap: 16,
@@ -126,7 +124,6 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
           { label: `Flight ${crumbDate(session.start_ts)}` },
         ]}
       />
-      <BackLink href={`/plane/${entry.tail}`} label="Back to plane" />
       <header
         style={{
           display: "flex",
@@ -191,8 +188,31 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
         </div>
       </header>
 
+      <div className="ss-detail-grid">
+      {/* Left at >= 1024px: the 2D / 3D map, large. Right: the record. */}
+      <div className="ss-detail-col ss-detail-tall" data-testid="flight-col-map">
+        <div style={{ order: 2 }}>
+          <FlightMapView
+            tail={tail}
+            points={points}
+            initialView={initialView}
+            hour12={hour12}
+            share={{
+              path: `/flight/${entry.tail}/${params.flightId}`,
+              text: flightShareText({
+                tail: entry.tail,
+                nickname: entry.nickname,
+                startMs: session.start_ts,
+                durationS: session.duration_s,
+              }),
+            }}
+          />
+        </div>
+      </div>
+      <div className="ss-detail-col" data-testid="flight-col-record">
       <div
         style={{
+          order: 1,
           display: "inline-flex",
           alignItems: "center",
           gap: 8,
@@ -211,24 +231,9 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
         {fmtDurationHuman(session.duration_s)}
       </div>
 
-      <FlightMapView
-        tail={tail}
-        points={points}
-        initialView={initialView}
-        hour12={hour12}
-        share={{
-          path: `/flight/${entry.tail}/${params.flightId}`,
-          text: flightShareText({
-            tail: entry.tail,
-            nickname: entry.nickname,
-            startMs: session.start_ts,
-            durationS: session.duration_s,
-          }),
-        }}
-      />
-
       <section
         style={{
+          order: 3,
           background: SS_TOKENS.bg1,
           border: `.5px solid ${SS_TOKENS.hairline}`,
           borderRadius: 12,
@@ -264,6 +269,7 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
       <footer
         className="ss-mono"
         style={{
+          order: 4,
           marginTop: 8,
           fontSize: 12,
           color: SS_TOKENS.fg1,
@@ -288,58 +294,17 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
         </Link>
       </footer>
 
-      <FlightRelated
-        tail={entry.tail}
-        nickname={entry.nickname}
-        flightId={params.flightId}
-        view={initialView}
-        points={points}
-      />
-    </main>
-  );
-}
-
-function Missing({ tail }: { tail: string }) {
-  return (
-    <main
-      style={{
-        minHeight: "100dvh",
-        padding: 32,
-        maxWidth: 480,
-        margin: "0 auto",
-        color: SS_TOKENS.fg1,
-        textAlign: "center",
-        display: "flex",
-        flexDirection: "column",
-        gap: 16,
-      }}
-    >
-      <h1
-        style={{
-          fontSize: 22,
-          color: SS_TOKENS.fg0,
-          fontWeight: 700,
-          margin: 0,
-        }}
-      >
-        Flight not available
-      </h1>
-      <p style={{ fontSize: 14, lineHeight: 1.5 }}>
-        This flight is no longer in our window. We keep flight tracks for
-        the most recent 30 days and prune older ones to keep storage
-        light.
-      </p>
-      <Link
-        href={`/plane/${tail}`}
-        className="ss-mono"
-        style={{
-          fontSize: 12,
-          color: SS_TOKENS.alert,
-          textDecoration: "underline",
-        }}
-      >
-        See {tail}&rsquo;s recent activity →
-      </Link>
+      <div style={{ order: 5 }}>
+        <FlightRelated
+          tail={entry.tail}
+          nickname={entry.nickname}
+          flightId={params.flightId}
+          view={initialView}
+          points={points}
+        />
+      </div>
+      </div>
+      </div>
     </main>
   );
 }

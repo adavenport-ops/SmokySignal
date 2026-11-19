@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 import { buildMissionRows, hoursString, ledgerMonths, type LedgerRow } from "@/lib/ledger";
 import { loadLedgerRows } from "@/lib/rollup-read";
-import { LOG_START_DATE } from "@/lib/rollup-sessions";
+import { getDataSince } from "@/lib/data-since";
 import { missionLabel } from "@/lib/role-display";
 import { formatTs } from "@/lib/time";
 import { BackLink } from "@/components/BackLink";
@@ -35,6 +35,7 @@ export default async function DataPage() {
     console.warn("[data] load failed:", e);
   }
   const known = new Set((await getRegistry()).map((f) => f.tail));
+  const since = await getDataSince();
   const months = ledgerMonths(rows);
   // Newest month first; missions keep their canonical order within it.
   const missionRows = buildMissionRows(rows).sort((a, b) => b.month.localeCompare(a.month));
@@ -51,7 +52,7 @@ export default async function DataPage() {
           ]),
         ]}
       />
-      <BackLink />
+      <BackLink section="history" />
       <span className="ss-eyebrow">SmokySignal · Data and CSV</span>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -68,7 +69,7 @@ export default async function DataPage() {
         </p>
         <p className="ss-mono" data-testid="data-span" style={{ fontSize: 12, color: SS_TOKENS.fg2, letterSpacing: ".04em", margin: 0 }}>
           {months.length === 0
-            ? `No months on file yet. Log starts ${LOG_START_DATE}.`
+            ? `No months on file yet. Log starts ${since}.`
             : `${months.length} month${months.length === 1 ? "" : "s"} on file, ${months[0]} to ${months[months.length - 1]}`}
         </p>
       </section>
@@ -130,11 +131,15 @@ export default async function DataPage() {
             </thead>
             <tbody>
               {newestFirst.map((r) => (
-                <tr key={`${r.month}-${r.tail}`} style={rowStyle}>
+                <tr
+                  key={`${r.month}-${r.tail}`}
+                  className={known.has(r.tail) ? "ss-row-link" : undefined}
+                  style={rowStyle}
+                >
                   <Td mono>{r.month}</Td>
                   <Td mono>
                     {known.has(r.tail) ? (
-                      <Link href={`/plane/${r.tail}`} prefetch={false} style={{ color: SS_TOKENS.fg0, fontWeight: 700, textDecoration: "none" }}>
+                      <Link href={`/plane/${r.tail}`} prefetch={false} className="ss-row-anchor" style={{ color: SS_TOKENS.fg0, fontWeight: 700, textDecoration: "none" }}>
                         {r.tail}
                       </Link>
                     ) : (
@@ -156,7 +161,7 @@ export default async function DataPage() {
         </Scroll>
       </section>
 
-      <Methods />
+      <Methods since={since} />
     </main>
   );
 }
@@ -229,7 +234,7 @@ function MonthSelect({ name, label, months, value }: { name: string; label: stri
   );
 }
 
-function Methods() {
+function Methods({ since }: { since: string }) {
   const p = { fontSize: 12.5, lineHeight: 1.55, color: SS_TOKENS.fg1, margin: 0 } as const;
   return (
     <section data-testid="data-methods" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -248,12 +253,12 @@ function Methods() {
       <p style={p}>
         <strong style={{ color: SS_TOKENS.fg0 }}>Coverage.</strong> Receivers are volunteer stations. Low flying,
         terrain and gaps between stations drop reports, and a tail flying with its transponder off never shows up.
-        A flight is a run of reports with no gap over 5 minutes, so a dropout can split one sortie in two. Hours run
+        A flight is a run of reports with no gap over 5 minutes, so a dropout can split one flight in two. Hours run
         from first report to last.
       </p>
       <p style={p}>
         <strong style={{ color: SS_TOKENS.fg0 }}>Span.</strong> Data starts{" "}
-        <span className="ss-mono">{LOG_START_DATE}</span>. Nothing earlier is on file. Months are Pacific, counted by
+        <span className="ss-mono">{since}</span>, the first day with a stored track. Nothing earlier is on file, and nothing is pruned. Months are Pacific, counted by
         takeoff.
       </p>
       <p style={p}>

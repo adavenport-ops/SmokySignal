@@ -1,6 +1,7 @@
 // Vercel cron — writes the permanent daily rollup (lib/rollup.ts).
-// Builds yesterday (UTC) and backfills any day still inside the 35-day
-// tracks window that is missing from rollup:index. Idempotent: a re-run
+// Builds yesterday (UTC) and backfills every stored track day that is
+// missing from rollup:index, back to the first day on record. Then
+// refreshes meta:data_since (lib/data-since.ts). Idempotent: a re-run
 // overwrites the same keys with the same content.
 // Schedule: 09:15 UTC daily (01:15 PST / 02:15 PDT), well after the
 // UTC day it summarizes has closed. Auth: Bearer CRON_SECRET.
@@ -12,6 +13,7 @@ import { NextResponse } from "next/server";
 import { hasKv } from "@/lib/cache";
 import { runRollup } from "@/lib/rollup";
 import { persistTrackHistory } from "@/lib/tracks";
+import { refreshDataSince } from "@/lib/data-since";
 import { backfillActivityArchive } from "@/lib/activity";
 import { pingIndexNow, type PingResult } from "@/lib/seo/indexnow-server";
 
@@ -63,6 +65,13 @@ export async function GET(req: Request) {
     } catch (e) {
       console.warn("[cron/rollup] persistTrackHistory failed:", e);
     }
+    // Recompute the first day on record. Best-effort.
+    let dataSince: string | null = null;
+    try {
+      dataSince = (await refreshDataSince()).data_since;
+    } catch (e) {
+      console.warn("[cron/rollup] refreshDataSince failed:", e);
+    }
     // Copy anything still in the capped activity:feed into the permanent
     // per-day archive. Idempotent and best-effort.
     let activity: { copied: number; days: number } | null = null;
@@ -82,6 +91,7 @@ export async function GET(req: Request) {
     return NextResponse.json({
       ok: true,
       persisted,
+      data_since: dataSince,
       activity_archived: activity,
       indexnow,
       built,

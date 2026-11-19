@@ -267,3 +267,36 @@ export function diffActivity(
   };
   return { events: out, next };
 }
+
+// ─── read-side dedupe ────────────────────────────────────────────────
+
+/** Two rows for the same tail and transition this close are one event. */
+export const DUPLICATE_EVENT_WINDOW_MS = 2 * 60 * 1000;
+
+/**
+ * Collapse repeats of one transition. Rows merged from the rolling feed
+ * and the per-day archive (or written by two instances a few seconds
+ * apart) can carry the same (tail, kind) with timestamps a little apart.
+ * Any row within DUPLICATE_EVENT_WINDOW_MS of a kept row with the same
+ * tail and kind is dropped. Timestamps in seconds are promoted to ms.
+ * Keeps the earliest row of each cluster; output is newest first.
+ * squawk_emergency rows are deduped the same way (a repeat of the same
+ * alert inside two minutes is still one alert).
+ */
+export function dedupeActivity<T extends Pick<ActivityEntry, "tail" | "kind" | "ts">>(
+  rows: ReadonlyArray<T>,
+  windowMs = DUPLICATE_EVENT_WINDOW_MS,
+): T[] {
+  const norm = rows.map((r) => (r.ts < 1e12 ? { ...r, ts: r.ts * 1000 } : r));
+  const sorted = [...norm].sort((a, b) => a.ts - b.ts);
+  const lastKept = new Map<string, number>();
+  const out: T[] = [];
+  for (const r of sorted) {
+    const k = `${r.tail}|${r.kind}`;
+    const prev = lastKept.get(k);
+    if (prev !== undefined && r.ts - prev <= windowMs) continue;
+    lastKept.set(k, r.ts);
+    out.push(r);
+  }
+  return out.reverse();
+}
