@@ -143,6 +143,19 @@ export function RadarShell({
   const [historyOn, setHistoryOn] = useState(false);
   const [historySheetOpen, setHistorySheetOpen] = useState(false);
   const topShift = historyOn ? HISTORY_BANNER_SPACE : 0;
+  // Set when history fit the camera; on exit the picked region is
+  // restored (refit) so the picker's name matches the map again.
+  const historyMovedCameraRef = useRef(false);
+  const prevHistoryOnRef = useRef(false);
+  useEffect(() => {
+    const was = prevHistoryOnRef.current;
+    prevHistoryOnRef.current = historyOn;
+    if (was && !historyOn && historyMovedCameraRef.current) {
+      historyMovedCameraRef.current = false;
+      setViewCustom(false);
+      setFitNonce((n) => n + 1);
+    }
+  }, [historyOn]);
   // Hydrate the rings pref + region from localStorage on mount.
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -292,6 +305,11 @@ export function RadarShell({
         sheetOpen={historySheetOpen}
         onSheetOpenChange={setHistorySheetOpen}
         onActiveChange={setHistoryOn}
+        onCameraFit={() => {
+          // History moved the camera off the picked region.
+          historyMovedCameraRef.current = true;
+          setViewCustom(true);
+        }}
         insets={historyInsets}
         bannerTop={PICKER_TOP}
         chipBottom={`calc(${rowBottom + 80}px + var(--ss-install-prompt-h, 0px))`}

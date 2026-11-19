@@ -107,6 +107,8 @@ type Props = {
   sheetOpen: boolean;
   onSheetOpenChange: (open: boolean) => void;
   onActiveChange: (active: boolean) => void;
+  /** Called when history fits the camera to its lines. */
+  onCameraFit?: () => void;
   /** Screen space the overlays cover, for fitting the camera to the lines. */
   insets: Padding;
   /** Banner top, just under the header. */
@@ -125,6 +127,7 @@ export function HistoryOverlay({
   sheetOpen,
   onSheetOpenChange,
   onActiveChange,
+  onCameraFit,
   insets,
   bannerTop,
   chipBottom,
@@ -147,6 +150,8 @@ export function HistoryOverlay({
 
   const onActiveRef = useRef(onActiveChange);
   onActiveRef.current = onActiveChange;
+  const onCameraFitRef = useRef(onCameraFit);
+  onCameraFitRef.current = onCameraFit;
   useEffect(() => {
     onActiveRef.current(applied !== null);
     setSelected(null);
@@ -210,6 +215,7 @@ export function HistoryOverlay({
             ],
             { padding: pad, duration: 600, maxZoom: 12, essential: true },
           );
+          onCameraFitRef.current?.();
         } catch {
           /* degenerate box */
         }
@@ -248,6 +254,48 @@ export function HistoryOverlay({
     if (!body || !selected) return null;
     return body.sessions.find((s) => s.id === selected.id && s.tail === selected.tail) ?? null;
   }, [body, selected]);
+
+  // Phones: the tapped-flight card covers the bottom of the map, so
+  // fit the selected line into the space above it (card + tab bar).
+  const isDesktop = useIsDesktop();
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const selectedKey = selectedSession ? `${selectedSession.tail}:${selectedSession.id}` : null;
+  useEffect(() => {
+    if (!map || isDesktop || !selectedKey || !body) return;
+    const line = body.polylines.find((p) => `${p.tail}:${p.id}` === selectedKey);
+    const ext = line ? polylineExtent([line]) : null;
+    if (!ext) return;
+    const raf = requestAnimationFrame(() => {
+      const el = map.getContainer();
+      const card = cardRef.current;
+      if (!card) return;
+      // Space from the card's top edge to the map's bottom edge: the
+      // card plus the tab bar the map extends behind.
+      const covered = Math.max(0, el.getBoundingClientRect().bottom - card.getBoundingClientRect().top);
+      // Never scale the bottom padding down (the card must stay clear
+      // of the line); shrink the top padding first, keeping a sliver
+      // of map for the line itself.
+      const bottom = covered + 16;
+      const minVisible = 96;
+      const top = Math.max(
+        8,
+        Math.min(insetsRef.current.top, el.clientHeight - bottom - minVisible),
+      );
+      const pad = { top, bottom, left: 24, right: 24 };
+      try {
+        map.fitBounds(
+          [
+            [ext[0], ext[1]],
+            [ext[2], ext[3]],
+          ],
+          { padding: pad, duration: 500, maxZoom: 12, essential: true },
+        );
+      } catch {
+        /* degenerate box */
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [map, isDesktop, selectedKey, body]);
 
   if (today === null) return null;
 
@@ -375,6 +423,7 @@ export function HistoryOverlay({
 
       {applied && (selectedSession || chip) && (
         <div
+          ref={cardRef}
           style={{
             position: "absolute",
             left: 12,

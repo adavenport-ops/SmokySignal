@@ -29,8 +29,10 @@ export function FreshnessLabel({ lastSampleMs, className, style }: Props) {
       <span
         className={`ss-mono ${className ?? ""}`}
         style={{ fontSize: 12, color: SS_TOKENS.fg1, ...style }}
+        aria-label="Last sample unknown"
       >
-        LAST SAMPLE — UNKNOWN
+        <span className="ss-fresh-full">LAST SAMPLE — UNKNOWN</span>
+        <span className="ss-fresh-short" aria-hidden="true">SAMPLE UNKNOWN</span>
       </span>
     );
   }
@@ -50,13 +52,21 @@ export function FreshnessLabel({ lastSampleMs, className, style }: Props) {
         letterSpacing: ".06em",
         ...style,
       }}
+      aria-label={`Last sample ${label.toLowerCase()}, ${clock} Pacific`}
       title={
         stale
           ? "Live cron may be down — last sample is older than 15 minutes."
-          : undefined
+          : `Last sample — ${label.toLowerCase()} · ${clock} PT`
       }
     >
-      LAST SAMPLE — {label} · {clock} PT
+      <span className="ss-fresh-full">
+        LAST SAMPLE — {label} · {clock} PT
+      </span>
+      {/* Narrow phones: the full text runs under the region picker, so
+          show the age + clock only. The full text stays in aria-label. */}
+      <span className="ss-fresh-short" aria-hidden="true">
+        {label} · {clock}
+      </span>
     </span>
   );
 }

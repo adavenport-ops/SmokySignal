@@ -370,3 +370,17 @@ body {
 .ss-type-floor [style*="font-size: 11.5px"] {
   font-size: var(--ss-type-floor) !important;
 }
+
+/* Radar freshness chip: short form on narrow phones so it never runs
+   under the region picker (top-right). */
+.ss-fresh-short {
+  display: none;
+}
+@media (max-width: 480px) {
+  .ss-fresh-full {
+    display: none;
+  }
+  .ss-fresh-short {
+    display: inline;
+  }
+}
