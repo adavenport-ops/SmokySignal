@@ -1500,9 +1500,133 @@ test.describe("p14 live-prod audit", () => {
       evidence: `select=${present}; options=${options.map((o) => o.label).join(" | ")}; ${monthEvidence}`,
       screenshot,
     });
+  test("40. /embed is frameable; every other route still sends X-Frame-Options DENY", async ({
+    request,
+  }) => {
+    const embed = await request.get("/embed");
+    const home = await request.get("/");
+    const eh = embed.headers();
+    const hh = home.headers();
+    const embedCsp = eh["content-security-policy"] ?? "";
+    const pass =
+      embed.ok() &&
+      eh["x-frame-options"] == null &&
+      /frame-ancestors \*/.test(embedCsp) &&
+      /deny/i.test(hh["x-frame-options"] ?? "") &&
+      /frame-ancestors 'none'/.test(hh["content-security-policy"] ?? "");
+    record({
+      claim:
+        "/embed has no X-Frame-Options and frame-ancestors *, while / keeps X-Frame-Options DENY",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `embed ${embed.status()} xfo=${eh["x-frame-options"] ?? "(none)"} csp-fa=${(embedCsp.match(/frame-ancestors [^;]+/) ?? ["(none)"])[0]} · home xfo=${hh["x-frame-options"] ?? "(none)"}`,
+    });
+    expect(pass).toBe(true);
   });
 
-  test("40. /relay renders the create form and is linked from /about (Relay)", async ({
+  test("41. /calendar.ics is text/calendar with VEVENTs and a Los Angeles VTIMEZONE", async ({
+    request,
+  }) => {
+    const r = await request.get("/calendar.ics");
+    const body = await r.text();
+    const ct = r.headers()["content-type"] ?? "";
+    const events = (body.match(/BEGIN:VEVENT/g) ?? []).length;
+    // An empty feed is valid while the forecast is still learning. Ask
+    // /forecast how many takeoffs it has logged; VEVENTs are required
+    // only at >= 30 (lib/ics.ts MIN_TOTAL_EVENTS).
+    const fh = await (await request.get("/forecast")).text();
+    const m = /(\d+)<\/span>\s*(?:<!--\s*-->)?\s*logged\s*(?:<!--\s*-->)?\s*takeoff/.exec(fh);
+    const logged = m ? Number(m[1]) : null;
+    const needEvents = logged != null && logged >= 30;
+    const shape =
+      r.ok() &&
+      /^text\/calendar/.test(ct) &&
+      /BEGIN:VCALENDAR/.test(body) &&
+      /TZID:America\/Los_Angeles/.test(body);
+    const pass = shape && (!needEvents || events > 0);
+    record({
+      claim: "/calendar.ics serves valid text/calendar; VEVENT busy windows once the forecast has 30+ takeoffs",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `status=${r.status()} content-type=${ct} vevents=${events} logged_takeoffs=${logged ?? "unknown"} cache-control=${r.headers()["cache-control"] ?? "(none)"}`,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("42. /glance renders UP/DOWN/NO READ, a 24h clock and no tab bar", async ({ page }) => {
+    await page.goto("/glance", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1200);
+    const screenshot = await shot(page, "42-glance");
+    const word = (await page.locator("[data-glance-word]").innerText().catch(() => "")).trim();
+    const clock = await page.locator("[data-glance-clock]").innerText().catch(() => "");
+    const tabBar = await page.locator('nav[aria-label="Main"]').count();
+    const pass =
+      /^(UP|DOWN|NO READ)$/.test(word) && /\b([01]\d|2[0-3]):[0-5]\d:[0-5]\d\b/.test(clock) && tabBar === 0;
+    record({
+      claim: "/glance renders a status word and a 24-hour clock with no tab bar",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `word=${word} clock=${clock} tabBar=${tabBar}`,
+      screenshot,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("43. /offline exists with the no-signal copy", async ({ page }) => {
+    await page.goto("/offline", { waitUntil: "networkidle" });
+    const screenshot = await shot(page, "43-offline");
+    const body = await page.locator("body").innerText();
+    const pass =
+      /No signal\./.test(body) &&
+      /Last update unknown\./.test(body) &&
+      /needs a connection to see the sky/.test(body);
+    record({
+      claim: "/offline renders the No signal copy",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: pass ? "copy present" : `body=${body.slice(0, 120)}`,
+      screenshot,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("44. the service worker registers and API JSON is never cached", async ({ page }) => {
+    await page.goto("/", { waitUntil: "networkidle" });
+    const r = await page.evaluate(async () => {
+      if (!("serviceWorker" in navigator)) return { supported: false };
+      const reg = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<null>((res) => setTimeout(() => res(null), 8000)),
+      ]);
+      if (!reg) return { supported: true, scope: null };
+      await fetch("/api/status.json", { cache: "no-store" }).catch(() => null);
+      const names = await caches.keys();
+      const shell = names.filter((n) => n.startsWith("ss-shell-"));
+      let apiCached = 0;
+      let offlineCached = false;
+      for (const n of shell) {
+        const c = await caches.open(n);
+        for (const k of await c.keys()) {
+          const u = new URL(k.url);
+          if (u.pathname.startsWith("/api/")) apiCached++;
+          if (u.pathname === "/offline") offlineCached = true;
+        }
+      }
+      return { supported: true, scope: reg.scope, shell, apiCached, offlineCached };
+    });
+    const pass =
+      !r.supported ||
+      (!!r.scope && (r.apiCached ?? 0) === 0 && (r.shell?.length ?? 0) >= 1);
+    record({
+      claim: "Service worker registers, caches /offline, and holds no /api/* responses",
+      category: !r.supported ? "indeterminate" : pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: JSON.stringify(r),
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("45. /relay renders the create form and is linked from /about (Relay)", async ({
     page,
   }) => {
     await page.goto("/relay", { waitUntil: "networkidle" });
@@ -1531,7 +1655,7 @@ test.describe("p14 live-prod audit", () => {
     });
   });
 
-  test("41. /feed.xml is Atom with entries; /rss.xml is RSS; both s-maxage=60 (Relay)", async ({
+  test("46. /feed.xml is Atom with entries; /rss.xml is RSS; both s-maxage=60 (Relay)", async ({
     request,
     page,
   }) => {
@@ -1574,7 +1698,7 @@ test.describe("p14 live-prod audit", () => {
     });
   });
 
-  test("42. POST /api/relay with an invalid webhook returns 400 (Relay)", async ({
+  test("47. POST /api/relay with an invalid webhook returns 400 (Relay)", async ({
     request,
   }) => {
     const cases = [

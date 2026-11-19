@@ -4,8 +4,10 @@
 // the browser deduplicates by scope. Silent on unsupported browsers (Safari
 // pre-16.4, anything not in `serviceWorker in navigator`).
 //
-// The SW is push-only; no offline caching. Mounted from app/layout.tsx so it
-// gets a registration handle as early as the JS bundle hydrates.
+// The SW handles push plus a minimal offline shell (/offline, hashed
+// chunks, icons; never API JSON, never HTML). See public/sw.js. Mounted
+// from app/layout.tsx so it gets a registration handle as early as the JS
+// bundle hydrates.
 
 import { useEffect } from "react";
 import { speakAlert } from "@/lib/voice-mode";

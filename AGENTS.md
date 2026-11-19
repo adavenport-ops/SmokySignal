@@ -97,7 +97,8 @@ waiting for a live event.
 - `components/FilterPanel.tsx` — radar filter UI (extracted from HotZoneLayer P16); multi-select roles supported
 - `app/(tabs)/` — main app routes (home, radar, dash, plane, settings, etc.)
 - `app/api/cron/` — scheduled refreshes (snapshot, hotzones, predictor)
-- `public/sw.js` — service worker (push-only, no caching)
+- `public/sw.js` — service worker (push + minimal offline shell: `/offline`, hashed chunks, icons; never API JSON or HTML)
+- `app/embed` (framable status widget, only path with `frame-ancestors *`), `app/glance` (handlebar screen), `app/calendar.ics` (busy-window feed), `lib/ics.ts`, `lib/glance.ts`, `lib/embed.ts`
 
 ## Privacy posture
 

@@ -6,7 +6,9 @@
 //   - next/font/google self-hosts fonts under /_next/static
 //   - @vercel/analytics posts to same-origin /_vercel/insights; the
 //     debug script (non-Vercel hosts) comes from va.vercel-scripts.com
-//   - public/sw.js service worker (same origin)
+//   - public/sw.js service worker (same origin); it caches only the
+//     /offline shell and hashed static assets, never API JSON
+//   - /embed is the one framable route (see embedHeaders below)
 // script-src keeps 'unsafe-inline' because Next 14 App Router emits
 // inline bootstrap / flight-data scripts and this app does not use
 // nonces. style-src keeps 'unsafe-inline' for React style attributes.
@@ -16,7 +18,7 @@
 const isDev = process.env.NODE_ENV !== "production";
 const isPreview = process.env.VERCEL_ENV === "preview";
 const live = isPreview ? " https://vercel.live" : "";
-const csp = [
+const buildCsp = (frameAncestors) => [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://va.vercel-scripts.com${live}`,
   `style-src 'self' 'unsafe-inline'${live}`,
@@ -30,12 +32,12 @@ const csp = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
+  `frame-ancestors ${frameAncestors}`,
 ].join("; ");
 
-const securityHeaders = [
-  { key: "Content-Security-Policy", value: csp },
-  { key: "X-Frame-Options", value: "DENY" },
+// Headers every route gets. The two frame-control headers are the only
+// ones that differ for /embed.
+const baseHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
@@ -44,11 +46,32 @@ const securityHeaders = [
   },
 ];
 
+// Everywhere except /embed: no framing at all.
+const securityHeaders = [
+  { key: "Content-Security-Policy", value: buildCsp("'none'") },
+  { key: "X-Frame-Options", value: "DENY" },
+  ...baseHeaders,
+];
+
+// /embed, the status widget for club sites and forums, is the one route
+// meant to live in someone else's <iframe>: frame-ancestors * and no
+// X-Frame-Options. The catch-all below excludes exactly this path, so
+// the two rules never overlap and DENY cannot leak onto /embed (nor
+// the widget's looser policy onto anything else, /embed/help included).
+const embedHeaders = [
+  { key: "Content-Security-Policy", value: buildCsp("*") },
+  ...baseHeaders,
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    return [
+      { source: "/embed", headers: embedHeaders },
+      // Every path except exactly /embed.
+      { source: "/((?!embed$).*)", headers: securityHeaders },
+    ];
   },
   experimental: {
     typedRoutes: false,

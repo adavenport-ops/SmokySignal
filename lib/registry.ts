@@ -11,6 +11,7 @@
 // every 10s) doesn't hammer KV.
 
 import { getRedis } from "./cache";
+import { backupVerified } from "./registry-backup";
 import { FLEET as SEED, REMOVED_TAILS } from "./seed";
 import type { FleetEntry } from "./types";
 import { isLegacyRow, normalizeRegistryRows, parseRegistryRaw } from "./registry-migrate";
@@ -76,26 +77,32 @@ export function invalidateRegistryCache(): void {
   memCache = null;
 }
 
-export async function saveRegistry(tails: FleetEntry[]): Promise<void> {
+/**
+ * Writes the registry, failing closed on the backup. The current value is
+ * snapshotted under registry:tails:backup:{ISO}, read back and compared
+ * (lib/registry-backup.ts); if that fails this throws BackupError and the
+ * registry is NOT written. Returns the backup id (the ISO timestamp
+ * listBackups() shows), or null only when nothing was stored yet, so there
+ * was nothing to back up.
+ */
+export async function saveRegistry(tails: FleetEntry[]): Promise<string | null> {
   const redis = await getRedis();
   if (!redis) throw new Error("KV not configured — cannot save registry");
 
-  // Snapshot current state into a backup before overwriting.
   const ts = new Date().toISOString();
-  const backupKey = `${BACKUP_PREFIX}${ts}`;
-  try {
-    const current = await redis.get(REGISTRY_KEY);
-    if (current != null) {
-      const value = typeof current === "string" ? current : JSON.stringify(current);
-      await redis.set(backupKey, value);
-    }
-  } catch (e) {
-    console.warn("[registry] backup snapshot failed (continuing):", e);
-  }
+  const backedUp = await backupVerified(
+    {
+      get: (k) => redis.get(k),
+      set: (k, v) => redis.set(k, v),
+    },
+    REGISTRY_KEY,
+    `${BACKUP_PREFIX}${ts}`,
+  );
 
   await redis.set(REGISTRY_KEY, JSON.stringify(tails));
   await rotateBackups();
   invalidateRegistryCache();
+  return backedUp ? ts : null;
 }
 
 async function rotateBackups(): Promise<void> {

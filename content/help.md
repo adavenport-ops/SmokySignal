@@ -4,9 +4,9 @@ A short tour of what SmokySignal shows you, where the data comes from, what you 
 
 ## What this is
 
-SmokySignal is a situational-awareness tool for motorcyclists in Washington state. It tells you, in one glance, whether a known traffic-enforcement aircraft is up and roughly where it's working. The point is to be informed, not to evade — knowing the bird is up is the same as seeing a marked patrol car ahead. Ride within the limit and ride well.
+SmokySignal is a situational-awareness tool for motorcyclists in Washington state. It tells you, in one glance, whether a known traffic-enforcement aircraft is up and roughly where it's working. The point is to be informed, not to dodge — knowing the bird is up is the same as seeing a marked patrol car ahead. Ride within the limit and ride well.
 
-We track {{TAIL_COUNT}} fixed-wing planes and helicopters across WSP, KCSO, Pierce SO, Snohomish SO, Spokane SO, State of WA, CBP, and USCG. The full list is on the [About](/about) page.
+We track {{TAIL_COUNT}} fixed-wing planes and rotorcraft across WSP, KCSO, Pierce SO, Snohomish SO, Spokane SO, State of WA, CBP, and USCG. The full list is on the [About](/about) page.
 
 ## Status tiers
 
@@ -14,7 +14,7 @@ SmokySignal tracks the law-enforcement aircraft over Washington. Anything in the
 
 **SMOKEY (speed enforcement)** — fixed-wing planes, usually Cessnas with FLIR cameras, used for clocking speed from the air. WSP runs five of these. Pierce SO runs one. Pill: SMOKEY UP. Headline: "Smokey's up."
 
-**SMOKEY (patrol helicopter)** — county sheriff helicopters that may be doing traffic, pursuit, or SAR. Same SMOKEY UP pill. Body copy still says "patrol helicopter" so you know the airframe.
+**SMOKEY (patrol rotorcraft)** — county sheriff rotorcraft that may be doing traffic, pursuit, or SAR. Same SMOKEY UP pill. Body text still says "patrol rotorcraft" so you know the airframe.
 
 **SAR** (search and rescue) — Hueys and similar. Almost always responding to a rescue, not enforcement. Status stays green; we just note the rescue in a footnote.
 
@@ -56,7 +56,7 @@ To disarm: tap the bell again, or revoke notification permission in your browser
 
 The hero panel is the headline. It always reads as one of three states:
 
-- **SMOKEY UP / Smokey's up.** — A law-enforcement plane is in the air — fixed-wing FLIR or patrol helicopter. Mind the throttle.
+- **SMOKEY UP / Smokey's up.** — A law-enforcement plane is in the air — fixed-wing FLIR or patrol rotorcraft. Mind the throttle.
 - **ALL CLEAR / Smokey's down.** — Nothing alert-class is up. If a SAR or transport aircraft happens to be in the air, you'll see a small footnote.
 
 Below the hero, the **activity strip** shows the most recent state-change event — a takeoff, landing, or emergency squawk. It auto-hides if there's nothing recent (older than 6 hours).
@@ -71,12 +71,12 @@ In the top-right, the small **moon icon** toggles a screen wake lock — handy o
 
 The map is a live view of Washington state. The status pill at the top mirrors the home screen's state:
 
-- **SMOKEY UP** (amber) — a law-enforcement plane is up (fixed-wing FLIR, patrol helicopter, or unconfirmed alert-class)
+- **SMOKEY UP** (amber) — a law-enforcement plane is up (fixed-wing FLIR, patrol rotorcraft, or unconfirmed alert-class)
 - **ALL CLEAR** (green) — nothing alert-class is up
 
 Top-right shows `0/{{TAIL_COUNT}} UP` — how many of our {{TAIL_COUNT}} tracked tails are up right now. The number turns amber any time it's nonzero.
 
-Each up plane appears as an amber chevron pointing along its current heading. Helicopters use a circular rotor icon. Tap a chevron to open the plane detail page.
+Each up plane appears as an amber chevron pointing along its current heading. Choppers use a circular rotor icon. Tap a chevron to open the plane detail page.
 
 When something's up, a horizontal carousel slides up from the bottom with one card per plane — quick stats and a tap-target for each.
 
@@ -113,6 +113,14 @@ The map shows the in-progress flight if the plane is currently up (with a pulsin
 
 `/forecast` shows a 7×24 grid: probability of any fleet takeoff per hour-of-week. Brighter cells = more historical activity. The current Pacific (day, hour) is outlined in amber. Tap any cell to see which tails most commonly fly in that bucket.
 
+### Glance mode
+
+[/glance](/glance) is one screen of huge type for a phone on a handlebar mount: UP or DOWN, the nearest Smokey's distance and bearing, and a 24-hour Pacific clock. High contrast, read-only, the screen stays awake. The only control is a small EXIT.
+
+Distance and bearing appear only when your browser has already been given location access for SmokySignal. Glance never asks. If the feed goes quiet it says NO READ with the time of the last good read; it never shows DOWN on an old read.
+
+**Mounting and safety.** Set it before you ride; don't interact while moving. Mount the phone, open /glance, check the read time, then ride. If something needs a tap, pull over.
+
 ## Sharing flights
 
 Every flight gets a permanent shareable URL: `/flight/{TAIL}/{FLIGHT_ID}`. You can grab it via the **Share** button next to the back link on any plane detail page (and on the admin recent-flights view). The link works without auth and includes a social-friendly preview image.
@@ -125,7 +133,7 @@ SmokySignal is a one-way receiver. We pull public aircraft signals from [adsb.fi
 
 There are no rider accounts, no individual analytics, no back channel to any agency. The repository is public; the data flow is fully visible at [/legal](/legal).
 
-If a friend tells you the app secretly snitches when you cross 80, they're working with bad intel. We listen on the open channel. We don't broadcast.
+If a friend tells you the app secretly reports you when you cross 80, they're working with bad intel. We listen on the open channel. We don't broadcast.
 
 The only thing that touches our servers is the **Spotted** button — when tapped, it sends your current location plus the timestamp to our database. That data isn't tied to any account or identifier; it's used to validate when planes go silent on ADS-B.
 

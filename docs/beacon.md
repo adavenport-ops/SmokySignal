@@ -46,6 +46,8 @@ On `stale`, `fetched_at` and `age_s` are `null` when there is no read at all.
 - Poll every 30 seconds. Faster than 15 seconds gets you the same cached answer.
 - `?mock=up`, `?mock=down` and `?mock=stale` return fixed states for testing your rig.
   Don't leave a mock URL on a live light.
+- `?region=puget_sound` (any id from `/embed/help`) counts only birds inside that region.
+  Unknown ids and `all_wa` mean the whole state.
 
 ## Home Assistant
 
