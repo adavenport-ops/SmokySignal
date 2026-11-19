@@ -240,7 +240,7 @@ export function shouldSkip(
   return false;
 }
 
-function insideQuietHours(prefs: AlertPrefs): boolean {
+export function insideQuietHours(prefs: AlertPrefs, now: Date = new Date()): boolean {
   const start = prefs.quiet_start_h;
   const end = prefs.quiet_end_h;
   if (start === end) return false; // zero-length window = always firing
@@ -251,12 +251,12 @@ function insideQuietHours(prefs: AlertPrefs): boolean {
       hour: "numeric",
       hour12: false,
     });
-    const parts = fmt.formatToParts(new Date());
+    const parts = fmt.formatToParts(now);
     const h = parts.find((p) => p.type === "hour")?.value ?? "0";
     hour = Number(h) % 24;
   } catch {
     // bad TZ → fall back to UTC; quiet hours are advisory at best in that case
-    hour = new Date().getUTCHours();
+    hour = now.getUTCHours();
   }
   if (start < end) {
     return hour >= start && hour < end;

@@ -21,6 +21,7 @@ import { Logo } from "@/components/brand/Logo";
 import { FLEET } from "@/lib/seed";
 import { MISSIONS, POLICE_UNITS } from "@/lib/mission";
 import { MigrationPanel } from "./MigrationPanel";
+import { AnnouncementPanel } from "./AnnouncementPanel";
 
 const OPERATORS: readonly string[] = [
   ...Array.from(new Set(FLEET.map((f) => f.operator))),
@@ -127,6 +128,10 @@ export function Editor({
 
       <Section title="Push" subtitle="broadcast test ping">
         <PushTestButton />
+      </Section>
+
+      <Section title="Announcement" subtitle="one push to every rider, once per id">
+        <AnnouncementPanel />
       </Section>
 
       <Section title="Backups" subtitle={`${backups.length} most recent`}>
