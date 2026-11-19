@@ -480,3 +480,49 @@ export function corridorLabel(
   if (!m) return null;
   return m.nearestPlace ? `${m.name} · ${m.nearestPlace}` : m.name;
 }
+
+// ---------------------------------------------------------------------
+// Usual speed limits per corridor (speed warning, N1b).
+//
+// Approximate, rider-opt-in defaults for the Puget Sound stretches drawn
+// above. They are NOT a posted-limit database: limits change along every
+// one of these roads (work zones, interchanges, city sections), and the
+// polylines are ~0.5 km approximations. The speed warning uses them only
+// when the rider turns on "Use corridor defaults" in /settings, and only
+// while the rider is within CORRIDOR_LIMIT_MATCH_NM of the centerline.
+// Otherwise the rider's own limit applies. Posted signs always win.
+// ---------------------------------------------------------------------
+
+export const CORRIDOR_DEFAULT_LIMIT_MPH: Readonly<Record<string, number>> = {
+  "i-5": 60,
+  "i-405": 60,
+  "sr-167": 60,
+  "sr-512": 60,
+  "sr-16": 60,
+  "i-90": 60,
+  "sr-410": 55,
+  "us-2": 55,
+  "sr-18": 60,
+  "us-101-hood-canal": 50,
+};
+
+/** How close to a centerline counts as "on" the corridor for its limit. */
+export const CORRIDOR_LIMIT_MATCH_NM = 0.25;
+
+export type CorridorLimit = { id: string; name: string; limitMph: number };
+
+/**
+ * The usual limit of the corridor the point sits on, or null when the
+ * point is not within `maxNm` of a corridor that has a default.
+ */
+export function corridorDefaultLimit(
+  lat: number,
+  lon: number,
+  maxNm = CORRIDOR_LIMIT_MATCH_NM,
+): CorridorLimit | null {
+  const m = nearestCorridor(lat, lon, maxNm);
+  if (!m) return null;
+  const limitMph = CORRIDOR_DEFAULT_LIMIT_MPH[m.id];
+  if (limitMph == null) return null;
+  return { id: m.id, name: m.name, limitMph };
+}

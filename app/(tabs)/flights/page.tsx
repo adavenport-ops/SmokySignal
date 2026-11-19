@@ -4,6 +4,7 @@ import { ActivityFeed } from "@/components/ActivityFeed";
 import { getSnapshot } from "@/lib/snapshot";
 import { getRecentActivity } from "@/lib/activity";
 import { applyMockState, parseMockState } from "@/lib/mock-state";
+import { getSpeedWarningEnabled } from "@/lib/flags";
 import { SS_TOKENS, TYPE } from "@/lib/tokens";
 
 // Flights: the old /dash ("Now": tails up, nearest watchers) and the old
@@ -84,7 +85,10 @@ export default async function FlightsPage({ searchParams }: { searchParams: SP }
   }
 
   const mock = typeof searchParams.mock === "string" ? searchParams.mock : undefined;
-  const real = await getSnapshot();
+  const [real, speedWarningAvailable] = await Promise.all([
+    getSnapshot(),
+    getSpeedWarningEnabled().catch(() => true),
+  ]);
   const mockState = parseMockState(mock);
   const initial = applyMockState(real, mockState);
   return (
@@ -93,6 +97,7 @@ export default async function FlightsPage({ searchParams }: { searchParams: SP }
       mockOn={mockState !== null}
       header={header}
       switcher={switcher}
+      speedWarningAvailable={speedWarningAvailable}
     />
   );
 }

@@ -1,16 +1,13 @@
 import { TabBar } from "@/components/TabBar";
-import { SpeedWarning } from "@/components/SpeedWarning";
 import { AppBadge } from "@/components/AppBadge";
 import { SecondaryFooter } from "@/components/SecondaryFooter";
 import { ScreenAwakeController } from "@/components/ScreenAwake";
-import { getSpeedWarningEnabled } from "@/lib/flags";
 
-export default async function TabsLayout({
+export default function TabsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const speedWarningEnabled = await getSpeedWarningEnabled();
   return (
     <>
       <a href="#main-content" className="ss-skip-link">
@@ -28,7 +25,6 @@ export default async function TabsLayout({
       <TabBar />
       <ScreenAwakeController />
       <AppBadge />
-      <SpeedWarning enabled={speedWarningEnabled} />
     </>
   );
 }

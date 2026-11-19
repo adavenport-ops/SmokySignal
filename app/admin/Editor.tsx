@@ -595,7 +595,8 @@ function FlagsForm({ enabled }: { enabled: boolean }) {
               lineHeight: 1.45,
             }}
           >
-            Fullscreen alert when rider is speeding inside 5nm of an airborne tail.
+            Kill switch for the rider speed warning (N1b) on /flights and /glance.
+            Riders still opt in on /settings; it runs on their device only.
             Off = never shown.
           </div>
         </div>

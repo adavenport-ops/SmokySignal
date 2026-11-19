@@ -9,6 +9,7 @@
 
 import { getSnapshot } from "@/lib/snapshot";
 import { applyMockState, parseMockState } from "@/lib/mock-state";
+import { getSpeedWarningEnabled } from "@/lib/flags";
 import type { Snapshot } from "@/lib/types";
 import { GlanceView } from "./GlanceView";
 
@@ -37,5 +38,14 @@ export default async function GlancePage({ searchParams }: Props) {
   } catch {
     snapshot = null; // renders NO READ until the first poll lands
   }
-  return <GlanceView initialSnapshot={snapshot} serverNow={Date.now()} mock={mock} />;
+  // Speed warning kill switch (lib/flags.ts); the rider opts in on /settings.
+  const speedWarningAvailable = await getSpeedWarningEnabled().catch(() => true);
+  return (
+    <GlanceView
+      initialSnapshot={snapshot}
+      serverNow={Date.now()}
+      mock={mock}
+      speedWarningAvailable={speedWarningAvailable}
+    />
+  );
 }

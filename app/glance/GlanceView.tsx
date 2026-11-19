@@ -22,6 +22,7 @@ import {
   type RiderPos,
 } from "@/lib/glance";
 import type { Snapshot } from "@/lib/types";
+import { SpeedWarning } from "@/components/SpeedWarning";
 import s from "./glance.module.css";
 
 const POLL_MS = 15_000;
@@ -40,11 +41,13 @@ type Props = {
   serverNow: number;
   /** Validated ?mock= value to forward to the API, or null. */
   mock: string | null;
+  /** Speed warning kill switch (lib/flags.ts). The rider opts in on /settings. */
+  speedWarningAvailable?: boolean;
 };
 
 const WORD = { up: "UP", down: "DOWN", stale: "NO READ" } as const;
 
-export function GlanceView({ initialSnapshot, serverNow, mock }: Props) {
+export function GlanceView({ initialSnapshot, serverNow, mock, speedWarningAvailable = true }: Props) {
   const [snap, setSnap] = useState<Snapshot | null>(initialSnapshot);
   const [now, setNow] = useState(serverNow);
   const [rider, setRider] = useState<RiderPos | null>(null);
@@ -216,6 +219,9 @@ export function GlanceView({ initialSnapshot, serverNow, mock }: Props) {
         <span>{read ? `READ ${read}` : "NO READ YET"}</span>
         <span>{m.ageS != null && m.kind !== "stale" ? `${m.ageS}s ago` : "smokysignal.app"}</span>
       </div>
+
+      {/* N1b speed warning: on-device only, opt-in from /settings. */}
+      <SpeedWarning aircraft={snap?.aircraft} available={speedWarningAvailable} />
     </main>
   );
 }
