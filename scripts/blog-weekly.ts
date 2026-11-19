@@ -4,9 +4,13 @@
 //
 // Reads only PUBLIC, read-only prod endpoints (GET /api/history, four
 // calls: Smokey and everything, this week and last), the merged PR list
-// via `gh`, and docs/BACKLOG.md. Writes content/blog/<date>-week-<n>.md.
-// Refuses to overwrite an existing post unless --force. --dry-run prints
-// the post and writes nothing.
+// via `gh`, and docs/BACKLOG.md. Writes content/blog/<date>-week-<n>.md
+// and a media stub content/blog/media/<date>-week-<n>.json (2-3 shots of
+// the feature of the week, at the BACKLOG item's **Route:** when it has
+// one); the post carries matching image lines that render once
+// `npm run blog:media -- --post <slug>` has captured them (docs/BLOG.md).
+// Refuses to overwrite an existing post or stub unless --force. --dry-run
+// prints both and writes nothing.
 //
 // Options:
 //   --week-ending YYYY-MM-DD   last Pacific day of the week (required)
@@ -22,6 +26,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { HistoryBody } from "../lib/history-core";
 import { addDays, isPtDate, todayPt } from "../lib/pt-range";
+import { weeklyMediaMarkdown, weeklyMediaStub } from "../lib/blog-media-core";
 import {
   featureOfWeek,
   foldWeek,
@@ -133,9 +138,13 @@ async function main() {
     for (const d of grouped.dropped) console.error(`blog-weekly: left out #${d.number} (${d.reason})`);
   }
 
-  const md = renderWeeklyMarkdown(stats, prLines, featureOfWeek(readBacklog()), {
+  const feature = featureOfWeek(readBacklog());
+  const slug = weeklySlug(stats);
+  const stub = weeklyMediaStub(slug, feature);
+  const md = renderWeeklyMarkdown(stats, prLines, feature, {
     generatedOn: todayPt(Date.now()),
     sourceHost: host,
+    media: weeklyMediaMarkdown(slug, stub),
   });
 
   // Same rule the CI voice gate applies to content/**.md.
@@ -148,10 +157,13 @@ async function main() {
     process.exit(1);
   }
 
-  const file = path.join(ROOT, "content", "blog", `${weeklySlug(stats)}.md`);
+  const file = path.join(ROOT, "content", "blog", `${slug}.md`);
+  const mediaFile = path.join(ROOT, "content", "blog", "media", `${slug}.json`);
+  const stubJson = JSON.stringify(stub, null, 2) + "\n";
   if (args.dryRun) {
     process.stdout.write(md);
-    console.error(`blog-weekly: dry run, would write ${path.relative(ROOT, file)}`);
+    process.stdout.write(`\n<!-- ${path.relative(ROOT, mediaFile)} -->\n${stubJson}`);
+    console.error(`blog-weekly: dry run, would write ${path.relative(ROOT, file)} and ${path.relative(ROOT, mediaFile)}`);
     return;
   }
   if (fs.existsSync(file) && !args.force) {
@@ -161,6 +173,14 @@ async function main() {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, md);
   console.error(`blog-weekly: wrote ${path.relative(ROOT, file)}`);
+  // The stub is hand-edited after generation; a re-run keeps the edits.
+  if (fs.existsSync(mediaFile) && !args.force) {
+    console.error(`blog-weekly: kept ${path.relative(ROOT, mediaFile)} (exists; --force replaces it)`);
+  } else {
+    fs.mkdirSync(path.dirname(mediaFile), { recursive: true });
+    fs.writeFileSync(mediaFile, stubJson);
+    console.error(`blog-weekly: wrote ${path.relative(ROOT, mediaFile)}; next: npm run blog:media -- --post ${slug}`);
+  }
 }
 
 main().catch((e) => {

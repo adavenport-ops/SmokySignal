@@ -434,12 +434,19 @@ export function groupPrs(
 
 // ─── backlog ─────────────────────────────────────────────────────────
 
-export type FeatureOfWeek = { title: string; blogLine: string | null };
+export type FeatureOfWeek = {
+  title: string;
+  blogLine: string | null;
+  /** In-app route from the item's **Route:** field (e.g. /road/i-5), for the media stub. */
+  route: string | null;
+};
 
 /**
  * First item under `## This week` in docs/BACKLOG.md: a `### ` heading or
  * a `- ` bullet. A `Blog line:` field inside that item becomes the
- * sentence the post prints. Placeholder lines (`_..._`, `>`) are ignored.
+ * sentence the post prints; a `Route:` field (an in-app path) is where
+ * the post's screenshots are taken. Placeholder lines (`_..._`, `>`) are
+ * ignored.
  */
 export function featureOfWeek(backlog: string | null): FeatureOfWeek | null {
   if (!backlog) return null;
@@ -451,6 +458,7 @@ export function featureOfWeek(backlog: string | null): FeatureOfWeek | null {
   // its indented sub-bullets.
   let fromHeading = false;
   let blogLine: string | null = null;
+  let route: string | null = null;
   for (let i = start + 1; i < lines.length; i++) {
     const raw = lines[i]!;
     const l = raw.trim();
@@ -469,14 +477,13 @@ export function featureOfWeek(backlog: string | null): FeatureOfWeek | null {
     }
     if (/^###\s/.test(l)) break;
     if (!fromHeading && /^[-*]\s/.test(raw)) break;
+    const r = /^[-*]?\s*\**Route\**:?\**\s*`?(\/[^\s`]*)`?\s*$/i.exec(l);
+    if (r && !r[1]!.startsWith("//")) route = r[1]!;
     const blog = /^[-*]?\s*\**Blog line\**:?\**\s*(.+)$/i.exec(l);
-    if (blog) {
-      blogLine = blog[1]!.trim();
-      break;
-    }
+    if (blog) blogLine = blog[1]!.trim();
   }
   if (!title) return null;
-  return { title: voiceScrub(title), blogLine: blogLine ? voiceScrub(blogLine) : null };
+  return { title: voiceScrub(title), blogLine: blogLine ? voiceScrub(blogLine) : null, route };
 }
 
 // ─── markdown ────────────────────────────────────────────────────────
@@ -486,6 +493,12 @@ export type RenderMeta = {
   generatedOn: string;
   /** Host the stats were read from, e.g. "smokysignal.app". */
   sourceHost: string;
+  /**
+   * Media placeholders (markdown image lines, lib/blog-media-core.ts
+   * weeklyMediaMarkdown) printed under the feature of the week. They
+   * render once `npm run blog:media` has captured them.
+   */
+  media?: readonly string[];
 };
 
 export function weeklySlug(stats: Pick<WeekStats, "to" | "week">): string {
@@ -618,6 +631,10 @@ export function renderWeeklyMarkdown(
 
   if (feature) {
     out.push("## Feature of the week", "", `**${feature.title}.**${feature.blogLine ? ` ${feature.blogLine}` : ""}`, "");
+  }
+  if (meta.media && meta.media.length > 0) {
+    if (!feature) out.push("## Feature of the week", "");
+    for (const line of meta.media) out.push(line, "");
   }
 
   out.push(

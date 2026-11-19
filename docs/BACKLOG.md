@@ -17,7 +17,9 @@ named that are not built yet. Rank is rider value over cost; re-rank freely.
 4. Once the PR merges, the job moves the item to `## Shipped` as one line:
    `- YYYY-MM-DD · B0x · Title · #PR`, newest at the top.
 
-Item fields: id, title, **Why** (rider value), **Size** (S = one sitting,
+Item fields: id, title, **Route** (optional: the in-app path that shows
+it, e.g. `/road/i-5`; the weekly post's screenshots are taken there),
+**Why** (rider value), **Size** (S = one sitting,
 M = a few days, L = a project), **One weekly run** (yes when it fits one
 automated run end to end), **Files** (likely touched), **Acceptance**, and
 **Blog line** (one sentence for the weekly post, brand voice: no emoji, no

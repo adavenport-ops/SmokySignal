@@ -1,0 +1,418 @@
+{
+  "post": "2026-11-19-the-big-update",
+  "generatedAt": "2026-11-19T08:05:26.925Z",
+  "totalBytes": 3466672,
+  "items": [
+    {
+      "id": "hero-3d",
+      "kind": "clip",
+      "viewport": "desktop",
+      "width": 1152,
+      "height": 998,
+      "displayWidth": 720,
+      "caption": "N305DK's 17 Nov run from Gray AAF down I-5 to Olympia, in 3D at true altitude, with the Orbit control turning the camera.",
+      "alt": "A 3D view of a real Smokey flight path draped over terrain, the camera orbiting slowly while the rotate, tilt, compass and Orbit buttons sit at the top right.",
+      "illustrative": false,
+      "duration": 6,
+      "files": {
+        "mp4": {
+          "path": "/blog/media/2026-11-19-the-big-update/hero-3d.mp4",
+          "bytes": 390553
+        },
+        "webm": {
+          "path": "/blog/media/2026-11-19-the-big-update/hero-3d.webm",
+          "bytes": 374709
+        },
+        "jpg": {
+          "path": "/blog/media/2026-11-19-the-big-update/hero-3d.jpg",
+          "bytes": 83744
+        }
+      },
+      "source": "https://www.smokysignal.app/flight/N305DK/20261118T0032?view=3d",
+      "capturedAt": "2026-11-19T08:05:26.895Z"
+    },
+    {
+      "id": "radar-history",
+      "kind": "clip",
+      "viewport": "phone",
+      "width": 720,
+      "height": 1558,
+      "displayWidth": 390,
+      "caption": "History mode on a phone: open HISTORY, pick Last 30 days, and a month of Smokey routes draws in. Then zoom to the Sound.",
+      "alt": "On a phone, the radar's History sheet opens, Last 30 days is picked, and thirty days of Smokey flight paths fill in across the Puget Sound map.",
+      "illustrative": false,
+      "duration": 8,
+      "files": {
+        "mp4": {
+          "path": "/blog/media/2026-11-19-the-big-update/radar-history.mp4",
+          "bytes": 277776
+        },
+        "webm": {
+          "path": "/blog/media/2026-11-19-the-big-update/radar-history.webm",
+          "bytes": 304738
+        },
+        "jpg": {
+          "path": "/blog/media/2026-11-19-the-big-update/radar-history.jpg",
+          "bytes": 79392
+        }
+      },
+      "source": "https://www.smokysignal.app/radar",
+      "capturedAt": "2026-11-19T08:02:34.097Z"
+    },
+    {
+      "id": "radar-palettes",
+      "kind": "clip",
+      "viewport": "desktop",
+      "width": 1152,
+      "height": 720,
+      "displayWidth": 720,
+      "caption": "Ember, Magma, Ice. Each palette recolours the heat, the routes and the roads under them.",
+      "alt": "The desktop radar with its layers panel open, switching the map palette from Ember to Magma to Ice, the heat and the tinted motorways changing colour each time.",
+      "illustrative": false,
+      "duration": 7,
+      "files": {
+        "mp4": {
+          "path": "/blog/media/2026-11-19-the-big-update/radar-palettes.mp4",
+          "bytes": 123919
+        },
+        "webm": {
+          "path": "/blog/media/2026-11-19-the-big-update/radar-palettes.webm",
+          "bytes": 199842
+        },
+        "jpg": {
+          "path": "/blog/media/2026-11-19-the-big-update/radar-palettes.jpg",
+          "bytes": 83029
+        }
+      },
+      "source": "https://www.smokysignal.app/radar",
+      "capturedAt": "2026-11-19T08:02:55.087Z"
+    },
+    {
+      "id": "search-cmdk",
+      "kind": "clip",
+      "viewport": "desktop",
+      "width": 1152,
+      "height": 720,
+      "displayWidth": 720,
+      "caption": "Command-K from anywhere. Type a tail, hit Enter, land on its logbook.",
+      "alt": "On desktop with the sidebar showing, the search palette opens, N305DK is typed, and Enter lands on that plane's page.",
+      "illustrative": false,
+      "duration": 7,
+      "files": {
+        "mp4": {
+          "path": "/blog/media/2026-11-19-the-big-update/search-cmdk.mp4",
+          "bytes": 155345
+        },
+        "webm": {
+          "path": "/blog/media/2026-11-19-the-big-update/search-cmdk.webm",
+          "bytes": 165456
+        },
+        "jpg": {
+          "path": "/blog/media/2026-11-19-the-big-update/search-cmdk.jpg",
+          "bytes": 14604
+        }
+      },
+      "source": "https://www.smokysignal.app/",
+      "capturedAt": "2026-11-19T08:03:09.111Z"
+    },
+    {
+      "id": "home-phone",
+      "kind": "screenshot",
+      "viewport": "phone",
+      "width": 780,
+      "height": 1688,
+      "displayWidth": 390,
+      "caption": "The Now tab on a phone. One glance: up, down, or the feed's quiet.",
+      "alt": "SmokySignal's home screen on a phone, showing the live status of the Smokey fleet.",
+      "illustrative": false,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-19-the-big-update/home-phone.webp",
+          "bytes": 43488
+        },
+        "png": {
+          "path": "/blog/media/2026-11-19-the-big-update/home-phone.png",
+          "bytes": 40337
+        }
+      },
+      "source": "https://www.smokysignal.app/",
+      "capturedAt": "2026-11-19T08:03:14.278Z"
+    },
+    {
+      "id": "home-desktop",
+      "kind": "screenshot",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 900,
+      "displayWidth": 720,
+      "caption": "Desktop gets the sidebar: every page, six sections, one rail.",
+      "alt": "SmokySignal's home screen on desktop with the navigation sidebar down the left.",
+      "illustrative": false,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-19-the-big-update/home-desktop.webp",
+          "bytes": 49906
+        },
+        "png": {
+          "path": "/blog/media/2026-11-19-the-big-update/home-desktop.png",
+          "bytes": 79553
+        }
+      },
+      "source": "https://www.smokysignal.app/",
+      "capturedAt": "2026-11-19T08:03:20.556Z"
+    },
+    {
+      "id": "circling",
+      "kind": "screenshot",
+      "viewport": "phone",
+      "width": 780,
+      "height": 1688,
+      "displayWidth": 390,
+      "caption": "What's circling: anything working a pattern right now, in plain words.",
+      "alt": "The What's circling page on a phone.",
+      "illustrative": false,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-19-the-big-update/circling.webp",
+          "bytes": 73718
+        },
+        "png": {
+          "path": "/blog/media/2026-11-19-the-big-update/circling.png",
+          "bytes": 57052
+        }
+      },
+      "source": "https://www.smokysignal.app/circling",
+      "capturedAt": "2026-11-19T08:03:25.671Z"
+    },
+    {
+      "id": "seen-fife",
+      "kind": "screenshot",
+      "viewport": "phone",
+      "width": 780,
+      "height": 1688,
+      "displayWidth": 390,
+      "caption": "What flew over Fife on 17 Nov around 15:30: N305DK, right overhead at 15:22, 1,600 ft, working I-5.",
+      "alt": "The /seen answer for Fife on 17 November at 15:30: N305DK, Smokey 4, passed 0.1 mi away at 15:22 at 1,600 ft, with a small map of its pattern over I-5.",
+      "illustrative": false,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-19-the-big-update/seen-fife.webp",
+          "bytes": 58642
+        },
+        "png": {
+          "path": "/blog/media/2026-11-19-the-big-update/seen-fife.png",
+          "bytes": 48896
+        }
+      },
+      "source": "https://www.smokysignal.app/seen?place=Fife&date=2026-11-17&time=15:30",
+      "capturedAt": "2026-11-19T08:03:29.801Z"
+    },
+    {
+      "id": "road-i5",
+      "kind": "screenshot",
+      "viewport": "phone",
+      "width": 780,
+      "height": 1688,
+      "displayWidth": 390,
+      "caption": "I-5's pass history: time overhead, the busiest stretch and the hour of day.",
+      "alt": "The I-5 road history page on a phone with time overhead and the busiest stretch.",
+      "illustrative": false,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-19-the-big-update/road-i5.webp",
+          "bytes": 37058
+        },
+        "png": {
+          "path": "/blog/media/2026-11-19-the-big-update/road-i5.png",
+          "bytes": 31149
+        }
+      },
+      "source": "https://www.smokysignal.app/road/i-5",
+      "capturedAt": "2026-11-19T08:03:34.939Z"
+    },
+    {
+      "id": "forecast-month",
+      "kind": "screenshot",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 900,
+      "displayWidth": 720,
+      "caption": "The forecast's month view: hour by weekday for November so far. History, not a promise.",
+      "alt": "The forecast month view on desktop, an hour-by-weekday grid of Smokey activity for November 2026.",
+      "illustrative": false,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-19-the-big-update/forecast-month.webp",
+          "bytes": 59838
+        },
+        "png": {
+          "path": "/blog/media/2026-11-19-the-big-update/forecast-month.png",
+          "bytes": 72839
+        }
+      },
+      "source": "https://www.smokysignal.app/forecast?month=2026-11",
+      "capturedAt": "2026-11-19T08:03:41.104Z"
+    },
+    {
+      "id": "stats",
+      "kind": "screenshot",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 900,
+      "displayWidth": 720,
+      "caption": "Stats keeps a permanent daily log of hours aloft, week by week.",
+      "alt": "The stats page on desktop with hours aloft by week.",
+      "illustrative": false,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-19-the-big-update/stats.webp",
+          "bytes": 47846
+        },
+        "png": {
+          "path": "/blog/media/2026-11-19-the-big-update/stats.png",
+          "bytes": 60784
+        }
+      },
+      "source": "https://www.smokysignal.app/stats",
+      "capturedAt": "2026-11-19T08:03:45.672Z"
+    },
+    {
+      "id": "plane-logbook",
+      "kind": "screenshot",
+      "viewport": "phone",
+      "width": 780,
+      "height": 1688,
+      "displayWidth": 390,
+      "caption": "N305DK's logbook: sorties and hours per month, departure fields, time on station.",
+      "alt": "N305DK's page on a phone, scrolled to its logbook.",
+      "illustrative": false,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-19-the-big-update/plane-logbook.webp",
+          "bytes": 46470
+        },
+        "png": {
+          "path": "/blog/media/2026-11-19-the-big-update/plane-logbook.png",
+          "bytes": 50076
+        }
+      },
+      "source": "https://www.smokysignal.app/plane/N305DK",
+      "capturedAt": "2026-11-19T08:03:51.134Z"
+    },
+    {
+      "id": "flight-card",
+      "kind": "screenshot",
+      "viewport": "desktop",
+      "width": 1200,
+      "height": 1500,
+      "displayWidth": 600,
+      "caption": "Every flight renders a share card: the track, the altitude profile and the corridor it worked.",
+      "alt": "The share card for N305DK's 18 November flight, with the track, an altitude profile and the corridor it worked.",
+      "illustrative": false,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-19-the-big-update/flight-card.webp",
+          "bytes": 36966
+        },
+        "png": {
+          "path": "/blog/media/2026-11-19-the-big-update/flight-card.png",
+          "bytes": 29728
+        }
+      },
+      "source": "https://www.smokysignal.app/flight/N305DK/20261118T0032/card",
+      "capturedAt": "2026-11-19T08:03:51.584Z"
+    },
+    {
+      "id": "board",
+      "kind": "screenshot",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 900,
+      "displayWidth": 720,
+      "caption": "The shop board, a departures board for the TV over the bench.",
+      "alt": "The /board departures-board view on a desktop screen.",
+      "illustrative": false,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-19-the-big-update/board.webp",
+          "bytes": 40088
+        },
+        "png": {
+          "path": "/blog/media/2026-11-19-the-big-update/board.png",
+          "bytes": 38826
+        }
+      },
+      "source": "https://www.smokysignal.app/board",
+      "capturedAt": "2026-11-19T08:03:56.689Z"
+    },
+    {
+      "id": "glance",
+      "kind": "screenshot",
+      "viewport": "phone",
+      "width": 780,
+      "height": 1688,
+      "displayWidth": 390,
+      "caption": "Handlebar mode: huge type, high contrast, screen kept awake.",
+      "alt": "The /glance handlebar view on a phone, status in very large type.",
+      "illustrative": false,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-19-the-big-update/glance.webp",
+          "bytes": 21982
+        },
+        "png": {
+          "path": "/blog/media/2026-11-19-the-big-update/glance.png",
+          "bytes": 16499
+        }
+      },
+      "source": "https://www.smokysignal.app/glance",
+      "capturedAt": "2026-11-19T08:04:01.461Z"
+    },
+    {
+      "id": "speed-warning",
+      "kind": "screenshot",
+      "viewport": "phone",
+      "width": 780,
+      "height": 1688,
+      "displayWidth": 390,
+      "caption": "The speed warning, illustrative: a staged rider and a staged bird. Opt in, foreground only, and your speed never leaves the phone.",
+      "alt": "The full-screen EASE OFF speed warning on a phone, with the distance to the bird and how far over the limit the rider is.",
+      "illustrative": true,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-19-the-big-update/speed-warning.webp",
+          "bytes": 30970
+        },
+        "png": {
+          "path": "/blog/media/2026-11-19-the-big-update/speed-warning.png",
+          "bytes": 16725
+        }
+      },
+      "source": "local build (fixtures) /glance?mock=up",
+      "capturedAt": "2026-11-19T08:04:06.549Z"
+    },
+    {
+      "id": "aircraft",
+      "kind": "screenshot",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 900,
+      "displayWidth": 720,
+      "caption": "All aircraft: every tail we watch, grouped by mission, with where the facts came from.",
+      "alt": "The All aircraft page on desktop, tails grouped by mission with their sources.",
+      "illustrative": false,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-19-the-big-update/aircraft.webp",
+          "bytes": 53504
+        },
+        "png": {
+          "path": "/blog/media/2026-11-19-the-big-update/aircraft.png",
+          "bytes": 70625
+        }
+      },
+      "source": "https://www.smokysignal.app/aircraft",
+      "capturedAt": "2026-11-19T08:04:11.477Z"
+    }
+  ]
+}

@@ -2745,6 +2745,58 @@ test.describe("p14 live-prod audit · navigation", () => {
     });
     expect(pass).toBe(true);
   });
+
+  // Blog media (scripts/blog-media.ts, components/BlogMarkdown.tsx): the
+  // launch post carries screenshots and clips, and none of them 404.
+  test("72b. the launch post has a clip (mp4 + webm) and 6+ images, every media file a 200", async ({ page, request }) => {
+    test.setTimeout(90_000);
+    await page.goto("/blog/2026-11-19-the-big-update", { waitUntil: "domcontentloaded" });
+    const media = await page.evaluate(() => {
+      const videos = [...document.querySelectorAll<HTMLVideoElement>('[data-testid="blog-post"] video')].map((v) => ({
+        poster: v.getAttribute("poster") ?? "",
+        sources: [...v.querySelectorAll("source")].map((s) => ({ src: s.getAttribute("src") ?? "", type: s.getAttribute("type") ?? "" })),
+        sized: !!v.getAttribute("width") && !!v.getAttribute("height"),
+      }));
+      const images = [...document.querySelectorAll<HTMLImageElement>('[data-testid="blog-post"] figure picture img')].map((i) => ({
+        src: i.getAttribute("src") ?? "",
+        webp: i.parentElement?.querySelector('source[type="image/webp"]')?.getAttribute("srcset") ?? "",
+        sized: !!i.getAttribute("width") && !!i.getAttribute("height"),
+        lazy: i.getAttribute("loading") === "lazy",
+        alt: i.getAttribute("alt") ?? "",
+      }));
+      const captions = document.querySelectorAll('[data-testid="blog-post"] figure figcaption').length;
+      return { videos, images, captions };
+    });
+    const withBoth = media.videos.filter(
+      (v) => v.sources.some((s) => s.type === "video/mp4") && v.sources.some((s) => s.type === "video/webm"),
+    );
+    const urls = [
+      ...new Set([
+        ...media.videos.flatMap((v) => [v.poster, ...v.sources.map((s) => s.src)]),
+        ...media.images.flatMap((i) => [i.src, i.webp]),
+      ]),
+    ].filter(Boolean);
+    const bad: string[] = [];
+    for (const u of urls) {
+      const r = await request.get(u);
+      if (r.status() !== 200) bad.push(`${u}=${r.status()}`);
+    }
+    const pass =
+      withBoth.length >= 1 &&
+      media.images.length >= 6 &&
+      media.images.every((i) => i.sized && i.lazy && i.alt.length > 0 && i.webp) &&
+      media.videos.every((v) => v.sized && v.poster) &&
+      bad.length === 0;
+    const screenshot = await shot(page, "72b-blog-media");
+    record({
+      claim: "Launch post: at least one <video> with mp4 and webm sources, at least 6 sized lazy images, every media URL returns 200",
+      category: pass ? "working_as_designed" : media.images.length + media.videos.length === 0 ? "unshipped" : "confirmed_bug",
+      pass,
+      evidence: `videos=${media.videos.length} (mp4+webm ${withBoth.length}) images=${media.images.length} captions=${media.captions} urls=${urls.length} bad=${bad.join(",") || "none"}`,
+      screenshot,
+    });
+    expect(pass).toBe(true);
+  });
 });
 
 // 3D on /radar: history mode (`?h=1&...&hview=3d`) and live (`?view=3d`).

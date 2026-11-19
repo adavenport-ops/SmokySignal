@@ -18,7 +18,8 @@
     "verify-prod": "./scripts/verify-prod.zsh",
     "feeds:check": "tsx scripts/feeds-live-check.ts",
     "blog:weekly": "tsx scripts/blog-weekly.ts",
-    "seo:audit": "tsx scripts/seo-audit.ts"
+    "seo:audit": "tsx scripts/seo-audit.ts",
+    "blog:media": "tsx scripts/blog-media.ts"
   },
   "dependencies": {
     "@deck.gl/core": "9.4.1",
@@ -54,8 +55,12 @@
     "eslint": "8.57.1",
     "eslint-config-next": "14.2.35",
     "postcss": "^8.4.47",
+    "sharp": "0.35.5",
     "tailwindcss": "^3.4.14",
     "tsx": "^4.21.0",
     "typescript": "^5.6.3"
+  },
+  "optionalDependencies": {
+    "ffmpeg-static": "5.3.0"
   }
 }
