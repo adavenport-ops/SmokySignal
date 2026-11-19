@@ -48,6 +48,8 @@ import {
 import type { Aircraft, FleetEntry, Snapshot } from "@/lib/types";
 import type { LearningState } from "@/lib/learning";
 import type { PaletteId } from "@/lib/radar-palettes";
+import { LIVE_VIEW_PARAM, parseMapView, withMapView } from "@/lib/history-3d";
+import { Pill3D, hasWebGL2 } from "./View3DToggle";
 
 export type RiderPos = { lat: number; lon: number };
 
@@ -63,6 +65,10 @@ const RadarMap = nextDynamic(() => import("./RadarMap"), {
     />
   ),
 });
+
+// Live 3D (`?view=3d`). This chunk and the deck.gl one behind it load only
+// once a rider turns 3D on.
+const RadarLive3D = nextDynamic(() => import("./RadarLive3D"), { ssr: false });
 
 // Phone tab bar height. From 1024 px the bar becomes a left rail
 // (app/globals.css sets --ss-tabbar-h to 0 there), so bottom overlays
@@ -177,6 +183,23 @@ export function RadarShell({
       setFitNonce((n) => n + 1);
     }
   }, [historyOn]);
+  // Live 3D: hydrated from `?view=3d`, mirrored back with replaceState.
+  // History mode has its own 3D switch in its banner.
+  const [live3d, setLive3d] = useState(false);
+  useEffect(() => {
+    const want = parseMapView(new URLSearchParams(window.location.search).get(LIVE_VIEW_PARAM)) === "3d";
+    if (want && !hasWebGL2()) flashToast(setToast, "3D needs WebGL2 · flat map");
+    setLive3d(want && hasWebGL2());
+  }, []);
+  const setLive3dUrl = (on: boolean) => {
+    setLive3d(on);
+    const qs = withMapView(window.location.search, LIVE_VIEW_PARAM, on ? "3d" : "2d").toString();
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`,
+    );
+  };
   // Hydrate the rings pref + region from localStorage on mount.
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -311,14 +334,29 @@ export function RadarShell({
           palette={palette}
         />
       )}
+      {live3d && !historyOn && (
+        <RadarLive3D
+          airborne={airborne}
+          renderCard={(a) => <PlaneCard p={a} />}
+          resetInset={{ top: PICKER_TOP + 90, right: 12 }}
+          framePadding={{ top: PICKER_TOP, bottom: rowBottom + 44, left: 0, right: 60 }}
+          // Just above the RINGS / HISTORY / 3D row.
+          cardBottom={`calc(${rowBottom + 52}px + var(--ss-install-prompt-h, 0px))`}
+          onUnavailable={() => {
+            setLive3dUrl(false);
+            flashToast(setToast, "3D dropped out · flat map");
+          }}
+        />
+      )}
       <HotZoneLayer
         map={map}
         bottomBoost={airborne.length > 0 ? 130 : 0}
         learning={learning}
-        suppressed={historyOn}
+        // 3D draws neither heat nor 30-day paths, so their row steps aside.
+        suppressed={historyOn || live3d}
         initialPalette={palette}
       />
-      <FlightPathLayer map={map} suppressed={historyOn} initialPalette={palette} />
+      <FlightPathLayer map={map} suppressed={historyOn || live3d} initialPalette={palette} />
       <UserZoneLayer map={map} />
       <AircraftTrailLayer map={map} airborne={airborne} hidden={historyOn} />
       <HistoryOverlay
@@ -350,12 +388,27 @@ export function RadarShell({
           16 + (airborne.length > 0 ? 130 : 0)
         }px + ${TABBAR_CSS} + var(--ss-install-prompt-h, 0px))`}
         disabled={!rider}
-        raised={!historyOn}
+        raised={!historyOn && !live3d}
         trailing={
-          <HistoryPill
-            active={historyOn}
-            onClick={() => setHistorySheetOpen(true)}
-          />
+          <>
+            <HistoryPill
+              active={historyOn}
+              onClick={() => setHistorySheetOpen(true)}
+            />
+            {!historyOn && (
+              <Pill3D
+                active={live3d}
+                testId="radar-3d-toggle"
+                onClick={() => {
+                  if (!live3d && !hasWebGL2()) {
+                    flashToast(setToast, "3D needs WebGL2 · flat map");
+                    return;
+                  }
+                  setLive3dUrl(!live3d);
+                }}
+              />
+            )}
+          </>
         }
       />
       {/* PROMPT_19C diagnostic — sits two rows above the HOT ZONES /
@@ -365,7 +418,7 @@ export function RadarShell({
           the badge stays visible above the prompt on iOS Safari.
           Removed in the follow-up PR once trail rendering is
           confirmed in the wild. */}
-      {!historyOn && (
+      {!historyOn && !live3d && (
         <div
           style={{
             position: "absolute",

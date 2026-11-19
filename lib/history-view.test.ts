@@ -300,8 +300,8 @@ test("3D adapter: polylines → paths with colour", () => {
       id: "f1",
       color: "#8FA9E0",
       points: [
-        { lat: 47.1, lon: -122.3, alt: 1200, ts: 1 },
-        { lat: 47.2, lon: -122.4, alt: null, ts: 2 },
+        { lat: 47.1, lon: -122.3, alt: 1200, spd: null, trk: null, ts: 1 },
+        { lat: 47.2, lon: -122.4, alt: null, spd: null, trk: null, ts: 2 },
       ],
     },
   ]);

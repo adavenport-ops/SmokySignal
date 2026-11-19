@@ -2668,3 +2668,109 @@ test.describe("p14 live-prod audit · navigation", () => {
     }
   });
 });
+
+// 3D on /radar: history mode (`?h=1&...&hview=3d`) and live (`?view=3d`).
+// Both mount components/Flight3D.tsx over the radar; the QA hook is the
+// same flight-3d container, with data-scene telling the two apart.
+test.describe("p14 live-prod audit · 3D radar", () => {
+  test("57. /radar?h=1&...&hview=3d and /radar?view=3d render a WebGL2 canvas with no console errors", async ({
+    page: projectPage,
+    playwright,
+    browserName,
+    baseURL,
+    viewport,
+    userAgent,
+    deviceScaleFactor,
+    isMobile,
+    hasTouch,
+    extraHTTPHeaders,
+  }) => {
+    test.setTimeout(180_000);
+    const ptDate = (offsetDays: number) =>
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Los_Angeles",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date(Date.now() - offsetDays * 86_400_000));
+    const historyPath = `/radar?h=1&from=${ptDate(7)}&to=${ptDate(0)}&hview=3d`;
+
+    let ownBrowser: Awaited<ReturnType<typeof playwright.chromium.launch>> | null = null;
+    let page = projectPage;
+    if (browserName === "chromium") {
+      ownBrowser = await playwright.chromium.launch({ args: GL_ARGS });
+      const ctx = await ownBrowser.newContext({
+        baseURL,
+        viewport,
+        userAgent,
+        deviceScaleFactor,
+        isMobile,
+        hasTouch,
+        extraHTTPHeaders,
+      });
+      page = await ctx.newPage();
+    }
+    try {
+      const errors: string[] = [];
+      page.on("console", (m) => {
+        if (m.type() === "error") errors.push(m.text().slice(0, 200));
+      });
+      page.on("pageerror", (e) => errors.push(`pageerror: ${e.message.slice(0, 200)}`));
+
+      const probe = async (url: string, scene: string, param: string, name: string) => {
+        errors.length = 0;
+        await page.goto(url, { waitUntil: "domcontentloaded" });
+        const gl2 = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl2"));
+        if (!gl2) {
+          return { gl2, ready: false, canvas: null, kept: false, errs: [] as string[], screenshot: await shot(page, name) };
+        }
+        const ready = await page
+          .waitForSelector(`[data-testid="flight-3d"][data-scene="${scene}"][data-ready="1"]`, { timeout: 45_000 })
+          .then(() => true)
+          .catch(() => false);
+        await page.waitForTimeout(4000);
+        const canvas = await page.evaluate(() => {
+          const c = document.querySelector<HTMLCanvasElement>('[data-testid="flight-3d"] canvas');
+          if (!c) return null;
+          // getContext with the type already in use returns the live context.
+          return { w: c.clientWidth, h: c.clientHeight, isGl2: !!c.getContext("webgl2") };
+        });
+        const kept = new URL(page.url()).searchParams.get(param) === "3d";
+        const errs = errors.filter((e) => !/_vercel\/insights/.test(e));
+        return { gl2, ready, canvas, kept, errs, screenshot: await shot(page, name) };
+      };
+
+      const hist = await probe(historyPath, "radar-history", "hview", "57-radar-history-3d");
+      const live = await probe("/radar?view=3d", "radar-live", "view", "57-radar-live-3d");
+      if (!hist.gl2) {
+        record({
+          claim: "3D on /radar (history hview=3d, live view=3d)",
+          category: "indeterminate",
+          pass: true,
+          evidence: "browser has no WebGL2; the radar stays on the flat map",
+          screenshot: hist.screenshot,
+        });
+        return;
+      }
+      const ok = (r: typeof hist) =>
+        r.ready &&
+        r.canvas != null &&
+        r.canvas.isGl2 &&
+        r.canvas.w > 100 &&
+        r.canvas.h > 100 &&
+        r.kept &&
+        r.errs.length === 0;
+      const pass = ok(hist) && ok(live);
+      record({
+        claim:
+          "/radar?h=1&from=&to=&hview=3d (history) and /radar?view=3d (live) render a WebGL2 canvas with no console errors",
+        category: pass ? "working_as_designed" : hist.ready || live.ready ? "confirmed_bug" : "unshipped",
+        pass,
+        evidence: `history: ${historyPath} ready=${hist.ready} canvas=${JSON.stringify(hist.canvas)} kept=${hist.kept} errors=${JSON.stringify(hist.errs.slice(0, 3))} | live: ready=${live.ready} canvas=${JSON.stringify(live.canvas)} kept=${live.kept} errors=${JSON.stringify(live.errs.slice(0, 3))}`,
+        screenshot: hist.screenshot,
+      });
+    } finally {
+      await ownBrowser?.close();
+    }
+  });
+});

@@ -17,8 +17,13 @@
 // Map: one GeoJSON source for lines and one for heat (lib/history-
 // layers.ts), attached once and updated with setData. Turning history
 // off empties and hides them; nothing is re-added on the next toggle.
+//
+// 3D: the banner's 3D button (`?hview=3d`) lays components/Flight3D.tsx
+// over the map with every flight in range stacked over terrain. Loaded
+// through next/dynamic, so deck.gl stays out of /radar's first-load JS.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import nextDynamic from "next/dynamic";
 import { createPortal } from "react-dom";
 import type { Map as MaplibreMap, MapMouseEvent } from "maplibre-gl";
 import { SS_TOKENS } from "@/lib/tokens";
@@ -65,7 +70,26 @@ import { useHistoryLayers } from "@/lib/hooks/useHistoryLayers";
 import { useRadarPalette } from "@/lib/hooks/useRadarPalette";
 import type { PaletteId } from "@/lib/radar-palettes";
 import type { Mission } from "@/lib/types";
+import {
+  HISTORY_VIEW_PARAM,
+  historyPathKey,
+  historyPaths3D,
+  parseHistoryPathKey,
+  parseMapView,
+  tailColors3D,
+  withMapView,
+} from "@/lib/history-3d";
+import type { Flight3DPick } from "./Flight3D";
 import { Chip, Eyebrow, FlightMiniCard, PeriodPicker, useIsDesktop } from "./HistoryControls";
+import { Pill3D, hasWebGL2 } from "./View3DToggle";
+
+const Flight3D = nextDynamic(() => import("./Flight3D"), {
+  ssr: false,
+  loading: () => <div style={{ position: "absolute", inset: 0, background: SS_TOKENS.bg0 }} />,
+});
+
+const NO_WEBGL2_NOTE = "3D needs WebGL2, and this browser does not offer it. Flat map it is.";
+const DROPPED_NOTE = "3D view dropped out on this device. Back on the flat map.";
 
 /** Vertical space the banner takes under the header (44 + 8 gap). */
 export const HISTORY_BANNER_SPACE = 52;
@@ -142,13 +166,19 @@ export function HistoryOverlay({
   const [today, setToday] = useState<string | null>(null);
   const [applied, setApplied] = useState<HistoryState | null>(null);
   const [selected, setSelected] = useState<HistoryLineKey | null>(null);
+  const [view3d, setView3d] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
 
   // Hydrate from the URL once (and on back/forward).
   useEffect(() => {
     const read = () => {
       const t = ptDate(Date.now());
+      const params = new URLSearchParams(window.location.search);
       setToday(t);
-      setApplied(parseHistoryParams(new URLSearchParams(window.location.search), t));
+      setApplied(parseHistoryParams(params, t));
+      const want3d = parseMapView(params.get(HISTORY_VIEW_PARAM)) === "3d";
+      if (want3d && !hasWebGL2()) setNote(NO_WEBGL2_NOTE);
+      setView3d(want3d && hasWebGL2());
     };
     read();
     window.addEventListener("popstate", read);
@@ -166,13 +196,38 @@ export function HistoryOverlay({
     // Mirror to the URL without a navigation (a router push would
     // re-render the server page and refetch the live snapshot).
     const cur = new URLSearchParams(window.location.search);
-    const next = applied ? serializeHistoryParams(applied, cur) : clearHistoryParams(cur);
+    const next = withMapView(
+      applied ? serializeHistoryParams(applied, cur) : clearHistoryParams(cur),
+      HISTORY_VIEW_PARAM,
+      applied && view3d ? "3d" : "2d",
+    );
     const qs = next.toString();
     if (qs !== cur.toString()) {
       const url = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`;
       window.history.replaceState(window.history.state, "", url);
     }
-  }, [applied, today]);
+  }, [applied, today, view3d]);
+
+  // A note (no WebGL2, 3D dropped out) shows in the chip slot for a beat.
+  useEffect(() => {
+    if (!note) return;
+    const id = window.setTimeout(() => setNote(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [note]);
+
+  const toggle3d = useCallback(() => {
+    if (view3d) return setView3d(false);
+    if (!hasWebGL2()) return setNote(NO_WEBGL2_NOTE);
+    setNote(null);
+    setView3d(true);
+  }, [view3d]);
+  const on3dUnavailable = useCallback((reason: string) => {
+    setView3d(false);
+    setNote(reason === "webgl2" ? NO_WEBGL2_NOTE : DROPPED_NOTE);
+  }, []);
+  const onPick3d = useCallback((p: Flight3DPick | null) => {
+    setSelected(p?.kind === "path" ? parseHistoryPathKey(p.id) : null);
+  }, []);
 
   const query = applied ? historyApiQuery(applied) : null;
   const hist = useHistory(query);
@@ -309,6 +364,12 @@ export function HistoryOverlay({
     });
     return () => cancelAnimationFrame(raf);
   }, [map, isDesktop, selectedKey, body]);
+  const show3d = applied !== null && view3d;
+  const selectedPathKey = selected ? historyPathKey(selected) : null;
+  const paths3d = useMemo(
+    () => (show3d && body ? historyPaths3D(body.polylines, selectedPathKey) : []),
+    [show3d, body, selectedPathKey],
+  );
 
   if (today === null) return null;
 
@@ -316,11 +377,14 @@ export function HistoryOverlay({
   let chip: React.ReactNode = null;
   if (applied) {
     const stale = hist.status !== "idle" && hist.query !== query;
-    if (hist.status === "loading" || stale) chip = <StatusChip text={HISTORY_COPY.loading} pending />;
+    if (note) chip = <StatusChip text={note} />;
+    else if (hist.status === "loading" || stale) chip = <StatusChip text={HISTORY_COPY.loading} pending />;
     else if (hist.status === "error") chip = <StatusChip text={HISTORY_COPY[hist.error]} />;
     else if (body && body.summary.flights === 0) chip = <StatusChip text={HISTORY_COPY.empty} />;
     else if (body) {
-      const legend = Object.entries(colors);
+      // In 3D the ribbons use the 3D palette (lib/history-3d.ts); the
+      // legend follows whichever view is on screen.
+      const legend = Object.entries(show3d ? tailColors3D(Object.keys(colors)) : colors);
       chip = (
         <div
           data-testid="history-summary"
@@ -355,6 +419,27 @@ export function HistoryOverlay({
 
   return (
     <>
+      {show3d && (
+        <div
+          data-testid="history-3d"
+          style={{ position: "absolute", inset: 0, zIndex: 5, background: SS_TOKENS.bg0 }}
+        >
+          <Flight3D
+            paths={paths3d}
+            fill
+            scene="radar-history"
+            replay={false}
+            annotate={false}
+            onPick={onPick3d}
+            frameKey={body ? query : null}
+            // Under the region picker + compass column (banner, picker
+            // row, compass), so nothing in the top bar moves.
+            resetInset={{ top: bannerTop + HISTORY_BANNER_SPACE + 90, right: 12 }}
+            framePadding={insets}
+            onUnavailable={on3dUnavailable}
+          />
+        </div>
+      )}
       {applied && (
         <div
           role="status"
@@ -408,6 +493,7 @@ export function HistoryOverlay({
             <span style={{ color: SS_TOKENS.fg1 }}> · </span>
             <span>{range}</span>
           </button>
+          <Pill3D active={view3d} onClick={toggle3d} variant="banner" testId="history-3d-toggle" />
           <button
             type="button"
             onClick={() => {

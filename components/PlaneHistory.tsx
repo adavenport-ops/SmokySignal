@@ -7,13 +7,14 @@
 // Data: GET /api/history?tail=…&from=…&to=… (lib/history-core.ts).
 // Map plumbing is shared with the /radar overlay (lib/history-layers.ts).
 //
-// 3D: TODO(flight3d) — components/Flight3D.tsx (paths: {id, points,
-// color?}[]) is in a separate PR and was not on main when this shipped.
-// When it lands, add a 2D | 3D toggle above the map here and render
-// <Flight3D paths={historyToFlight3DPaths(body.polylines, colors)} />
-// for 3D. The adapter is ready in lib/history-view.ts.
+// 3D: a 2D | 3D switch above the map (`?hview=3d`) swaps in
+// components/Flight3D.tsx, loaded through next/dynamic so deck.gl never
+// lands in this page's first-load JS. Paths and colours come from
+// lib/history-3d.ts: one flight is orange with replay; many flights get a
+// cool colour each, orange only for the one tapped, and no replay.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import nextDynamic from "next/dynamic";
 import maplibregl, { Map as MaplibreMap, NavigationControl } from "maplibre-gl";
 import { applyNeutralBasemap, basemapStyleUrl } from "@/lib/basemap";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -42,20 +43,68 @@ import {
 import { useHistory } from "@/lib/hooks/useHistory";
 import { useHistoryLayers } from "@/lib/hooks/useHistoryLayers";
 import { useRadarPalette } from "@/lib/hooks/useRadarPalette";
+import {
+  HISTORY_VIEW_PARAM,
+  historyPathKey,
+  historyPaths3D,
+  parseHistoryPathKey,
+  parseMapView,
+  replayAllowed,
+  withMapView,
+  type MapView,
+} from "@/lib/history-3d";
+import type { Flight3DPick } from "./Flight3D";
 import { FlightMiniCard, PeriodPicker, Stat } from "./HistoryControls";
+import { ViewToggle, hasWebGL2 } from "./View3DToggle";
 
 const MAP_HEIGHT = 260;
+const HEIGHT_3D = "clamp(380px, 62vh, 560px)";
+
+const Flight3D = nextDynamic(() => import("./Flight3D"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="ss-mono"
+      style={{
+        height: HEIGHT_3D,
+        background: SS_TOKENS.bg0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: SS_TOKENS.fg1,
+        fontSize: 12,
+        letterSpacing: ".08em",
+      }}
+    >
+      LOADING 3D
+    </div>
+  ),
+});
 const PUGET_SOUND: [number, number] = [-122.3, 47.6];
 
 export default function PlaneHistory({ tail }: { tail: string }) {
   const [today, setToday] = useState<string | null>(null);
   const [range, setRange] = useState<DateRange | null>(null);
   const [selected, setSelected] = useState<HistoryLineKey | null>(null);
+  const [view, setView] = useState<MapView>("2d");
+  const [unavailable, setUnavailable] = useState<string | null>(null);
 
   useEffect(() => {
     const t = ptDate(Date.now());
     setToday(t);
     setRange(resolvePreset("last30", t) ?? { from: t, to: t });
+    const v = parseMapView(new URLSearchParams(window.location.search).get(HISTORY_VIEW_PARAM));
+    setView(v);
+    if (v === "3d" && !hasWebGL2()) setUnavailable("webgl2");
+  }, []);
+
+  const chooseView = useCallback((next: MapView) => {
+    setView(next);
+    setUnavailable(next === "3d" && !hasWebGL2() ? "webgl2" : null);
+    const url = new URL(window.location.href);
+    const qs = withMapView(url.searchParams, HISTORY_VIEW_PARAM, next).toString();
+    // replaceState, not a router push: no server round trip for a view flip.
+    window.history.replaceState(window.history.state, "", `${url.pathname}${qs ? `?${qs}` : ""}${url.hash}`);
   }, []);
 
   const query = range ? historyApiQuery({ ...range, tails: [tail], missions: [] }) : null;
@@ -67,6 +116,17 @@ export default function PlaneHistory({ tail }: { tail: string }) {
     () => (body && selected ? body.sessions.find((s) => s.id === selected.id && s.tail === selected.tail) ?? null : null),
     [body, selected],
   );
+
+  const show3d = view === "3d" && unavailable == null;
+  const selectedKey = selected ? historyPathKey(selected) : null;
+  const paths = useMemo(
+    () => (show3d && body ? historyPaths3D(body.polylines, selectedKey) : []),
+    [show3d, body, selectedKey],
+  );
+  const onPick = useCallback((p: Flight3DPick | null) => {
+    if (p?.kind === "path") setSelected(parseHistoryPathKey(p.id));
+    else setSelected(null);
+  }, []);
 
   if (!today || !range) {
     return <div style={{ height: MAP_HEIGHT + 180 }} aria-hidden />;
@@ -82,8 +142,33 @@ export default function PlaneHistory({ tail }: { tail: string }) {
       <div style={{ padding: "0 14px" }}>
         <PeriodPicker today={today} value={range} onPick={setRange} />
       </div>
+      <div style={{ padding: "0 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+        <ViewToggle view={view} onChange={chooseView} label="Flight history view" />
+        {view === "3d" && unavailable && (
+          <div role="status" style={{ fontSize: 13, lineHeight: 1.5, color: SS_TOKENS.fg1 }}>
+            {unavailable === "webgl2"
+              ? "3D needs WebGL2, and this browser does not offer it. Here is the flat map."
+              : "3D view dropped out on this device. Here is the flat map."}
+          </div>
+        )}
+      </div>
       <div style={{ position: "relative" }}>
-        <HistoryMap tail={tail} body={body} selected={selected} onSelect={setSelected} />
+        {show3d ? (
+          <div data-testid="plane-history-3d" style={{ height: HEIGHT_3D }}>
+            <Flight3D
+              paths={paths}
+              fill
+              scene="plane-history"
+              replay={replayAllowed(paths)}
+              annotate={paths.length === 1}
+              onPick={onPick}
+              frameKey={body ? query : null}
+              onUnavailable={setUnavailable}
+            />
+          </div>
+        ) : (
+          <HistoryMap tail={tail} body={body} selected={selected} onSelect={setSelected} />
+        )}
         {status && (
           <div
             className="ss-mono"

@@ -1,10 +1,12 @@
 // /api/trails — recent track-history slice for currently-airborne tails.
 // Powers the polyline trail layer on /radar (components/AircraftTrailLayer).
 //
-// Query: GET /api/trails?tails=N305DK,N2446X&minutes=30
-// Response: { trails: { [tail]: [{ lat, lon, ts }] } }
-//   - Coordinates only (no alt/speed) — the trail layer doesn't need them
-//     and dropping fields keeps the payload small.
+// Query: GET /api/trails?tails=N305DK,N2446X&minutes=30[&alt=1]
+// Response: { trails: { [tail]: [{ lat, lon, ts, alt? }] } }
+//   - Coordinates only by default (no alt/speed) — the 2D trail layer
+//     doesn't need them and dropping fields keeps the payload small.
+//   - `alt=1` adds barometric altitude (ft, null when not reported) for
+//     the live 3D view (components/RadarLive3D.tsx).
 //   - Sorted ascending by ts so a polyline reads from oldest → newest.
 
 import { NextResponse } from "next/server";
@@ -33,11 +35,12 @@ function parseTails(raw: string | null): string[] {
     .slice(0, MAX_TAILS);
 }
 
-type TrailPoint = { lat: number; lon: number; ts: number };
+type TrailPoint = { lat: number; lon: number; ts: number; alt?: number | null };
 
 async function trailFor(
   tail: string,
   cutoffSec: number,
+  withAlt: boolean,
 ): Promise<TrailPoint[]> {
   // Most trails fit inside today's UTC list; pull yesterday too only if
   // the cutoff crosses midnight (rare with default 30 min window).
@@ -56,7 +59,11 @@ async function trailFor(
     }
   }
   allPoints.sort((a, b) => a.ts - b.ts);
-  return allPoints.map((p) => ({ lat: p.lat, lon: p.lon, ts: p.ts }));
+  return allPoints.map((p) =>
+    withAlt
+      ? { lat: p.lat, lon: p.lon, ts: p.ts, alt: p.alt ?? null }
+      : { lat: p.lat, lon: p.lon, ts: p.ts },
+  );
 }
 
 export async function GET(req: Request) {
@@ -69,9 +76,10 @@ export async function GET(req: Request) {
   if (tails.length === 0) {
     return NextResponse.json({ trails: {} });
   }
+  const withAlt = url.searchParams.get("alt") === "1";
   const cutoffSec = Math.floor(Date.now() / 1000) - minutes * 60;
   const entries = await Promise.all(
-    tails.map(async (t) => [t, await trailFor(t, cutoffSec)] as const),
+    tails.map(async (t) => [t, await trailFor(t, cutoffSec, withAlt)] as const),
   );
   const trails: Record<string, TrailPoint[]> = {};
   for (const [tail, points] of entries) {

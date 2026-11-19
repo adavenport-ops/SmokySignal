@@ -530,17 +530,25 @@ export function polylineExtent(
 
 // ─── 3D hook ─────────────────────────────────────────────────────────
 
-/** Point shape handed to the 3D view (Flight3D `paths[].points`). */
-export type Flight3DPoint = { lat: number; lon: number; alt: number | null; ts: number };
+/**
+ * Point shape handed to the 3D view: components/Flight3D.tsx takes
+ * TrackPoint (lib/track-point.ts), whose capture fields are all optional.
+ * The history payload carries no speed or track, so those are null.
+ */
+export type Flight3DPoint = {
+  lat: number;
+  lon: number;
+  alt: number | null;
+  spd: number | null;
+  trk: number | null;
+  ts: number;
+};
 export type Flight3DPath = { id: string; points: Flight3DPoint[]; color?: string };
 
 /**
  * Props adapter for components/Flight3D.tsx (`paths: {id, points,
- * color?}[]`). TODO(flight3d): Flight3D is in a separate PR and was not
- * on main when this shipped. Once it lands, render it behind the 2D|3D
- * toggle in components/PlaneHistory.tsx with
- * `paths={historyToFlight3DPaths(body.polylines, colors)}`, and adjust
- * Flight3DPoint if its point shape differs.
+ * color?}[]`). Ids are the flight ids; lib/history-3d.ts historyPaths3D
+ * re-keys them by tail and applies the 3D colour rules.
  */
 export function historyToFlight3DPaths(
   polylines: readonly HistoryPolyline[],
@@ -551,7 +559,7 @@ export function historyToFlight3DPaths(
     .map((p) => ({
       id: p.id,
       color: colors[p.tail] ?? HISTORY_SINGLE_COLOR,
-      points: p.points.map((v: PolyVertex) => ({ lat: v[0], lon: v[1], alt: v[2], ts: v[3] })),
+      points: p.points.map((v: PolyVertex) => ({ lat: v[0], lon: v[1], alt: v[2], spd: null, trk: null, ts: v[3] })),
     }));
 }
 

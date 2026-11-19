@@ -6,8 +6,10 @@
 //
 // Loaded only through next/dynamic (ssr: false) once a rider picks 3D, so
 // deck.gl never lands in a page's first-load JS. Reusable: takes any number
-// of paths plus optional live markers, so /radar and date-range overlays can
-// mount the same component later.
+// of paths plus optional live markers. Mounted by the /flight share page,
+// the plane page's Flight history, /radar history mode and live /radar 3D.
+// The map is built once; new paths / markers flow through render() and
+// only rebuild deck.gl layers, so a 10 s live poll never re-creates the map.
 //
 // Vertical scale: terrain exaggeration and altitude share TERRAIN_EXAGGERATION
 // (lib/flight3d.ts), so height above the ground stays proportional. HUD
@@ -84,12 +86,30 @@ export type Flight3DMarker = {
   label?: string;
 };
 
+export type Flight3DPick = { kind: "path" | "marker"; id: string };
+
 type Props = {
   paths: Flight3DPath[];
-  /** Live aircraft to pin in the scene (e.g. a later /radar 3D mode). */
+  /** Live aircraft to pin in the scene (/radar live 3D). */
   markers?: Flight3DMarker[];
   /** CSS height. Default: most of a phone screen, capped on desktop. */
   height?: number | string;
+  /** Fill the parent edge to edge (no card border), e.g. full-screen /radar. */
+  fill?: boolean;
+  /** Where the RESET VIEW button sits, px from the top-right corner. */
+  resetInset?: { top: number; right: number };
+  /** Tap on a path or marker; null for a tap on empty ground. */
+  onPick?: (pick: Flight3DPick | null) => void;
+  /** Re-frame the camera when this changes (new data set, new range). */
+  frameKey?: string | number | null;
+  /** Camera when there is nothing to frame. Default: Puget Sound. */
+  emptyView?: { center: [number, number]; zoom: number };
+  /** Extra px the parent's overlays cover on each side, kept clear when framing. */
+  framePadding?: { top: number; bottom: number; left: number; right: number };
+  /** Camera pitch, degrees. Default 60 (side-on, for one track's curtain). */
+  pitch?: number;
+  /** QA hook: stamped on the container as data-scene. */
+  scene?: string;
   /** Show the replay scrubber + animated marker. Default true. */
   replay?: boolean;
   /** Mark orbits and departure / arrival fields. Default true. */
@@ -185,6 +205,38 @@ function fitCamera(
   let zoom = 10;
   const availW = Math.max(40, width - pad.left - pad.right);
   const availH = Math.max(40, height - pad.top - pad.bottom);
+  // Seed from a flat fit of the footprint, a step wider for the pitch.
+  // Starting at a fixed zoom, points far from the centroid (a few aircraft
+  // spread over the Sound) can project past the horizon, get skipped, and
+  // the fit settles on whatever is left.
+  let minLon = Infinity;
+  let minLat = Infinity;
+  let maxLon = -Infinity;
+  let maxLat = -Infinity;
+  for (const p of pts) {
+    minLon = Math.min(minLon, p[0]);
+    maxLon = Math.max(maxLon, p[0]);
+    minLat = Math.min(minLat, p[1]);
+    maxLat = Math.max(maxLat, p[1]);
+  }
+  if (maxLon - minLon > 1e-6 || maxLat - minLat > 1e-6) {
+    try {
+      const flat = new WebMercatorViewport({ width, height }).fitBounds(
+        [
+          [minLon, minLat],
+          [maxLon, maxLat],
+        ],
+        { padding: pad },
+      );
+      if (Number.isFinite(flat.zoom)) {
+        zoom = Math.min(maxZoom, flat.zoom - 1);
+        lon = flat.longitude;
+        lat = flat.latitude;
+      }
+    } catch {
+      /* box too small for the padding: keep the default seed */
+    }
+  }
   for (let pass = 0; pass < 6; pass++) {
     const vp = new WebMercatorViewport({ width, height, longitude: lon, latitude: lat, zoom, pitch, bearing });
     let minX = Infinity;
@@ -259,6 +311,21 @@ function prefersReducedMotion(): boolean {
 }
 
 const NO_MARKERS: Flight3DMarker[] = [];
+const DEFAULT_EMPTY_VIEW = { center: [-122.35, 47.45] as [number, number], zoom: 8.6 };
+/** Touch slop around a 3 px ribbon, px. */
+const PICK_RADIUS = 14;
+/** Touch slop around a 9 px live dot, px. Markers win over ribbons. */
+const MARKER_PICK_RADIUS = 24;
+
+function segDist2(px: number, py: number, ax: number, ay: number, bx: number, by: number): number {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 > 0 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2)) : 0;
+  const x = ax + t * dx - px;
+  const y = ay + t * dy - py;
+  return x * x + y * y;
+}
 /** Translucent layers must not write depth or they hide what is behind them. */
 const NO_DEPTH_WRITE = { depthWriteEnabled: false } as const;
 
@@ -270,11 +337,28 @@ export default function Flight3D({
   annotate = true,
   hour12 = false,
   onUnavailable,
+  fill = false,
+  resetInset,
+  onPick,
+  frameKey = null,
+  emptyView = DEFAULT_EMPTY_VIEW,
+  framePadding,
+  pitch = PITCH,
+  scene,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MaplibreMap | null>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
-  const groundRef = useRef<number[][]>([]);
+  /** Terrain height (m) under each vertex, by path id. */
+  const groundRef = useRef<Map<string, number[]>>(new Map());
+  const onPickRef = useRef(onPick);
+  onPickRef.current = onPick;
+  const emptyViewRef = useRef(emptyView);
+  emptyViewRef.current = emptyView;
+  const framePadRef = useRef(framePadding);
+  framePadRef.current = framePadding;
+  const pitchRef = useRef(pitch);
+  pitchRef.current = pitch;
   const fontRef = useRef<string>("monospace");
   const rafRef = useRef<number | null>(null);
   const progressRef = useRef(0);
@@ -325,7 +409,7 @@ export default function Flight3D({
       markers.map((m) => ({ lat: m.lat, lon: m.lon })),
     ]);
     const axis = principalBearing(resolved.flat());
-    return { models, clock, axis, bounds: bounds ? padBounds(bounds, 2) : null };
+    return { models, markers, clock, axis, bounds: bounds ? padBounds(bounds, 2) : null };
   }, [paths, markers, annotate]);
 
   const modelRef = useRef(model);
@@ -351,8 +435,14 @@ export default function Flight3D({
     const layers: Layer[] = [];
     const noDepthWrite = NO_DEPTH_WRITE;
 
-    models.forEach((m, pi) => {
-      const g = ground[pi] ?? [];
+    // Many stacked flights: thinner curtains so the walls do not fog the
+    // terrain out.
+    const curtainAlpha = models.length > 3 ? 24 : 60;
+    // Dozens of flights: slimmer ribbons and a fainter glow, or they fuse.
+    const dense = models.length > 12;
+    models.forEach((m) => {
+      const g0 = ground.get(m.id);
+      const g = g0 && g0.length === m.positions.length ? g0 : [];
       const groundAt = (k: number) => g[k] ?? 0;
       const [r, gg, b] = m.rgba;
 
@@ -376,7 +466,7 @@ export default function Flight3D({
           _full3d: true,
           filled: true,
           extruded: false,
-          getFillColor: [r, gg, b, 60],
+          getFillColor: [r, gg, b, curtainAlpha],
           parameters: noDepthWrite,
         }),
       );
@@ -393,7 +483,7 @@ export default function Flight3D({
           data: ticks,
           getSourcePosition: (d) => d.s,
           getTargetPosition: (d) => d.t,
-          getColor: [r, gg, b, 120],
+          getColor: [r, gg, b, models.length > 3 ? 70 : 120],
           getWidth: 1,
           widthUnits: "pixels",
           parameters: noDepthWrite,
@@ -418,8 +508,8 @@ export default function Flight3D({
           id: `glow-${m.id}`,
           data: [m.positions],
           getPath: (d) => d,
-          getColor: [r, gg, b, 48],
-          getWidth: 9,
+          getColor: [r, gg, b, dense ? 28 : 48],
+          getWidth: dense ? 7 : 9,
           widthUnits: "pixels",
           billboard: true,
           jointRounded: true,
@@ -430,8 +520,8 @@ export default function Flight3D({
           id: `core-${m.id}`,
           data: [m.positions],
           getPath: (d) => d,
-          getColor: [r, gg, b, 235],
-          getWidth: 3,
+          getColor: [r, gg, b, dense ? 215 : 235],
+          getWidth: dense ? 2 : 3,
           widthUnits: "pixels",
           billboard: true,
           jointRounded: true,
@@ -565,6 +655,7 @@ export default function Flight3D({
         const z = altitudeZ(mk.altFt ?? 0);
         const elev = map?.queryTerrainElevation([mk.lon, mk.lat]) ?? 0;
         return {
+          id: mk.id,
           pos: [mk.lon, mk.lat, z] as Position3,
           ground: Math.max(0, elev),
           rgba: hexToRgba(mk.color ?? RIBBON_HEX),
@@ -585,14 +676,16 @@ export default function Flight3D({
           id: "live-dot",
           data: live,
           getPosition: (d) => d.pos,
-          getRadius: 7,
+          getRadius: 9,
           radiusUnits: "pixels",
           billboard: true,
           stroked: true,
           getFillColor: (d) => d.rgba,
-          getLineColor: [11, 13, 16, 255],
+          // Light rim so the grey neutral dot holds up over dark terrain.
+          getLineColor: [242, 244, 247, 230],
           lineWidthUnits: "pixels",
-          getLineWidth: 2,
+          getLineWidth: 1.5,
+          parameters: { depthCompare: "always", depthWriteEnabled: false },
         }),
         new TextLayer<(typeof live)[number]>({
           id: "live-label",
@@ -719,6 +812,88 @@ export default function Flight3D({
     [buildStatic, buildDynamic, markers],
   );
 
+  /**
+   * What sits under a screen point: the nearest live marker within
+   * MARKER_PICK_RADIUS, else the nearest ribbon within PICK_RADIUS.
+   */
+  const hitTest = useCallback((x: number, y: number): Flight3DPick | null => {
+    const map = mapRef.current;
+    if (!map) return null;
+    const c = map.getContainer();
+    const center = map.getCenter();
+    const vp = new WebMercatorViewport({
+      width: c.clientWidth,
+      height: c.clientHeight,
+      longitude: center.lng,
+      latitude: center.lat,
+      zoom: map.getZoom(),
+      pitch: map.getPitch(),
+      bearing: map.getBearing(),
+    });
+    const toScreen = (lon: number, lat: number, z: number, ground: number): [number, number] => {
+      const g = map.project([lon, lat]);
+      const a = vp.project([lon, lat, z]) as number[];
+      const b = vp.project([lon, lat, ground]) as number[];
+      return [g.x + a[0]! - b[0]!, g.y + a[1]! - b[1]!];
+    };
+    let best: Flight3DPick | null = null;
+    let bestD = MARKER_PICK_RADIUS * MARKER_PICK_RADIUS;
+    for (const mk of modelRef.current.markers) {
+      const ground = Math.max(0, map.queryTerrainElevation([mk.lon, mk.lat]) ?? 0);
+      const [sx, sy] = toScreen(mk.lon, mk.lat, altitudeZ(mk.altFt ?? 0), ground);
+      const d = (sx - x) ** 2 + (sy - y) ** 2;
+      if (d <= bestD) {
+        bestD = d;
+        best = { kind: "marker", id: mk.id };
+      }
+    }
+    if (best) return best;
+    bestD = PICK_RADIUS * PICK_RADIUS;
+    const w = c.clientWidth;
+    const h = c.clientHeight;
+    // Later paths draw on top (the tapped flight goes last), so they win ties.
+    for (const m of modelRef.current.models) {
+      const g0 = groundRef.current.get(m.id);
+      const g = g0 && g0.length === m.positions.length ? g0 : null;
+      let prev: [number, number] | null = null;
+      for (let k = 0; k < m.positions.length; k++) {
+        const p = m.positions[k]!;
+        const s = toScreen(p[0], p[1], p[2], g ? g[k]! : 0);
+        if (prev) {
+          const off =
+            (prev[0] < -50 && s[0] < -50) ||
+            (prev[0] > w + 50 && s[0] > w + 50) ||
+            (prev[1] < -50 && s[1] < -50) ||
+            (prev[1] > h + 50 && s[1] > h + 50);
+          if (!off) {
+            const d = segDist2(x, y, prev[0], prev[1], s[0], s[1]);
+            if (d <= bestD) {
+              bestD = d;
+              best = { kind: "path", id: m.id };
+            }
+          }
+        }
+        prev = s;
+      }
+    }
+    return best;
+  }, []);
+
+  /** Sample terrain under every vertex. Cheap (DEM lookups), and keyed by
+   *  path id so a live poll that adds or drops a tail keeps the rest. */
+  const recomputeGround = useCallback(() => {
+    const m = mapRef.current;
+    if (!m) return;
+    const next = new Map<string, number[]>();
+    for (const pm of modelRef.current.models) {
+      next.set(
+        pm.id,
+        pm.positions.map((p) => Math.max(0, m.queryTerrainElevation([p[0], p[1]]) ?? 0)),
+      );
+    }
+    groundRef.current = next;
+  }, []);
+
   // ---- camera ------------------------------------------------------------
   /**
    * Look at the flight's long axis from the side so the curtain shows
@@ -734,31 +909,49 @@ export default function Flight3D({
 
   const frame = useCallback((animate: boolean) => {
     const map = mapRef.current;
+    if (!map) return;
     const b = modelRef.current.bounds;
-    if (!map || !b) return;
+    if (!b) {
+      const ev = emptyViewRef.current;
+      const target = { center: ev.center, zoom: ev.zoom, pitch: pitchRef.current, bearing: BEARING };
+      if (animate) map.easeTo({ ...target, duration: INTRO_MS });
+      else map.jumpTo(target);
+      return;
+    }
     const bearing = homeBearing(map);
     const c = map.getContainer();
     const pad = Math.round(Math.min(c.clientWidth, c.clientHeight) * 0.07);
     const pts = framingPoints(modelRef.current.models);
+    for (const mk of modelRef.current.markers) {
+      const z = altitudeZ(mk.altFt ?? 0);
+      pts.push([mk.lon, mk.lat, z], [mk.lon, mk.lat, 0]);
+    }
+    const fp = framePadRef.current ?? { top: 0, bottom: 0, left: 0, right: 0 };
     if (pts.length === 0) pts.push([b.minLon, b.minLat, 0], [b.maxLon, b.maxLat, 0]);
     const cam = fitCamera(
       pts,
       c.clientWidth,
       c.clientHeight,
       bearing,
-      PITCH,
-      { top: pad + 70, bottom: pad + 64, left: pad, right: pad },
+      pitchRef.current,
+      // The 70 / 64 keep the replay readout and scrubber clear.
+      {
+        top: pad + (replay ? 70 : 12) + fp.top,
+        bottom: pad + (replay ? 64 : 12) + fp.bottom,
+        left: pad + fp.left,
+        right: pad + fp.right,
+      },
       14,
       labelBoxes(modelRef.current.models),
     );
     if (!cam) return;
-    const target = { ...cam, bearing, pitch: PITCH };
+    const target = { ...cam, bearing, pitch: pitchRef.current };
     if (animate) {
       map.easeTo({ ...target, duration: INTRO_MS, easing: (t) => 1 - Math.pow(1 - t, 3) });
     } else {
       map.jumpTo(target);
     }
-  }, [homeBearing]);
+  }, [homeBearing, replay]);
 
   /** Swing the camera onto an orbit ring and park the replay at its start. */
   const focusOrbit = useCallback(
@@ -780,12 +973,12 @@ export default function Flight3D({
         c.clientWidth,
         c.clientHeight,
         map.getBearing(),
-        PITCH,
+        pitchRef.current,
         { top: pad + 90, bottom: pad + 64, left: pad, right: pad },
         14.5,
       );
       if (!cam) return;
-      const target = { ...cam, bearing: map.getBearing(), pitch: PITCH };
+      const target = { ...cam, bearing: map.getBearing(), pitch: pitchRef.current };
       if (prefersReducedMotion()) map.jumpTo(target);
       else map.easeTo({ ...target, duration: 1600, easing: (t) => 1 - Math.pow(1 - t, 3) });
     },
@@ -868,6 +1061,22 @@ export default function Flight3D({
     const overlay = new MapboxOverlay({ interleaved: true, layers: [] });
     overlayRef.current = overlay;
 
+    // Taps. deck.gl's own picking pass drifts several px from what MapLibre
+    // draws once terrain is on, enough to miss a dot under a fingertip, so
+    // hit-test in screen space instead: MapLibre's terrain-aware project()
+    // puts the ground point where it is drawn, and a plain mercator
+    // viewport adds the lift from the ground up to the altitude.
+    const onMapClick = (e: maplibregl.MapMouseEvent) => {
+      const cb = onPickRef.current;
+      if (cb) cb(hitTest(e.point.x, e.point.y));
+    };
+    const onMapMove = (e: maplibregl.MapMouseEvent) => {
+      if (!onPickRef.current || e.originalEvent.buttons) return;
+      map.getCanvas().style.cursor = hitTest(e.point.x, e.point.y) ? "pointer" : "";
+    };
+    map.on("click", onMapClick);
+    map.on("mousemove", onMapMove);
+
     // Fit an un-pitched view first so the intro has somewhere to come from.
     const b0 = modelRef.current.bounds;
     if (b0) {
@@ -879,14 +1088,6 @@ export default function Flight3D({
         { padding: 40, duration: 0, maxZoom: 14 },
       );
     }
-
-    const recomputeGround = () => {
-      const m = mapRef.current;
-      if (!m) return;
-      groundRef.current = modelRef.current.models.map((pm) =>
-        pm.positions.map((p) => Math.max(0, m.queryTerrainElevation([p[0], p[1]]) ?? 0)),
-      );
-    };
 
     let lastGroundZoom = -1;
     const onIdle = () => {
@@ -963,6 +1164,8 @@ export default function Flight3D({
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
       disposed = true;
       readyRef.current = false;
+      map.off("click", onMapClick);
+      map.off("mousemove", onMapMove);
       try {
         map.removeControl(overlay);
       } catch {
@@ -977,11 +1180,24 @@ export default function Flight3D({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Data / marker changes after mount.
+  // Data / marker changes after mount: resample the ground under the new
+  // vertices and rebuild layers. The map itself stays put.
   useEffect(() => {
     if (!readyRef.current) return;
+    recomputeGround();
     render(progressRef.current);
-  }, [model, render]);
+  }, [model, render, recomputeGround]);
+
+  // New data set (another range, first live fix): re-frame the camera.
+  useEffect(() => {
+    if (!readyRef.current) return;
+    frame(!prefersReducedMotion());
+  }, [frameKey, frame]);
+
+  // Replay switched off (one flight became many): stop the loop.
+  useEffect(() => {
+    if (!replay) setPlaying(false);
+  }, [replay]);
 
   // ---- replay loop -------------------------------------------------------
   useEffect(() => {
@@ -1056,21 +1272,24 @@ export default function Flight3D({
     );
   }
 
-  const orbitChips = models.flatMap((m) => m.orbits);
+  const orbitChips = fill ? [] : models.flatMap((m) => m.orbits);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, height: fill ? "100%" : undefined }}>
     <div
       data-testid="flight-3d"
       data-ready={ready ? "1" : "0"}
+      data-scene={scene}
+      data-paths={models.length}
+      data-markers={markers.length}
       style={{
         position: "relative",
         width: "100%",
-        height,
-        borderRadius: 12,
+        height: fill ? "100%" : height,
+        borderRadius: fill ? 0 : 12,
         overflow: "hidden",
         background: SS_TOKENS.bg0,
-        border: `.5px solid ${SS_TOKENS.hairline}`,
+        border: fill ? "none" : `.5px solid ${SS_TOKENS.hairline}`,
       }}
     >
       <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
@@ -1118,8 +1337,8 @@ export default function Flight3D({
         aria-label="Reset view"
         style={{
           position: "absolute",
-          top: 10,
-          right: 10,
+          top: resetInset?.top ?? 10,
+          right: resetInset?.right ?? 10,
           height: 44,
           padding: "0 12px",
           borderRadius: 8,
