@@ -342,7 +342,7 @@ export default async function ProgramPage() {
         <List
           title="Stored on our server"
           items={[
-            "Positions and takeoff and landing times for the tracked tails. Kept 35 days, plus a 30-day grid of where they flew and a permanent daily summary of flight times.",
+            "Positions and takeoff and landing times for the tracked tails, kept permanently (aircraft only, never people), plus a 30-day grid of where they flew and a permanent daily summary of flight times.",
             "If you turn on alerts: your browser's push address and alert settings. Any zones you draw are rounded to about a kilometer. Kept up to 90 days.",
             "If you tap Spotted on the radar: your position rounded to about a kilometer, and the time. Kept 35 days.",
             "If /dash is open and a test speed-warning check trips: a coarse note of how far over and which hot-zone cell, with no position or speed. Kept 7 days while we tune a future feature.",

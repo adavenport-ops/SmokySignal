@@ -1,111 +1,68 @@
 "use client";
 
-// Mission chips for /forecast. Shares the radar filter state
-// (lib/radar-filter.ts, localStorage "ss_hotzones_filter") so a rider who
-// widened /radar to Everything sees the same slice here, and the other
-// way round. The server page reads the choice from ?missions=, so this
-// component mirrors the stored filter into the URL on mount and on every
-// tap. Default: Smokey only.
+// Mission picker for /forecast: one mission at a time (Smokey by
+// default) or Everything. Its own state, in ?mission=, not the /radar
+// chip set: a forecast reads cleanest as one class of aircraft, and a
+// rider who widened the radar should not find the forecast changed under
+// them. The server page reads ?mission= and recounts both views.
 
-import { useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { SS_TOKENS } from "@/lib/tokens";
+import { missionLabel } from "@/lib/role-display";
 import type { Mission } from "@/lib/types";
-import { formatMissionsParam } from "@/lib/mission";
-import {
-  RIDER_BUCKETS,
-  isEverything,
-  readRadarFilter,
-  toggleEverything,
-  toggleMission,
-  writeRadarFilter,
-} from "@/lib/radar-filter";
 
-export function ForecastMissionFilter({ selected }: { selected: Mission[] }) {
+export type ForecastMissionChoice = Mission | "all";
+
+export function ForecastMissionFilter({
+  selected,
+  options,
+}: {
+  selected: ForecastMissionChoice;
+  /** Missions to offer, in display order (Smokey first). */
+  options: readonly Mission[];
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
-  const go = (missions: Mission[]) => {
+  const pick = (m: ForecastMissionChoice) => {
     const next = new URLSearchParams(params?.toString() ?? "");
-    next.set("missions", formatMissionsParam(missions));
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    next.delete("missions");
+    if (m === "police") next.delete("mission");
+    else next.set("mission", m);
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
 
-  // First visit without ?missions=: adopt the stored radar filter.
-  useEffect(() => {
-    if (params?.get("missions")) return;
-    const stored = readRadarFilter().buckets;
-    if (formatMissionsParam(stored) !== formatMissionsParam(selected)) go(stored);
-    // Mount-only: later changes come from taps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const choices: { id: ForecastMissionChoice; label: string }[] = [
+    ...options.map((m) => ({ id: m as ForecastMissionChoice, label: missionLabel(m) })),
+    { id: "all", label: "Everything" },
+  ];
 
-  const apply = (missions: Mission[]) => {
-    writeRadarFilter({ ...readRadarFilter(), buckets: missions });
-    go(missions);
-  };
-
-  const everything = isEverything(selected);
   return (
-    <section
-      aria-label="Forecast missions"
-      style={{ display: "flex", flexDirection: "column", gap: 6 }}
-    >
-      <span
-        className="ss-mono"
-        style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".1em" }}
-      >
-        MISSIONS · SAME AS /RADAR
+    <section aria-label="Forecast mission" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <span className="ss-eyebrow" id="fc-mission-label">
+        Mission
       </span>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        <Chip active={everything} onClick={() => apply(toggleEverything(selected))}>
-          Everything
-        </Chip>
-        {RIDER_BUCKETS.map((b) => (
-          <Chip
-            key={b.id}
-            active={selected.includes(b.id)}
-            onClick={() => apply(toggleMission(selected, b.id))}
+      <div
+        role="radiogroup"
+        aria-labelledby="fc-mission-label"
+        className="ss-fc-missions"
+        data-testid="forecast-mission"
+      >
+        {choices.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            role="radio"
+            aria-checked={selected === c.id}
+            data-mission={c.id}
+            onClick={() => pick(c.id)}
+            className="ss-mono"
           >
-            {b.label}
-          </Chip>
+            {c.label}
+          </button>
         ))}
       </div>
     </section>
-  );
-}
-
-function Chip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className="ss-mono"
-      style={{
-        padding: "6px 10px",
-        minHeight: 32,
-        borderRadius: 999,
-        background: active ? SS_TOKENS.alert : "transparent",
-        border: `.5px solid ${active ? SS_TOKENS.alert : SS_TOKENS.hairline2}`,
-        color: active ? SS_TOKENS.bg0 : SS_TOKENS.fg1,
-        fontSize: 12,
-        letterSpacing: ".04em",
-        cursor: "pointer",
-        touchAction: "manipulation",
-        WebkitTapHighlightColor: "transparent",
-      }}
-    >
-      {children}
-    </button>
   );
 }

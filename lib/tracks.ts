@@ -279,3 +279,20 @@ export async function persistTrackHistory(): Promise<number> {
   } while (String(cursor) !== "0");
   return persisted;
 }
+
+/** Every stored tracks:{tail}:{YYYYMMDD} key, unsorted. Empty without KV. */
+export async function listAllTrackKeys(): Promise<string[]> {
+  const redis = await getRedis();
+  if (!redis) return [];
+  const out = new Set<string>();
+  let cursor: string | number = 0;
+  do {
+    const [next, keys] = (await redis.scan(cursor, {
+      match: trackScanAllPattern(),
+      count: 1000,
+    })) as [string | number, string[]];
+    cursor = next;
+    for (const k of keys) out.add(k);
+  } while (String(cursor) !== "0");
+  return [...out];
+}

@@ -9,21 +9,16 @@
 
 import { getRedis } from "./cache";
 import { getRegistry } from "./registry";
-import { getTracksForDay } from "./tracks";
+import { getTracksForDay, listAllTrackKeys } from "./tracks";
+import { trackDays } from "./data-since-core";
 import { rollupDailyKey, rollupIndexKey } from "./storage-keys";
 import {
   buildRollupDoc,
-  planRollupDates,
+  planRollupBackfill,
   rollupHasDetail,
   type DailyRollup,
 } from "./rollup-core";
 
-/**
- * Days back the cron may still backfill. tracks:{tail}:{day} keys expire
- * 35 days after their last write, so day N-34 is the oldest day whose
- * points are guaranteed to be complete.
- */
-export const ROLLUP_BACKFILL_DAYS = 34;
 
 /** Read every registry tail's samples for one UTC day and fold them. */
 export async function buildDailyRollup(dateKey: string): Promise<DailyRollup> {
@@ -104,17 +99,18 @@ export type RollupRunResult = {
 const DAY_CONCURRENCY = 4;
 
 /**
- * Build yesterday plus any day in the backfill window that is not yet
- * indexed. Stops starting new days once `deadlineMs` passes so the
+ * Build yesterday plus every stored track day that is not yet indexed,
+ * back to the first day on record (tracks are permanent, so /stats,
+ * /data, /wrap and the logbook all cover the same days). Stops starting new days once `deadlineMs` passes so the
  * route stays inside its maxDuration; unfinished days roll to tomorrow.
  */
 export async function runRollup(opts: {
   nowMs: number;
   deadlineMs: number;
 }): Promise<RollupRunResult> {
-  const index = await getRollupIndex();
+  const [index, keys] = await Promise.all([getRollupIndex(), listAllTrackKeys()]);
   const indexed = new Set(index);
-  const plan = planRollupDates(opts.nowMs, indexed, ROLLUP_BACKFILL_DAYS);
+  const plan = planRollupBackfill(opts.nowMs, indexed, trackDays(keys));
   const built: string[] = [];
   const upgraded: string[] = [];
   const queue = [...plan];

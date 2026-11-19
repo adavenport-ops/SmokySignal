@@ -1,31 +1,31 @@
 import { JsonLd } from "@/components/JsonLd";
 import { simplePageJsonLd } from "@/lib/seo/jsonld";
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { fleetHex } from "@/lib/seed";
 import { getRegistry } from "@/lib/registry";
+import { getSnapshot } from "@/lib/snapshot";
 import { SS_TOKENS, TYPE } from "@/lib/tokens";
 import { displayNickname } from "@/lib/nickname-display";
-import { Tooltip } from "@/components/Tooltip";
 import { BackLink } from "@/components/BackLink";
-import {
-  MISSION_ORDER,
-  confidenceBadgeStyle,
-  confidenceLabel,
-  missionBlurb,
-  missionLabel,
-  policeUnitLabel,
-  roleBadgeStyle,
-  roleBadgeText,
-  roleTooltip,
-  sourceLabel,
-} from "@/lib/role-display";
+import { AircraftList, type AircraftListRow } from "@/components/AircraftList";
+import { policeUnitLabel } from "@/lib/role-display";
 import { normalizeMission } from "@/lib/mission";
+import { agencyName } from "@/lib/agencies";
+import { getRollupIndex, getRollups } from "@/lib/rollup";
+import { utcDateKey } from "@/lib/rollup-core";
+import { sessionsFromDay } from "@/lib/flights";
+import { getTrackLengths, getTracksForPairs } from "@/lib/tracks";
+import { aircraftActivity, type TailActivity } from "@/lib/aircraft-activity";
+import { fmtAgoTs } from "@/lib/time";
 import type { FleetEntry } from "@/lib/types";
+import type { RollupSession } from "@/lib/rollup-core";
 import { pageMeta } from "@/lib/seo/site";
 
-// All aircraft: the tail registry, grouped by job. Moved off the More
-// hub (/about) so the hub stays a hub. One compact row per tail, each
-// with its confidence badge and a source link, for transparency.
+// All aircraft: the tail registry with search, a mission filter, and a
+// sort by last flew. Moved off the More hub (/about) so the hub stays a
+// hub. One row per tail with its confidence badge, a source link, when it
+// last flew and how many flights it made in the last 30 days.
 
 export const dynamic = "force-dynamic";
 
@@ -36,11 +36,75 @@ export const metadata = pageMeta({
   path: "/aircraft",
 });
 
+const DAY_MS = 86_400_000;
+
+/**
+ * Last flew and 30-day flights per tail: the permanent daily rollups
+ * (the same docs /stats and /data read) plus track days not rolled up
+ * yet (today, and yesterday until the cron runs). Cached 5 minutes.
+ */
+const loadActivity = unstable_cache(
+  async (): Promise<Record<string, TailActivity>> => {
+    const now = Date.now();
+    const [fleet, index] = await Promise.all([getRegistry(), getRollupIndex()]);
+    const indexed = new Set(index);
+    // Every rollup day: "last flew" can sit past the 30-day window. The
+    // docs are small and only the folded result is cached.
+    const docs = await getRollups(index);
+    const openDays = [utcDateKey(now), utcDateKey(now - DAY_MS)].filter((d) => !indexed.has(d));
+    const pairs = fleet.flatMap((f) => openDays.map((date) => ({ tail: f.tail, date })));
+    const lengths = await getTrackLengths(pairs);
+    const points = await getTracksForPairs(pairs, lengths);
+    const extra: { tail: string; session: RollupSession }[] = [];
+    pairs.forEach((pair, i) => {
+      const entry = fleet.find((f) => f.tail === pair.tail)!;
+      for (const s of sessionsFromDay(entry, pair.date, points[i] ?? [])) {
+        extra.push({
+          tail: pair.tail,
+          session: { start_ts: s.start_ts, end_ts: s.end_ts, duration_s: s.duration_s, max_alt_ft: s.max_alt_ft },
+        });
+      }
+    });
+    return Object.fromEntries(aircraftActivity(docs, extra, now));
+  },
+  ["aircraft-activity-v1"],
+  { revalidate: 300 },
+);
+
+function toRow(f: FleetEntry, act: TailActivity | undefined, up: boolean): AircraftListRow {
+  return {
+    tail: f.tail,
+    nickname: displayNickname(f.nickname),
+    operator: f.operator,
+    agency: agencyName(f.operator),
+    model: f.model,
+    mission: normalizeMission(f.role),
+    last_flew_ts: act?.last_flew_ts ?? null,
+    last_flew_label: act?.last_flew_ts ? fmtAgoTs(act.last_flew_ts) : undefined,
+    flights_30d: act?.flights_30d ?? 0,
+    up,
+    hex: fleetHex(f).toUpperCase(),
+    base: f.base,
+    unit: policeUnitLabel(f.policeUnit),
+    mutualAid: f.scope === "mutual_aid",
+    confidence: f.roleConfidence,
+    sources: f.sources,
+  };
+}
+
 export default async function AircraftPage() {
-  const fleet = await getRegistry();
-  const groups = groupByMission(fleet);
+  const [fleet, snap, activity] = await Promise.all([
+    getRegistry(),
+    getSnapshot().catch(() => null),
+    loadActivity().catch((e) => {
+      console.warn("[aircraft] activity load failed:", e);
+      return {} as Record<string, TailActivity>;
+    }),
+  ]);
+  const upNow = new Set((snap?.aircraft ?? []).filter((a) => a.airborne).map((a) => a.tail));
+  const rows = fleet.map((f) => toRow(f, activity[f.tail], upNow.has(f.tail)));
   return (
-    <main className="ss-page">
+    <main className="ss-page ss-aircraft-page">
       <JsonLd
         data={simplePageJsonLd({
           path: "/aircraft",
@@ -65,10 +129,10 @@ export default async function AircraftPage() {
           All aircraft.
         </h1>
         <p style={{ fontSize: 14, lineHeight: 1.55, color: SS_TOKENS.fg1, margin: 0 }}>
-          The {fleet.length} tails this app watches, grouped by job. Each one
-          is checked against the FAA registry and, where we found one, an
-          agency or press source. Only a Smokey up turns the status orange. Who flies them
-          and why is on{" "}
+          The {fleet.length} tails this app watches. Each one is checked against the FAA
+          registry and, where we found one, an agency or press source. Only a Smokey up turns the
+          status orange. 30-day flights counts the flights each tail started in the last 30 days. Who flies them and why is
+          on{" "}
           <Link href="/program" style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}>
             the program
           </Link>
@@ -76,177 +140,7 @@ export default async function AircraftPage() {
         </p>
       </header>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-        {groups.map((g) => (
-          <MissionGroup key={g.mission} mission={g.mission} entries={g.entries} />
-        ))}
-      </div>
+      <AircraftList rows={rows} />
     </main>
   );
-}
-
-function groupByMission(
-  fleet: FleetEntry[],
-): Array<{ mission: FleetEntry["role"]; entries: FleetEntry[] }> {
-  return MISSION_ORDER.map((m) => ({
-    mission: m,
-    entries: fleet.filter((f) => normalizeMission(f.role) === m),
-  })).filter((g) => g.entries.length > 0);
-}
-
-function MissionGroup({
-  mission,
-  entries,
-}: {
-  mission: FleetEntry["role"];
-  entries: FleetEntry[];
-}) {
-  return (
-    <section aria-label={`${missionLabel(mission)} tails`} data-mission={mission}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-        <h2
-          className="ss-mono"
-          style={{ fontSize: 13, letterSpacing: ".12em", margin: 0, color: SS_TOKENS.fg0 }}
-        >
-          {roleBadgeText(mission)}
-        </h2>
-        <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
-          {entries.length} {entries.length === 1 ? "tail" : "tails"}
-        </span>
-      </div>
-      <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: "2px 0 8px", lineHeight: 1.45 }}>
-        {missionBlurb(mission)}
-      </p>
-      <ul
-        style={{
-          listStyle: "none",
-          margin: 0,
-          padding: 0,
-          background: SS_TOKENS.bg1,
-          border: `.5px solid ${SS_TOKENS.hairline}`,
-          borderRadius: 12,
-          overflow: "hidden",
-        }}
-      >
-        {entries.map((f, i) => (
-          <TailRow key={f.tail} entry={f} first={i === 0} />
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function TailRow({ entry, first }: { entry: FleetEntry; first: boolean }) {
-  const unit = policeUnitLabel(entry.policeUnit);
-  const source = entry.sources[0];
-  const mutualAid = entry.scope === "mutual_aid";
-  return (
-    <li
-      data-tail={entry.tail}
-      style={{
-        padding: "8px 14px",
-        borderTop: first ? "none" : `.5px solid ${SS_TOKENS.hairline}`,
-        display: "flex",
-        flexWrap: "wrap",
-        alignItems: "center",
-        gap: "4px 10px",
-      }}
-    >
-      <Link
-        href={`/plane/${entry.tail}`}
-        prefetch={false}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 8,
-          minHeight: 44,
-          textDecoration: "none",
-          color: "inherit",
-          flex: "1 1 220px",
-          minWidth: 0,
-        }}
-      >
-        <span
-          className="ss-mono"
-          style={{ fontSize: 15, fontWeight: 700, color: SS_TOKENS.fg0, letterSpacing: "-.01em" }}
-        >
-          {entry.tail}
-        </span>
-        <span
-          style={{
-            fontSize: 13,
-            color: SS_TOKENS.fg1,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {entry.nickname ? `“${displayNickname(entry.nickname)}” · ` : ""}
-          {entry.operator} · {entry.model}
-        </span>
-      </Link>
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-        <Tooltip content={roleTooltip(entry.role)}>
-          <span className="ss-mono" style={roleBadgeStyle(entry.role)} tabIndex={0}>
-            {roleBadgeText(entry.role)}
-          </span>
-        </Tooltip>
-        <Tooltip content={confidenceTip(entry.roleConfidence)}>
-          <span
-            className="ss-mono"
-            tabIndex={0}
-            data-confidence={entry.roleConfidence}
-            style={confidenceBadgeStyle(entry.roleConfidence)}
-          >
-            {confidenceLabel(entry.roleConfidence)}
-          </span>
-        </Tooltip>
-      </span>
-      <div
-        className="ss-mono"
-        style={{
-          flexBasis: "100%",
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: "0 10px",
-          fontSize: 12,
-          color: SS_TOKENS.fg1,
-          letterSpacing: ".04em",
-        }}
-      >
-        <span>
-          {fleetHex(entry).toUpperCase()} · {entry.base}
-          {unit ? ` · ${unit}` : ""}
-          {mutualAid ? " · Mutual aid" : ""}
-        </span>
-        {source && (
-          <a
-            href={source}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Source for ${entry.tail}: ${sourceLabel(source)}`}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              minHeight: 44,
-              color: SS_TOKENS.fg1,
-              textDecoration: "underline",
-            }}
-          >
-            source: {sourceLabel(source)}
-            {entry.sources.length > 1 ? ` +${entry.sources.length - 1}` : ""}
-          </a>
-        )}
-      </div>
-    </li>
-  );
-}
-
-function confidenceTip(confidence: FleetEntry["roleConfidence"]): string {
-  return confidence === "confirmed"
-    ? "Confirmed. The FAA owner record and an agency source agree."
-    : confidence === "tentative"
-      ? "Tentative. One source only, or the callsign-to-tail link is inferred. May be refined."
-      : "Unverified. We have not confirmed this yet.";
 }

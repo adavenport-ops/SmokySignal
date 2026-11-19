@@ -114,6 +114,37 @@
   font-weight: 600;
 }
 
+/* Quick day and part-of-day chips above the window control. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 0.5px solid var(--ss-hairline-2);
+  background: var(--ss-bg2);
+  color: var(--ss-fg0);
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--ss-fg0);
+  color: var(--ss-bg0);
+  border-color: var(--ss-fg0);
+  font-weight: 600;
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--ss-sky);
+  outline-offset: 2px;
+}
+
 .placeList {
   list-style: none;
   margin: 0;
@@ -186,9 +217,11 @@
   gap: 12px;
 }
 
+/* Two cards side by side only when each still gets ~340 px: narrower
+   cards wrapped the tail ("N305D / K") and squeezed the map. */
 @media (min-width: 1280px) {
   .list {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   }
 }

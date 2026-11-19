@@ -6,7 +6,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isWrapYear, summarizeWrap } from "./wrap";
+import { coveredDays, isWrapYear, monthExtremes, summarizeWrap, type WrapMonth } from "./wrap";
 import type { DailyRollup, RollupSession, RollupTail } from "./rollup-core";
 
 function s(startMs: number, minutes: number, extra: Partial<RollupSession> = {}): RollupSession {
@@ -69,7 +69,7 @@ test("isWrapYear: from the log's first year through the current one", () => {
 });
 
 test("summarizeWrap 2026: limited and in progress, totals, months, extremes", () => {
-  const w = summarizeWrap(DOCS, 2026, NOW);
+  const w = summarizeWrap(DOCS, 2026, NOW, undefined, "2026-10-16");
   assert.equal(w.from, "2026-10-16");
   assert.equal(w.to, "2026-11-17", "through the last closed day");
   assert.equal(w.limited, true);
@@ -83,7 +83,12 @@ test("summarizeWrap 2026: limited and in progress, totals, months, extremes", ()
     ],
   );
   assert.equal(w.busiest_month?.month, "2026-11");
-  // No whole month yet, so quietest compares the partial ones.
+  // Per covered day: Oct 16-31 is 16 days at 675 s/day, Nov 1-17 is
+  // 17 days at about 882 s/day.
+  assert.deepEqual(w.months.map((m) => [m.days, m.per_day_s]), [
+    [16, 675],
+    [17, 882],
+  ]);
   assert.equal(w.quietest_month?.month, "2026-10");
   assert.deepEqual(w.busiest_day, { date: "2026-11-03", airborne_s: 200 * 60, sorties: 1 });
   // 11:00 PT: Oct 20 (two tails) plus the Nov 3 sortie = 180 min.
@@ -102,7 +107,7 @@ test("summarizeWrap 2026: limited and in progress, totals, months, extremes", ()
 });
 
 test("summarizeWrap: a whole year prefers whole months for quietest", () => {
-  const w = summarizeWrap(DOCS, 2026, Date.UTC(2027, 1, 1, 20));
+  const w = summarizeWrap(DOCS, 2026, Date.UTC(2027, 1, 1, 20), undefined, "2026-10-16");
   assert.equal(w.to, "2026-12-31");
   assert.equal(w.in_progress, false);
   assert.deepEqual(w.months.map((m) => [m.month, m.partial]), [
@@ -115,7 +120,7 @@ test("summarizeWrap: a whole year prefers whole months for quietest", () => {
 });
 
 test("summarizeWrap: a year with no flights is empty, not broken", () => {
-  const w = summarizeWrap([], 2026, NOW);
+  const w = summarizeWrap([], 2026, NOW, undefined, "2026-10-16");
   assert.equal(w.totals.sorties, 0);
   assert.equal(w.busiest_month, null);
   assert.equal(w.busiest_day, null);
@@ -124,4 +129,33 @@ test("summarizeWrap: a year with no flights is empty, not broken", () => {
   assert.equal(w.corridor, null);
   assert.deepEqual(w.by_mission, []);
   assert.equal(w.months.length, 2);
+});
+
+function month(m: string, days: number, airborneMin: number, partial = false): WrapMonth {
+  const airborne_s = airborneMin * 60;
+  return { month: m, sorties: airborneMin > 0 ? 1 : 0, airborne_s, partial, days, per_day_s: Math.round(airborne_s / days) };
+}
+
+test("monthExtremes: a 16-day partial month is not quiet just for being short", () => {
+  // Oct 16-31: 16 days, 32 h. Nov: 30 days, 40 h. By totals Oct looks
+  // quietest; per day it is the busier month.
+  const oct = month("2026-10", 16, 32 * 60, true);
+  const nov = month("2026-11", 30, 40 * 60);
+  const { busiest, quietest } = monthExtremes([oct, nov]);
+  assert.equal(busiest?.month, "2026-10");
+  assert.equal(quietest?.month, "2026-11");
+});
+
+test("monthExtremes: stubs under a week sit out, one month has no quietest", () => {
+  const stub = month("2026-10", 3, 1);
+  const nov = month("2026-11", 30, 600);
+  assert.deepEqual(monthExtremes([stub, nov]), { busiest: nov, quietest: null });
+  assert.deepEqual(monthExtremes([]), { busiest: null, quietest: null });
+});
+
+test("coveredDays: clipped to the window on both ends", () => {
+  assert.equal(coveredDays("2026-10", "2026-10-14", "2026-11-18"), 18);
+  assert.equal(coveredDays("2026-11", "2026-10-14", "2026-11-18"), 18);
+  assert.equal(coveredDays("2026-12", "2026-10-14", "2026-11-18"), 0);
+  assert.equal(coveredDays("2026-02", "2026-01-01", "2026-12-31"), 28);
 });

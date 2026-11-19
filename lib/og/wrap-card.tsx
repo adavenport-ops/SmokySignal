@@ -5,7 +5,6 @@
 import { ImageResponse } from "next/og";
 import { loadGoogleFont, type OgFont } from "./status-card";
 import { loadWrap } from "@/lib/rollup-read";
-import { LOG_START_DATE } from "@/lib/rollup-sessions";
 import { SS_TOKENS } from "@/lib/tokens";
 import { isWrapYear, type WrapSummary } from "@/lib/wrap";
 
@@ -27,14 +26,14 @@ export async function renderWrapCard(rawYear: string): Promise<Response> {
   const title = year ? `${year} SEASON WRAP` : "SEASON WRAP";
   const stats: Array<[string, string]> = w
     ? [
-        ["SORTIES", String(w.totals.sorties)],
+        ["FLIGHTS", String(w.totals.sorties)],
         ["HOURS ALOFT", (w.totals.airborne_s / 3600).toFixed(1)],
         ["BUSIEST MONTH", w.busiest_month ? MONTHS[Number(w.busiest_month.month.slice(5)) - 1]! : "—"],
         ["TOP CORRIDOR", w.corridor ? w.corridor.road : "—"],
       ]
     : [];
   const note = w?.limited
-    ? `Log starts ${LOG_START_DATE}`
+    ? `Log starts ${w.from}`
     : w?.in_progress
       ? `Through ${w.to}`
       : w

@@ -13,9 +13,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SS_TOKENS } from "@/lib/tokens";
 import { roleBadgeStyle } from "@/lib/role-display";
 import {
+  PERIODS,
   RADIUS_MI_CHOICES,
   WINDOW_CHOICES,
+  activePeriod,
+  dayChipDate,
   departurePhrase,
+  futurePickMessage,
+  periodChipState,
+  periodHours,
   emptyMessage,
   fmtMiles,
   outsideMessage,
@@ -53,6 +59,8 @@ const ERROR_COPY: Record<string, string> = {
   outside_area: "That point is outside the area we track. Pick a place in Washington.",
   rate_limited: "Too many lookups in a minute. Give it a moment and try again.",
   kv_not_configured: "The track log is not reachable right now. Try again later.",
+  t_out_of_range: "That date is outside the track log. Pick a date from the start of our records to today.",
+  range_too_large: "That window holds more track than one lookup can read. Pick a shorter window.",
 };
 
 export function SeenLookup({
@@ -60,11 +68,18 @@ export function SeenLookup({
   today,
   earliest,
   hour12,
+  autorun = true,
 }: {
   initial: SeenPageState;
   today: string;
   earliest: string;
   hour12: boolean;
+  /**
+   * Run the lookup on load. True for a shared answer (the link carries a
+   * time); false when a town page only hands over the place, so the rider
+   * picks the time first.
+   */
+  autorun?: boolean;
 }) {
   const [form, setForm] = useState<SeenPageState>(initial);
   const [where, setWhere] = useState<"place" | "here">(
@@ -74,12 +89,22 @@ export function SeenLookup({
   const [geo, setGeo] = useState<Geo>(initial.lat != null && !initial.place ? "on" : "off");
   const [result, setResult] = useState<Fetch>({ kind: "idle" });
   const [shared, setShared] = useState<SeenPageState | null>(null);
+  // Today's date as the browser sees it: the server's `today` can go stale
+  // on a page left open past midnight.
+  const [nowMs, setNowMs] = useState<number | null>(null);
+  useEffect(() => setNowMs(Date.now()), []);
   const resultsRef = useRef<HTMLElement | null>(null);
   const opts = useMemo(() => ({ hour12 }), [hour12]);
 
   const run = useCallback(async (state: SeenPageState, scroll: boolean) => {
     const api = seenApiHref(state);
     if (!api) return;
+    const ahead = futurePickMessage(state, Date.now());
+    if (ahead) {
+      setResult({ kind: "error", message: ahead });
+      if (scroll) resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     window.history.replaceState(null, "", seenPageHref(state));
     setShared(state);
     setResult({ kind: "loading" });
@@ -101,10 +126,10 @@ export function SeenLookup({
     }
   }, []);
 
-  // A shared link opens with its answer.
+  // A shared link opens with its answer; a place-only link just prefills.
   useEffect(() => {
-    if (initial.lat != null && initial.lon != null) void run(initial, false);
-  }, [initial, run]);
+    if (autorun && initial.lat != null && initial.lon != null) void run(initial, false);
+  }, [autorun, initial, run]);
 
   const locate = useCallback(() => {
     if (!("geolocation" in navigator)) {
@@ -134,7 +159,11 @@ export function SeenLookup({
     setPlaceQuery("");
   };
 
-  const matches = searchPlaces(placeQuery, placeQuery ? 10 : 8);
+  const matches = searchPlaces(placeQuery, 10);
+  const todayNow = nowMs != null ? dayChipDate("today", nowMs) : today;
+  const yesterdayNow = nowMs != null ? dayChipDate("yesterday", nowMs) : null;
+  const period = activePeriod(form);
+  const ahead = nowMs != null ? futurePickMessage(form, nowMs) : null;
   const ready = form.lat != null && form.lon != null && form.date !== "" && form.time !== "";
 
   const onSubmit = (e: React.FormEvent) => {
@@ -156,7 +185,7 @@ export function SeenLookup({
                 name="date"
                 required
                 min={earliest}
-                max={today}
+                max={todayNow}
                 value={form.date}
                 onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
                 data-testid="seen-date"
@@ -176,6 +205,50 @@ export function SeenLookup({
               />
             </label>
           </div>
+          <div className={styles.chips} role="group" aria-label="Quick day">
+            <button
+              type="button"
+              className={styles.chip}
+              aria-pressed={form.date === todayNow}
+              onClick={() => setForm((f) => ({ ...f, date: todayNow }))}
+              data-testid="seen-chip-today"
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              className={styles.chip}
+              aria-pressed={yesterdayNow != null && form.date === yesterdayNow}
+              onClick={() => setForm((f) => ({ ...f, date: dayChipDate("yesterday", Date.now()) }))}
+              data-testid="seen-chip-yesterday"
+            >
+              Yesterday
+            </button>
+          </div>
+          <div className={styles.chips} role="group" aria-label="Part of the day, Pacific">
+            {PERIODS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className={styles.chip}
+                aria-pressed={period === p.id}
+                onClick={() => setForm((f) => ({ ...f, ...periodChipState(p.id) }))}
+                data-testid={`seen-chip-${p.id}`}
+              >
+                {p.label} <span className="ss-mono" style={{ fontSize: 12, opacity: 0.8 }}>{periodHours(p)}</span>
+              </button>
+            ))}
+          </div>
+          {period ? (
+            <p className="ss-mono" style={{ margin: 0, fontSize: 12, color: SS_TOKENS.fg1 }}>
+              Six hours, {periodHours(PERIODS.find((p) => p.id === period)!)} PT. Pick a time below to narrow it.
+            </p>
+          ) : null}
+          {ahead ? (
+            <p role="alert" style={{ margin: 0, fontSize: 13, color: SS_TOKENS.fg0 }} data-testid="seen-ahead">
+              {ahead}
+            </p>
+          ) : null}
           <div className={styles.seg} role="radiogroup" aria-label="Window either side of that time">
             {WINDOW_CHOICES.map((w) => (
               <label key={w}>
@@ -271,7 +344,7 @@ export function SeenLookup({
           </div>
         </fieldset>
 
-        <button type="submit" className={styles.cta} disabled={!ready || result.kind === "loading"} data-testid="seen-submit">
+        <button type="submit" className={styles.cta} disabled={!ready || ahead != null || result.kind === "loading"} data-testid="seen-submit">
           {result.kind === "loading" ? "Checking…" : "Check what flew"}
         </button>
         <p style={{ margin: 0, fontSize: 12, lineHeight: 1.5, color: SS_TOKENS.fg1 }}>
@@ -288,7 +361,7 @@ export function SeenLookup({
         data-testid="seen-results"
         data-state={result.kind === "done" ? (result.body.data.status === "ok" ? (result.body.aircraft.length > 0 ? "results" : "empty") : "outside") : result.kind}
       >
-        <Results result={result} shared={shared} opts={opts} />
+        <Results result={result} shared={shared} opts={opts} earliest={earliest} />
       </section>
     </div>
   );
@@ -298,10 +371,12 @@ function Results({
   result,
   shared,
   opts,
+  earliest,
 }: {
   result: Fetch;
   shared: SeenPageState | null;
   opts: { hour12: boolean };
+  earliest: string;
 }) {
   if (result.kind === "idle") {
     return (
@@ -311,8 +386,8 @@ function Results({
         </p>
         <p style={{ margin: "6px 0 0", fontSize: 13.5, lineHeight: 1.5, color: SS_TOKENS.fg1 }}>
           We check the track log for every aircraft on our list and show the
-          ones that passed within range, closest first. History starts
-          mid-October 2026.
+          ones that passed within range, closest first. History starts{" "}
+          <span className="ss-mono">{earliest}</span>.
         </p>
       </div>
     );
@@ -361,13 +436,17 @@ function Results({
       30 days over {town.name} &rarr;
     </Link>
   ) : null;
-  const shareCard = share ? (
-    <div className={page.card} style={{ display: "flex", flexDirection: "column", gap: 10 }} data-testid="seen-share-card">
-      <p style={{ margin: 0, fontSize: 15, lineHeight: 1.45, fontWeight: 600, color: SS_TOKENS.fg0 }}>{shareText}</p>
+  const shareActions =
+    share || townLink ? (
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 16px" }}>
         {share}
         {townLink}
       </div>
+    ) : null;
+  const shareCard = share ? (
+    <div className={page.card} style={{ display: "flex", flexDirection: "column", gap: 10 }} data-testid="seen-share-card">
+      <p style={{ margin: 0, fontSize: 15, lineHeight: 1.45, fontWeight: 600, color: SS_TOKENS.fg0 }}>{shareText}</p>
+      {shareActions}
     </div>
   ) : null;
 
@@ -404,8 +483,9 @@ function Results({
             </Link>
             .
           </p>
+          {/* The answer sentence is already above; only the actions here. */}
+          {shareActions ? <div style={{ marginTop: 12 }}>{shareActions}</div> : null}
         </div>
-        {shareCard}
       </>
     );
   }
@@ -446,7 +526,7 @@ function SeenCard({ item, body, opts }: { item: SeenItem; body: SeenBody; opts: 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 8, minWidth: 0 }}>
           <span style={roleBadgeStyle(item.mission)}>{item.mission_badge}</span>
-          <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
+          <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1, whiteSpace: "nowrap" }}>
             {item.tail}
           </span>
         </span>

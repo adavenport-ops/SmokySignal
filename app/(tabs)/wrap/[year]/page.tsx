@@ -8,7 +8,6 @@ import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { BackLink } from "@/components/BackLink";
 import { SS_TOKENS } from "@/lib/tokens";
 import { loadWrap } from "@/lib/rollup-read";
-import { LOG_START_DATE } from "@/lib/rollup-sessions";
 import { missionLabel } from "@/lib/role-display";
 import { formatTs, fmtDurationHuman } from "@/lib/time";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
@@ -74,12 +73,12 @@ export default async function WrapPage({ params }: Props) {
           The {year} season, from overhead.
         </h1>
         <p style={{ fontSize: 13, color: SS_TOKENS.fg1, lineHeight: 1.5, margin: 0 }}>
-          How the birds flew this year: every tracked tail, every logged sortie. Season means the calendar year,
+          How the birds flew this year: every tracked tail, every logged flight. Season means the calendar year,
           Pacific time.
         </p>
         {w?.limited && (
           <p data-testid="wrap-limited" style={{ fontSize: 13, color: SS_TOKENS.fg0, lineHeight: 1.5, margin: 0 }}>
-            Our log starts {LOG_START_DATE}. Next year&rsquo;s wrap covers the whole season.
+            Our log starts {w.from}. Next year&rsquo;s wrap covers the whole season.
           </p>
         )}
         {w && (
@@ -97,7 +96,7 @@ export default async function WrapPage({ params }: Props) {
         >
           <h2 style={{ fontSize: 16, fontWeight: 700, color: SS_TOKENS.fg0, margin: "0 0 6px" }}>Quiet skies on the books.</h2>
           <p style={{ fontSize: 13, lineHeight: 1.5, color: SS_TOKENS.fg1, margin: 0 }}>
-            No sorties logged for {year} yet. The log writes overnight, once a day closes.
+            No flights logged for {year} yet. The log writes overnight, once a day closes.
           </p>
         </section>
       ) : (
@@ -105,7 +104,7 @@ export default async function WrapPage({ params }: Props) {
       )}
 
       <p style={{ fontSize: 12, lineHeight: 1.55, color: SS_TOKENS.fg2, margin: 0 }}>
-        Counts aircraft, not people. A sortie is a run of public ADS-B reports with no gap over 5 minutes. Corridor
+        Counts aircraft, not people. A flight is a run of public ADS-B reports with no gap over 5 minutes. Corridor
         time comes from orbit and racetrack patterns over named roads. Monthly numbers are on{" "}
         <Link href="/data" style={{ color: SS_TOKENS.fg1, textDecoration: "underline" }}>
           Data and CSV
@@ -125,7 +124,7 @@ function WrapBody({ w, hour12 }: { w: WrapSummary; hour12: boolean }) {
   return (
     <>
       <section aria-label="Season totals" data-testid="wrap-totals" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
-        <Tile label="Sorties" value={String(w.totals.sorties)} sub={`${w.totals.tails} tail${w.totals.tails === 1 ? "" : "s"} flew`} />
+        <Tile label="Flights" value={String(w.totals.sorties)} sub={`${w.totals.tails} tail${w.totals.tails === 1 ? "" : "s"} flew`} />
         <Tile label="Hours aloft" value={hours(w.totals.airborne_s)} sub="all missions" />
         <Tile
           label="Busiest month"
@@ -135,7 +134,7 @@ function WrapBody({ w, hour12 }: { w: WrapSummary; hour12: boolean }) {
         <Tile
           label="Busiest day"
           value={w.busiest_day ? w.busiest_day.date.slice(5) : "—"}
-          sub={w.busiest_day ? `${hours(w.busiest_day.airborne_s)} h · ${w.busiest_day.sorties} sortie${w.busiest_day.sorties === 1 ? "" : "s"}` : "no flights logged"}
+          sub={w.busiest_day ? `${hours(w.busiest_day.airborne_s)} h · ${w.busiest_day.sorties} flight${w.busiest_day.sorties === 1 ? "" : "s"}` : "no flights logged"}
         />
         <Tile
           label="Busiest hour"
@@ -143,14 +142,14 @@ function WrapBody({ w, hour12 }: { w: WrapSummary; hour12: boolean }) {
           sub={w.busiest_hour ? `${fmtStation(w.busiest_hour.minutes * 60)} aloft, PT` : "no flights logged"}
         />
         <Tile
-          label="Longest sortie"
+          label="Longest flight"
           value={w.longest ? fmtDurationHuman(w.longest.duration_s) : "—"}
           sub={w.longest ? `${w.longest.nickname ?? w.longest.tail} · ${formatTs(w.longest.start_ts, "date")}` : "no flights logged"}
         />
         <Tile
           label="Quietest month"
           value={w.quietest_month ? monthName(w.quietest_month.month) : "—"}
-          sub={w.quietest_month ? monthSub(w.quietest_month) : "one month on the books"}
+          sub={w.quietest_month ? monthSub(w.quietest_month) : "needs two months of at least a week"}
         />
         <Tile
           label="Most-worked corridor"
@@ -166,10 +165,10 @@ function WrapBody({ w, hour12 }: { w: WrapSummary; hour12: boolean }) {
       </section>
 
       <section data-testid="wrap-months">
-        <SectionHead title="Month by month" note="Hours aloft by takeoff month. Cut months are marked." />
+        <SectionHead title="Month by month" note="Hours aloft by takeoff month. Busiest and quietest compare hours per day, so a cut month is not quiet just for being short." />
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {w.months.map((m) => (
-            <div key={m.month} style={{ display: "grid", gridTemplateColumns: "64px 1fr 108px", alignItems: "center", gap: 10 }}>
+            <div key={m.month} style={{ display: "grid", gridTemplateColumns: "64px 1fr minmax(150px, auto)", alignItems: "center", gap: 10 }}>
               <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
                 {m.month}
                 {m.partial ? "*" : ""}
@@ -178,13 +177,13 @@ function WrapBody({ w, hour12 }: { w: WrapSummary; hour12: boolean }) {
                 <span style={{ display: "block", height: "100%", width: `${(m.airborne_s / maxMonth) * 100}%`, background: SS_TOKENS.sky, opacity: 0.85 }} />
               </span>
               <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg0, textAlign: "right" }}>
-                {m.sorties} · {hours(m.airborne_s)} h
+                {m.sorties} · {hours(m.airborne_s)} h{m.partial ? ` (${m.days} d)` : ""}
               </span>
             </div>
           ))}
         </div>
         <p className="ss-mono" style={{ fontSize: 12.5, color: SS_TOKENS.fg2, margin: "6px 0 0" }}>
-          * partial month
+          * partial month, days covered in brackets
         </p>
       </section>
 
@@ -194,7 +193,7 @@ function WrapBody({ w, hour12 }: { w: WrapSummary; hour12: boolean }) {
           <thead>
             <tr>
               <Th align="left">Mission</Th>
-              <Th align="right">Sorties</Th>
+              <Th align="right">Flights</Th>
               <Th align="right">Hours</Th>
               <Th align="right">Tails</Th>
             </tr>
@@ -222,7 +221,8 @@ function WrapBody({ w, hour12 }: { w: WrapSummary; hour12: boolean }) {
 }
 
 function monthSub(m: WrapMonth): string {
-  return `${m.month}${m.partial ? "*" : ""} · ${hours(m.airborne_s)} h · ${m.sorties} sortie${m.sorties === 1 ? "" : "s"}`;
+  const perDay = (m.per_day_s / 3600).toFixed(1);
+  return `${perDay} h a day over ${m.days} day${m.days === 1 ? "" : "s"}${m.partial ? " (partial)" : ""} · ${m.sorties} flight${m.sorties === 1 ? "" : "s"}`;
 }
 
 function Tile({ label, value, sub }: { label: string; value: string; sub: string }) {

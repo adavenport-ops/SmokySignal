@@ -5,7 +5,6 @@ import type { Metadata } from "next";
 import { areaName } from "@/lib/places";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 import {
-  SEEN_EARLIEST_DATE,
   parseSeenPageParams,
   ogTitle,
   POPULAR_PLACES,
@@ -15,6 +14,7 @@ import {
   type SeenPageState,
 } from "@/lib/seen-view";
 import { SeenLookup } from "@/components/SeenLookup";
+import { getDataSince } from "@/lib/data-since";
 import styles from "@/components/pattern-pages.module.css";
 import { BackLink } from "@/components/BackLink";
 import { pageMeta } from "@/lib/seo/site";
@@ -75,7 +75,8 @@ function joinOr(xs: readonly number[]): string {
   return xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} or ${xs[xs.length - 1]}`;
 }
 
-export default function SeenPage({ searchParams }: Props) {
+export default async function SeenPage({ searchParams }: Props) {
+  const since = await getDataSince();
   const now = Date.now();
   const initial = parseSeenPageParams(searchParams, now);
   const hour12 = isHour12(getTimeFormatPref());
@@ -90,7 +91,7 @@ export default function SeenPage({ searchParams }: Props) {
           crumb: "Was that the plane I saw?",
         })}
       />
-      <BackLink />
+      <BackLink section="now" />
       <span className="ss-eyebrow">SmokySignal · Look back</span>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -106,13 +107,19 @@ export default function SeenPage({ searchParams }: Props) {
         </p>
       </section>
 
-      <SeenLookup initial={initial} today={todayPtDate(now)} earliest={SEEN_EARLIEST_DATE} hour12={hour12} />
+      <SeenLookup
+        initial={initial}
+        today={todayPtDate(now)}
+        earliest={since}
+        hour12={hour12}
+        autorun={typeof searchParams.time === "string"}
+      />
 
       {/* Server-rendered so the page explains itself without the lookup. */}
       <section className={styles.card} data-testid="seen-how">
         <h2 className={`ss-eyebrow ${styles.sectionTitle}`}>How the look-back works</h2>
         <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55, color: SS_TOKENS.fg1 }}>
-          Pick a date back to <span className="ss-mono">{SEEN_EARLIEST_DATE}</span>, a time, and a
+          Pick a date back to <span className="ss-mono">{since}</span>, a time, and a
           town or your spot. SmokySignal checks the recorded ADS-B tracks of every tail it watches,
           within a window you choose ({joinOr(WINDOW_CHOICES)} minutes) and a radius ({joinOr(RADIUS_MI_CHOICES)}{" "}
           miles), and lists the ones that

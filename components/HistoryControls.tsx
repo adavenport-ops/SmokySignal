@@ -102,13 +102,16 @@ export function PeriodPicker({
   today,
   value,
   onPick,
+  floor = HISTORY_FLOOR,
 }: {
   today: string;
   value: DateRange;
   onPick: (r: DateRange) => void;
+  /** First Pacific date on record (lib/data-since.ts). */
+  floor?: string;
 }) {
-  const presets = historyPresets(today);
-  const active = presetForRange(value, today);
+  const presets = historyPresets(today, floor);
+  const active = presetForRange(value, today, floor);
   const [from, setFrom] = useState(value.from);
   const [to, setTo] = useState(value.to);
   useEffect(() => {
@@ -117,7 +120,7 @@ export function PeriodPicker({
   }, [value.from, value.to]);
 
   const commit = (a: string, b: string) => {
-    const r = clampRange(a, b, today);
+    const r = clampRange(a, b, today, floor);
     if (r) onPick(r);
   };
 
@@ -130,7 +133,7 @@ export function PeriodPicker({
             key={p.id}
             active={active === p.id}
             onClick={() => {
-              const r = resolvePreset(p.id, today);
+              const r = resolvePreset(p.id, today, floor);
               if (r) onPick(r);
             }}
           >
@@ -143,7 +146,7 @@ export function PeriodPicker({
         <DateField
           label="From"
           value={from}
-          min={HISTORY_FLOOR}
+          min={floor}
           max={to || today}
           onChange={(v) => {
             setFrom(v);
@@ -153,7 +156,7 @@ export function PeriodPicker({
         <DateField
           label="To"
           value={to}
-          min={from || HISTORY_FLOOR}
+          min={from || floor}
           max={today}
           onChange={(v) => {
             setTo(v);

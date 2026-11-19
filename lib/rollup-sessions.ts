@@ -3,11 +3,15 @@
 // Pure. Used by the logbook, the open ledger and the season wrap.
 
 import { normalizeMission } from "./mission";
+import { DATA_SINCE_FALLBACK } from "./data-since-core";
 import { ptParts, stitchSessions, type DailyRollup, type RollupSession, type StitchedSession } from "./rollup-core";
 import type { Mission } from "./types";
 
-/** Day the permanent log begins, Pacific. Nothing before it is on file. */
-export const LOG_START_DATE = "2026-10-16";
+/**
+ * Day the permanent log begins, Pacific: the static data-since value
+ * (lib/data-since-core.ts). Pages that can await prefer getDataSince().
+ */
+export const LOG_START_DATE = DATA_SINCE_FALLBACK;
 
 export type TailMeta = {
   nickname: string | null;

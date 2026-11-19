@@ -9,12 +9,13 @@ import { PROGRAM_FAQ, helpFaq } from "@/lib/seo/faq";
 import { fillHelpPlaceholders } from "@/lib/seo/facts";
 import { getAllPosts } from "@/lib/blog";
 import { buildLlmsFullTxt } from "@/lib/seo/llms";
+import { getDataSince } from "@/lib/data-since";
 
 export const runtime = "nodejs";
 export const revalidate = 3600;
 
 export async function GET(): Promise<Response> {
-  const fleet = await getRegistry();
+  const [fleet, since] = await Promise.all([getRegistry(), getDataSince()]);
   let help: ReturnType<typeof helpFaq> = [];
   try {
     const md = await fs.readFile(path.join(process.cwd(), "content", "help.md"), "utf8");
@@ -22,7 +23,7 @@ export async function GET(): Promise<Response> {
   } catch (e) {
     console.warn("[llms-full] help.md unreadable:", e);
   }
-  return new Response(buildLlmsFullTxt(fleet, CORRIDORS, [...PROGRAM_FAQ, ...help], getAllPosts()), {
+  return new Response(buildLlmsFullTxt(fleet, CORRIDORS, [...PROGRAM_FAQ, ...help], getAllPosts(), since), {
     headers: {
       "Content-Type": "text/markdown; charset=utf-8",
       "Cache-Control": "public, max-age=3600, s-maxage=3600",

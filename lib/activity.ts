@@ -14,6 +14,7 @@ import { activityDayKey, activityDedupeKey } from "./storage-keys";
 import { ptRangeMs, utcDateKeysForRange } from "./pt-range";
 import { utcDateKey } from "./rollup-core";
 import {
+  dedupeActivity,
   diffActivity,
   type ActivityEntry,
   type ActivityKind,
@@ -278,7 +279,7 @@ export async function getRecentActivity(limit = 50): Promise<ActivityEntry[]> {
     return [];
   }
 
-  const entries = raw
+  const parsed = raw
     .map((s) => {
       if (typeof s === "string") {
         try {
@@ -292,8 +293,9 @@ export async function getRecentActivity(limit = 50): Promise<ActivityEntry[]> {
     })
     .filter((e): e is ActivityEntry => e !== null)
     // Normalize: if ts looks like seconds (10-digit unix), promote to ms.
-    .map((e) => (e.ts < 1e12 ? { ...e, ts: e.ts * 1000 } : e))
-    .reverse(); // newest first
+    .map((e) => (e.ts < 1e12 ? { ...e, ts: e.ts * 1000 } : e));
+  // Newest first, with racing duplicates of one transition folded.
+  const entries = dedupeActivity(parsed);
 
   await cacheSet(cacheKey, entries, READ_CACHE_TTL);
   return entries;
@@ -404,7 +406,8 @@ export async function backfillActivityArchive(
 
 /**
  * Every archived event between two Pacific dates (YYYY-MM-DD, inclusive),
- * newest first, ts normalized to ms and deduped by (tail, kind, ts).
+ * newest first, ts normalized to ms and deduped by (tail, kind, ts within
+ * 2 min).
  * Reads the UTC day lists the range touches, pipelined, no SCAN.
  */
 export async function getActivityRange(from: string, to: string): Promise<ActivityEntry[]> {
@@ -433,5 +436,5 @@ export async function getActivityRange(from: string, to: string): Promise<Activi
       }
     }
   }
-  return out.sort((a, b) => b.ts - a.ts);
+  return dedupeActivity(out);
 }

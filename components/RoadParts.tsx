@@ -5,11 +5,31 @@
 import { SS_TOKENS } from "@/lib/tokens";
 import { fmtDurationHuman, formatTs } from "@/lib/time";
 import { roleBadgeStyle, roleBadgeText } from "@/lib/role-display";
-import type { RoadPass, RoadSummary } from "@/lib/road";
+import { passBadgeLabel, type RoadPass, type RoadSummary } from "@/lib/road";
+import { missionLabel } from "@/lib/role-display";
 import styles from "./pattern-pages.module.css";
 
 export function fmtMinutes(min: number): string {
   return fmtDurationHuman(Math.round(min * 60));
+}
+
+/**
+ * Agency (or mission) badge on a pass row. Neutral grey: the page is
+ * already about one road or town, and an orange Smokey pill on every
+ * row repeated the obvious.
+ */
+export function RowBadge({ pass }: { pass: { operator?: string | null; mission: string } }) {
+  const text = passBadgeLabel({ operator: pass.operator, mission: pass.mission });
+  return (
+    <span
+      className="ss-mono"
+      title={missionLabel(pass.mission)}
+      style={{ ...roleBadgeStyle("unknown"), cursor: "default", letterSpacing: ".04em" }}
+      data-testid="pass-badge"
+    >
+      {text}
+    </span>
+  );
 }
 
 export function Tile({ label, value, sub }: { label: string; value: string; sub: string }) {
@@ -176,9 +196,7 @@ export function RecentPasses({ passes, hour12 }: { passes: RoadPass[]; hour12: b
                 <span style={{ fontSize: 14, fontWeight: 600, color: SS_TOKENS.fg0, minWidth: 0 }}>
                   {p.name}
                 </span>
-                <span className="ss-mono" style={roleBadgeStyle(p.mission)}>
-                  {roleBadgeText(p.mission)}
-                </span>
+                <RowBadge pass={p} />
               </div>
               <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
                 {formatTs(p.startTs, "datetime", { hour12 })} · {fmtMinutes(p.minutes)}

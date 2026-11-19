@@ -54,7 +54,7 @@ export default async function CirclingPage() {
           crumb: "Circling",
         })}
       />
-      <BackLink />
+      <BackLink section="now" />
       <span className="ss-eyebrow">SmokySignal · What&rsquo;s circling</span>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>

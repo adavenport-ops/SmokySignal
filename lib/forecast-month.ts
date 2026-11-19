@@ -20,7 +20,44 @@ import {
   type RollupSession,
 } from "./rollup-core";
 import { addDays, isMonthKey, monthBounds, monthLabel, ptRangeMs } from "./pt-range";
-import type { FleetRole } from "./types";
+import { MISSIONS, normalizeMissionList } from "./mission";
+import type { FleetRole, Mission } from "./types";
+
+// ─── /forecast mission picker ────────────────────────────────────────
+
+/** One mission at a time, or "all" (Everything). Smokey by default. */
+export type ForecastMission = Mission | "all";
+export const FORECAST_DEFAULT_MISSION: ForecastMission = "police";
+
+/**
+ * Resolve /forecast's ?mission= (single value). Falls back to the older
+ * shared ?missions= list when it names exactly one mission or every
+ * mission, so old links keep working; anything else is Smokey.
+ */
+export function parseForecastMission(
+  raw: string | null | undefined,
+  legacy?: string | null,
+): ForecastMission {
+  const v = (raw ?? "").trim().toLowerCase();
+  if (v === "all") return "all";
+  if (v) {
+    const one = normalizeMissionList([v]);
+    return one.length === 1 ? one[0]! : FORECAST_DEFAULT_MISSION;
+  }
+  const l = (legacy ?? "").trim().toLowerCase();
+  if (l === "all") return "all";
+  if (l) {
+    const list = normalizeMissionList(l.split(","));
+    if (list.length === 1) return list[0]!;
+    if (list.length === MISSIONS.length) return "all";
+  }
+  return FORECAST_DEFAULT_MISSION;
+}
+
+/** The roles list resolveAllowedTails() takes ([] = no constraint). */
+export function forecastRoles(m: ForecastMission): Mission[] {
+  return m === "all" ? [] : [m];
+}
 
 export type MonthOption = { value: string; label: string };
 
@@ -28,14 +65,36 @@ export type MonthOption = { value: string; label: string };
 export const LAST_30 = "last30" as const;
 
 /**
- * Calendar months that hold at least one indexed rollup day, newest
- * first. Months come from the UTC day key, which matches the Pacific
- * month for all but the first hours of the 1st.
+ * Calendar months on record, newest first. With `span` (the data-since
+ * date and today, both Pacific YYYY-MM-DD) every month from the first
+ * day on record through this month is listed, the same list the history
+ * presets show; months before data-since are dropped. Without it, the
+ * months that hold an indexed rollup day (UTC day key, which matches the
+ * Pacific month for all but the first hours of the 1st).
  */
-export function rollupMonths(indexDates: string[]): MonthOption[] {
+export function rollupMonths(
+  indexDates: string[],
+  span?: { since: string; today: string },
+): MonthOption[] {
   const months = new Set<string>();
   for (const d of indexDates) {
     if (/^\d{8}$/.test(d)) months.add(`${d.slice(0, 4)}-${d.slice(4, 6)}`);
+  }
+  if (span && /^\d{4}-\d{2}-\d{2}$/.test(span.since) && /^\d{4}-\d{2}-\d{2}$/.test(span.today)) {
+    const first = span.since.slice(0, 7);
+    const last = span.today.slice(0, 7);
+    for (const m of [...months]) if (m < first || m > last) months.delete(m);
+    let [y, mo] = first.split("-").map(Number) as [number, number];
+    for (let guard = 0; guard < 600; guard++) {
+      const key = `${y}-${String(mo).padStart(2, "0")}`;
+      if (key > last) break;
+      months.add(key);
+      mo++;
+      if (mo > 12) {
+        mo = 1;
+        y++;
+      }
+    }
   }
   return [...months]
     .sort()

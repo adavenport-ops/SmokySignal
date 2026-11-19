@@ -274,7 +274,7 @@ export default function Map3DControls({ map, defaultPitch, top, right, bottomRes
       onClick={resetNorth}
       round
     >
-      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden style={{ transform: `rotate(${-cam.bearing}deg)` }}>
+      <svg width="22" height="22" viewBox="0 0 26 26" aria-hidden style={{ transform: `rotate(${-cam.bearing}deg)` }}>
         <circle cx="13" cy="13" r="11.5" fill="none" stroke={SS_TOKENS.hairline2} strokeWidth="1" />
         <path d="M13 3.5 L16.2 13 L9.8 13 Z" fill={SS_TOKENS.fg0} />
         <path d="M13 22.5 L16.2 13 L9.8 13 Z" fill={SS_TOKENS.fg2} />
@@ -284,15 +284,17 @@ export default function Map3DControls({ map, defaultPitch, top, right, bottomRes
         className="ss-mono"
         style={{
           position: "absolute",
-          top: 1,
+          top: 0,
           left: 0,
           right: 0,
           textAlign: "center",
-          fontSize: 9,
+          // 12px floor for text; the needle shrank to 22px to make room.
+          fontSize: 12,
+          lineHeight: 1,
           fontWeight: 700,
           color: SS_TOKENS.fg1,
           transform: `rotate(${-cam.bearing}deg)`,
-          transformOrigin: "50% 21px",
+          transformOrigin: "50% 22px",
           pointerEvents: "none",
         }}
       >

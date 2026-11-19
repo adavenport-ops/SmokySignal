@@ -10,6 +10,7 @@ import {
   buildRollupDoc,
   distributeMinutes,
   planRollupDates,
+  planRollupBackfill,
   ptParts,
   stitchSessions,
   summarizeRollups,
@@ -198,4 +199,21 @@ test("summarizeRollups: no docs → empty summary", () => {
   assert.equal(s.busiest_day, null);
   assert.equal(s.longest_sortie, null);
   assert.equal(s.per_tail.length, 0);
+});
+
+test("planRollupBackfill: every stored day not yet indexed, however old, newest first", () => {
+  const now = Date.UTC(2026, 10, 19, 9, 15); // 2026-11-19 09:15 UTC
+  // Track days run from the first day on record, far past the old
+  // 34-day window, plus today (still being written).
+  const stored = ["20261015", "20261016", "20261017", "20261117", "20261118", "20261119"];
+  const indexed = new Set(["20261016", "20261117", "20261118"]);
+  assert.deepEqual(planRollupBackfill(now, indexed, stored), ["20261118", "20261017", "20261015"]);
+});
+
+test("planRollupBackfill: yesterday always, nothing else when all indexed, junk ignored", () => {
+  const now = Date.UTC(2026, 10, 19, 9, 15);
+  assert.deepEqual(planRollupBackfill(now, new Set(["20261118", "20261015"]), ["20261015", "bad", "20261118"]), [
+    "20261118",
+  ]);
+  assert.deepEqual(planRollupBackfill(now, new Set(), []), ["20261118"]);
 });

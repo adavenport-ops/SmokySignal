@@ -13,7 +13,24 @@ import type { Mission } from "./types";
 /** First year with a wrap. The log begins in it. */
 export const FIRST_WRAP_YEAR = Number(LOG_START_DATE.slice(0, 4));
 
-export type WrapMonth = { month: string; sorties: number; airborne_s: number; partial: boolean };
+export type WrapMonth = {
+  month: string;
+  sorties: number;
+  airborne_s: number;
+  /** True when the log start or the last closed day cuts the month short. */
+  partial: boolean;
+  /** Days of this month the wrap covers. */
+  days: number;
+  /** Airborne seconds per covered day: what busiest and quietest compare. */
+  per_day_s: number;
+};
+
+/**
+ * A month needs at least this many covered days before it can be the
+ * busiest or quietest one. Shorter stubs (a log that began on the 28th)
+ * would swing either way on a single flight.
+ */
+export const WRAP_MIN_COMPARE_DAYS = 7;
 
 export type WrapSummary = {
   year: number;
@@ -58,11 +75,13 @@ export function summarizeWrap(
   year: number,
   nowMs: number,
   registry?: ReadonlyMap<string, Partial<TailMeta>>,
+  /** First Pacific date on record (lib/data-since.ts). */
+  since: string = LOG_START_DATE,
 ): WrapSummary {
   const yearStart = `${year}-01-01`;
   const yearEnd = `${year}-12-31`;
   const today = ptParts(nowMs).date;
-  const from = LOG_START_DATE > yearStart ? LOG_START_DATE : yearStart;
+  const from = since > yearStart ? since : yearStart;
   // The rollup closes a day once it is over, so "through yesterday".
   const lastClosed = addDays(today, -1);
   const to = yearEnd < lastClosed ? yearEnd : lastClosed;
@@ -84,6 +103,8 @@ export function summarizeWrap(
         sorties: 0,
         airborne_s: 0,
         partial: m === from.slice(0, 7) && !from.endsWith("-01") ? true : m === to.slice(0, 7) && to !== lastDayOf(m),
+        days: coveredDays(m, from, to),
+        per_day_s: 0,
       },
     ]),
   );
@@ -127,21 +148,8 @@ export function summarizeWrap(
   }
 
   const monthList = [...months.values()];
-  let busiestMonth: WrapMonth | null = null;
-  let quietestMonth: WrapMonth | null = null;
-  for (const m of monthList) {
-    if (m.sorties > 0 && (!busiestMonth || m.airborne_s > busiestMonth.airborne_s)) busiestMonth = m;
-  }
-  // Quietest compares whole months when there are any, so a log that
-  // began on the 16th does not make its first month look quiet. With a
-  // single month there is nothing to compare.
-  const full = monthList.filter((m) => !m.partial);
-  const pool = full.length > 0 ? full : monthList;
-  if (monthList.length >= 2) {
-    for (const m of pool) {
-      if (!quietestMonth || m.airborne_s < quietestMonth.airborne_s) quietestMonth = m;
-    }
-  }
+  for (const m of monthList) m.per_day_s = m.days > 0 ? Math.round(m.airborne_s / m.days) : 0;
+  const { busiest: busiestMonth, quietest: quietestMonth } = monthExtremes(monthList);
 
   let busiestDay: WrapSummary["busiest_day"] = null;
   for (const [date, min] of dayMin) {
@@ -178,6 +186,42 @@ export function summarizeWrap(
       return { mission: m, sorties: v.sorties, airborne_s: v.airborne_s, tails: v.tails.size };
     }),
   };
+}
+
+/**
+ * Busiest and quietest month by airborne time per covered day, so a
+ * 16-day partial month is not "quiet" next to a whole one. Months with
+ * fewer than WRAP_MIN_COMPARE_DAYS covered days sit out; quietest needs
+ * two comparable months.
+ */
+export function monthExtremes(list: ReadonlyArray<WrapMonth>): {
+  busiest: WrapMonth | null;
+  quietest: WrapMonth | null;
+} {
+  const pool = list.filter((m) => m.days >= WRAP_MIN_COMPARE_DAYS);
+  let busiest: WrapMonth | null = null;
+  let quietest: WrapMonth | null = null;
+  for (const m of pool) {
+    if (m.sorties > 0 && (!busiest || m.per_day_s > busiest.per_day_s)) busiest = m;
+  }
+  if (pool.length >= 2) {
+    for (const m of pool) {
+      if (!quietest || m.per_day_s < quietest.per_day_s) quietest = m;
+    }
+  }
+  if (quietest && busiest && quietest.month === busiest.month) quietest = null;
+  return { busiest, quietest };
+}
+
+/** Days of `month` inside [from, to], both YYYY-MM-DD. */
+export function coveredDays(month: string, from: string, to: string): number {
+  const first = `${month}-01`;
+  const last = lastDayOf(month);
+  const a = from > first ? from : first;
+  const b = to < last ? to : last;
+  if (a > b) return 0;
+  const ms = Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`);
+  return Math.round(ms / 86_400_000) + 1;
 }
 
 function lastDayOf(month: string): string {

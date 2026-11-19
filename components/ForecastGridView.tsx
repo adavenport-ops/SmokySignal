@@ -1,7 +1,10 @@
 "use client";
 
 // 7×24 heatmap of takeoff probability per (dow, hour) bucket. Tap a
-// cell to see the top contributing tails for that bucket.
+// cell to see the top contributing tails for that bucket. The cells are
+// small (24 to a row), so touch screens also get a tap row under the grid:
+// weekday buttons and a strip of 24 hour buttons, every one >= 44px, that
+// select the same cells.
 
 import { useMemo, useState } from "react";
 import { SS_TOKENS } from "@/lib/tokens";
@@ -80,7 +83,16 @@ export function ForecastGridView({
         </div>
       </ScrollX>
 
-      <CellDetail cell={selected} hour12={hour12} />
+      <TapRow
+        byDow={byDow}
+        maxProb={maxProb}
+        now={now}
+        selected={selected}
+        onSelect={setSelected}
+        hour12={hour12}
+      />
+
+      <CellDetail cell={selected} hour12={hour12} dowTotal={selected ? dowTotal(byDow[selected.dow] ?? []) : 0} />
     </div>
   );
 }
@@ -148,6 +160,80 @@ function DowRow({
   );
 }
 
+/** Takeoffs logged on one weekday: the probability's denominator. */
+function dowTotal(row: ForecastCell[]): number {
+  return row.reduce((n, c) => n + c.sample_count, 0);
+}
+
+/**
+ * Touch-only tap row (CSS hides it on fine pointers): pick a weekday,
+ * then an hour. Same cells and colours as the grid, 44px targets.
+ */
+function TapRow({
+  byDow,
+  maxProb,
+  now,
+  selected,
+  onSelect,
+  hour12,
+}: {
+  byDow: ForecastCell[][];
+  maxProb: number;
+  now: { dow: number; hour: number };
+  selected: ForecastCell | null;
+  onSelect: (c: ForecastCell) => void;
+  hour12: boolean;
+}) {
+  const [day, setDay] = useState<number>(now.dow);
+  const dow = selected?.dow ?? day;
+  const row = byDow[dow] ?? [];
+  return (
+    <div className="ss-fc-taprow" data-testid="forecast-taprow">
+      <div role="group" aria-label="Weekday" className="ss-fc-taprow-days">
+        {DAYS.map((d, i) => (
+          <button
+            key={d}
+            type="button"
+            aria-pressed={i === dow}
+            onClick={() => {
+              setDay(i);
+              const hour = selected?.hour ?? now.hour;
+              const c = byDow[i]?.find((x) => x.hour === hour);
+              if (c) onSelect(c);
+            }}
+            className="ss-mono"
+          >
+            {d}
+          </button>
+        ))}
+      </div>
+      <ScrollX label={`Hours on ${DAYS[dow]}`} testId="forecast-taprow-hours">
+        <div role="group" aria-label={`Hours on ${DAYS[dow]}`} className="ss-fc-taprow-hours">
+          {row.map((c) => {
+            const on = selected?.dow === c.dow && selected?.hour === c.hour;
+            return (
+              <button
+                key={c.hour}
+                type="button"
+                aria-pressed={on}
+                aria-label={`${DAYS[c.dow]} ${fmtHour(c.hour, hour12)}, ${Math.round(c.probability * 100)}%`}
+                onClick={() => onSelect(c)}
+                className="ss-mono"
+                style={{
+                  background: heatColor(c.probability, maxProb),
+                  outline: on ? `1.5px solid ${SS_TOKENS.fg0}` : undefined,
+                }}
+              >
+                {String(c.hour).padStart(2, "0")}
+              </button>
+            );
+          })}
+        </div>
+      </ScrollX>
+    </div>
+  );
+}
+
 function heatColor(p: number, max: number): string {
   if (p === 0) return "rgba(255,255,255,0.03)";
   const t = Math.min(1, p / max);
@@ -156,7 +242,15 @@ function heatColor(p: number, max: number): string {
   return `rgba(245,184,64,${alpha.toFixed(3)})`;
 }
 
-function CellDetail({ cell, hour12 }: { cell: ForecastCell | null; hour12: boolean }) {
+function CellDetail({
+  cell,
+  hour12,
+  dowTotal,
+}: {
+  cell: ForecastCell | null;
+  hour12: boolean;
+  dowTotal: number;
+}) {
   if (!cell) {
     return (
       <div
@@ -167,7 +261,7 @@ function CellDetail({ cell, hour12 }: { cell: ForecastCell | null; hour12: boole
           padding: "16px 8px",
         }}
       >
-        Tap a cell to see the most common tails for that hour.
+        Tap a cell to see the sample behind it and the most common tails for that hour.
       </div>
     );
   }
@@ -218,8 +312,10 @@ function CellDetail({ cell, hour12 }: { cell: ForecastCell | null; hour12: boole
         className="ss-mono"
         style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".04em" }}
       >
-        {cell.sample_count} historical takeoff
-        {cell.sample_count === 1 ? "" : "s"} in this bucket
+        <span data-testid="forecast-cell-sample">
+          {Math.round(cell.probability * 100)}% · {cell.sample_count} of {dowTotal}{" "}
+          {DAYS[cell.dow]} flight{dowTotal === 1 ? "" : "s"} took off this hour
+        </span>
       </div>
       {cell.common_tails.length > 0 && (
         <div

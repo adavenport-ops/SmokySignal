@@ -20,7 +20,7 @@ import {
 import type { SeenBody, SeenItem } from "./seen-view";
 import type { FleetEntry } from "./types";
 
-/** Refuse a read past this many points (a window is at most ~3 h of track). */
+/** Refuse a read past this many points (a window is at most ~6 h of track plus padding). */
 export const SEEN_MAX_POINTS_READ = 120_000;
 
 export type SeenResult =

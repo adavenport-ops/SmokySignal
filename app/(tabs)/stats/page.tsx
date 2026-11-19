@@ -19,6 +19,7 @@ import { ScrollX } from "@/components/ScrollX";
 import { SeasonWrapCard } from "@/components/SeasonWrapCard";
 import { pageMeta } from "@/lib/seo/site";
 import { getRegistry } from "@/lib/registry";
+import { getDataSince } from "@/lib/data-since";
 
 // Cookies (time-format pref, flags in the tabs layout) make the route
 // dynamic; the KV reads behind it are cached for 5 minutes instead.
@@ -56,6 +57,9 @@ export default async function StatsPage() {
   }
   const empty = !stats || stats.days_on_record === 0;
   const known = new Set((await getRegistry()).map((f) => f.tail));
+  const since = await getDataSince();
+  // Days actually rolled up, not the calendar span from `since`.
+  const spanDays = stats?.days_on_record ?? 0;
 
   return (
     <main className="ss-page" style={{ gap: 22 }}>
@@ -67,7 +71,7 @@ export default async function StatsPage() {
           crumb: "Stats",
         })}
       />
-      <BackLink />
+      <BackLink section="history" />
       <span className="ss-eyebrow">SmokySignal · Stats</span>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -94,7 +98,7 @@ export default async function StatsPage() {
         >
           {empty
             ? "0 days of data"
-            : `${stats!.days_on_record} day${stats!.days_on_record === 1 ? "" : "s"} of data since ${stats!.first_date}`}
+            : `${spanDays} day${spanDays === 1 ? "" : "s"} of data since ${since}`}
         </p>
       </section>
 
@@ -414,13 +418,17 @@ function TailTable({ rows, known }: { rows: TailStat[]; known: ReadonlySet<strin
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.tail} style={{ borderTop: `.5px solid ${SS_TOKENS.hairline}` }}>
+              <tr
+                key={r.tail}
+                className={known.has(r.tail) ? "ss-row-link" : undefined}
+                style={{ borderTop: `.5px solid ${SS_TOKENS.hairline}` }}
+              >
                 <td style={{ padding: "10px 6px 10px 0" }}>
                   {known.has(r.tail) ? (
                     <Link
                       href={`/plane/${r.tail}`}
                       prefetch={false}
-                      className="ss-mono"
+                      className="ss-mono ss-row-anchor"
                       style={{ color: SS_TOKENS.fg0, textDecoration: "none", fontWeight: 700 }}
                     >
                       {r.tail}

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { getDataSince } from "@/lib/data-since";
 import nextDynamic from "next/dynamic";
 import { fleetHex } from "@/lib/seed";
 import { getRegistry } from "@/lib/registry";
@@ -14,7 +15,6 @@ import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 import type { Aircraft } from "@/lib/types";
 import type { RecentFlightForTail } from "@/lib/flights";
 import type { TrackPoint } from "@/lib/tracks";
-import { BackLink } from "@/components/BackLink";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PlaneRelated } from "@/components/NavRelated";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
@@ -115,7 +115,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 export default async function PlanePage({ params, searchParams }: Props) {
   const tail = params.tail.toUpperCase();
 
-  const [fleet, real] = await Promise.all([getRegistry(), getSnapshot()]);
+  const [fleet, real, since] = await Promise.all([getRegistry(), getSnapshot(), getDataSince()]);
   const entry = fleet.find((f) => f.tail === tail);
   if (!entry) notFound();
   const recentFlight = await getMostRecentFlightForTail(tail, entry.nickname);
@@ -128,10 +128,10 @@ export default async function PlanePage({ params, searchParams }: Props) {
 
   return (
     <main
+      className="ss-detail-page"
+      data-testid="plane-page"
       style={{
         minHeight: "100dvh",
-        maxWidth: 460,
-        margin: "0 auto",
         // 180 px bottom clears tab bar + iOS install prompt overlay.
         padding: "12px 18px 180px",
         display: "flex",
@@ -143,12 +143,14 @@ export default async function PlanePage({ params, searchParams }: Props) {
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           alignItems: "center",
           gap: 8,
+          // The breadcrumb above is the way back up; this row only
+          // carries page actions.
+          marginTop: -8,
         }}
       >
-        <BackLink href="/flights" label="Flights" />
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <a
             href="#flight-history"
@@ -267,17 +269,11 @@ export default async function PlanePage({ params, searchParams }: Props) {
         </div>
       </header>
 
-      <ClassificationCard entry={entry} />
-
-      <section>
-        {up && live ? (
-          <LiveDataBlock live={live} updatedSec={updatedSec} />
-        ) : (
-          <GroundedNote live={live} />
-        )}
-      </section>
-
-      <section>
+      <div className="ss-detail-grid">
+      {/* Left column at >= 1024px: the maps. Right: the record. On a
+          phone both columns flatten and `order` keeps the reading order. */}
+      <div className="ss-detail-col ss-detail-tall" data-testid="plane-col-map">
+      <section style={{ order: 3 }}>
         <h2 className="ss-eyebrow" style={{ margin: "0 0 8px", fontWeight: "inherit" }}>
           {recentFlight && !up ? "Last flight" : "Recent track"}
         </h2>
@@ -290,7 +286,7 @@ export default async function PlanePage({ params, searchParams }: Props) {
         />
       </section>
 
-      <section>
+      <section style={{ order: 4 }}>
         <Card padded={false}>
           <div style={{ padding: "12px 14px 8px" }}>
             <h2 className="ss-eyebrow" style={{ margin: 0, fontWeight: "inherit" }}>Where this plane patrols</h2>
@@ -308,10 +304,13 @@ export default async function PlanePage({ params, searchParams }: Props) {
         </Card>
       </section>
 
-      <Logbook tail={entry.tail} nickname={entry.nickname} hour12={hour12} />
-
       {/* Flight history: kept as its own block (see components/PlaneHistory.tsx). */}
-      <section id="flight-history" aria-label="Flight history" data-testid="flight-history-section">
+      <section
+        id="flight-history"
+        aria-label="Flight history"
+        data-testid="flight-history-section"
+        style={{ order: 6 }}
+      >
         <Card padded={false}>
           <div style={{ padding: "12px 14px 10px" }}>
             <h2 className="ss-eyebrow" style={{ margin: 0, fontWeight: "inherit" }}>Flight history</h2>
@@ -319,20 +318,44 @@ export default async function PlanePage({ params, searchParams }: Props) {
               Every flight on record for a period. Pacific dates.
             </div>
           </div>
-          <PlaneHistory tail={entry.tail} />
+          <PlaneHistory tail={entry.tail} since={since} />
         </Card>
       </section>
+      </div>
 
-      <FleetMeta tail={entry.tail} hex={fleetHex(entry).toUpperCase()} role={entry.roleDescription} />
+      <div className="ss-detail-col" data-testid="plane-col-record">
+      <div style={{ order: 1 }}>
+        <ClassificationCard entry={entry} />
+      </div>
 
-      <PlaneRelated
-        tail={entry.tail}
-        latestFlight={
-          recentFlight
-            ? { id: flightIdFromTs(recentFlight.session.start_ts), startTs: recentFlight.session.start_ts }
-            : null
-        }
-      />
+      <section style={{ order: 2 }}>
+        {up && live ? (
+          <LiveDataBlock live={live} updatedSec={updatedSec} />
+        ) : (
+          <GroundedNote live={live} />
+        )}
+      </section>
+
+      <div style={{ order: 5 }}>
+        <Logbook tail={entry.tail} nickname={entry.nickname} hour12={hour12} />
+      </div>
+
+      <div style={{ order: 7 }}>
+        <FleetMeta tail={entry.tail} hex={fleetHex(entry).toUpperCase()} role={entry.roleDescription} />
+      </div>
+
+      <div style={{ order: 8 }}>
+        <PlaneRelated
+          tail={entry.tail}
+          latestFlight={
+            recentFlight
+              ? { id: flightIdFromTs(recentFlight.session.start_ts), startTs: recentFlight.session.start_ts }
+              : null
+          }
+        />
+      </div>
+      </div>
+      </div>
     </main>
   );
 }
@@ -709,7 +732,7 @@ function ClassificationCard({ entry }: { entry: FleetEntry }) {
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ss-mono"
+                  className="ss-mono ss-source-link"
                   style={{
                     fontSize: 12,
                     color: SS_TOKENS.fg1,

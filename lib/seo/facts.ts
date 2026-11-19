@@ -99,7 +99,7 @@ function sheriffCounty(code: string): string {
  * Five to eight plain sentences with numbers, in reading order. Each one
  * stands alone so an answer engine can quote it without context.
  */
-export function keyFacts(fleet: readonly FleetEntry[]): string[] {
+export function keyFacts(fleet: readonly FleetEntry[], since: string = LOG_START_DATE): string[] {
   const s = fleetStats(fleet);
   const counties = joinAnd(s.waSheriffOffices.map(sheriffCounty));
   const states = s.mutualAidStates.length > 0 ? joinAnd(s.mutualAidStates) : "neighboring";
@@ -137,7 +137,7 @@ export function keyFacts(fleet: readonly FleetEntry[]): string[] {
     "In Washington, aerial speed enforcement works by timing a vehicle between marks painted on the highway shoulder; the crew radios a trooper on the ground, who makes the stop.",
   );
   facts.push(
-    `Positions come from the adsb.fi and adsb.lol volunteer receiver networks; the flight log starts ${LOG_START_DATE} and the open data is licensed ODbL 1.0.`,
+    `Positions come from the adsb.fi and adsb.lol volunteer receiver networks; the flight log starts ${since} and the open data is licensed ODbL 1.0.`,
   );
   facts.push(
     "SmokySignal has no accounts and does not store a rider's location or speed.",

@@ -23,6 +23,9 @@ import { applyNeutralBasemap, basemapStyleUrl } from "@/lib/basemap";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { TrackPoint } from "@/lib/tracks";
+import { releaseMap } from "@/lib/webgl";
+import { MapBoundary, useReportMapLoss } from "./MapBoundary";
+import { TrackSvgFallback } from "./TrackSvgFallback";
 
 const PUGET_SOUND: [number, number] = [-122.3, 47.6];
 const FALLBACK_ZOOM = 9;
@@ -79,7 +82,24 @@ function fitToCoords(map: MaplibreMap, coords: Coord[], padPct = 0.1): void {
   });
 }
 
-export default function PlaneTrackMap({
+/**
+ * WebGL-gated: without WebGL, or if the map throws while mounting, the
+ * page gets a flat SVG of the same track instead of an error screen.
+ */
+export default function PlaneTrackMap(props: Props) {
+  const height = props.height ?? 280;
+  return (
+    <MapBoundary
+      name="plane-track"
+      placeholder={<div aria-hidden style={{ height, borderRadius: 12, background: SS_TOKENS.bg0 }} />}
+      fallback={<TrackSvgFallback height={height} tracks={[{ id: props.tail, points: props.points }]} />}
+    >
+      <PlaneTrackMapInner {...props} />
+    </MapBoundary>
+  );
+}
+
+function PlaneTrackMapInner({
   tail,
   points,
   inProgress,
@@ -95,6 +115,7 @@ export default function PlaneTrackMap({
   // useEffect can react to it.
   const [coords, setCoords] = useState<Coord[]>(() => pointsToCoords(points));
   const lastFitRef = useRef<{ minLat: number; maxLat: number; minLon: number; maxLon: number } | null>(null);
+  const reportLoss = useReportMapLoss();
 
   // Mount the map once.
   useEffect(() => {
@@ -128,6 +149,9 @@ export default function PlaneTrackMap({
       doubleClickZoom: true,
     });
     mapRef.current = map;
+    // remove() detaches this listener before it drops the context, so
+    // this only fires for an eviction while the map is on screen.
+    map.on("webglcontextlost", reportLoss);
 
     map.addControl(new NavigationControl({ showCompass: true }), "top-right");
 
@@ -210,7 +234,7 @@ export default function PlaneTrackMap({
     return () => {
       if (pulseRef.current != null) cancelAnimationFrame(pulseRef.current);
       styleLoadedRef.current = false;
-      map.remove();
+      releaseMap(map);
       mapRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

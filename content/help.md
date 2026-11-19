@@ -160,7 +160,7 @@ It shows after two GPS readings in a row agree. It clears on its own about 10 se
 
 Every flight gets a permanent shareable URL: `/flight/{TAIL}/{FLIGHT_ID}`. You can grab it via the **Share** button next to the back link on any plane detail page (and on the admin recent-flights view). The link works without auth and includes a social-friendly preview image.
 
-Flights are kept for 30 days; older ones are pruned automatically.
+Flights are kept permanently. A flight link keeps working, and older flights stay in plane history and the logbook.
 
 ## Why we don't track you
 

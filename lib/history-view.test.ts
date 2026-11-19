@@ -89,7 +89,7 @@ test("parse: junk tails dropped, repeat params merged, mission=all", () => {
 test("serialize: round-trips and keeps unrelated params", () => {
   const states: HistoryState[] = [
     { from: "2026-11-01", to: "2026-11-17", tails: ["N305DK"], missions: ["police"] },
-    { from: "2026-10-16", to: "2026-10-31", tails: [], missions: ["police", "sar", "medevac"] },
+    { from: HISTORY_FLOOR, to: "2026-10-31", tails: [], missions: ["police", "sar", "medevac"] },
     { from: "2026-11-18", to: "2026-11-18", tails: ["N2446X", "N305DK"], missions: ["sar"] },
   ];
   for (const s of states) {
@@ -134,13 +134,14 @@ test("presets: rolling windows end today", () => {
 });
 
 test("presets: rolling windows stop at the floor", () => {
-  assert.deepStrictEqual(resolvePreset("last30", "2026-11-01"), { from: HISTORY_FLOOR, to: "2026-11-01" });
-  assert.deepStrictEqual(resolvePreset("last7", "2026-10-18"), { from: HISTORY_FLOOR, to: "2026-10-18" });
+  // Rolling presets always span their full length, even near the floor.
+  assert.deepStrictEqual(resolvePreset("last30", "2026-11-01"), { from: "2026-10-03", to: "2026-11-01" });
+  assert.deepStrictEqual(resolvePreset("last7", "2026-10-18"), { from: "2026-10-12", to: "2026-10-18" });
   assert.strictEqual(resolvePreset("last7", "2026-10-01"), null);
 });
 
 test("presets: months clip to the floor and to today", () => {
-  assert.deepStrictEqual(resolvePreset("month:2026-10", TODAY), { from: "2026-10-16", to: "2026-10-31" });
+  assert.deepStrictEqual(resolvePreset("month:2026-10", TODAY), { from: HISTORY_FLOOR, to: "2026-10-31" });
   assert.deepStrictEqual(resolvePreset("month:2026-11", TODAY), { from: "2026-11-01", to: TODAY });
   assert.deepStrictEqual(resolvePreset("month:2026-12", "2027-01-05"), { from: "2026-12-01", to: "2026-12-31" });
   // Before the record, and in the future.
@@ -157,8 +158,8 @@ test("presets: month lengths, leap February", () => {
 test("presets: months on record, newest first, across a year end", () => {
   assert.deepStrictEqual(historyMonths(TODAY), ["2026-11", "2026-10"]);
   assert.deepStrictEqual(historyMonths("2027-01-02"), ["2027-01", "2026-12", "2026-11", "2026-10"]);
-  assert.deepStrictEqual(historyMonths("2026-10-16"), ["2026-10"]);
-  assert.deepStrictEqual(historyMonths("2026-10-15"), []);
+  assert.deepStrictEqual(historyMonths(HISTORY_FLOOR), ["2026-10"]);
+  assert.deepStrictEqual(historyMonths("2026-10-13"), []);
   assert.deepStrictEqual(
     historyPresets(TODAY).map((p) => p.label),
     ["Last 7 days", "Last 30 days", "November 2026", "October 2026"],
@@ -166,7 +167,7 @@ test("presets: months on record, newest first, across a year end", () => {
 });
 
 test("presets: a range maps back to its preset", () => {
-  assert.strictEqual(presetForRange({ from: "2026-10-16", to: "2026-10-31" }, TODAY), "month:2026-10");
+  assert.strictEqual(presetForRange({ from: HISTORY_FLOOR, to: "2026-10-31" }, TODAY), "month:2026-10");
   assert.strictEqual(presetForRange({ from: "2026-11-12", to: TODAY }, TODAY), "last7");
   assert.strictEqual(presetForRange({ from: "2026-11-02", to: "2026-11-09" }, TODAY), null);
 });
@@ -177,7 +178,7 @@ test("custom range: clamp, swap, cap", () => {
   assert.deepStrictEqual(clampRange("2026-12-01", "2026-12-24", TODAY), { from: TODAY, to: TODAY });
   assert.strictEqual(clampRange("", TODAY, TODAY), null);
   assert.strictEqual(clampRange("2026-02-30", TODAY, TODAY), null);
-  const long = clampRange("2026-10-16", "2028-01-01", "2028-01-01")!;
+  const long = clampRange(HISTORY_FLOOR, "2028-01-01", "2028-01-01")!;
   assert.deepStrictEqual(long, { from: "2027-01-01", to: "2028-01-01" });
 });
 
@@ -261,7 +262,7 @@ test("subject: tail, tail count, mission set", () => {
 
 test("range label: months, presets, custom spans", () => {
   assert.strictEqual(rangeLabel({ from: "2026-11-01", to: TODAY }, TODAY), "Nov 2026");
-  assert.strictEqual(rangeLabel({ from: "2026-10-16", to: "2026-10-31" }, TODAY), "Oct 2026");
+  assert.strictEqual(rangeLabel({ from: HISTORY_FLOOR, to: "2026-10-31" }, TODAY), "Oct 2026");
   assert.strictEqual(rangeLabel({ from: "2026-11-12", to: TODAY }, TODAY), "Last 7 days");
   assert.strictEqual(rangeLabel({ from: "2026-10-20", to: TODAY }, TODAY), "Last 30 days");
   assert.strictEqual(rangeLabel({ from: "2026-11-03", to: "2026-11-09" }, TODAY), "Nov 3–9");
@@ -315,9 +316,9 @@ test("layer paint stops are valid MapLibre interpolations", async () => {
   for (const [, v] of HISTORY_HEAT_OPACITY_STOPS) assert.ok(v > 0 && v < 1);
 });
 
-test("record-start date reads in the brand style: 16 Oct 2026", async () => {
+test("record-start date reads in the brand style: 14 Oct 2026", async () => {
   const { formatDayMonYear, HISTORY_FLOOR } = await import("./history-view");
-  assert.strictEqual(formatDayMonYear(HISTORY_FLOOR), "16 Oct 2026");
+  assert.strictEqual(formatDayMonYear(HISTORY_FLOOR), "14 Oct 2026");
   assert.strictEqual(formatDayMonYear("2026-01-05"), "5 Jan 2026");
   assert.strictEqual(formatDayMonYear("not a date"), "not a date");
   assert.strictEqual(formatDayMonYear("2026-13-01"), "2026-13-01");

@@ -142,3 +142,32 @@ test("summarizeMonth honours a tail filter (mission chips)", () => {
   assert.equal(one.per_tail[0]!.tail, "N2446X");
   assert.equal(one.days_of_data, 2, "day count is about the log, not the filter");
 });
+
+test("parseForecastMission: single mission, Everything, legacy list, default Smokey", async () => {
+  const { parseForecastMission, forecastRoles } = await import("./forecast-month");
+  assert.equal(parseForecastMission(undefined), "police");
+  assert.equal(parseForecastMission("federal_le"), "federal_le");
+  assert.equal(parseForecastMission("ALL"), "all");
+  assert.equal(parseForecastMission("nonsense"), "police");
+  // Old shared ?missions= links: one mission or every mission carry over.
+  assert.equal(parseForecastMission(null, "sar"), "sar");
+  assert.equal(parseForecastMission(null, "all"), "all");
+  assert.equal(parseForecastMission(null, "police,sar"), "police");
+  // ?mission= wins over the legacy list.
+  assert.equal(parseForecastMission("sar", "all"), "sar");
+  assert.deepEqual(forecastRoles("all"), []);
+  assert.deepEqual(forecastRoles("sar"), ["sar"]);
+});
+
+test("rollupMonths with a data-since span lists every month on record", () => {
+  const opts = rollupMonths(["20261016", "20261101"], { since: "2026-10-14", today: "2027-01-05" });
+  assert.deepEqual(
+    opts.map((o) => o.value),
+    ["2027-01", "2026-12", "2026-11", "2026-10"],
+  );
+  // A stray day before the record is dropped.
+  assert.deepEqual(
+    rollupMonths(["20260901"], { since: "2026-10-14", today: "2026-10-20" }).map((o) => o.value),
+    ["2026-10"],
+  );
+});

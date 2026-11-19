@@ -1,9 +1,10 @@
 // Aircraft logbook on /plane/[tail]: months, sortie lengths, departure
 // fields, typical hours, time on station and recent flights.
 //
-// Server component. Reads the permanent daily rollup plus the most recent
-// track days (today is not rolled up yet, and tracks carry the points for
-// departure / pattern detail), folds them in lib/logbook.ts, and caches
+// Server component. One source per day, the same one /stats, /data and
+// /wrap read: the permanent daily rollup for every rolled-up UTC day, and
+// raw tracks only for days the rollup cron has not built yet (today, and
+// yesterday before 09:15 UTC). Folds them in lib/logbook.ts and caches
 // the result per tail for 5 minutes.
 
 import Link from "next/link";
@@ -13,7 +14,7 @@ import { airportById } from "@/lib/airports";
 import { SESSION_GAP_MS, sessionsFromDay } from "@/lib/flights";
 import { buildLogbook, type Logbook as LogbookData, type TrackFlightInput } from "@/lib/logbook";
 import { getRollupIndex, getRollups } from "@/lib/rollup";
-import { LOG_START_DATE } from "@/lib/rollup-sessions";
+import { DATA_SINCE_FALLBACK, getDataSince } from "@/lib/data-since";
 import { formatTs, fmtDurationHuman } from "@/lib/time";
 import { SS_TOKENS } from "@/lib/tokens";
 import { getTracksForDay, listTrackKeys } from "@/lib/tracks";
@@ -22,18 +23,19 @@ import type { FleetEntry } from "@/lib/types";
 const CACHE_SECONDS = 300;
 /** Rollup days read per render. A year and a bit. */
 const MAX_ROLLUP_DAYS = 400;
-/** Newest track days read for flight detail. */
+/** Most not-yet-rolled-up track days read (normally today and yesterday). */
 const TRACK_DAYS = 10;
 
 async function readLogbook(tail: string, nickname: string | null): Promise<LogbookData> {
   const now = Date.now();
-  const [index, trackDates] = await Promise.all([getRollupIndex(), listTrackKeys(tail)]);
+  const [index, trackDates, since] = await Promise.all([getRollupIndex(), listTrackKeys(tail), getDataSince()]);
+  const indexed = new Set(index);
   const docs = await getRollups(index.slice(-MAX_ROLLUP_DAYS));
   const rollupSessions = docs.flatMap((d) =>
     d.tails.filter((t) => t.tail === tail).flatMap((t) => t.sessions),
   );
   const days = await Promise.all(
-    trackDates.slice(0, TRACK_DAYS).map(async (date) => ({ date, samples: await getTracksForDay(tail, date) })),
+    trackDates.filter((d) => !indexed.has(d)).slice(0, TRACK_DAYS).map(async (date) => ({ date, samples: await getTracksForDay(tail, date) })),
   );
   const trackFlights: TrackFlightInput[] = [];
   for (const { date, samples } of days) {
@@ -47,11 +49,11 @@ async function readLogbook(tail: string, nickname: string | null): Promise<Logbo
       });
     }
   }
-  return buildLogbook({ tail, rollupSessions, trackFlights, nowMs: now });
+  return buildLogbook({ tail, rollupSessions, trackFlights, nowMs: now, since });
 }
 
 function loadLogbook(tail: string, nickname: string | null): Promise<LogbookData> {
-  return unstable_cache(() => readLogbook(tail, nickname), ["logbook-v1", tail], {
+  return unstable_cache(() => readLogbook(tail, nickname), ["logbook-v2", tail], {
     revalidate: CACHE_SECONDS,
   })();
 }
@@ -77,7 +79,7 @@ export async function Logbook({
       <Card>
         <div className="ss-eyebrow">Logbook</div>
         <p style={{ fontSize: 12.5, color: SS_TOKENS.fg2, margin: "2px 0 0", lineHeight: 1.45 }}>
-          From the permanent daily log, which starts {LOG_START_DATE}. Times Pacific.
+          From the permanent daily log, which starts {lb?.since ?? DATA_SINCE_FALLBACK}. Times Pacific.
         </p>
         {!lb || lb.totals.sorties === 0 ? (
           <p data-testid="logbook-empty" style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: "12px 0 0", lineHeight: 1.5 }}>
@@ -96,9 +98,9 @@ function LogbookBody({ lb, hour12 }: { lb: LogbookData; hour12: boolean }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 12 }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-        <Stat label="SORTIES" value={String(lb.totals.sorties)} />
+        <Stat label="FLIGHTS" value={String(lb.totals.sorties)} />
         <Stat label="HOURS" value={(lb.totals.airborne_s / 3600).toFixed(1)} />
-        <Stat label="AVG SORTIE" value={lb.avg_sortie_s != null ? fmtDurationHuman(lb.avg_sortie_s) : "—"} />
+        <Stat label="AVG FLIGHT" value={lb.avg_sortie_s != null ? fmtDurationHuman(lb.avg_sortie_s) : "—"} />
         <Stat
           label="LONGEST"
           value={lb.longest ? fmtDurationHuman(lb.longest.duration_s) : "—"}
@@ -108,7 +110,7 @@ function LogbookBody({ lb, hour12 }: { lb: LogbookData; hour12: boolean }) {
       </div>
 
       <div data-testid="logbook-months">
-        <Head title="By month" note="Sorties and hours aloft, by takeoff month." />
+        <Head title="By month" note="Flights and hours aloft, by takeoff month." />
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {lb.months.map((m) => (
             <div
@@ -144,7 +146,7 @@ function LogbookBody({ lb, hour12 }: { lb: LogbookData; hour12: boolean }) {
           title="Departs from"
           note={
             lb.departures_known > 0
-              ? `Field inferred from where the track starts, ${lb.departures_known} of ${lb.totals.sorties} sorties resolved.`
+              ? `Field inferred from where the track starts, ${lb.departures_known} of ${lb.totals.sorties} flights placed at a field.`
               : "No departure field resolved yet."
           }
         />
@@ -172,7 +174,7 @@ function LogbookBody({ lb, hour12 }: { lb: LogbookData; hour12: boolean }) {
           title="Time on station"
           note={
             lb.station.flights_with_detail > 0
-              ? `Minutes flying an orbit or racetrack, across ${lb.station.flights_with_detail} sortie${lb.station.flights_with_detail === 1 ? "" : "s"} with full tracks.`
+              ? `Minutes flying an orbit or racetrack, across ${lb.station.flights_with_detail} flight${lb.station.flights_with_detail === 1 ? "" : "s"} with full tracks.`
               : "Pattern detail fills in as the nightly log rebuilds."
           }
         />
@@ -233,7 +235,7 @@ function LogbookBody({ lb, hour12 }: { lb: LogbookData; hour12: boolean }) {
                   {f.inProgress ? "UP NOW" : fmtDurationHuman(f.duration_s)}
                 </span>
                 <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1, minWidth: 0, overflowWrap: "anywhere" }}>
-                  {f.dep ?? "—"} → {f.arr ?? (f.inProgress ? "up" : "—")}
+                  {f.dep ?? "off-field"} → {f.arr ?? (f.inProgress ? "up" : "off-field")}
                   {f.corridor ? ` · ${f.corridor}` : ""}
                 </span>
                 <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg2, textAlign: "right" }}>

@@ -99,7 +99,7 @@ test("Dataset: ODbL, creator, temporal coverage from the log start, CSV distribu
   assert.equal(o.license, ODBL_URL);
   assert.equal(o.creator.name, "SmokySignal");
   assert.equal(o.temporalCoverage, `${LOG_START_DATE}/..`);
-  assert.equal(LOG_START_DATE, "2026-10-16");
+  assert.equal(LOG_START_DATE, "2026-10-14");
   assert.equal(o.distribution[0]["@type"], "DataDownload");
   assert.equal(o.distribution[0].encodingFormat, "text/csv");
   assert.equal(o.distribution[0].contentUrl, `${SITE_URL}${CSV_PATH}`);

@@ -27,7 +27,7 @@ import {
   MIN_RADIUS_NM,
   SEEN_EARLIEST_DATE,
   SEEN_VERSION,
-  WINDOW_CHOICES,
+  ALL_WINDOW_CHOICES,
   compassWord,
   isoMinute,
   miToNm,
@@ -131,10 +131,10 @@ export function parseSeenQuery(params: URLSearchParams, nowMs: number): SeenQuer
   let windowMin: number = DEFAULT_WINDOW_MIN;
   const wRaw = params.get("window_min");
   if (wRaw != null) {
-    if (!WINDOW_RE.test(wRaw)) return { ok: false, error: "bad_window", detail: WINDOW_CHOICES.join(",") };
+    if (!WINDOW_RE.test(wRaw)) return { ok: false, error: "bad_window", detail: ALL_WINDOW_CHOICES.join(",") };
     const w = Number(wRaw);
-    if (!(WINDOW_CHOICES as readonly number[]).includes(w)) {
-      return { ok: false, error: "bad_window", detail: WINDOW_CHOICES.join(",") };
+    if (!(ALL_WINDOW_CHOICES as readonly number[]).includes(w)) {
+      return { ok: false, error: "bad_window", detail: ALL_WINDOW_CHOICES.join(",") };
     }
     windowMin = w;
   }

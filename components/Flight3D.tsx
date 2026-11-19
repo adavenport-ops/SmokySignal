@@ -37,6 +37,9 @@ import {
 } from "@deck.gl/layers";
 import { TripsLayer } from "@deck.gl/geo-layers";
 import { SS_TOKENS } from "@/lib/tokens";
+import { releaseMap, supportsWebGL2 } from "@/lib/webgl";
+import { MapBoundary } from "./MapBoundary";
+import { TrackSvgFallback } from "./TrackSvgFallback";
 import type { TrackPoint } from "@/lib/tracks";
 import { detectOrbits, type OrbitSegment } from "@/lib/orbit";
 import { inferArrival, inferDeparture, type AirportMatch } from "@/lib/airports";
@@ -59,7 +62,9 @@ import {
   advanceProgress,
   altitudeZ,
   boundsOf,
+  clampFrameZoom,
   decimateAll,
+  framePadding as initialFramePadding,
   hexToRgba,
   orbitAltitudeFt,
   orbitLabel,
@@ -424,10 +429,6 @@ function screenProjector(map: MaplibreMap) {
 const OBSTACLE_SELECTOR =
   '[data-label-obstacle],[data-testid="map3d-controls"],[data-testid="map3d-hint"],button[aria-label="Reset view"]';
 const OBSTACLE_PAD = 6;
-/** Width of the Map3DControls column (BTN), px. */
-const CONTROLS_COL_W = 44;
-/** Below this frame width the controls column eats real map room. */
-const NARROW_W = 640;
 
 function obstacleRects(wrap: HTMLElement | null): Rect[] {
   if (!wrap) return [];
@@ -469,10 +470,38 @@ function segDist2(px: number, py: number, ax: number, ay: number, bx: number, by
 /** Translucent layers must not write depth or they hide what is behind them. */
 const NO_DEPTH_WRITE = { depthWriteEnabled: false } as const;
 
-export default function Flight3D({
+const DEFAULT_HEIGHT = "clamp(420px, 66vh, 640px)";
+
+/**
+ * Error boundary around the 3D view. The inner component already probes
+ * for WebGL2 and reports a refusal through onUnavailable; this catches
+ * anything that still throws while mounting (contexts used up) and shows
+ * the tracks flat instead of taking the page down.
+ */
+export default function Flight3D(props: Props) {
+  const { onUnavailable } = props;
+  const onCrash = useCallback(() => onUnavailable?.("context"), [onUnavailable]);
+  return (
+    <MapBoundary
+      gate={false}
+      name="flight3d"
+      onCrash={onCrash}
+      fallback={
+        <TrackSvgFallback
+          height={props.fill ? "100%" : (props.height ?? DEFAULT_HEIGHT)}
+          tracks={props.paths.map((p) => ({ id: p.id, points: p.points, color: p.color }))}
+        />
+      }
+    >
+      <Flight3DInner {...props} />
+    </MapBoundary>
+  );
+}
+
+function Flight3DInner({
   paths,
   markers = NO_MARKERS,
-  height = "clamp(420px, 66vh, 640px)",
+  height = DEFAULT_HEIGHT,
   replay = true,
   annotate = true,
   hour12 = false,
@@ -1124,38 +1153,45 @@ export default function Flight3D({
     }
     const bearing = homeBearing(map);
     const c = map.getContainer();
-    const pad = Math.round(Math.min(c.clientWidth, c.clientHeight) * 0.07);
     const pts = framingPoints(modelRef.current.models);
     for (const mk of modelRef.current.markers) {
       const z = altitudeZ(mk.altFt ?? 0);
       pts.push([mk.lon, mk.lat, z], [mk.lon, mk.lat, 0]);
     }
-    const fp0 = framePadRef.current ?? { top: 0, bottom: 0, left: 0, right: 0 };
-    // Narrow frames: keep the path out from under the controls column
-    // (its width + its inset + 12 px of air).
-    const fp =
-      c.clientWidth < NARROW_W
-        ? { ...fp0, right: Math.max(fp0.right, CONTROLS_COL_W + (resetInsetRef.current?.right ?? 10) + 12 - pad) }
-        : fp0;
     if (pts.length === 0) pts.push([b.minLon, b.minLat, 0], [b.maxLon, b.maxLat, 0]);
-    const cam = fitCamera(
+    // Keep the track clear of the controls column (every width), the
+    // replay readout and scrubber or the gesture hint, and the parent's
+    // overlays (lib/flight3d.ts framePadding).
+    const padding = initialFramePadding({
+      width: c.clientWidth,
+      height: c.clientHeight,
+      replay,
+      controlsRight: resetInsetRef.current?.right ?? 10,
+      parent: framePadRef.current,
+    });
+    const fitted = fitCamera(
       pts,
       c.clientWidth,
       c.clientHeight,
       bearing,
       pitchRef.current,
-      // The 70 / 64 keep the replay readout and scrubber clear.
-      {
-        top: pad + (replay ? 70 : 12) + fp.top,
-        bottom: pad + (replay ? 64 : 12) + fp.bottom,
-        left: pad + fp.left,
-        right: pad + fp.right,
-      },
+      padding,
       14,
       // Many flights: labels are thinned by collision, so they do not widen
       // the frame (a dozen 270 px plates would zoom a phone right out).
       modelRef.current.models.length > 1 ? [] : labelBoxes(modelRef.current.labels),
     );
+    // Regional tracks never open wider than a sensible zoom.
+    const cam = fitted
+      ? {
+          ...fitted,
+          zoom: clampFrameZoom(fitted.zoom, {
+            bounds: b,
+            frameW: c.clientWidth - padding.left - padding.right,
+            frameH: c.clientHeight - padding.top - padding.bottom,
+          }),
+        }
+      : null;
     if (!cam) return;
     const target = { ...cam, bearing, pitch: pitchRef.current };
     if (animate) {
@@ -1207,8 +1243,8 @@ export default function Flight3D({
       onUnavailable?.(reason);
     };
 
-    const probe = document.createElement("canvas").getContext("webgl2");
-    if (!probe) {
+    // Cached probe that releases its own context (lib/webgl.ts).
+    if (!supportsWebGL2()) {
       fail("webgl2");
       return;
     }
@@ -1408,8 +1444,12 @@ export default function Flight3D({
       } catch {
         /* overlay never attached */
       }
-      overlay.finalize();
-      map.remove();
+      try {
+        overlay.finalize();
+      } catch {
+        /* still release the map below */
+      }
+      releaseMap(map);
       mapRef.current = null;
       overlayRef.current = null;
       setMapObj(null);

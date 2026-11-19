@@ -7,7 +7,7 @@ import { getRegistry } from "@/lib/registry";
 import { peekSnapshot } from "@/lib/snapshot";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 import { formatTs } from "@/lib/time";
-import { roleBadgeStyle, roleBadgeText } from "@/lib/role-display";
+import { formatMilesOff } from "@/lib/units";
 import {
   TOWN_RADIUS_MI,
   nearbyCorridors,
@@ -22,7 +22,7 @@ import { townShareText } from "@/lib/share-text";
 import { CoverageNote } from "@/components/CoverageNote";
 import { dropoutsByArea } from "@/lib/coverage";
 import { haversineNm } from "@/lib/geo";
-import { HourHistogram, Missions, Tile, fmtMinutes } from "@/components/RoadParts";
+import { HourHistogram, Missions, RowBadge, Tile, fmtMinutes } from "@/components/RoadParts";
 import { TownLive } from "@/components/TownLive";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { Related, type RelatedLink } from "@/components/Related";
@@ -144,12 +144,10 @@ function Recent({ s, hour12 }: { s: TownSummary; hour12: boolean }) {
               <>
                 <span style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
                   <span style={{ fontSize: 14, fontWeight: 600, color: SS_TOKENS.fg0, minWidth: 0 }}>{p.name}</span>
-                  <span className="ss-mono" style={roleBadgeStyle(p.mission)}>
-                    {roleBadgeText(p.mission)}
-                  </span>
+                  <RowBadge pass={p} />
                 </span>
                 <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
-                  {formatTs(p.startTs, "datetime", { hour12 })} · {fmtMinutes(p.minutes)} · {p.closestNm} nm off
+                  {formatTs(p.startTs, "datetime", { hour12 })} · {fmtMinutes(p.minutes)} · {formatMilesOff(p.closestNm)}
                   {p.road ? ` · ${p.road}` : ""}
                   {p.pattern ? " · pattern" : ""}
                   {p.flight ? " · flight →" : ""}

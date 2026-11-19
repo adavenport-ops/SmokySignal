@@ -1,6 +1,8 @@
 import { JsonLd } from "@/components/JsonLd";
 import { simplePageJsonLd } from "@/lib/seo/jsonld";
 import Link from "next/link";
+import { getDataSince } from "@/lib/data-since";
+import { ptDateOf } from "@/lib/data-since-core";
 import { BASE_URL } from "@/lib/config";
 import { unstable_cache } from "next/cache";
 import { SS_TOKENS, TYPE } from "@/lib/tokens";
@@ -13,13 +15,16 @@ import { getLearningState } from "@/lib/learning";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 import { getSnapshot } from "@/lib/snapshot";
 import { getRegistry } from "@/lib/registry";
-import { parseMissionsParam, resolveAllowedTails } from "@/lib/mission";
+import { MISSIONS, normalizeMission, resolveAllowedTails } from "@/lib/mission";
+import { missionLabel } from "@/lib/role-display";
+import { monthLabel } from "@/lib/pt-range";
 import { ForecastMissionFilter } from "@/components/ForecastMissionFilter";
 import { computeStatus } from "@/lib/status";
-import type { Mission } from "@/lib/types";
 import { getRollupIndex, getRollups } from "@/lib/rollup";
 import {
   LAST_30,
+  forecastRoles,
+  parseForecastMission,
   resolveMonthParam,
   rollupMonths,
   summarizeMonth,
@@ -65,7 +70,7 @@ const loadMonth = unstable_cache(
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
-type SP = { mock?: string; month?: string; missions?: string };
+type SP = { mock?: string; month?: string; mission?: string; missions?: string };
 
 export default async function ForecastPage({
   searchParams,
@@ -79,16 +84,20 @@ export default async function ForecastPage({
   } catch (e) {
     console.warn("[forecast] rollup index load failed:", e);
   }
-  const months = rollupMonths(index);
+  const since = await getDataSince();
+  const months = rollupMonths(index, { since, today: ptDateOf(Date.now()) });
   const period = resolveMonthParam(searchParams.month, months);
   const options = [{ value: LAST_30, label: "Last 30 days" }, ...months];
 
-  // Same mission filter as /radar (lib/radar-filter.ts). The client chip
-  // row writes the shared filter state and mirrors it into ?missions=.
-  // Default: Smokey only. Applies to both the forecast and the month view.
-  const missions = parseMissionsParam(searchParams.missions);
+  // /forecast's own single-select mission (?mission=), not the /radar
+  // chips. Default: Smokey. Applies to both the forecast and the month
+  // view, so every count below changes with it.
+  const mission = parseForecastMission(searchParams.mission, searchParams.missions);
   const fleet = await getRegistry();
-  const allowedTails = resolveAllowedTails(fleet, { roles: missions });
+  const allowedTails = resolveAllowedTails(fleet, { roles: forecastRoles(mission) });
+  const present = new Set(fleet.map((f) => normalizeMission(f.role)));
+  const missionOptions = MISSIONS.filter((m) => present.has(m));
+  const missionName = mission === "all" ? "Everything" : missionLabel(mission);
   const [realGrid, realLearning, realSnap] = await Promise.all([
     getForecastGrid({ tails: allowedTails }),
     getLearningState(),
@@ -107,6 +116,8 @@ export default async function ForecastPage({
     }
   }
 
+  const pageTitle =
+    period === LAST_30 ? "Weekly forecast" : (monthSummary?.label ?? monthLabel(period));
   const grid = applyMockForecastGrid(realGrid, mockState);
   const learning = applyMockLearning(realLearning, mockState);
   const snap = applyMockState(realSnap, mockState);
@@ -135,8 +146,13 @@ export default async function ForecastPage({
           .ss-forecast-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         }
       `}</style>
-      <BackLink />
-      <span className="ss-eyebrow">SmokySignal · Forecast</span>
+      <BackLink section="history" />
+      <header style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span className="ss-eyebrow">SmokySignal · Forecast</span>
+        <h1 style={h1Style} data-testid={period === LAST_30 ? "forecast-title" : "forecast-month-title"}>
+          {pageTitle}
+        </h1>
+      </header>
 
       {liveStatus.kind === "alert" && (
         <Link
@@ -196,31 +212,40 @@ export default async function ForecastPage({
         </Link>
       )}
 
-      <MonthSelect value={period} options={options} />
+      <section
+        aria-label="Forecast controls"
+        style={{ display: "flex", flexDirection: "column", gap: 12 }}
+      >
+        <MonthSelect value={period} options={options} />
+        <ForecastMissionFilter selected={mission} options={missionOptions} />
+      </section>
 
       {period === LAST_30 ? (
         <>
           <section style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <h1 style={h1Style}>Weekly forecast</h1>
             <p style={leadStyle}>
-              Hour-of-week probability of a takeoff in the classes picked below, drawn from{" "}
-              <span className="ss-mono">{grid.total_events}</span> logged
-              takeoff{grid.total_events === 1 ? "" : "s"}, seen in public ADS-B
-              data via adsb.fi and adsb.lol {days <= 0 ? (
+              Odds that a {missionName === "Everything" ? "tracked" : missionName} flight takes off
+              in each hour of the week, drawn from{" "}
+              <span className="ss-mono" data-testid="forecast-total">{grid.total_events}</span>{" "}
+              flight{grid.total_events === 1 ? "" : "s"} counted at takeoff by the live feed
+              (public ADS-B via adsb.fi and adsb.lol) {days <= 0 ? (
                 "so far"
               ) : (
                 <>
                   over <span className="ss-mono">{daysNum}</span> {daysWord}
                 </>
               )}
-              . Brighter cells,
-              busier hour. Tap a cell to see the regular birds.
+              . The live feed logs a flight when it takes off, so its count can sit a few
+              off the flight log on Stats. Brighter cells, busier hour. Tap a cell to see
+              the sample and the regular birds.
             </p>
             <DeliveryNote />
             <a href={`${BASE_URL.replace(/^https?:/, "webcal:")}/calendar.ics`} className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.alert, textDecoration: "underline" }}>Subscribe in calendar</a>
           </section>
 
-          <ForecastMissionFilter selected={missions} />
+          {grid.total_events === 0 && mission !== "all" && !mockState ? (
+            <NoFlights mission={missionName} />
+          ) : null}
 
           {showLearning && (
             <LearningPanel
@@ -233,12 +258,7 @@ export default async function ForecastPage({
           <ForecastGridView grid={grid} hour12={hour12} />
         </>
       ) : (
-        <MonthView
-          summary={monthSummary}
-          month={period}
-          hour12={hour12}
-          missions={missions}
-        />
+        <MonthView summary={monthSummary} hour12={hour12} missionName={missionName} />
       )}
 
       <Related
@@ -292,21 +312,38 @@ function DeliveryNote() {
   );
 }
 
+function NoFlights({ mission }: { mission: string }) {
+  return (
+    <p
+      role="status"
+      data-testid="forecast-no-flights"
+      style={{
+        fontSize: 14,
+        color: SS_TOKENS.fg0,
+        background: SS_TOKENS.bg1,
+        border: `.5px solid ${SS_TOKENS.hairline}`,
+        borderRadius: 12,
+        padding: "12px 14px",
+        margin: 0,
+      }}
+    >
+      No flights for {mission} in this period.
+    </p>
+  );
+}
+
 function MonthView({
   summary,
-  month,
   hour12,
-  missions,
+  missionName,
 }: {
   summary: MonthSummary | null;
-  month: string;
   hour12: boolean;
-  missions: Mission[];
+  missionName: string;
 }) {
   if (!summary) {
     return (
       <section style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <h1 style={h1Style}>{month}</h1>
         <p style={leadStyle}>
           The log for this month did not load. Try again in a minute.
         </p>
@@ -324,12 +361,9 @@ function MonthView({
   return (
     <>
       <section style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <h1 style={h1Style} data-testid="forecast-month-title">
-          {s.label}
-        </h1>
         <p style={leadStyle}>
-          Minutes aloft by Pacific hour and weekday for the classes picked
-          below, from the permanent daily log of public ADS-B data via adsb.fi and adsb.lol. A record of when the birds
+          Minutes aloft by Pacific hour and weekday for the mission picked
+          above, from the permanent daily log of public ADS-B data via adsb.fi and adsb.lol. A record of when the birds
           flew this month, not a promise about next week. Brighter cell, more
           time up.
         </p>
@@ -353,7 +387,7 @@ function MonthView({
         <DeliveryNote />
       </section>
 
-      <ForecastMissionFilter selected={missions} />
+      {s.totals.flights === 0 && missionName !== "Everything" ? <NoFlights mission={missionName} /> : null}
 
       <section
         aria-label="Month totals"
@@ -365,7 +399,7 @@ function MonthView({
           value={fmtHours(s.totals.airborne_s)}
           sub={`${s.totals.tails_flown} tail${s.totals.tails_flown === 1 ? "" : "s"} flew`}
         />
-        <Tile label="Flights" value={String(s.totals.flights)} sub="takeoffs this month" />
+        <Tile label="Flights" value={String(s.totals.flights)} sub="started this month" />
         <Tile
           label="Busiest day"
           value={s.busiest_day ? s.busiest_day.date.slice(5) : "—"}
@@ -433,7 +467,7 @@ function MonthView({
       )}
 
       <p style={{ fontSize: 12, lineHeight: 1.55, color: SS_TOKENS.fg1, margin: 0 }}>
-        Counts the tails in the classes picked above. A flight is a run
+        Counts the tails on the mission picked above. A flight is a run
         of position reports with no gap over 5 minutes, so a coverage dropout
         can split one sortie in two. Times are Pacific, 24-hour unless you
         chose 12-hour in settings.

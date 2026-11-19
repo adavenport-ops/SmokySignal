@@ -17,6 +17,7 @@ import { agencyName } from "./agencies";
 import { cleanPoints, splitSessions } from "./circling";
 import { flightIdFromTs, sessionsFromDay } from "./flights";
 import { TOWN_RADIUS_NM, type Town } from "./towns";
+import { MIN_PASS_S } from "./road";
 import type { TrackPoint } from "./tracks";
 import type { FleetEntry, Mission } from "./types";
 
@@ -147,7 +148,8 @@ export function passesForTown(
         labels[label] = cur;
       }
     }
-    if (near.length < 2) continue;
+    // Under a minute in range reads "0m": a clipped edge, not a pass.
+    if (near.length < 2 || seconds < MIN_PASS_S) continue;
     let top: string | null = null;
     for (const [k, v] of Object.entries(labels)) if (!top || v.minutes > labels[top]!.minutes) top = k;
     for (const k of Object.keys(roads)) roads[k] = round1(roads[k]!);
@@ -172,7 +174,13 @@ export function passesForTown(
 }
 
 export type TownMissionRow = { mission: Mission; label: string; flights: number; minutes: number };
-export type TownAgencyRow = { code: string; name: string; flights: number };
+export type TownAgencyRow = {
+  code: string;
+  name: string;
+  flights: number;
+  /** Distinct tails of this agency among the passes. */
+  tails: number;
+};
 export type TownRoadRow = { id: string; label: string; minutes: number; share: number };
 
 export type TownSummary = {
@@ -218,6 +226,7 @@ export function summarizeTown(
   const weekdayMinutes = new Array<number>(7).fill(0);
   const missionAgg = new Map<Mission, { flights: number; minutes: number }>();
   const agencyAgg = new Map<string, number>();
+  const agencyTails = new Map<string, Set<string>>();
   const labelMin = new Map<string, { id: string; minutes: number }>();
   const roadIds = new Set<string>();
   const tails = new Set<string>();
@@ -244,6 +253,9 @@ export function summarizeTown(
     agg.minutes += p.minutes;
     missionAgg.set(p.mission, agg);
     agencyAgg.set(p.operator, (agencyAgg.get(p.operator) ?? 0) + 1);
+    const at = agencyTails.get(p.operator) ?? new Set<string>();
+    at.add(p.tail);
+    agencyTails.set(p.operator, at);
     for (const id of Object.keys(p.roads)) roadIds.add(id);
     for (const [label, v] of Object.entries(p.labels)) {
       const cur = labelMin.get(label) ?? { id: v.id, minutes: 0 };
@@ -261,7 +273,7 @@ export function summarizeTown(
   missions.sort((a, b) => b.flights - a.flights || b.minutes - a.minutes);
 
   const agencies: TownAgencyRow[] = [...agencyAgg.entries()]
-    .map(([code, flights]) => ({ code, name: agencyName(code), flights }))
+    .map(([code, flights]) => ({ code, name: agencyName(code), flights, tails: agencyTails.get(code)?.size ?? 0 }))
     .sort((a, b) => b.flights - a.flights || a.name.localeCompare(b.name));
 
   const roadTotal = [...labelMin.values()].reduce((s, v) => s + v.minutes, 0);
@@ -322,10 +334,21 @@ export function townIntro(
   if (s.flights30d === 0) {
     return `No tracked flight came within about ${radiusMi} mi of ${s.name} in the last 30 days. That is history, not a promise about tomorrow.`;
   }
-  const lead = `In the last 30 days, ${s.flights30d} tracked flight${s.flights30d === 1 ? "" : "s"} by ${s.tails} aircraft came within about ${radiusMi} mi of ${s.name}.`;
+  // Two different counts live in this paragraph: aircraft that came near
+  // this town, and how many aircraft an agency has on our list overall.
+  // Say which is which so "6 aircraft" and "7 aircraft" never collide.
+  const flights = `${s.flights30d} tracked flight${s.flights30d === 1 ? "" : "s"}`;
+  const craft = `${s.tails} aircraft`;
+  const lead = `In the last 30 days, ${craft} we track made ${flights} within about ${radiusMi} mi of ${s.name}.`;
   const named = s.agencies.slice(0, 3).map((a) => {
     const fleet = registryCounts.get(a.code);
-    return `${a.name} (${a.flights} flight${a.flights === 1 ? "" : "s"}${fleet ? `, ${fleet} aircraft on our list` : ""})`;
+    const n = `${a.flights} flight${a.flights === 1 ? "" : "s"}`;
+    if (!fleet) return `${a.name} (${n})`;
+    let by: string;
+    if (a.tails <= 0 || a.tails > fleet) by = `, ${fleet} aircraft on our list`;
+    else if (a.tails === fleet) by = fleet === 1 ? " by its only aircraft on our list" : ` by all ${fleet} of its aircraft on our list`;
+    else by = ` by ${a.tails} of its ${fleet} aircraft on our list`;
+    return `${a.name} (${n}${by})`;
   });
   const more = s.agencies.length - named.length;
   const rest = more > 0 ? `, plus ${more} other agenc${more === 1 ? "y" : "ies"}` : "";

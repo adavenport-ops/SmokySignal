@@ -20,8 +20,8 @@ export function MonthSelect({
   const router = useRouter();
   const params = useSearchParams();
   const [pending, startTransition] = useTransition();
-  // Keep the mission chips (?missions=) when the period changes.
-  const missions = params?.get("missions") ?? null;
+  // Keep the mission pick (?mission=) when the period changes.
+  const mission = params?.get("mission") ?? null;
 
   return (
     <form
@@ -73,7 +73,7 @@ export function MonthSelect({
           </option>
         ))}
       </select>
-      {missions && <input type="hidden" name="missions" value={missions} />}
+      {mission && <input type="hidden" name="mission" value={mission} />}
       <noscript>
         <button
           type="submit"
