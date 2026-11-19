@@ -1669,5 +1669,145 @@
       "https://kootenaijournal.com/2023/03/02/county-gets-new-search-and-rescue-helicopter"
     ],
     "notes": "Bell 206B / TH-67 owned by a 501(c)(3), registered as government (type 5). County also pays Spokane County $10,000/yr for helicopter support. Current status unclear."
+  },
+  {
+    "tail": "N2181N",
+    "icao_hex": "A1D9C2",
+    "faa_model": "CESSNA 182T",
+    "year_mfr": 2004,
+    "serial": "18281339",
+    "faa_owner": "STATE OF OREGON (DEPARTMENT OF STATE POLICE)",
+    "faa_owner_city_state": "SALEM OR",
+    "faa_status": "Valid",
+    "faa_expiration": "09/30/2028",
+    "operator": "Oregon State Police Aviation Unit",
+    "base_icao": null,
+    "callsign": null,
+    "mission": "police_enforcement",
+    "police_unit": "state_police",
+    "secondary_mission": null,
+    "confidence": "tentative",
+    "patrol_areas": "Oregon; Fish & Wildlife support, searches and pursuits. No source places it over WA.",
+    "patrol_area_sources": [],
+    "scope": "mutual_aid",
+    "seed_status": "n/a",
+    "sources": [
+      "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N2181N",
+      "https://www.oregon.gov/osp/programs/fw/Pages/sections.aspx",
+      "https://allthingsosp.org/?p=193"
+    ],
+    "notes": "FAA owner line reads STATE OF OREGON, other name DEPARTMENT OF STATE POLICE. OSP fleet described by a third party as one Cessna 185, one 206 and two 182s (allthingsosp.org); tail-to-airframe mapping unverified. Routine traffic enforcement not documented."
+  },
+  {
+    "tail": "N427AM",
+    "icao_hex": "A515AC",
+    "faa_model": "CESSNA T182T",
+    "year_mfr": 2010,
+    "serial": "T18209018",
+    "faa_owner": "STATE OF OREGON (OREGON STATE POLICE)",
+    "faa_owner_city_state": "SALEM OR",
+    "faa_status": "Valid",
+    "faa_expiration": "12/31/2030",
+    "operator": "Oregon State Police Aviation Unit",
+    "base_icao": null,
+    "callsign": null,
+    "mission": "police_enforcement",
+    "police_unit": "state_police",
+    "secondary_mission": null,
+    "confidence": "tentative",
+    "patrol_areas": "Oregon; Fish & Wildlife support, searches and pursuits. No source places it over WA.",
+    "patrol_area_sources": [],
+    "scope": "mutual_aid",
+    "seed_status": "n/a",
+    "sources": [
+      "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N427AM",
+      "https://www.oregon.gov/osp/programs/fw/Pages/sections.aspx",
+      "https://allthingsosp.org/?p=193"
+    ],
+    "notes": "FAA owner line reads STATE OF OREGON, other name OREGON STATE POLICE. Same caveats as N2181N. OSP airframes in FAA are now N17386, N2237S, N2181N, N427AM (4)."
+  },
+  {
+    "tail": "N425EJ",
+    "icao_hex": "A50E9F",
+    "faa_model": "TEXTRON AVIATION 182T",
+    "year_mfr": 2015,
+    "serial": "18282372",
+    "faa_owner": "CITY OF PORTLAND (PORTLAND POLICE BUREAU)",
+    "faa_owner_city_state": "PORTLAND OR",
+    "faa_status": "Valid",
+    "faa_expiration": "04/30/2030",
+    "operator": "Portland Police Bureau Air Support Unit",
+    "base_icao": null,
+    "callsign": null,
+    "mission": "police_enforcement",
+    "police_unit": "city_police",
+    "secondary_mission": null,
+    "confidence": "tentative",
+    "patrol_areas": "Portland metro. Sister airframe N2163J documented circling Vancouver and Clark County WA (July 2021); no WA track documented for this tail.",
+    "patrol_area_sources": [
+      "https://oregonaviationwatch.org/articles/OAW-PDXPoliceSurveillance.php"
+    ],
+    "scope": "mutual_aid",
+    "seed_status": "n/a",
+    "sources": [
+      "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N425EJ",
+      "https://www.portland.gov/police/divisions/air-support-unit"
+    ],
+    "notes": "PPB (May 2024 release, via search summary) says the unit has a 2015 Cessna 182T bought in 2023 and a 2003 182T (N2163J, already recorded). Linking N425EJ to PPB rests on the FAA other-name line plus that description."
+  },
+  {
+    "tail": "N575RW",
+    "icao_hex": "A76288",
+    "faa_model": "CESSNA R172K",
+    "year_mfr": 1978,
+    "serial": "R1722881",
+    "faa_owner": "WASHINGTON COUNTY",
+    "faa_owner_city_state": "HILLSBORO OR",
+    "faa_status": "Valid",
+    "faa_expiration": "08/31/2028",
+    "operator": "Washington County Sheriff's Office (Air 5, callsign not tied to tail)",
+    "base_icao": null,
+    "callsign": null,
+    "mission": "police_enforcement",
+    "police_unit": "sheriff_patrol",
+    "secondary_mission": null,
+    "confidence": "tentative",
+    "patrol_areas": "Washington County OR (Sunset Highway, Beaverton, Hillsboro, SE Portland). No WA flights documented.",
+    "patrol_area_sources": [
+      "https://oregonaviationwatch.org/articles/OAW-PDXPoliceSurveillance.php",
+      "https://www.kptv.com/2026/05/06/sheriffs-plane-tracks-speeding-duii-suspect-who-crashed-hid-under-truck-banks-driveway/"
+    ],
+    "scope": "mutual_aid",
+    "seed_status": "n/a",
+    "sources": [
+      "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N575RW"
+    ],
+    "notes": "FAA owner is WASHINGTON COUNTY (no sheriff named). Oregon Aviation Watch ties N575RW to Washington County and Hillsboro; KPTV 2026-05-06 reports a WCSO plane called Air 5 on a pursuit but gives no tail. Tail-to-callsign link is inference."
+  },
+  {
+    "tail": "N4343Z",
+    "icao_hex": "A534D3",
+    "faa_model": "PIPER PA-18-150",
+    "year_mfr": 1968,
+    "serial": "18-8661",
+    "faa_owner": "HOOD RIVER COUNTY SHERIFF'S OFFICE",
+    "faa_owner_city_state": "HOOD RIVER OR",
+    "faa_status": "Valid",
+    "faa_expiration": "07/31/2029",
+    "operator": "Hood River County Sheriff's Office",
+    "base_icao": null,
+    "callsign": null,
+    "mission": "police_enforcement",
+    "police_unit": "sheriff_patrol",
+    "secondary_mission": null,
+    "confidence": "tentative",
+    "patrol_areas": "Hood River County and Columbia River Gorge (inferred from owner). No operational source found.",
+    "patrol_area_sources": [],
+    "scope": "mutual_aid",
+    "seed_status": "n/a",
+    "sources": [
+      "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N4343Z"
+    ],
+    "notes": "Only evidence is the FAA owner record (other name STATE OF OREGON DEPT OF ADMINISTRATIVE SVCS). Web search found no sheriff aviation program, so mission and use are unverified; could be a surplus or loaned aircraft."
   }
 ]
