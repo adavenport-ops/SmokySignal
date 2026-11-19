@@ -12,14 +12,22 @@ import {
   type UserZone,
 } from "@/lib/user-zones";
 import { REGIONS } from "@/lib/regions";
+import {
+  DEFAULT_ZONE_RADIUS_MI,
+  ZONE_RADII_MI,
+  defaultZoneName,
+  formatZoneCoords,
+  formatZoneRadius,
+  miToNm,
+  zonePlaceName,
+  zoneRadiusMi,
+} from "@/lib/zone-draft";
 
-const DEFAULT_RADIUS_NM = 5;
-const MIN_RADIUS_NM = 1;
-const MAX_RADIUS_NM = 25;
+const DEFAULT_RADIUS_NM = Number(miToNm(DEFAULT_ZONE_RADIUS_MI).toFixed(3));
 
 export function UserZonesManager() {
   const [zones, setZones] = useState<UserZone[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<{ id: string; what: "name" | "radius" } | null>(null);
 
   useEffect(() => {
     setZones(readUserZones());
@@ -36,11 +44,15 @@ export function UserZonesManager() {
     }
     navigator.geolocation.getCurrentPosition(
       (p) => {
+        const lat = p.coords.latitude;
+        const lon = p.coords.longitude;
         addUserZone({
-          lat: p.coords.latitude,
-          lon: p.coords.longitude,
+          lat,
+          lon,
           radiusNm: DEFAULT_RADIUS_NM,
-          label: nextLabel(zones),
+          radiusMi: DEFAULT_ZONE_RADIUS_MI,
+          label: defaultZoneName(lat, lon, zones.map((z) => z.label)),
+          place: zonePlaceName(lat, lon) ?? undefined,
         });
       },
       () => addAtPugetSound(),
@@ -116,8 +128,8 @@ export function UserZonesManager() {
             lineHeight: 1.5,
           }}
         >
-          No zones yet. Drop a 5 nm circle where you stand. Out on the
-          road, the + on the radar drops one wherever you are.
+          No zones yet. Drop a 5 mi circle where you stand. Out on the
+          road, the + on the radar adds one by name, radius and pin.
         </div>
       )}
 
@@ -125,10 +137,10 @@ export function UserZonesManager() {
         <ZoneCard
           key={z.id}
           zone={z}
-          editing={editingId === z.id}
-          onEdit={() => setEditingId(z.id)}
-          onSave={() => setEditingId(null)}
-          onCancel={() => setEditingId(null)}
+          editing={editing?.id === z.id ? editing.what : false}
+          onEdit={(what) => setEditing({ id: z.id, what })}
+          onSave={() => setEditing(null)}
+          onCancel={() => setEditing(null)}
         />
       ))}
 
@@ -144,23 +156,31 @@ function ZoneCard({
   onCancel,
 }: {
   zone: UserZone;
-  editing: boolean;
-  onEdit: () => void;
+  editing: false | "name" | "radius";
+  onEdit: (what: "name" | "radius") => void;
   onSave: () => void;
   onCancel: () => void;
 }) {
   const [label, setLabel] = useState(zone.label);
-  const [radius, setRadius] = useState(zone.radiusNm);
+  const [radiusMi, setRadiusMi] = useState<number>(zoneRadiusMi(zone));
+  const place = zone.place ?? zonePlaceName(zone.lat, zone.lon);
 
   useEffect(() => {
     if (editing) {
       setLabel(zone.label);
-      setRadius(zone.radiusNm);
+      setRadiusMi(zoneRadiusMi(zone));
     }
-  }, [editing, zone.label, zone.radiusNm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing, zone.label, zone.radiusNm, zone.radiusMi]);
+
+  // An older zone may carry a radius that isn't a chip (5 nm reads 6 mi).
+  const chips: number[] = [...ZONE_RADII_MI];
+  if (!chips.includes(zoneRadiusMi(zone))) chips.push(zoneRadiusMi(zone));
+  chips.sort((a, b) => a - b);
 
   return (
     <section
+      data-testid="zone-card"
       style={{
         background: SS_TOKENS.bg1,
         border: `.5px solid ${SS_TOKENS.hairline}`,
@@ -171,17 +191,24 @@ function ZoneCard({
         gap: 10,
       }}
     >
-      {editing ? (
+      {editing === "name" ? (
         <>
           <label className="ss-eyebrow" htmlFor={`zone-label-${zone.id}`}>
-            Label
+            Name
           </label>
           <input
             id={`zone-label-${zone.id}`}
             type="text"
             value={label}
             maxLength={40}
+            autoFocus
             onChange={(e) => setLabel(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                updateUserZone(zone.id, { label: label.trim() || zone.label });
+                onSave();
+              }
+            }}
             style={{
               minHeight: TAP_MIN,
               padding: "10px 12px",
@@ -193,25 +220,60 @@ function ZoneCard({
               fontSize: 16,
             }}
           />
-          <label className="ss-eyebrow" htmlFor={`zone-radius-${zone.id}`}>
-            Radius <span className="ss-mono">{radius.toFixed(0)} nm</span>
-          </label>
-          <input
-            id={`zone-radius-${zone.id}`}
-            type="range"
-            min={MIN_RADIUS_NM}
-            max={MAX_RADIUS_NM}
-            value={radius}
-            onChange={(e) => setRadius(Number(e.target.value))}
-            style={{ accentColor: SS_TOKENS.fg0, minHeight: TAP_MIN }}
-          />
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              type="button"
+              onClick={() => {
+                updateUserZone(zone.id, { label: label.trim() || zone.label });
+                onSave();
+              }}
+              style={primaryBtn}
+            >
+              Save
+            </button>
+            <button type="button" onClick={onCancel} style={ghostBtn}>
+              Cancel
+            </button>
+          </div>
+        </>
+      ) : editing === "radius" ? (
+        <>
+          <div style={{ fontSize: 16, fontWeight: 600, color: SS_TOKENS.fg0 }}>{zone.label}</div>
+          <div role="radiogroup" aria-label="Radius" style={{ display: "flex", gap: 8 }}>
+            {chips.map((mi) => {
+              const on = radiusMi === mi;
+              return (
+                <button
+                  key={mi}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => setRadiusMi(mi)}
+                  className="ss-mono"
+                  style={{
+                    flex: 1,
+                    minHeight: TAP_MIN,
+                    borderRadius: 999,
+                    border: `.5px solid ${on ? SS_TOKENS.cta : SS_TOKENS.hairline2}`,
+                    background: on ? SS_TOKENS.cta : "transparent",
+                    color: on ? SS_TOKENS.ctaInk : SS_TOKENS.fg1,
+                    fontSize: 14,
+                    fontWeight: on ? 600 : 500,
+                    cursor: "pointer",
+                  }}
+                >
+                  {mi} mi
+                </button>
+              );
+            })}
+          </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button
               type="button"
               onClick={() => {
                 updateUserZone(zone.id, {
-                  label: label.trim() || zone.label,
-                  radiusNm: radius,
+                  radiusNm: Number(miToNm(radiusMi).toFixed(3)),
+                  radiusMi,
                 });
                 onSave();
               }}
@@ -234,38 +296,28 @@ function ZoneCard({
               gap: 12,
             }}
           >
-            <div
-              style={{
-                fontSize: 16,
-                fontWeight: 600,
-                color: SS_TOKENS.fg0,
-              }}
-            >
+            <div style={{ fontSize: 16, fontWeight: 600, color: SS_TOKENS.fg0 }}>
               {zone.label}
             </div>
-            <div
-              className="ss-mono"
-              style={{
-                fontSize: 13,
-                color: SS_TOKENS.fg1,
-              }}
-            >
-              {zone.radiusNm.toFixed(0)} nm
+            <div className="ss-mono" style={{ fontSize: 13, color: SS_TOKENS.fg1 }}>
+              {formatZoneRadius(zone)}
             </div>
           </div>
+          {place && place !== zone.label && (
+            <div style={{ fontSize: 14, color: SS_TOKENS.fg1 }}>Near {place}</div>
+          )}
           <div
             className="ss-mono"
-            style={{
-              fontSize: 12,
-              color: SS_TOKENS.fg1,
-              letterSpacing: ".04em",
-            }}
+            style={{ fontSize: 12, color: SS_TOKENS.fg2, letterSpacing: ".04em" }}
           >
-            {zone.lat.toFixed(3)}, {zone.lon.toFixed(3)}
+            {formatZoneCoords(zone.lat, zone.lon)}
           </div>
-          <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-            <button type="button" onClick={onEdit} style={ghostBtn}>
-              Edit
+          <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+            <button type="button" onClick={() => onEdit("name")} style={ghostBtn}>
+              Rename
+            </button>
+            <button type="button" onClick={() => onEdit("radius")} style={ghostBtn}>
+              Edit radius
             </button>
             <button
               type="button"
@@ -289,13 +341,10 @@ function addAtPugetSound() {
     lat: ps.centerLat,
     lon: ps.centerLon,
     radiusNm: DEFAULT_RADIUS_NM,
-    label: nextLabel(readUserZones()),
+    radiusMi: DEFAULT_ZONE_RADIUS_MI,
+    label: defaultZoneName(ps.centerLat, ps.centerLon, readUserZones().map((z) => z.label)),
+    place: zonePlaceName(ps.centerLat, ps.centerLon) ?? undefined,
   });
-}
-
-function nextLabel(existing: UserZone[]): string {
-  const n = existing.length + 1;
-  return `Zone ${n}`;
 }
 
 const primaryBtn: React.CSSProperties = {
@@ -312,7 +361,7 @@ const primaryBtn: React.CSSProperties = {
 };
 
 const ghostBtn: React.CSSProperties = {
-  flex: 1,
+  flex: "1 1 auto",
   minHeight: TAP_PREFERRED,
   padding: "0 14px",
   borderRadius: 10,

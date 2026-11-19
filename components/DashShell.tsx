@@ -17,6 +17,7 @@ import { ProximityFlash } from "./ProximityFlash";
 import { ShareStatusButton } from "./ShareStatusButton";
 import { SpeedWarning } from "./SpeedWarning";
 import type { Aircraft, Snapshot } from "@/lib/types";
+import { displayNickname } from "@/lib/nickname-display";
 const NEAR_NM = 5;
 // Top-N airborne planes to surface in the watcher list. Three is enough
 // to convey crowdedness without dominating the screen.
@@ -201,7 +202,7 @@ function NearestRow({
                 whiteSpace: "nowrap",
               }}
             >
-              {entry.plane.nickname}
+              {displayNickname(entry.plane.nickname)}
             </span>
           )}
         </div>
@@ -278,7 +279,7 @@ function ContextLine({
   let text: string;
   let color: string;
   if (nearest && nearest.distanceNm <= NEAR_NM) {
-    const display = nearest.plane.nickname || nearest.plane.tail;
+    const display = displayNickname(nearest.plane.nickname) || nearest.plane.tail;
     text = `Heads up · ${display} ${nearest.distanceNm.toFixed(1)}nm away`;
     color = SS_TOKENS.warn;
   } else if (airborneCount > 0) {
@@ -369,7 +370,7 @@ function UpNowCard({ airborne }: { airborne: Aircraft[] }) {
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {a.nickname}
+                    {displayNickname(a.nickname)}
                   </span>
                 )}
               </div>

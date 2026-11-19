@@ -32,6 +32,9 @@ const Flight3D = nextDynamic(() => import("./Flight3D"), {
 
 const POLL_MS = 10_000;
 
+/** Why the HOT ZONES / FLIGHT PATHS pills are gone in live 3D. */
+const LIVE_3D_NOTE = "3D shows live aircraft. Switch to 2D for hot zones.";
+
 type Props = {
   airborne: Aircraft[];
   /** The radar's own plane card, shown for a tapped marker. */
@@ -138,6 +141,40 @@ export default function RadarLive3D({
           onUnavailable={onUnavailable}
         />
       </div>
+      {!selectedAc && (
+        // Hot zones and 30-day paths stay on the flat map; say so, or
+        // their pills just vanish when 3D comes on. Sits where a tapped
+        // plane card goes, left of the SPOTTED button, and never takes
+        // a tap.
+        <div
+          role="note"
+          data-testid="radar-live-3d-note"
+          style={{
+            position: "absolute",
+            left: 12,
+            right: 84,
+            bottom: cardBottom,
+            zIndex: 11,
+            display: "flex",
+            pointerEvents: "none",
+          }}
+        >
+          <span
+            style={{
+              maxWidth: 420,
+              padding: "6px 10px",
+              borderRadius: 8,
+              background: "rgba(11,13,16,0.82)",
+              border: `.5px solid ${SS_TOKENS.hairline2}`,
+              color: SS_TOKENS.fg1,
+              fontSize: 12,
+              lineHeight: 1.4,
+            }}
+          >
+            {LIVE_3D_NOTE}
+          </span>
+        </div>
+      )}
       {selectedAc && (
         <div
           data-testid="radar-live-3d-card"

@@ -12,6 +12,7 @@ import { recentLabel, recentlyUp } from "@/lib/nav";
 import { normalizeMission } from "@/lib/mission";
 import { useNavTails, useRecentActivity } from "@/lib/hooks/useNavData";
 import type { Mission, Snapshot } from "@/lib/types";
+import { displayNickname } from "@/lib/nickname-display";
 
 const SHORT_BADGE: Record<Mission, string> = {
   police: "SMOKEY",
@@ -45,8 +46,8 @@ export function RecentlyUp({ variant, snapshot = null, pathname = "", limit = 5 
 
   const lookup = useMemo(() => {
     const m = new Map<string, { nickname: string | null; role: string }>();
-    for (const t of tails ?? []) m.set(t.tail, { nickname: t.nickname, role: t.role });
-    for (const a of snapshot?.aircraft ?? []) m.set(a.tail, { nickname: a.nickname, role: a.role });
+    for (const t of tails ?? []) m.set(t.tail, { nickname: displayNickname(t.nickname), role: t.role });
+    for (const a of snapshot?.aircraft ?? []) m.set(a.tail, { nickname: displayNickname(a.nickname), role: a.role });
     return m;
   }, [tails, snapshot]);
 

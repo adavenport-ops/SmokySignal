@@ -136,7 +136,7 @@ test("test send: goes through the injected transport, marked as a test", async (
   };
   const t = await testRelayService(credFrom(r.body.manage_url as string), { ...d, relayDeps });
   assert.deepEqual(t.body, { ok: true, status: 204, retried: false });
-  assert.equal(JSON.parse(sent[0]!).embeds[0].title, "Test signal. Smokey's up.");
+  assert.equal(JSON.parse(sent[0]!).embeds[0].title, "Test signal. Smokey’s up.");
   const after = await getRelayService(credFrom(r.body.manage_url as string), d);
   assert.equal((after.body.relay as { lastStatus: number }).lastStatus, 204);
 });

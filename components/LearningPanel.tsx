@@ -184,7 +184,7 @@ function ProgressBar({ progress }: { progress: number }) {
 }
 
 function computeHeadline(state: LearningState): string {
-  if (state.stillLearning) return "Channel 19's tuning in.";
+  if (state.stillLearning) return "Channel 19’s tuning in.";
   return "Sky's quiet enough to count.";
 }
 

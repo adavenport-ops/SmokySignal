@@ -8,6 +8,7 @@ import { CORRIDORS } from "@/lib/corridor";
 import { nearestPlaceName } from "@/lib/places";
 import { crumbDate } from "@/lib/nav";
 import { ptLocal, seenPageHref } from "@/lib/seen-view";
+import { displayNickname } from "@/lib/nickname-display";
 
 export function PlaneRelated({
   tail,
@@ -67,7 +68,7 @@ export function FlightRelated({
   const links: RelatedLink[] = [
     {
       href: `/plane/${t}`,
-      label: nickname ? `${tail} · ${nickname}` : tail,
+      label: nickname ? `${tail} · ${displayNickname(nickname)}` : tail,
       blurb: "Live state, logbook and every flight",
       icon: "aircraft",
     },

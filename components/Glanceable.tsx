@@ -25,6 +25,8 @@ import { AlertsStateChip } from "./AlertsStateChip";
 import { IOSInstallPrompt } from "./IOSInstallPrompt";
 import { HomeMiniMap } from "./HomeMiniMap";
 import { ScreenAwakeToggle } from "./ScreenAwake";
+import { HomeRecent } from "./HomeRecent";
+import { displayNickname } from "@/lib/nickname-display";
 
 // Hide the activity strip when the most recent event is older than this —
 // a stale "Guardian One up · 8 hours ago" looks more like a bug than a
@@ -170,7 +172,10 @@ export function Glanceable({
             flexShrink: 1,
           }}
         >
-          <Logo size={32} wordmark />
+          {/* The sidebar carries the wordmark from 1024px (app/nav.css). */}
+          <span className="ss-home-brand">
+            <Logo size={32} wordmark />
+          </span>
           <AlertsStateChip />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -243,6 +248,8 @@ export function Glanceable({
           <ArmAlertsCallout />
 
           {others.length > 0 && <Others others={others} rider={rider} />}
+
+          <HomeRecent snapshot={snap} />
         </div>
 
         <div className="ss-home-col ss-home-col-side">
@@ -501,7 +508,7 @@ function Hero({ status }: { status: StatusState }) {
           </div>
           <LeadIdentity
             tail={status.lead.aircraft.tail}
-            nickname={status.lead.entry.nickname}
+            nickname={displayNickname(status.lead.entry.nickname)}
             operator={status.lead.entry.operator}
           />
         </>
@@ -658,7 +665,7 @@ function Others({
                         marginLeft: 6,
                       }}
                     >
-                      &ldquo;{p.nickname}&rdquo;
+                      &ldquo;{displayNickname(p.nickname)}&rdquo;
                     </span>
                   )}
                 </div>

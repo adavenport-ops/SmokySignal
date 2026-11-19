@@ -95,6 +95,8 @@ export function UserZoneLayer({ map }: { map: MaplibreMap | null }) {
       // Don't intercept if the same click hit an aircraft chevron — that
       // gesture belongs to follow mode in RadarMap.
       if (map.queryRenderedFeatures(e.point, { layers: ["aircraft"] }).length > 0) return;
+      // The add-zone sheet is waiting for a tap to drop its pin.
+      if (document.documentElement.dataset.ssPlacingZone === "1") return;
       const feat = e.features?.[0];
       const id = feat?.properties?.id;
       const label = feat?.properties?.label ?? "this zone";

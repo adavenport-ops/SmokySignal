@@ -28,7 +28,7 @@ export function PaletteChips({ active, onPick, submit = false }: Props) {
       <div
         role={submit ? undefined : "group"}
         aria-label={submit ? undefined : "Map colors"}
-        style={{ display: "flex", gap: 6, flexWrap: "wrap" }}
+        style={{ display: "flex", gap: 4, rowGap: 8, flexWrap: "wrap" }}
       >
         {PALETTE_IDS.map((id) => {
           const p = PALETTES[id];
@@ -42,49 +42,75 @@ export function PaletteChips({ active, onPick, submit = false }: Props) {
               onClick={onPick ? () => onPick(id) : undefined}
               aria-pressed={on}
               aria-label={`${p.label} colors`}
-              title={p.label}
               data-palette={id}
               style={{
-                position: "relative",
-                width: TAP_MIN,
-                height: TAP_MIN,
-                minWidth: TAP_MIN,
+                // Swatch over its name, so a rider can tell "Ice" from
+                // "High contrast" without tapping each one.
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 4,
+                width: 64,
+                minHeight: TAP_MIN,
                 padding: 0,
-                borderRadius: 10,
-                background: BASEMAP.land,
-                border: on ? `2px solid ${SS_TOKENS.fg0}` : `.5px solid ${SS_TOKENS.hairline2}`,
+                background: "transparent",
+                border: 0,
                 cursor: "pointer",
-                overflow: "hidden",
                 touchAction: "manipulation",
                 WebkitTapHighlightColor: "transparent",
               }}
             >
-              {/* Route thread, as it sits on the basemap. */}
               <span
                 aria-hidden
                 style={{
-                  position: "absolute",
-                  left: 6,
-                  right: 6,
-                  top: 11,
-                  height: 2,
-                  borderRadius: 1,
-                  background: p.route.color,
+                  position: "relative",
+                  display: "block",
+                  width: TAP_MIN,
+                  height: TAP_MIN,
+                  borderRadius: 10,
+                  background: BASEMAP.land,
+                  border: on ? `2px solid ${SS_TOKENS.fg0}` : `.5px solid ${SS_TOKENS.hairline2}`,
+                  overflow: "hidden",
+                  boxSizing: "border-box",
                 }}
-              />
-              {/* Heat ramp, low density to the core. */}
+              >
+                {/* Route thread, as it sits on the basemap. */}
+                <span
+                  style={{
+                    position: "absolute",
+                    left: 6,
+                    right: 6,
+                    top: 11,
+                    height: 2,
+                    borderRadius: 1,
+                    background: p.route.color,
+                  }}
+                />
+                {/* Heat ramp, low density to the core. */}
+                <span
+                  style={{
+                    position: "absolute",
+                    left: 6,
+                    right: 6,
+                    bottom: 7,
+                    height: 14,
+                    borderRadius: 4,
+                    background: heatGradientCss(p),
+                  }}
+                />
+              </span>
               <span
                 aria-hidden
                 style={{
-                  position: "absolute",
-                  left: 6,
-                  right: 6,
-                  bottom: 7,
-                  height: 14,
-                  borderRadius: 4,
-                  background: heatGradientCss(p),
+                  fontSize: 12,
+                  lineHeight: 1.25,
+                  textAlign: "center",
+                  color: on ? SS_TOKENS.fg0 : SS_TOKENS.fg1,
+                  fontWeight: on ? 600 : 400,
                 }}
-              />
+              >
+                {p.label}
+              </span>
             </button>
           );
         })}

@@ -39,9 +39,11 @@ import {
 } from "@/lib/radar-filter";
 import {
   HISTORY_COPY,
+  HISTORY_FLOOR,
   HISTORY_MAX_TAILS,
   assignTailColors,
   clearHistoryParams,
+  formatDayMonYear,
   formatSummaryChip,
   heatToGeoJSON,
   historyApiQuery,
@@ -82,6 +84,7 @@ import {
 import type { Flight3DPick } from "./Flight3D";
 import { Chip, Eyebrow, FlightMiniCard, PeriodPicker, useIsDesktop } from "./HistoryControls";
 import { Pill3D, hasWebGL2 } from "./View3DToggle";
+import { displayNickname } from "@/lib/nickname-display";
 
 const Flight3D = nextDynamic(() => import("./Flight3D"), {
   ssr: false,
@@ -731,7 +734,7 @@ function HistorySheet({
           <div>
             <div style={{ fontSize: 18, fontWeight: 700 }}>History</div>
             <div style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
-              Flights on record since <span className="ss-mono">Oct 16 2026</span>. Pacific dates.
+              Flights on record since <span className="ss-mono">{formatDayMonYear(HISTORY_FLOOR)}</span>. Pacific dates.
             </div>
           </div>
           <button
@@ -814,7 +817,7 @@ function HistorySheet({
                   {g.tails.map((r) => (
                     <Chip key={r.tail} active={draft.tails.includes(r.tail)} onClick={() => toggleTail(r.tail)}>
                       {r.tail}
-                      {r.nickname ? <span style={{ opacity: 0.7 }}> · {r.nickname}</span> : null}
+                      {r.nickname ? <span style={{ opacity: 0.7 }}> · {displayNickname(r.nickname)}</span> : null}
                     </Chip>
                   ))}
                 </div>

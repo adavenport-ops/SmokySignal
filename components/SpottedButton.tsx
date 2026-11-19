@@ -12,6 +12,18 @@ const STORAGE_KEY = "ss_last_spot";
 const RATE_LIMIT_MS = 30_000;
 const TABBAR_HEIGHT = 66;
 const TOAST_MS = 3500;
+/** A spot is worth a quick fix, not a perfect one: give up after 5 s. */
+const FIX_TIMEOUT_MS = 5000;
+/** A fix this fresh is good enough for a spot, and instant. */
+const FIX_MAX_AGE_MS = 30_000;
+
+type Phase = "idle" | "logging" | "done" | "failed";
+type Toast = { text: string; tone: "info" | "ok" | "fail"; retry?: boolean };
+
+function hhmm(ts: number): string {
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
 
 // Wrapping localStorage protects us against iOS Safari private-browsing
 // where the API throws on every call.
@@ -34,23 +46,48 @@ function safeWriteLastSpot(ts: number): void {
   }
 }
 
-export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
-  const [toast, setToast] = useState<string | null>(null);
+export function SpottedButton({
+  airborne,
+  toastTop = "112px",
+}: {
+  airborne: Aircraft[];
+  /** Where the status toast sits (top of the map, clear of the bottom
+   *  pill rows and the TRAIL chip). */
+  toastTop?: string;
+}) {
+  const [toast, setToast] = useState<Toast | null>(null);
   const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const phaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pulsing, setPulsing] = useState(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
     () => () => {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      if (phaseTimerRef.current) clearTimeout(phaseTimerRef.current);
     },
     [],
   );
 
-  const flash = (msg: string, ms = TOAST_MS) => {
-    setToast(msg);
+  const flash = (
+    text: string,
+    tone: Toast["tone"] = "info",
+    ms = TOAST_MS,
+    retry = false,
+  ) => {
+    setToast({ text, tone, retry });
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     toastTimerRef.current = setTimeout(() => setToast(null), ms);
+  };
+  const settle = (p: Phase) => {
+    setPhase(p);
+    if (phaseTimerRef.current) clearTimeout(phaseTimerRef.current);
+    phaseTimerRef.current = setTimeout(() => setPhase("idle"), 2500);
+  };
+  const fail = (text: string, retry = false) => {
+    flash(text, "fail", retry ? 8000 : 5000, retry);
+    settle("failed");
   };
 
   const onTap = async () => {
@@ -66,23 +103,25 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
     // 1) rate limit
     const last = safeReadLastSpot();
     if (last > 0 && Date.now() - last < RATE_LIMIT_MS) {
-      flash("Easy there — wait a bit");
+      flash("Spot logged already. Wait 30 s for the next one.");
       return;
     }
     // 2) feature check
     if (!navigator.geolocation) {
-      flash("Need location to log a spot");
+      fail("Need location to log a spot.");
       return;
     }
 
+    // Instant state, same frame as the tap.
     setBusy(true);
-    flash("Locating…", 8000);
+    setPhase("logging");
+    flash("Logging…", "info", FIX_TIMEOUT_MS + 10_000);
     try {
       const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
-          maximumAge: 0,
-          timeout: 8000,
+          maximumAge: FIX_MAX_AGE_MS,
+          timeout: FIX_TIMEOUT_MS,
         });
       });
       const riderLat = pos.coords.latitude;
@@ -115,23 +154,26 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
       });
       if (r.status === 429) {
         // Server-side per-IP limit (lib/rate-limit.ts).
-        flash("Too many spots — wait a minute and try again");
+        fail("Too many spots. Wait a minute.");
         return;
       }
       if (!r.ok) {
-        flash("Spot didn't save");
+        fail("Spot didn't save.", true);
         return;
       }
       safeWriteLastSpot(ts);
-      flash("Spotted, thanks");
+      flash(`Spot logged, ${hhmm(ts)}. Thanks.`, "ok");
+      settle("done");
     } catch (e) {
       const code = (e as GeolocationPositionError | undefined)?.code;
       if (code === 1 /* PERMISSION_DENIED */) {
-        flash("Location denied — enable in Settings to log spots");
+        fail("Location is off. Allow it in your browser to log spots.");
       } else if (code === 3 /* TIMEOUT */) {
-        flash("Location took too long — try again");
+        fail("No location fix in 5 s.", true);
+      } else if (code === 2 /* POSITION_UNAVAILABLE */) {
+        fail("No location fix.", true);
       } else {
-        flash("Couldn't get a fix");
+        fail("Spot didn't save.", true);
       }
     } finally {
       setBusy(false);
@@ -146,8 +188,14 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
       >
         <button
         type="button"
-        aria-label="Log a spot of an airborne aircraft"
+        aria-label={
+          phase === "logging"
+            ? "Logging your spot"
+            : "Log a spot of an airborne aircraft"
+        }
         aria-busy={busy}
+        data-phase={phase}
+        data-testid="spotted-button"
         onClick={onTap}
         style={{
           position: "fixed",
@@ -167,7 +215,9 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
           touchAction: "manipulation",
           // Suppresses the iOS gray flash; we have our own scale animation.
           WebkitTapHighlightColor: "transparent",
-          opacity: busy ? 0.85 : 1,
+          opacity: 1,
+          outline: phase === "failed" ? `2px solid ${SS_TOKENS.fg0}` : undefined,
+          outlineOffset: 3,
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
@@ -177,33 +227,102 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
           transition: "transform 200ms ease, opacity 200ms ease",
         }}
       >
-        <BinocularsIcon />
+        {phase === "logging" ? (
+          <Spinner />
+        ) : phase === "done" ? (
+          <CheckIcon />
+        ) : (
+          <BinocularsIcon />
+        )}
         </button>
       </Tooltip>
       {toast && (
         <div
-          role="status"
+          role={toast.tone === "fail" ? "alert" : "status"}
+          data-testid="spotted-toast"
+          data-tone={toast.tone}
           style={{
-            position: "fixed",
-            left: "50%",
-            transform: "translateX(-50%)",
-            bottom: `calc(var(--ss-tabbar-h, ${TABBAR_HEIGHT}px) + 100px)`,
+            // Top of the map, under the picker row and between the + and
+            // the compass: clear of the TRAIL chip and the pill rows.
+            // Absolute inside the radar's fixed <main>, so it centres on
+            // the map, not under the desktop sidebar.
+            position: "absolute",
+            top: toastTop,
+            left: 64,
+            right: 56,
             zIndex: 26,
-            padding: "8px 14px",
-            borderRadius: 999,
-            background: "rgba(11,13,16,0.92)",
-            color: SS_TOKENS.fg0,
-            border: `.5px solid ${SS_TOKENS.hairline2}`,
-            fontFamily: "var(--font-mono)",
-            fontSize: 12,
-            letterSpacing: ".04em",
-            whiteSpace: "nowrap",
+            display: "flex",
+            justifyContent: "center",
+            pointerEvents: "none",
           }}
         >
-          {toast}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              maxWidth: 420,
+              minHeight: 44,
+              padding: toast.retry ? "0 0 0 12px" : "0 12px",
+              borderRadius: 10,
+              background: "rgba(21,24,29,0.96)",
+              color: SS_TOKENS.fg0,
+              border: `.5px solid ${
+                toast.tone === "ok" ? SS_TOKENS.clear : SS_TOKENS.hairline2
+              }`,
+              fontSize: 13,
+              lineHeight: 1.3,
+              pointerEvents: "auto",
+            }}
+          >
+            <span>{toast.text}</span>
+            {toast.retry && (
+              <button
+                type="button"
+                onClick={() => {
+                  setToast(null);
+                  void onTap();
+                }}
+                style={{
+                  minHeight: 44,
+                  minWidth: 44,
+                  padding: "0 12px",
+                  background: "transparent",
+                  border: 0,
+                  color: SS_TOKENS.sky,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  touchAction: "manipulation",
+                }}
+              >
+                Try again
+              </button>
+            )}
+          </div>
         </div>
       )}
     </>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden>
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeOpacity="0.3" strokeWidth="2.5" />
+      <path d="M21 12a9 9 0 0 0-9-9" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
+      </path>
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5 12.5 10 17.5 19 7" />
+    </svg>
   );
 }
 

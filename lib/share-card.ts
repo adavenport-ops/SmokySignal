@@ -80,14 +80,14 @@ export function statusCardText(
     const n = Math.max(1, status.alertCount);
     return {
       tone: "alert",
-      headline: "Smokey's up.",
+      headline: "Smokey’s up.",
       detail: `${n} airborne.`,
       stamp,
     };
   }
   return {
     tone: "clear",
-    headline: "Smokey's down.",
+    headline: "Smokey’s down.",
     detail: "No bird up over Washington.",
     stamp,
   };
@@ -118,9 +118,9 @@ export function statusShareText(
   const time = `${ptStamp(fetchedAtMs).time} PT.`;
   if (status.kind === "alert") {
     const region = leadRegionLabel(status);
-    const head = region ? `Smokey's up over ${region}.` : "Smokey's up.";
+    const head = region ? `Smokey’s up over ${region}.` : "Smokey’s up.";
     const count = status.alertCount > 1 ? ` ${status.alertCount} airborne.` : "";
     return `${head}${count} ${time}`;
   }
-  return `Smokey's down. ${time}`;
+  return `Smokey’s down. ${time}`;
 }

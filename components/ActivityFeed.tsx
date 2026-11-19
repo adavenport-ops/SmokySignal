@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { displayNicknameText } from "@/lib/nickname-display";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { ActivityEntry, ActivityKind } from "@/lib/activity";
 import { fmtAgoTs, fmtRelativeDay, formatTs, formatTsBare } from "@/lib/time";
@@ -104,6 +105,7 @@ function Empty() {
 
 function List({ entries }: { entries: ActivityEntry[] }) {
   const days = useMemo(() => groupByDay(groupActivity(entries)), [entries]);
+  const hasOnWatch = days.some((d) => d.rows.some((r) => r.kind === "first_seen"));
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {days.map((d) => (
@@ -141,7 +143,33 @@ function List({ entries }: { entries: ActivityEntry[] }) {
           </div>
         </section>
       ))}
+      {hasOnWatch && <OnWatchLegend />}
     </div>
+  );
+}
+
+/** "On watch" reads like jargon on its own; one line says what it means. */
+function OnWatchLegend() {
+  return (
+    <p
+      data-testid="activity-on-watch-legend"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        margin: 0,
+        padding: "0 2px",
+        fontSize: 13,
+        lineHeight: 1.45,
+        color: SS_TOKENS.fg1,
+      }}
+    >
+      <KindIcon kind="first_seen" />
+      <span>
+        <strong style={{ color: SS_TOKENS.fg0, fontWeight: 600 }}>On watch</strong>{" "}
+        means the tail was already up when we first picked it up, so there is no takeoff time.
+      </span>
+    </p>
   );
 }
 
@@ -179,7 +207,7 @@ function Row({ row, first }: { row: ActivityRow; first: boolean }) {
             lineHeight: 1.4,
           }}
         >
-          {rowTitle(row)}
+          {displayNicknameText(rowTitle(row))}
         </div>
         {place && (
           <div
@@ -259,6 +287,9 @@ function KindIcon({ kind }: { kind: ActivityKind }) {
           background: "rgba(125,211,252,0.14)",
           color: SS_TOKENS.sky,
         }}
+        role="img"
+        aria-label="On watch: already up when first seen"
+        title="On watch: already up when we first picked it up"
       >
         ✦
       </span>

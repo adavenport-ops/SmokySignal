@@ -281,7 +281,7 @@ function composePayload(args: DispatchTakeoffArgs): PushPayload {
   // Only police read "Smokey's up." Every other mission names itself.
   switch (mission) {
     case "police":
-      title = "Smokey's up.";
+      title = "Smokey’s up.";
       body =
         args.policeUnit === "wsp"
           ? trimBody(`${name} watching. ${altStr}.`)

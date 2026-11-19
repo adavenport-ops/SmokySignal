@@ -310,7 +310,7 @@ test("discord body on the wire: embed, username, no mentions", async () => {
   const body = JSON.parse(hitsFor(r).pop()!.body);
   assert.equal(body.username, "SmokySignal");
   assert.deepEqual(body.allowed_mentions, { parse: [] });
-  assert.equal(body.embeds[0].title, "Smokey's up.");
+  assert.equal(body.embeds[0].title, "Smokey’s up.");
   assert.equal(body.embeds[0].color, 0xff7a1a);
 });
 

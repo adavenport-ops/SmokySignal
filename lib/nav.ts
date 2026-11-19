@@ -339,7 +339,7 @@ export function navSections(nowMs: number = Date.now()): NavSection[] {
           href: "/settings",
           icon: "settings",
           rail: "Settings",
-          keywords: ["preferences", "options", "display", "screen awake", "configure"],
+          keywords: ["preferences", "options", "configure"],
         },
       ],
     },

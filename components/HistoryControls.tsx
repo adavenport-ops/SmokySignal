@@ -18,6 +18,7 @@ import {
   type DateRange,
 } from "@/lib/history-view";
 import type { HistorySession } from "@/lib/history-core";
+import { displayNickname } from "@/lib/nickname-display";
 
 /** Side panel instead of bottom sheet from this width up. */
 export const DESKTOP_MIN_PX = 768;
@@ -244,7 +245,7 @@ export function FlightMiniCard({
           {c.tail}
         </span>
         {c.nickname && (
-          <span style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>&ldquo;{c.nickname}&rdquo;</span>
+          <span style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>&ldquo;{displayNickname(c.nickname)}&rdquo;</span>
         )}
         <button
           type="button"

@@ -50,7 +50,7 @@ export function isAlertMission(role: unknown): boolean {
 }
 
 const TITLES: Record<Mission, [up: string, down: string]> = {
-  police: ["Smokey's up.", "Smokey's down."],
+  police: ["Smokey’s up.", "Smokey’s down."],
   federal_le: ["Federal up.", "Federal down."],
   sar: ["SAR run.", "SAR back on the ground."],
   wildfire: ["Fire run.", "Fire bird down."],

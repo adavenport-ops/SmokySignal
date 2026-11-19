@@ -52,6 +52,13 @@ export function headingLabel(bearing: number): string {
   return String(h).padStart(3, "0");
 }
 
+/** The compass button's accessible name: the live heading, then what a
+ *  tap does. "Compass, heading 342°. Tap to face north." Whole degrees,
+ *  unpadded, so a screen reader says "five degrees", not "zero zero five". */
+export function compassAriaLabel(bearing: number): string {
+  return `Compass, heading ${Number(headingLabel(bearing))}°. Tap to face north.`;
+}
+
 export type CameraAction = "rotate-left" | "rotate-right" | "tilt-up" | "tilt-down";
 
 /** Q / E rotate, W / S tilt. Modifier chords are left to the browser. */
@@ -128,6 +135,9 @@ export function enable3DGestures(map: GestureMap): void {
 // ─── gesture hint ────────────────────────────────────────────────────
 
 export const HINT_STORAGE_KEY = "ss_3d_gesture_hint_seen";
+
+/** How long the hint stays up before it hides itself, ms. */
+export const HINT_MS = 4000;
 
 export const GESTURE_HINT = {
   desktop: "Right-drag or Ctrl-drag to rotate · Shift-drag to tilt",

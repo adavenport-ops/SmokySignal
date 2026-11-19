@@ -1,13 +1,19 @@
 "use client";
 
 // The More sheet: what the More tab opens on phones, and the /about page
-// for direct links on any screen. Search on top (the same index as ⌘K,
-// results inline), the recently-up tails, then the same six sections as
-// the desktop sidebar (lib/nav.ts), rows >= 48px.
+// for direct links on any screen. Search on top (the same index as ⌘K),
+// the recently-up tails, then the same six sections as the desktop
+// sidebar (lib/nav.ts), rows >= 48px.
+//
+// Typing filters the sections in place (lib/nav-index.ts
+// filterNavSections, the palette's scorer). Matches that are not pages
+// (tails with their jump-offs, settings, roads, towns) show in the card
+// under the field. Nothing anywhere: "No matches".
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { navSections, showNewBadge, type NavItem } from "@/lib/nav";
+import { filterNavSections } from "@/lib/nav-index";
 import { useNavSeen } from "@/lib/hooks/useNavData";
 import { NavIcon } from "./NavIcons";
 import { RecentlyUp } from "./RecentlyUp";
@@ -18,13 +24,33 @@ export function MoreSheet() {
   const [seen, markSeen, ready] = useNavSeen();
   const [now, setNow] = useState(0);
   useEffect(() => setNow(Date.now()), []);
+  const [query, setQuery] = useState("");
+  const [other, setOther] = useState({ count: 0, loading: false });
+  const filtering = query.trim().length > 0;
+  const shown = useMemo(() => filterNavSections(sections, query), [sections, query]);
+  const nothing = filtering && shown.length === 0 && other.count === 0 && !other.loading;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 22 }} data-testid="more-sheet">
-      <SearchPanel inline />
+      <SearchPanel
+        inline
+        query={query}
+        onQueryChange={setQuery}
+        excludeKinds={["page"]}
+        hideEmpty
+        onResults={(count, loading) =>
+          setOther((o) => (o.count === count && o.loading === loading ? o : { count, loading }))
+        }
+      />
+
+      {nothing ? (
+        <p className="ss-more-empty" role="status" data-testid="more-no-matches">
+          No matches. Try a tail, a road or a town.
+        </p>
+      ) : null}
 
       <nav aria-label="Site sections" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        {sections.map((g) => (
+        {shown.map((g) => (
           <section key={g.id} className="ss-hub-group" data-hub-group={g.id} aria-labelledby={`hub-${g.id}`}>
             <h2 id={`hub-${g.id}`} className="ss-eyebrow" style={{ margin: 0 }}>
               {g.title}
@@ -39,7 +65,7 @@ export function MoreSheet() {
                 />
               ))}
             </div>
-            {g.id === "aircraft" ? (
+            {g.id === "aircraft" && !filtering ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
                 <h3 id="hub-recent" style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--ss-fg1)" }}>
                   Recently up

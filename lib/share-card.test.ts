@@ -62,7 +62,7 @@ test("statusCardText: two watchers up", () => {
   const t = statusCardText(computeStatus(s, fleet), s.fetched_at, Date.now());
   assert.deepEqual(t, {
     tone: "alert",
-    headline: "Smokey's up.",
+    headline: "Smokey’s up.",
     detail: "2 airborne.",
     stamp: "14:20 PT · 2026-11-18",
   });
@@ -72,7 +72,7 @@ test("statusCardText: nothing up reads down, still stamped", () => {
   const s = snap([]);
   const t = statusCardText(computeStatus(s, fleet), s.fetched_at, Date.now());
   assert.equal(t.tone, "clear");
-  assert.equal(t.headline, "Smokey's down.");
+  assert.equal(t.headline, "Smokey’s down.");
   assert.equal(t.stamp, "14:20 PT · 2026-11-18");
 });
 
@@ -81,7 +81,7 @@ test("statusCardText: a fire run alone reads down (only police count)", () => {
   // airframe and counts as Smokey since the 2026-11 taxonomy.)
   const s = snap([{ tail: "N338WN", lat: 47.9, lon: -122.2 }]);
   const t = statusCardText(computeStatus(s, fleet), s.fetched_at, Date.now());
-  assert.equal(t.headline, "Smokey's down.");
+  assert.equal(t.headline, "Smokey’s down.");
 });
 
 test("statusCardText: no snapshot reads 'No signal.' stamped with now", () => {
@@ -112,7 +112,7 @@ test("statusShareText: one up with a position names the region", () => {
   const s = snap([{ tail: "N305DK", lat: 47.45, lon: -122.3 }]);
   assert.equal(
     statusShareText(computeStatus(s, fleet), s.fetched_at),
-    "Smokey's up over Puget Sound. 14:20 PT.",
+    "Smokey’s up over Puget Sound. 14:20 PT.",
   );
 });
 
@@ -123,7 +123,7 @@ test("statusShareText: several up adds the count", () => {
   ]);
   assert.equal(
     statusShareText(computeStatus(s, fleet), s.fetched_at),
-    "Smokey's up over Puget Sound. 2 airborne. 14:20 PT.",
+    "Smokey’s up over Puget Sound. 2 airborne. 14:20 PT.",
   );
 });
 
@@ -131,7 +131,7 @@ test("statusShareText: up without a position fix drops the region", () => {
   const s = snap([{ tail: "N305DK" }]);
   assert.equal(
     statusShareText(computeStatus(s, fleet), s.fetched_at),
-    "Smokey's up. 14:20 PT.",
+    "Smokey’s up. 14:20 PT.",
   );
 });
 
@@ -139,6 +139,6 @@ test("statusShareText: down", () => {
   const s = snap([]);
   assert.equal(
     statusShareText(computeStatus(s, fleet), s.fetched_at),
-    "Smokey's down. 14:20 PT.",
+    "Smokey’s down. 14:20 PT.",
   );
 });

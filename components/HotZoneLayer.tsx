@@ -89,6 +89,12 @@ type Props = {
   suppressed?: boolean;
   /** Palette the server rendered with (ss_palette cookie). */
   initialPalette?: PaletteId;
+  /** Top of the LAYERS button, a map control in the top-left column
+   *  under the + (the bottom pill row has no room beside SPOTTED). */
+  layersTop?: number;
+  /** Space the bottom overlays take, so the open panel stops above
+   *  them (CSS length). */
+  layersBottomReserve?: string;
 };
 
 export function HotZoneLayer({
@@ -97,6 +103,8 @@ export function HotZoneLayer({
   learning,
   suppressed = false,
   initialPalette,
+  layersTop = 156,
+  layersBottomReserve = "180px",
 }: Props) {
   const [palette, setPalette] = useRadarPalette(initialPalette);
   const paletteRef = useRef<RadarPalette>(palette);
@@ -574,27 +582,40 @@ export function HotZoneLayer({
             {flightPathsEnabled ? "● FLIGHT PATHS" : "○ FLIGHT PATHS"}
           </button>
         </Tooltip>
-        <Tooltip side="top" content="Filter by category, operator, or tail.">
+      </div>
+      )}
+
+      {!suppressed && (
+        <Tooltip side="right" content="Map colors, layers and filters.">
           <button
             type="button"
             onClick={() => setPanelOpen((v) => !v)}
-            aria-label="Radar filters"
+            aria-label="Layers"
             aria-expanded={panelOpen}
+            data-testid="radar-layers-toggle"
             className="ss-mono"
             style={{
               ...pillStyle(panelOpen ? SS_TOKENS.fg0 : SS_TOKENS.fg1),
-              padding: "8px 10px",
+              position: "absolute",
+              left: 12,
+              top: layersTop,
+              zIndex: 12,
+              minWidth: 44,
+              padding: "0 14px 0 12px",
+              gap: 6,
+              background: panelOpen ? "rgba(30,34,41,0.94)" : "rgba(11,13,16,0.78)",
             }}
           >
-            {panelOpen ? "▴" : "▾"}
+            <LayersIcon />
+            LAYERS
           </button>
         </Tooltip>
-      </div>
       )}
 
       {panelOpen && !suppressed && (
         <FilterPanel
-          bottom={offsetCss(44)}
+          top={layersTop + 52}
+          maxHeight={`calc(100% - ${layersTop + 52}px - ${layersBottomReserve})`}
           filter={filter}
           onChange={setFilter}
           onClose={() => setPanelOpen(false)}
@@ -660,4 +681,25 @@ function markPalette(map: MaplibreMap, p: RadarPalette): void {
   } catch {
     /* map torn down */
   }
+}
+
+/** Stacked-sheets glyph for the LAYERS pill. 1.5 px stroke, per the brand. */
+function LayersIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 3 2.5 8 12 13l9.5-5L12 3Z" />
+      <path d="m2.5 12.5 9.5 5 9.5-5" />
+      <path d="m2.5 17 9.5 5 9.5-5" />
+    </svg>
+  );
 }

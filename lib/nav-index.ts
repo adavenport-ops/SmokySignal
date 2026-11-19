@@ -16,8 +16,9 @@
 import { CORRIDORS } from "./corridor";
 import { SEEN_PLACES } from "./seen-view";
 import { TOWNS } from "./towns";
-import { allNavItems } from "./nav";
+import { allNavItems, type NavItem, type NavSection } from "./nav";
 import { missionLabel } from "./role-display";
+import { displayNickname } from "./nickname-display";
 
 export type SearchKind = "page" | "setting" | "road" | "aircraft" | "town" | "place";
 
@@ -78,26 +79,37 @@ export function pageEntries(nowMs: number = Date.now()): SearchEntry[] {
 }
 
 /**
- * Settings that live on a section of a page. The anchors are the section
- * ids on /settings (Display → Map palette, Riding → Speed warning) and
- * /settings/alerts (components/AlertsSettings.tsx and the display
- * settings below it).
+ * Settings that live on a section of a page. Everything about how the app
+ * looks (time format, contrast, map colors, default region, keep screen
+ * awake) sits in the Display section on /settings (#display); speed
+ * warning has its own section there; alert settings live on
+ * /settings/alerts (components/AlertsSettings.tsx).
  */
+export const DISPLAY_ANCHOR = "/settings#display";
+
 export const SETTING_ENTRIES: ReadonlyArray<SearchEntry> = [
+  {
+    id: "setting:display",
+    kind: "setting",
+    title: "Display",
+    subtitle: "Time format, contrast, map colors, region, screen awake",
+    href: DISPLAY_ANCHOR,
+    keywords: ["display", "appearance", "look", "screen", "display settings"],
+  },
   {
     id: "setting:map-palette",
     kind: "setting",
-    title: "Map palette",
-    subtitle: "Colors for the radar heat and tracks",
-    href: "/settings#map-palette",
-    keywords: ["palette", "map colors", "map colours", "colors", "colours", "color scheme", "heat colors", "colorblind", "theme"],
+    title: "Map colors",
+    subtitle: "Palette for the radar heat and tracks",
+    href: DISPLAY_ANCHOR,
+    keywords: ["palette", "map palette", "map colors", "map colours", "colors", "colours", "color scheme", "heat colors", "colorblind", "theme"],
   },
   {
     id: "setting:contrast",
     kind: "setting",
     title: "Contrast",
     subtitle: "Normal or high contrast, still dark",
-    href: "/settings/alerts#contrast",
+    href: DISPLAY_ANCHOR,
     keywords: ["contrast", "high contrast", "glare", "sun", "legibility", "readability"],
   },
   {
@@ -123,16 +135,16 @@ export const SETTING_ENTRIES: ReadonlyArray<SearchEntry> = [
     kind: "setting",
     title: "Time format",
     subtitle: "24-hour or 12-hour clock",
-    href: "/settings/alerts#time-format",
+    href: DISPLAY_ANCHOR,
     keywords: ["time format", "24-hour", "12-hour", "clock", "am pm", "military time"],
   },
   {
     id: "setting:region",
     kind: "setting",
-    title: "Region",
-    subtitle: "Where the radar centers",
-    href: "/settings/alerts#region",
-    keywords: ["region", "area", "puget sound", "spokane", "east wa", "home region"],
+    title: "Default region",
+    subtitle: "Where the radar opens",
+    href: DISPLAY_ANCHOR,
+    keywords: ["region", "default region", "area", "puget sound", "spokane", "east wa", "home region"],
   },
   {
     id: "setting:zones",
@@ -179,8 +191,8 @@ export const SETTING_ENTRIES: ReadonlyArray<SearchEntry> = [
     kind: "setting",
     title: "Keep screen awake",
     subtitle: "Hold the screen on while open",
-    href: "/settings",
-    keywords: ["screen awake", "wake lock", "stay on", "sleep", "display"],
+    href: DISPLAY_ANCHOR,
+    keywords: ["screen awake", "keep screen awake", "wake lock", "stay on", "screen sleep"],
   },
 ];
 
@@ -239,7 +251,7 @@ export function tailEntries(tails: ReadonlyArray<NavIndexTail>): SearchEntry[] {
   for (const t of tails) {
     if (!t || typeof t.tail !== "string" || !t.tail) continue;
     const mission = missionLabel(t.role);
-    const parts = [t.nickname, t.operator, mission].filter((x): x is string => Boolean(x));
+    const parts = [displayNickname(t.nickname), t.operator, mission].filter((x): x is string => Boolean(x));
     out.push({
       id: `aircraft:${t.tail}`,
       kind: "aircraft",
@@ -346,6 +358,9 @@ export function scoreEntry(query: string, e: SearchEntry): number {
   return Math.max(whole, (sum / tokens.length) * 0.85);
 }
 
+/** Lowest score that counts as a match. */
+const MATCH_FLOOR = 20;
+
 /** Shown before the rider types anything. */
 const DEFAULT_IDS = [
   "page:radar",
@@ -370,7 +385,7 @@ export function searchNav(index: ReadonlyArray<SearchEntry>, query: string, limi
   const scored: SearchResult[] = [];
   for (const e of index) {
     const score = scoreEntry(query, e);
-    if (score >= 20) scored.push({ ...e, score });
+    if (score >= MATCH_FLOOR) scored.push({ ...e, score });
   }
   scored.sort(
     (a, b) =>
@@ -379,4 +394,32 @@ export function searchNav(index: ReadonlyArray<SearchEntry>, query: string, limi
       a.title.localeCompare(b.title),
   );
   return scored.slice(0, limit);
+}
+
+// ─── More sheet filter ─────────────────────────────────────────────────
+
+function itemEntry(it: NavItem): SearchEntry {
+  return {
+    id: `page:${it.id}`,
+    kind: "page",
+    title: it.label,
+    subtitle: it.blurb,
+    href: it.href,
+    keywords: it.keywords ?? [],
+  };
+}
+
+/**
+ * The More sheet's sections filtered by a query: the same scorer and
+ * threshold as searchNav, items kept in their section order, empty
+ * sections dropped. An empty query returns the sections unchanged.
+ */
+export function filterNavSections(sections: ReadonlyArray<NavSection>, query: string): NavSection[] {
+  if (!compact(query)) return sections.slice();
+  const out: NavSection[] = [];
+  for (const s of sections) {
+    const items = s.items.filter((it) => scoreEntry(query, itemEntry(it)) >= MATCH_FLOOR);
+    if (items.length) out.push({ ...s, items });
+  }
+  return out;
 }

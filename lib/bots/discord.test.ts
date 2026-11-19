@@ -82,7 +82,7 @@ test("buildStatusEmbed: down is green, never orange; stale is grey", () => {
   assert.equal(down.title, "ALL CLEAR");
   assert.equal(down.color, EMBED_COLOR.clear);
   assert.notEqual(down.color, EMBED_COLOR.alert);
-  assert.match(down.description, /^Smokey's down\./);
+  assert.match(down.description, /^Smokey’s down\./);
 
   // Non-Smokey up alone: still ALL CLEAR, footnote only.
   const fire = buildStatusEmbed(statusViewFromSnapshot(snap([{ tail: "N338WN", lat: 47, lon: -120.5 }]), T + 5_000));

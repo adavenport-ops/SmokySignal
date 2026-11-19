@@ -3094,10 +3094,12 @@ test.describe("p14 live-prod audit · full navigation", () => {
       const search = await page.locator('[data-testid="more-sheet"] input[role="combobox"]').isVisible();
       await page.locator('[data-testid="more-sheet"] input[role="combobox"]').fill("telegram");
       await page.waitForTimeout(300);
+      // Typing filters the sections in place (fix/walk-a): the Telegram
+      // row is the first link left in the site sections.
       const first = await page
-        .locator('[data-testid="more-sheet"] [role="option"]')
+        .locator('[data-testid="more-sheet"] nav[aria-label="Site sections"] a[data-nav-id]')
         .first()
-        .getAttribute("data-href")
+        .getAttribute("href")
         .catch(() => null);
       const pass =
         JSON.stringify(headings.map((h) => h.trim().toLowerCase())) ===

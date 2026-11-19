@@ -8,8 +8,8 @@ export function ContrastSetting({ current }: { current: ContrastMode }) {
       id="contrast"
       style={{
         background: SS_TOKENS.bg1,
-        border: `.5px solid ${SS_TOKENS.hairline}`,
-        borderRadius: 14,
+        border: `.5px solid ${SS_TOKENS.hairline2}`,
+        borderRadius: 12,
         padding: "16px 18px",
         display: "flex",
         flexDirection: "column",
@@ -17,25 +17,12 @@ export function ContrastSetting({ current }: { current: ContrastMode }) {
       }}
     >
       <div>
-        <div
-          className="ss-mono"
-          style={{
-            fontSize: 12,
-            color: SS_TOKENS.fg1,
-            letterSpacing: ".12em",
-            textTransform: "uppercase",
-            marginBottom: 6,
-          }}
-        >
-          Display
-        </div>
         <h2
           style={{
-            fontSize: 18,
-            fontWeight: 700,
+            fontSize: 16,
+            fontWeight: 600,
             color: SS_TOKENS.fg0,
             margin: 0,
-            letterSpacing: "-.01em",
           }}
         >
           Contrast
@@ -45,7 +32,7 @@ export function ContrastSetting({ current }: { current: ContrastMode }) {
             fontSize: 13,
             color: SS_TOKENS.fg1,
             lineHeight: 1.5,
-            marginTop: 6,
+            marginTop: 4,
             marginBottom: 0,
           }}
         >
