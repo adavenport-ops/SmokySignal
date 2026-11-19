@@ -17,15 +17,11 @@
 // is the actual "you're about to get a ticket" signal worth surfacing.
 
 import { haversineNm } from "./geo";
-import type { Aircraft, FleetRole } from "./types";
+import type { Aircraft } from "./types";
+import { countsAsSmokey } from "./mission";
 import type { HotZone } from "./hotzones";
 
 // km per nautical mile (for the zone-radius check). 1 nm ≈ 1.852 km.
-const ALERT_ROLES: ReadonlySet<FleetRole> = new Set([
-  "smokey",
-  "patrol",
-  "unknown",
-]);
 
 // GPS speed jitters by ~2 mph at highway speeds. Don't fire on +1.
 const SPEED_TOLERANCE_MPH = 2;
@@ -75,7 +71,7 @@ export function evaluateWarning(
   for (const a of input.airborneAircraft) {
     if (!a.airborne) continue;
     if (a.lat == null || a.lon == null) continue;
-    if (!ALERT_ROLES.has(a.role)) continue;
+    if (!countsAsSmokey(a)) continue;
     const d = haversineNm(input.riderLat, input.riderLon, a.lat, a.lon);
     if (nearestBirdMi == null || d < nearestBirdMi) nearestBirdMi = d;
   }

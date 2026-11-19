@@ -6,6 +6,7 @@ import { useAircraft } from "@/lib/hooks/useAircraft";
 import { useRiderPos } from "@/lib/hooks/useRiderPos";
 import { SS_TOKENS } from "@/lib/tokens";
 import { SMOKY_TAIL } from "@/lib/seed";
+import { countsAsSmokey } from "@/lib/mission";
 import { DEFAULT_SPEED_LIMIT_MPH, haversineNm } from "@/lib/geo";
 import { evaluateWarning } from "@/lib/speed-warning";
 import { bucketDistanceNm, bucketOverLimit } from "@/lib/dryrun-payload";
@@ -222,7 +223,7 @@ export function DashShell({ initial, initialActivity, mockOn = false }: Props) {
         active={
           nearest != null &&
           nearest.distanceNm <= NEAR_NM &&
-          (nearest.plane.role === "smokey" || nearest.plane.role === "patrol")
+          countsAsSmokey(nearest.plane)
         }
       />
     </main>

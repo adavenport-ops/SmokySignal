@@ -14,6 +14,8 @@ import { createHash } from "node:crypto";
 import { getRedis } from "../cache";
 import {
   DEFAULT_PREFS,
+  effectiveMissions,
+  tierForMissions,
   type AlertPrefs,
   type StoredSubscription,
   type UserZoneSpec,
@@ -79,8 +81,10 @@ function sanitizeZoneIds(v: unknown): string[] | "any" {
  */
 function mergePrefs(partial?: Partial<AlertPrefs>): AlertPrefs {
   if (!partial) return { ...DEFAULT_PREFS };
+  const missions = effectiveMissions(partial);
   const merged: AlertPrefs = {
-    tier: partial.tier === "all" ? "all" : "alert_only",
+    tier: tierForMissions(missions),
+    missions,
     zones: sanitizeZoneIds(partial.zones),
     quiet_start_h: clampHour(partial.quiet_start_h, DEFAULT_PREFS.quiet_start_h),
     quiet_end_h: clampHour(partial.quiet_end_h, DEFAULT_PREFS.quiet_end_h),

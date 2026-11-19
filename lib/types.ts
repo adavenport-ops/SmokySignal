@@ -1,15 +1,50 @@
 /**
- * Role drives the home + radar status pill via lib/status.ts. Only smokey
- * (speed-enforcement fixed-wing) and patrol (multi-role helicopters) trigger
- * the alert pill; sar / transport stay green; unknown is treated as alert
- * (conservative default for tails we haven't classified yet).
+ * Mission taxonomy. Drives the home + radar status pill via lib/status.ts,
+ * push defaults, radar filters and every rider-facing badge.
+ *
+ *   police     → "SMOKEY"           (the only class that reads SMOKEY UP)
+ *   federal_le → "FEDERAL"          (CBP Air and Marine Operations)
+ *   sar        → "SEARCH & RESCUE"
+ *   wildfire   → "WILDFIRE"         (DNR, fire districts)
+ *   medevac    → "MEDEVAC"
+ *   survey     → "SURVEY"
+ *   transport  → "TRANSPORT"        (incl. the WSP-flown King Air)
+ *   unknown    → "UNCONFIRMED"
+ *
+ * Owner decision (2026-11): "Smokey" is every police aircraft, meaning WSP,
+ * county sheriffs, any city or tribal police, plus police mutual-aid
+ * aircraft from OR / ID. Military is out of the registry entirely.
+ *
+ * The rider labels live in lib/role-display.ts. Legacy role values
+ * (smokey / patrol / sar / transport / unknown) still parse through
+ * normalizeMission() in lib/mission.ts so old KV registry rows, old
+ * activity events and old push prefs keep working.
  */
-export type FleetRole =
-  | "smokey"
-  | "patrol"
+export type Mission =
+  | "police"
+  | "federal_le"
   | "sar"
+  | "wildfire"
+  | "medevac"
+  | "survey"
   | "transport"
   | "unknown";
+
+/**
+ * @deprecated Alias kept so existing imports compile. Values are the
+ * mission taxonomy above, not the pre-2026-11 role set.
+ */
+export type FleetRole = Mission;
+
+/**
+ * Which kind of police unit flies a `police` airframe. `state` covers an
+ * out-of-state state police (Oregon State Police) flying mutual aid; WSP
+ * keeps its own value because it is the speed-enforcement fleet.
+ */
+export type PoliceUnit = "wsp" | "sheriff" | "city" | "tribal" | "state";
+
+/** 'wa' = based in Washington. 'mutual_aid' = based in OR / ID. */
+export type MissionScope = "wa" | "mutual_aid";
 
 export type RoleConfidence = "confirmed" | "tentative" | "unknown";
 
@@ -32,9 +67,24 @@ export type FleetEntry = {
   roleDescription: string;
   /** Home airport: ICAO code + city. */
   base: string;
-  /** Role classification driving the status pill. See lib/status.ts. */
-  role: FleetRole;
+  /**
+   * Primary mission. The field keeps its historical name (`role`) so the
+   * stored KV registry, activity events and rollups keep their key; the
+   * value set is the Mission taxonomy.
+   */
+  role: Mission;
+  /** Set when role is 'police'. */
+  policeUnit?: PoliceUnit;
+  /** A second job the airframe also flies (sheriff rotorcraft → 'sar'). */
+  secondaryMission?: Mission;
+  /** Omitted means 'wa'. */
+  scope?: MissionScope;
   roleConfidence: RoleConfidence;
+  /**
+   * Public sources for the classification (FAA registry page first, then
+   * agency or press pages). Every seed entry carries at least one.
+   */
+  sources: string[];
   /**
    * Optional 1-line note explaining the classification. Visible in the admin
    * editor and as a tooltip on /plane/[tail]. ≤120 chars.

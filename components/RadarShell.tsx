@@ -1,5 +1,6 @@
 "use client";
 
+import { missionLabel } from "@/lib/role-display";
 import { useEffect, useMemo, useRef, useState } from "react";
 import nextDynamic from "next/dynamic";
 import Link from "next/link";
@@ -110,10 +111,10 @@ export function RadarShell({
   const pillKind = status.kind;
   const pillTooltip =
     status.kind === "alert"
-      ? `${status.alertCount} alert-class aircraft up — see /help for the role taxonomy.`
+      ? `${status.alertCount} Smokey up. Only Smokey-class tails flip the pill.`
       : status.lead
-        ? `Nothing alerting. ${status.lead.entry.nickname ?? status.lead.aircraft.tail} is up but classified ${status.lead.entry.role}.`
-        : "Nothing in our 16-tail registry is currently up.";
+        ? `Nothing alerting. ${status.lead.entry.nickname ?? status.lead.aircraft.tail} is up, classed ${missionLabel(status.lead.entry.role)}.`
+        : `Nothing in our ${total}-tail registry is up.`;
   const counterColor =
     status.alertCount > 0 ? SS_TOKENS.alert : SS_TOKENS.fg1;
 

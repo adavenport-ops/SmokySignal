@@ -82,6 +82,8 @@ waiting for a live event.
 - `lib/hotzones.ts` — 30-day grid aggregate; geo-fenced via `SS_REGION_*` env vars
 - `lib/push/*` — VAPID push pipeline (subscribe / dispatcher / dedupe / quiet hours)
 - `lib/radar-filter.ts` — shared filter state (operator/tail/region) for /radar
+- `lib/mission.ts` — mission taxonomy (police = Smokey, federal_le, sar, wildfire, medevac, survey, transport, unknown), legacy role mapper, `countsAsSmokey()` (mutual aid only in WA airspace). Labels in `lib/role-display.ts`
+- `lib/registry-migrate.ts` + `/api/admin/migrate-taxonomy` — KV registry v3→v4 migration (GET = dry run, POST = apply, admin cookie)
 - `lib/user-zones.ts` — rider-defined geofences (localStorage); managed at `/settings/zones`
 - `lib/user-prefs.ts` — cookie-backed display prefs (12/24-hour, normal/high contrast)
 - `lib/voice-mode.ts` — speechSynthesis readback toggle (foreground only)

@@ -17,12 +17,14 @@ import type { FleetRole } from "@/lib/types";
 
 type Props = {
   size?: number;
-  role?: FleetRole | "unknown";
+  role?: FleetRole | GlyphRole;
+  /** Airframe model; picks the fixed-wing or rotor glyph. */
+  model?: string | null;
   /** Bearing in degrees clockwise from north. */
   heading?: number;
 };
 
-export function PlaneIcon({ size = 16, role = "smokey", heading = 0 }: Props) {
+export function PlaneIcon({ size = 16, role = "smokey", model, heading = 0 }: Props) {
   return (
     <span
       role="img"
@@ -35,7 +37,7 @@ export function PlaneIcon({ size = 16, role = "smokey", heading = 0 }: Props) {
         transform: `rotate(${heading}deg)`,
         lineHeight: 0,
       }}
-      dangerouslySetInnerHTML={{ __html: aircraftSvg(role, { size }) }}
+      dangerouslySetInnerHTML={{ __html: aircraftSvg(role, { size, model }) }}
     />
   );
 }

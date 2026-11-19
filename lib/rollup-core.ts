@@ -12,6 +12,7 @@ import { sessionsFromDay, SESSION_GAP_MS } from "./flights";
 import { PT_TZ } from "./time";
 import type { TrackPoint } from "./tracks";
 import type { FleetEntry, FleetRole } from "./types";
+import { normalizeMission } from "./mission";
 
 export const ROLLUP_VERSION = 1 as const;
 
@@ -321,7 +322,9 @@ export function summarizeRollups(
   const sortedDocs = [...docs].sort((a, b) => a.date.localeCompare(b.date));
   for (const doc of sortedDocs) {
     for (const t of doc.tails) {
-      meta.set(t.tail, { nickname: t.nickname, operator: t.operator, role: t.role });
+      // Stored rollups keep the role value of their day; old docs hold
+      // pre-taxonomy values (smokey, patrol), so normalize on read.
+      meta.set(t.tail, { nickname: t.nickname, operator: t.operator, role: normalizeMission(t.role) });
       const list = rawByTail.get(t.tail) ?? [];
       list.push(...t.sessions);
       rawByTail.set(t.tail, list);

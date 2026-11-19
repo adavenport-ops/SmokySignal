@@ -17,7 +17,18 @@ import { BackLink } from "@/components/BackLink";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { FlightIntel } from "@/components/FlightIntel";
 import { Tooltip } from "@/components/Tooltip";
-import { roleBadgeStyle, roleBadgeText, roleTooltip } from "@/lib/role-display";
+import {
+  confidenceBadgeStyle,
+  confidenceLabel,
+  isAlertMission,
+  missionLabel,
+  policeUnitLabel,
+  roleBadgeStyle,
+  roleBadgeText,
+  roleTooltip,
+  sourceLabel,
+} from "@/lib/role-display";
+import type { FleetEntry } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -125,8 +136,8 @@ export default async function PlanePage({ params, searchParams }: Props) {
         </div>
         <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           <StatusPill
-            kind={up ? "alert" : "clear"}
-            label={up ? "AIRBORNE · WATCHING" : "GROUNDED"}
+            kind={up && isAlertMission(entry.role) ? "alert" : "clear"}
+            label={up ? (isAlertMission(entry.role) ? "AIRBORNE · WATCHING" : "AIRBORNE") : "GROUNDED"}
             sub={
               up
                 ? fmtAloft(live?.time_aloft_min)
@@ -148,24 +159,26 @@ export default async function PlanePage({ params, searchParams }: Props) {
               {roleBadgeText(entry.role)}
             </span>
           </Tooltip>
-          {entry.roleConfidence === "tentative" && (
-            <Tooltip content="Role is best-guess from public records. May be refined.">
-              <span
-                tabIndex={0}
-                className="ss-mono"
-                style={{
-                  fontSize: 10,
-                  color: SS_TOKENS.fg2,
-                  fontStyle: "italic",
-                  cursor: "help",
-                }}
-              >
-                (tentative)
-              </span>
-            </Tooltip>
-          )}
+          <Tooltip
+            content={
+              entry.roleConfidence === "confirmed"
+                ? "Confirmed. The FAA owner record and an agency source agree."
+                : "Tentative. One source only, or the callsign-to-tail link is inferred. May be refined."
+            }
+          >
+            <span
+              tabIndex={0}
+              className="ss-mono"
+              data-confidence={entry.roleConfidence}
+              style={confidenceBadgeStyle(entry.roleConfidence)}
+            >
+              {confidenceLabel(entry.roleConfidence)}
+            </span>
+          </Tooltip>
         </div>
       </header>
+
+      <ClassificationCard entry={entry} />
 
       <section>
         {up && live ? (
@@ -527,6 +540,81 @@ function fmtSessionDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   return h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m`;
+}
+
+// Mission, unit, confidence and sources for this tail. Sources come from
+// the registry research (FAA registry first, then agency or press pages).
+function ClassificationCard({ entry }: { entry: FleetEntry }) {
+  const unit = policeUnitLabel(entry.policeUnit);
+  const rows: Array<[string, string]> = [["MISSION", missionLabel(entry.role)]];
+  if (unit) rows.push(["UNIT", unit]);
+  if (entry.secondaryMission) rows.push(["ALSO FLIES", missionLabel(entry.secondaryMission)]);
+  rows.push(["BASED", entry.scope === "mutual_aid" ? "Out of state, mutual aid" : "Washington"]);
+  rows.push(["CONFIDENCE", confidenceLabel(entry.roleConfidence)]);
+  return (
+    <section aria-label="Classification" data-testid="classification">
+      <Card>
+        <div className="ss-eyebrow" style={{ marginBottom: 10 }}>
+          Classification
+        </div>
+        <dl
+          style={{
+            display: "grid",
+            gridTemplateColumns: "auto 1fr",
+            gap: "6px 14px",
+            margin: 0,
+          }}
+        >
+          {rows.map(([k, v]) => (
+            <div key={k} style={{ display: "contents" }}>
+              <dt className="ss-mono" style={{ fontSize: 10.5, color: SS_TOKENS.fg2, letterSpacing: ".08em" }}>
+                {k}
+              </dt>
+              <dd className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg0, margin: 0 }}>
+                {v}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        {entry.roleNote && (
+          <p style={{ fontSize: 12, color: SS_TOKENS.fg1, margin: "10px 0 0", lineHeight: 1.45 }}>
+            {entry.roleNote}
+          </p>
+        )}
+        <div className="ss-mono" style={{ fontSize: 10.5, color: SS_TOKENS.fg2, letterSpacing: ".08em", marginTop: 12 }}>
+          SOURCES
+        </div>
+        {entry.sources.length === 0 ? (
+          <p style={{ fontSize: 12, color: SS_TOKENS.fg2, margin: "4px 0 0" }}>
+            None on file yet.
+          </p>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0, margin: "4px 0 0", display: "flex", flexDirection: "column", gap: 2 }}>
+            {entry.sources.map((url) => (
+              <li key={url}>
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ss-mono"
+                  style={{
+                    fontSize: 11.5,
+                    color: SS_TOKENS.fg1,
+                    textDecoration: "underline",
+                    display: "inline-flex",
+                    minHeight: 28,
+                    alignItems: "center",
+                  }}
+                >
+                  {sourceLabel(url)}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    </section>
+  );
 }
 
 function FleetMeta({

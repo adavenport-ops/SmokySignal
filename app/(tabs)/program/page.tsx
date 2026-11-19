@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { getRegistry } from "@/lib/registry";
 import { SS_TOKENS } from "@/lib/tokens";
-import type { FleetEntry } from "@/lib/types";
+import type { FleetEntry, Mission } from "@/lib/types";
+import { MISSIONS, isRotorcraftModel, normalizeMission } from "@/lib/mission";
+import { roleBadgeStyle, roleBadgeText } from "@/lib/role-display";
 
 // "What's flying." Plain-language explainer for curious locals (the Dana
 // persona in the 2026-11 audit): who flies over Puget Sound, in what,
@@ -50,6 +52,50 @@ const AGENCY: Record<string, { name: string; area: string }> = {
     name: "State of Washington (WSP-flown)",
     area: "Owned by the state, flown by WSP when the Cessnas can't go.",
   },
+  "Chelan SO": {
+    name: "Chelan County Sheriff's Office",
+    area: "Wenatchee and the east slopes. Mostly searches and rescues.",
+  },
+  "WA DNR": {
+    name: "Washington Department of Natural Resources",
+    area: "Wildfire duty, out of Olympia and Yakima.",
+  },
+  "Chelan FD1": {
+    name: "Chelan County Fire District 1",
+    area: "Wenatchee. Fire duty.",
+  },
+  WDFW: {
+    name: "Washington Department of Fish and Wildlife",
+    area: "Wildlife survey flights, out of Olympia.",
+  },
+  "Portland PB": {
+    name: "Portland air unit (Oregon, mutual aid)",
+    area: "Portland. Has followed a pursuit across the river into Vancouver.",
+  },
+  OSP: {
+    name: "Oregon State (mutual aid)",
+    area: "Salem. No record we found of regular Washington flights.",
+  },
+  "Multnomah SO": {
+    name: "Multnomah County Sheriff (Oregon, mutual aid)",
+    area: "Portland area.",
+  },
+  "Clackamas SO": {
+    name: "Clackamas County Sheriff (Oregon, mutual aid)",
+    area: "Oregon City. Likely Oregon only.",
+  },
+  "Washington Co SO": {
+    name: "Washington County Sheriff (Oregon, mutual aid)",
+    area: "Hillsboro, west of Portland.",
+  },
+  "Hood River SO": {
+    name: "Hood River County Sheriff (Oregon, mutual aid)",
+    area: "The Gorge. Use not verified.",
+  },
+  "Kootenai RAS": {
+    name: "Kootenai County Regional Air Support (Idaho, mutual aid)",
+    area: "Coeur d'Alene, next door to Spokane.",
+  },
   KCSO: {
     name: "King County Sheriff's Office",
     area: "King County, out of Renton.",
@@ -68,22 +114,20 @@ const AGENCY: Record<string, { name: string; area: string }> = {
   },
   CBP: {
     name: "U.S. Customs and Border Protection, Air and Marine Operations",
-    area: "The northern border and Salish Sea, out of Bellingham.",
-  },
-  USCG: {
-    name: "U.S. Coast Guard",
-    area: "The Strait and the coast, out of Port Angeles.",
+    area: "The northern border and Salish Sea, out of Bellingham and Spokane. Federal, not Smokey.",
   },
 };
 
 function isFixedWing(model: string): boolean {
-  return /cessna|beech|king air/i.test(model);
+  return !isRotorcraftModel(model);
 }
 
 type AgencyGroup = {
   code: string;
   name: string;
   area: string;
+  /** Missions this agency's tails fly, in taxonomy order. */
+  missions: Mission[];
   entries: FleetEntry[];
 };
 
@@ -94,12 +138,24 @@ function groupByOperator(fleet: FleetEntry[]): AgencyGroup[] {
     list.push(f);
     map.set(f.operator, list);
   }
-  return Array.from(map.entries()).map(([code, entries]) => ({
-    code,
-    name: AGENCY[code]?.name ?? code,
-    area: AGENCY[code]?.area ?? "",
-    entries,
-  }));
+  const groups = Array.from(map.entries()).map(([code, entries]) => {
+    const set = new Set(entries.map((e) => normalizeMission(e.role)));
+    return {
+      code,
+      name: AGENCY[code]?.name ?? code,
+      area: AGENCY[code]?.area ?? "",
+      missions: MISSIONS.filter((m) => set.has(m)),
+      entries,
+    };
+  });
+  // Smokey agencies first (WA-based before mutual aid), then the rest in
+  // taxonomy order. Stable within a bucket.
+  const rank = (g: AgencyGroup) => {
+    const primary = MISSIONS.indexOf(g.missions[0] ?? "unknown");
+    const mutual = g.entries.every((e) => e.scope === "mutual_aid") ? 0.5 : 0;
+    return primary + mutual;
+  };
+  return groups.sort((a, b) => rank(a) - rank(b));
 }
 
 type Airframe = {
@@ -226,7 +282,9 @@ export default async function ProgramPage() {
         <P>
           These are the agencies whose airframes SmokySignal watches. Most
           of the traffic over Puget Sound is WSP out of Olympia and the King
-          County Sheriff out of Renton.
+          County Sheriff out of Renton. Only the ones marked Smokey flip the
+          pill. Oregon and Idaho units count only once they cross into
+          Washington.
         </P>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {agencies.map((g) => (
@@ -241,10 +299,11 @@ export default async function ProgramPage() {
 
       <Section eyebrow="What they fly" title="Airframes">
         <P>
-          Two kinds. Fixed-wing: small Cessnas and twin-engine Beechcraft
-          King Airs. Slow, quiet, and able to hold an orbit over one stretch
-          of road. Rotorcraft: Bell and Airbus types, mostly sheriff and
-          federal, flown for searches, rescues, and pursuits.
+          Two kinds. Fixed-wing: mostly small Cessnas, plus twin-engine
+          Beechcraft King Airs and a few utility types. Slow, quiet, and
+          able to hold an orbit over one stretch of road. Rotorcraft: Bell,
+          Hughes and Airbus types, flown by sheriffs, the border unit, and
+          the state&rsquo;s wildfire crews.
         </P>
         <div
           style={{
@@ -293,9 +352,11 @@ export default async function ProgramPage() {
           ))}
         </div>
         <P>
-          WSP says its Aviation Section runs five Cessnas and one King Air
-          from a hangar at Olympia.{" "}
-          <ExtLink href={WSP_AVIATION_URL}>WSP, May 2023</ExtLink>.
+          WSP said in 2023 that its Aviation Section runs five Cessnas and
+          one King Air from a hangar at Olympia.{" "}
+          <ExtLink href={WSP_AVIATION_URL}>WSP, May 2023</ExtLink>. The FAA
+          registry now lists six Cessnas under WSP, two of them new since
+          2025.
         </P>
       </Section>
 
@@ -466,8 +527,22 @@ function AgencyCard({ group }: { group: AgencyGroup }) {
         padding: "12px 14px",
       }}
     >
-      <div style={{ fontSize: 14.5, fontWeight: 700, color: SS_TOKENS.fg0 }}>
-        {group.name}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          flexWrap: "wrap",
+        }}
+      >
+        <span style={{ fontSize: 14.5, fontWeight: 700, color: SS_TOKENS.fg0 }}>
+          {group.name}
+        </span>
+        {group.missions.map((m) => (
+          <span key={m} className="ss-mono" style={roleBadgeStyle(m)}>
+            {roleBadgeText(m)}
+          </span>
+        ))}
       </div>
       {group.area && (
         <div style={{ fontSize: 13, color: SS_TOKENS.fg1, marginTop: 3, lineHeight: 1.45 }}>

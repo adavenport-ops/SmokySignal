@@ -19,17 +19,15 @@ import {
 import { invalidateSnapshot } from "@/lib/snapshot";
 import { setSpeedWarningEnabled } from "@/lib/flags";
 import type { FleetEntry, FleetRole, RoleConfidence } from "@/lib/types";
+import { MISSIONS, isMission, isMissionScope, isPoliceUnit } from "@/lib/mission";
+import { FLEET } from "@/lib/seed";
 
 const TAIL_RE = /^N\d{1,5}[A-Z]{0,2}$/;
 const HEX_RE = /^[A-F0-9]{6}$/;
-const KNOWN_OPERATORS = [
-  "WSP",
-  "KCSO",
-  "Pierce SO",
-  "Snohomish SO",
-  "Spokane SO",
-  "State of WA",
-] as const;
+// Operator codes the seed uses. Anything else goes through "Other".
+const KNOWN_OPERATORS: readonly string[] = Array.from(
+  new Set([...FLEET.map((f) => f.operator), "State of WA"]),
+);
 
 function s(form: FormData, k: string): string {
   return String(form.get(k) ?? "").trim();
@@ -84,13 +82,7 @@ export async function logoutAction() {
   redirect("/");
 }
 
-const VALID_ROLES: readonly FleetRole[] = [
-  "smokey",
-  "patrol",
-  "sar",
-  "transport",
-  "unknown",
-] as const;
+const VALID_ROLES: readonly FleetRole[] = MISSIONS;
 const VALID_CONFIDENCE: readonly RoleConfidence[] = [
   "confirmed",
   "tentative",
@@ -113,6 +105,9 @@ function readEntryFromForm(formData: FormData): {
   const base = s(formData, "base");
   const roleDescription = s(formData, "roleDescription") || "—";
   const roleRaw = s(formData, "role").toLowerCase();
+  const policeUnitRaw = s(formData, "policeUnit").toLowerCase();
+  const secondaryRaw = s(formData, "secondaryMission").toLowerCase();
+  const scopeRaw = s(formData, "scope").toLowerCase();
   const confidenceRaw = s(formData, "roleConfidence").toLowerCase();
   const roleNoteRaw = s(formData, "roleNote");
   const roleNote = roleNoteRaw ? roleNoteRaw.slice(0, 120) : undefined;
@@ -120,7 +115,7 @@ function readEntryFromForm(formData: FormData): {
   if (!TAIL_RE.test(tail)) return { entry: null, errorCode: "bad_tail" };
   if (hex && !HEX_RE.test(hex)) return { entry: null, errorCode: "bad_hex" };
   if (!operator) return { entry: null, errorCode: "bad_operator" };
-  if (!KNOWN_OPERATORS.includes(operator as (typeof KNOWN_OPERATORS)[number]) && operatorRaw !== "Other") {
+  if (!KNOWN_OPERATORS.includes(operator) && operatorRaw !== "Other") {
     return { entry: null, errorCode: "bad_operator" };
   }
   if (!model) return { entry: null, errorCode: "bad_model" };
@@ -131,6 +126,19 @@ function readEntryFromForm(formData: FormData): {
   if (!VALID_CONFIDENCE.includes(confidenceRaw as RoleConfidence)) {
     return { entry: null, errorCode: "bad_confidence" };
   }
+  if (policeUnitRaw && !isPoliceUnit(policeUnitRaw)) {
+    return { entry: null, errorCode: "bad_police_unit" };
+  }
+  if (secondaryRaw && !isMission(secondaryRaw)) {
+    return { entry: null, errorCode: "bad_role" };
+  }
+  if (scopeRaw && !isMissionScope(scopeRaw)) {
+    return { entry: null, errorCode: "bad_scope" };
+  }
+  const sources = s(formData, "sources")
+    .split(/\s+/)
+    .filter((u) => /^https:\/\//.test(u))
+    .slice(0, 12);
 
   return {
     entry: {
@@ -142,8 +150,12 @@ function readEntryFromForm(formData: FormData): {
       base,
       hex,
       role: roleRaw as FleetRole,
+      ...(roleRaw === "police" && isPoliceUnit(policeUnitRaw) ? { policeUnit: policeUnitRaw } : {}),
+      ...(isMission(secondaryRaw) ? { secondaryMission: secondaryRaw } : {}),
+      ...(isMissionScope(scopeRaw) && scopeRaw !== "wa" ? { scope: scopeRaw } : {}),
       roleConfidence: confidenceRaw as RoleConfidence,
       roleNote,
+      sources,
     },
     errorCode: null,
   };
@@ -191,6 +203,10 @@ export async function updateTailAction(formData: FormData) {
   }
 
   const prev = current[idx]!;
+  // The edit form may leave sources blank; keep the stored list then.
+  if (entry.sources.length === 0 && prev.sources.length > 0) {
+    entry.sources = [...prev.sources];
+  }
   const next = current.slice();
   next[idx] = entry;
   await saveRegistry(next);

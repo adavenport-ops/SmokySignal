@@ -156,6 +156,8 @@ test("validatePrefsInput: accepts a normal client payload and drops unknown keys
   if (!r.ok) return;
   assert.deepStrictEqual(r.prefs, {
     tier: "all",
+    // A legacy tier-only payload is translated to the mission list.
+    missions: ["police", "federal_le", "sar", "wildfire", "medevac", "survey", "transport", "unknown"],
     zones: "any",
     quiet_start_h: 23,
     quiet_end_h: 6,

@@ -11,8 +11,9 @@
 // every 10s) doesn't hammer KV.
 
 import { getRedis } from "./cache";
-import { FLEET as SEED } from "./seed";
+import { FLEET as SEED, REMOVED_TAILS } from "./seed";
 import type { FleetEntry } from "./types";
+import { isLegacyRow, normalizeRegistryRows, parseRegistryRaw } from "./registry-migrate";
 
 const REGISTRY_KEY = "registry:tails";
 const BACKUP_PREFIX = "registry:tails:backup:";
@@ -24,56 +25,34 @@ const MEM_CACHE_MS = 5_000;
 
 let memCache: { value: FleetEntry[]; expiresAt: number } | null = null;
 
+// Every read goes through the pure normalizer in lib/registry-migrate.ts.
+// Rows written before the mission taxonomy (no `sources`) take their
+// taxonomy fields from the seed when the seed knows the tail, so the app
+// reads correctly before /api/admin/migrate-taxonomy has rewritten KV.
+// Legacy rows for REMOVED_TAILS (sold N3532K, the USCG tail) are dropped on
+// read for the same reason; a new-shape row for one of those tails means an
+// admin re-added it on purpose, so it stays.
+const REMOVED = new Set(REMOVED_TAILS.map((r) => r.tail));
 function parseFleet(raw: unknown): FleetEntry[] | null {
-  if (raw == null) return null;
-  let arr: unknown[] | null = null;
-  if (Array.isArray(raw)) arr = raw;
-  else if (typeof raw === "string") {
-    try {
-      const parsed = JSON.parse(raw);
-      arr = Array.isArray(parsed) ? parsed : null;
-    } catch {
-      return null;
-    }
-  }
-  if (!arr) return null;
-  // Backfill the post-v1 fields (role, roleConfidence, roleDescription) on
-  // read so older registry rows continue to work without a manual
-  // migration. Conservative default for role is "unknown" → triggers
-  // alert pill.
-  return arr.map((row) => {
-    const e = row as Partial<FleetEntry> & Record<string, unknown>;
-    return {
-      tail: String(e.tail ?? ""),
-      hex: e.hex ?? null,
-      operator: String(e.operator ?? ""),
-      model: String(e.model ?? ""),
-      nickname: (e.nickname as string | null) ?? null,
-      base: String(e.base ?? ""),
-      // Older rows had a free-text `role` (mission description). Promote
-      // it to roleDescription if the new typed field is missing.
-      roleDescription:
-        typeof e.roleDescription === "string"
-          ? e.roleDescription
-          : typeof (e as { role?: unknown }).role === "string" &&
-              !["smokey", "patrol", "sar", "transport", "unknown"].includes(
-                (e as { role: string }).role,
-              )
-            ? (e as { role: string }).role
-            : "—",
-      role:
-        typeof e.role === "string" &&
-        ["smokey", "patrol", "sar", "transport", "unknown"].includes(e.role)
-          ? (e.role as FleetEntry["role"])
-          : "unknown",
-      roleConfidence:
-        typeof e.roleConfidence === "string" &&
-        ["confirmed", "tentative", "unknown"].includes(e.roleConfidence)
-          ? (e.roleConfidence as FleetEntry["roleConfidence"])
-          : "unknown",
-      roleNote: typeof e.roleNote === "string" ? e.roleNote : undefined,
-    } satisfies FleetEntry;
+  const rows = parseRegistryRaw(raw);
+  if (!rows) return null;
+  const kept = rows.filter((r) => {
+    if (!r || typeof r !== "object") return true;
+    const row = r as Record<string, unknown>;
+    return !(REMOVED.has(String(row.tail ?? "")) && isLegacyRow(row));
   });
+  return normalizeRegistryRows(kept, SEED);
+}
+
+/**
+ * The stored registry exactly as KV holds it (no normalization). Used by
+ * the migrate-taxonomy route to diff the real stored shape. Null when KV
+ * is not configured or holds nothing.
+ */
+export async function getRawRegistry(): Promise<unknown> {
+  const redis = await getRedis();
+  if (!redis) return null;
+  return (await redis.get(REGISTRY_KEY)) ?? null;
 }
 
 export async function getRegistry(): Promise<FleetEntry[]> {

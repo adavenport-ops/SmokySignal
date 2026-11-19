@@ -6,7 +6,7 @@
 // filters without bloating the heatmap layer module.
 //
 // Four rows post-P19.5:
-//   Categories — Smokey / Search & Rescue / Transport buckets
+//   Missions   — Everything + one chip per mission (default Smokey only)
 //   Operators  — multi-select chips per registry operator
 //   Tails      — typeahead + chip set, follow a single tail
 //   Layers     — Hot zones / Flight paths toggles inside the panel
@@ -18,11 +18,10 @@
 // Smokey bucket; showMode === "operator" + operator value seeds the
 // operator chip set.
 //
-// Filter shape: see lib/radar-filter.ts. The chevron exposes three
-// rider-facing categories (Smokey / Search & Rescue / Transport) that
-// map onto the granular FleetRole taxonomy in lib/types.ts. Empty
-// bucket selection means "show all categories" — same back-compat
-// semantics as the prior empty `roles` array.
+// Filter shape: see lib/radar-filter.ts. The Missions row lists the
+// mission taxonomy (lib/types.ts) with rider labels from
+// lib/role-display.ts. Default is Smokey only; "Everything" selects
+// every mission. Removing the last chip falls back to Smokey.
 
 import { useEffect, useMemo, useState } from "react";
 import { SS_TOKENS } from "@/lib/tokens";
@@ -30,6 +29,9 @@ import {
   OPERATORS,
   RIDER_BUCKETS,
   getRegistryTails,
+  isEverything,
+  toggleEverything,
+  toggleMission,
   searchRegistryTails,
   type RadarFilter as Filter,
   type RegistryTail,
@@ -61,10 +63,11 @@ export function FilterPanel({
   onToggleFlightPaths,
 }: Props) {
   const toggleBucket = (id: RiderBucketId) => {
-    const set = new Set(filter.buckets);
-    if (set.has(id)) set.delete(id);
-    else set.add(id);
-    onChange({ ...filter, buckets: [...set] as RiderBucketId[] });
+    onChange({ ...filter, buckets: toggleMission(filter.buckets, id) });
+  };
+  const everything = isEverything(filter.buckets);
+  const onEverything = () => {
+    onChange({ ...filter, buckets: toggleEverything(filter.buckets) });
   };
 
   const toggleOperator = (op: string) => {
@@ -141,7 +144,10 @@ export function FilterPanel({
         </button>
       </div>
 
-      <Group label="Categories">
+      <Group label="Missions">
+        <Pill active={everything} onClick={onEverything}>
+          Everything
+        </Pill>
         {RIDER_BUCKETS.map((b) => (
           <Pill
             key={b.id}

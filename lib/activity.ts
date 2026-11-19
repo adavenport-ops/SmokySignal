@@ -16,6 +16,7 @@ import {
   type PrevState,
 } from "./activity-diff";
 import type { Snapshot } from "./types";
+import { normalizeMission } from "./mission";
 
 export {
   describeEvent,
@@ -181,7 +182,9 @@ export async function recordActivity(curr: Snapshot): Promise<void> {
           takeoffs.map((e) =>
             dispatchTakeoff({
               tail: e.tail,
-              role: e.role ?? "unknown",
+              role: normalizeMission(e.role),
+              policeUnit: curr.aircraft.find((a) => a.tail === e.tail)?.policeUnit,
+              scope: curr.aircraft.find((a) => a.tail === e.tail)?.scope,
               roleConfidence: "unknown",
               nickname:
                 curr.aircraft.find((a) => a.tail === e.tail)?.nickname ?? null,

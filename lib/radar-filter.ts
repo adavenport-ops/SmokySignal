@@ -1,90 +1,70 @@
-// Shared radar filter state — categories / operators / tails. Lives in
+// Shared radar filter state — missions / operators / tails. Lives in
 // localStorage under "ss_hotzones_filter" (legacy key kept so existing
-// user state survives this refactor) and broadcasts changes via a
-// CustomEvent so the heatmap chevron panel and the aircraft marker
-// layer stay in sync without a context provider.
+// user state survives) and broadcasts changes via a CustomEvent so the
+// heatmap chevron panel and the aircraft marker layer stay in sync
+// without a context provider.
 //
 // Region selection is owned by lib/region-pref.ts — the rider's region
 // pref drives /api/hotzones via the region_id param. This filter only
-// concerns category / operator / tail filtering inside the chosen
-// region.
+// concerns mission / operator / tail filtering inside the chosen region.
 //
-// Vocabulary alignment: riders see three categories — Smokey, Search &
-// Rescue, Transport — that mirror what the role badges say. The backend
-// FleetRole taxonomy stays granular (smokey / patrol / unknown all under
-// the Smokey umbrella) but never leaks into the filter UI. Persisted
-// state from prior eras (FleetRole-chip pre-P17, showMode shortcut
-// pre-P19) migrates forward in readRadarFilter().
+// Missions (2026-11): the filter's `buckets` field now holds Mission
+// values (lib/types.ts). The field keeps its name so the map layers that
+// read it (HotZoneLayer, FlightPathLayer) need no change. Default is
+// police only (Smokey); "Everything" is every mission selected. Persisted
+// state from prior eras (bucket ids smokey / sar / transport, raw
+// FleetRole arrays, the pre-P19 showMode shortcut) migrates forward in
+// readRadarFilter().
 
-/** Underlying FleetRole IDs. Mirrors lib/types.ts FleetRole. Used by
- *  bucket-to-role expansion when a category set hits the API. */
-export const FILTERABLE_ROLES = [
-  "smokey",
-  "patrol",
-  "sar",
-  "transport",
-  "unknown",
-] as const;
-export type FilterableRole = (typeof FILTERABLE_ROLES)[number];
+import type { Mission } from "./types";
+import { DEFAULT_MISSIONS, MISSIONS, normalizeMission, normalizeMissionList } from "./mission";
+import { missionLabel } from "./role-display";
+import { FLEET } from "./seed";
 
-/** Rider-facing category buckets. Each bucket maps to one or more
- *  FleetRoles; the LE-tier roles (smokey + patrol + unknown) collapse
- *  into the single "Smokey" bucket to match the umbrella relabel in
- *  lib/role-display.ts. */
-export const RIDER_BUCKETS = [
-  {
-    id: "smokey",
-    label: "Smokey",
-    roles: ["smokey", "patrol", "unknown"] as readonly FilterableRole[],
-  },
-  {
-    id: "sar",
-    label: "Search & Rescue",
-    roles: ["sar"] as readonly FilterableRole[],
-  },
-  {
-    id: "transport",
-    label: "Transport",
-    roles: ["transport"] as readonly FilterableRole[],
-  },
-] as const;
-export type RiderBucketId = (typeof RIDER_BUCKETS)[number]["id"];
+/** @deprecated Mission values. Kept for import compatibility. */
+export const FILTERABLE_ROLES = MISSIONS;
+export type FilterableRole = Mission;
 
-const RIDER_BUCKET_IDS: readonly RiderBucketId[] = RIDER_BUCKETS.map(
-  (b) => b.id,
-);
+/** Rider-facing mission chips, in display order. One chip per mission. */
+export const RIDER_BUCKETS: ReadonlyArray<{
+  id: Mission;
+  label: string;
+  roles: readonly Mission[];
+}> = MISSIONS.map((m) => ({ id: m, label: missionLabel(m), roles: [m] }));
+export type RiderBucketId = Mission;
 
-/** Expand a bucket-id set to the underlying FleetRole list. Empty input
- *  returns empty (caller treats as "no constraint"). Used by the heatmap
- *  query builder to send a comma-separated `roles` to /api/hotzones. */
-export function bucketsToRoles(
-  buckets: readonly RiderBucketId[],
-): FilterableRole[] {
-  if (buckets.length === 0) return [];
-  const out = new Set<FilterableRole>();
-  for (const b of RIDER_BUCKETS) {
-    if (buckets.includes(b.id)) {
-      for (const r of b.roles) out.add(r);
-    }
-  }
-  return [...out];
+/** True when every mission is selected (the "Everything" chip). */
+export function isEverything(buckets: readonly Mission[]): boolean {
+  return MISSIONS.every((m) => buckets.includes(m));
 }
 
-/** Inverse of bucketsToRoles — derives the bucket set that contains the
- *  given roles. Used to migrate prior persisted state that stored raw
- *  FleetRole arrays. */
-function rolesToBuckets(
-  roles: readonly FilterableRole[],
-): RiderBucketId[] {
-  const out = new Set<RiderBucketId>();
-  for (const b of RIDER_BUCKETS) {
-    if (b.roles.some((r) => roles.includes(r))) out.add(b.id);
-  }
-  return [...out];
+/**
+ * Bucket set → the `roles` list the heatmap / flight-path APIs take.
+ * Empty input, or every mission selected, returns [] (no constraint).
+ */
+export function bucketsToRoles(buckets: readonly Mission[]): Mission[] {
+  if (buckets.length === 0 || isEverything(buckets)) return [];
+  return MISSIONS.filter((m) => buckets.includes(m));
+}
+
+/** Chip tap. From "Everything", a mission chip narrows to that one
+ *  mission. Removing the last selected mission falls back to police. */
+export function toggleMission(buckets: readonly Mission[], m: Mission): Mission[] {
+  if (isEverything(buckets)) return [m];
+  const set = new Set(buckets);
+  if (set.has(m)) set.delete(m);
+  else set.add(m);
+  const next = MISSIONS.filter((x) => set.has(x));
+  return next.length > 0 ? next : [...DEFAULT_MISSIONS];
+}
+
+/** "Everything" chip tap: select all, or back to the police default. */
+export function toggleEverything(buckets: readonly Mission[]): Mission[] {
+  return isEverything(buckets) ? [...DEFAULT_MISSIONS] : [...MISSIONS];
 }
 
 export type RadarFilter = {
-  /** Multi-select category allow-list. Empty = show all categories. */
+  /** Selected missions. Default ['police']; all missions = Everything. */
   buckets: RiderBucketId[];
   /** Multi-select operator allow-list. Empty = no operator constraint. */
   operatorSet: string[];
@@ -97,88 +77,79 @@ export const RADAR_FILTER_KEY = "ss_hotzones_filter";
 export const RADAR_FILTER_CHANGE_EVENT = "ss-radar-filter-change";
 
 /**
- * @deprecated Use SMOKY_TAILS instead. Retained as an empty array so
- * any prior import compiles, but no longer drives filtering — role-based
- * classification (lib/types.ts FleetRole) is the source of truth.
+ * @deprecated Retained as an empty array so any prior import compiles.
+ * Mission classification (lib/types.ts) is the source of truth.
  */
 export const SMOKY_TAILS: readonly string[] = [];
-export const OPERATORS = [
-  "WSP",
-  "KCSO",
-  "Pierce SO",
-  "Snohomish SO",
-  "Spokane SO",
-  "State of WA",
-  "CBP",
-  "USCG",
-] as const;
+
+/** Operator chips: every operator code in the seed registry. */
+export const OPERATORS: readonly string[] = Array.from(
+  new Set(FLEET.map((f) => f.operator)),
+);
+
+/** Written with every save so a stored empty `buckets` from before the
+ *  taxonomy (which meant "all") can be told apart. */
+const FILTER_VERSION = 2;
 
 export const DEFAULT_RADAR_FILTER: RadarFilter = {
-  buckets: [],
+  buckets: [...DEFAULT_MISSIONS],
   operatorSet: [],
   tailSet: [],
 };
+
+/**
+ * Pure migration of a stored filter blob. Exported for tests.
+ * - v2 `buckets`: mission list (empty → police default).
+ * - Older `buckets` (smokey / sar / transport ids) map through the legacy
+ *   role mapper. An old empty list was the old default, so it becomes the
+ *   new default (police only), per the owner's call.
+ * - Older raw `roles` arrays map the same way.
+ * - Pre-P19 showMode === "smoky" adds police; showMode === "operator"
+ *   seeds the operator chip.
+ */
+export function migrateRadarFilter(parsed: unknown): RadarFilter {
+  if (!parsed || typeof parsed !== "object") return DEFAULT_RADAR_FILTER;
+  const p = parsed as Record<string, unknown>;
+  let buckets: Mission[];
+  if (Array.isArray(p.buckets)) {
+    buckets = normalizeMissionList(p.buckets);
+  } else if (Array.isArray(p.roles)) {
+    buckets = normalizeMissionList(p.roles);
+  } else {
+    buckets = [];
+  }
+  if (p.showMode === "smoky" && !buckets.includes("police")) {
+    buckets = MISSIONS.filter((m) => m === "police" || buckets.includes(m));
+  }
+  if (buckets.length === 0) buckets = [...DEFAULT_MISSIONS];
+
+  let operatorSet = Array.isArray(p.operatorSet)
+    ? p.operatorSet.filter(
+        (o): o is string => typeof o === "string" && OPERATORS.includes(o),
+      )
+    : [];
+  if (
+    p.showMode === "operator" &&
+    typeof p.operator === "string" &&
+    OPERATORS.includes(p.operator) &&
+    !operatorSet.includes(p.operator)
+  ) {
+    operatorSet = [...operatorSet, p.operator];
+  }
+  const tailSet = Array.isArray(p.tailSet)
+    ? p.tailSet.filter((t): t is string => typeof t === "string")
+    : Array.isArray(p.tails)
+      ? p.tails.filter((t): t is string => typeof t === "string")
+      : [];
+  return { buckets, operatorSet, tailSet };
+}
 
 export function readRadarFilter(): RadarFilter {
   if (typeof window === "undefined") return DEFAULT_RADAR_FILTER;
   try {
     const raw = window.localStorage.getItem(RADAR_FILTER_KEY);
     if (!raw) return DEFAULT_RADAR_FILTER;
-    const parsed = JSON.parse(raw) as Partial<RadarFilter> & {
-      roles?: unknown;
-      tails?: unknown;
-      // Pre-P19 fields. Read for migration only.
-      showMode?: unknown;
-      operator?: unknown;
-    };
-    let buckets: RiderBucketId[];
-    if (Array.isArray(parsed.buckets)) {
-      buckets = parsed.buckets.filter((b): b is RiderBucketId =>
-        (RIDER_BUCKET_IDS as readonly string[]).includes(b as string),
-      );
-    } else if (Array.isArray(parsed.roles)) {
-      // Migration: prior persisted state stored a `roles` array of raw
-      // FleetRole values. Map forward to the bucket containing each role
-      // so a returning rider's filter retains its meaning.
-      const legacyRoles = (parsed.roles as unknown[]).filter(
-        (r): r is FilterableRole =>
-          (FILTERABLE_ROLES as readonly string[]).includes(r as string),
-      );
-      buckets = rolesToBuckets(legacyRoles);
-    } else {
-      buckets = [];
-    }
-    // Migration: pre-P19 showMode === "smoky" widens to the Smokey
-    // bucket; showMode === "operator" + a parsed.operator value seeds
-    // the new operatorSet with the picked operator. Other showMode
-    // values are dropped silently.
-    if (parsed.showMode === "smoky" && !buckets.includes("smokey")) {
-      buckets = [...buckets, "smokey"];
-    }
-    let operatorSet = Array.isArray(parsed.operatorSet)
-      ? (parsed.operatorSet.filter(
-          (o): o is string =>
-            typeof o === "string" &&
-            OPERATORS.includes(o as (typeof OPERATORS)[number]),
-        ) as string[])
-      : [];
-    if (
-      parsed.showMode === "operator" &&
-      typeof parsed.operator === "string" &&
-      OPERATORS.includes(parsed.operator as (typeof OPERATORS)[number]) &&
-      !operatorSet.includes(parsed.operator)
-    ) {
-      operatorSet = [...operatorSet, parsed.operator];
-    }
-    // Migration: prior `tails` array carries forward as tailSet.
-    const tailSet = Array.isArray(parsed.tailSet)
-      ? (parsed.tailSet.filter((t): t is string => typeof t === "string") as string[])
-      : Array.isArray(parsed.tails)
-        ? ((parsed.tails as unknown[]).filter(
-            (t): t is string => typeof t === "string",
-          ) as string[])
-        : [];
-    return { buckets, operatorSet, tailSet };
+    return migrateRadarFilter(JSON.parse(raw));
   } catch {
     return DEFAULT_RADAR_FILTER;
   }
@@ -187,7 +158,10 @@ export function readRadarFilter(): RadarFilter {
 export function writeRadarFilter(f: RadarFilter): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(RADAR_FILTER_KEY, JSON.stringify(f));
+    window.localStorage.setItem(
+      RADAR_FILTER_KEY,
+      JSON.stringify({ ...f, v: FILTER_VERSION }),
+    );
     window.dispatchEvent(
       new CustomEvent(RADAR_FILTER_CHANGE_EVENT, { detail: f }),
     );
@@ -206,15 +180,10 @@ export function passesAircraftFilter(
   if (f.operatorSet.length > 0 && !f.operatorSet.includes(aircraft.operator)) {
     return false;
   }
-  // Multi-select bucket filter. Empty array = no category constraint.
-  if (f.buckets.length > 0) {
-    const allowed = bucketsToRoles(f.buckets);
-    if (
-      typeof aircraft.role !== "string" ||
-      !(allowed as readonly string[]).includes(aircraft.role)
-    ) {
-      return false;
-    }
+  // Mission filter. Empty or Everything = no mission constraint.
+  const allowed = bucketsToRoles(f.buckets);
+  if (allowed.length > 0 && !allowed.includes(normalizeMission(aircraft.role))) {
+    return false;
   }
   return true;
 }

@@ -9,7 +9,15 @@
 //     validation existed are cleaned on their next write instead of
 //     failing the whole update.
 
-import { DEFAULT_PREFS, type AlertPrefs, type AlertTier, type UserZoneSpec } from "./types";
+import {
+  DEFAULT_PREFS,
+  missionsForTier,
+  tierForMissions,
+  type AlertPrefs,
+  type AlertTier,
+  type UserZoneSpec,
+} from "./types";
+import { MISSIONS, isLegacyRole, isMission, normalizeMissionList } from "../mission";
 
 // ─── Endpoint allow-list ─────────────────────────────────────────────
 //
@@ -216,6 +224,29 @@ export function validatePrefsInput(v: unknown): PrefsValidation {
       return { ok: false, error: "invalid_tier" };
     }
     out.tier = p.tier as AlertTier;
+  }
+
+  if (p.missions !== undefined) {
+    // Non-empty list of known missions (legacy role names are accepted and
+    // mapped). An empty list would mean "never ping": riders disarm instead.
+    if (
+      !Array.isArray(p.missions) ||
+      p.missions.length === 0 ||
+      p.missions.length > MISSIONS.length * 2 ||
+      !p.missions.every(
+        (m) =>
+          typeof m === "string" &&
+          (isMission(m.toLowerCase()) || isLegacyRole(m.toLowerCase())),
+      )
+    ) {
+      return { ok: false, error: "invalid_missions" };
+    }
+    out.missions = normalizeMissionList(p.missions);
+    // Keep the legacy tier in step for older readers.
+    out.tier = tierForMissions(out.missions);
+  } else if (out.tier !== undefined) {
+    // Legacy client sent only a tier: translate it.
+    out.missions = missionsForTier(out.tier);
   }
 
   if (p.zones !== undefined) {

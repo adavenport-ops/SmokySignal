@@ -28,6 +28,7 @@
 // the pending landing is dropped and no events fire.
 
 import type { Aircraft, FleetRole, Snapshot } from "./types";
+import { normalizeMission } from "./mission";
 
 export const LANDING_DEBOUNCE_MS = 3 * 60 * 1000;
 
@@ -92,30 +93,25 @@ export function describeEvent(
   nickname: string | null | undefined,
   kind: ActivityKind,
   squawk?: string | null,
-  role: FleetRole = "unknown",
+  roleIn: FleetRole | string = "unknown",
 ): string {
   const name = nickname ?? tail;
+  const role = normalizeMission(roleIn);
 
   if (kind === "takeoff") {
-    if (role === "smokey") {
+    if (role === "police") {
       if (nickname === "Smokey 4") return "Smokey off the deck";
-      return `${name} off the deck`;
-    }
-    if (role === "patrol") {
       return `${name} up`;
     }
-    if (role === "sar") {
+    if (role === "sar" || role === "wildfire" || role === "medevac") {
       return `${name} on a run`;
-    }
-    if (role === "transport") {
-      return `${name} up`;
     }
     return `${name} up`;
   }
 
   if (kind === "landing") {
     if (role === "sar") return `${name} back on the ground`;
-    if (role === "smokey" && nickname === "Smokey 4") return "Smokey down";
+    if (role === "police" && nickname === "Smokey 4") return "Smokey down";
     return `${name} down`;
   }
 
@@ -169,7 +165,7 @@ export function diffActivity(
   for (const a of curr.aircraft) {
     const p = prevByTail.get(a.tail);
     const pending = prevPending[a.tail];
-    const role: FleetRole = a.role ?? "unknown";
+    const role: FleetRole = normalizeMission(a.role);
     const currentPos = {
       lat: a.lat ?? null,
       lon: a.lon ?? null,

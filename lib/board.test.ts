@@ -31,7 +31,7 @@ test("formatBoardRow: departure reads like the board", () => {
     tail: "N305DK",
     nickname: "Smokey 4",
     base: "KOLM Olympia",
-    role: "smokey",
+    role: "police",
     ts: T0712,
   });
   assert.deepEqual(row, {
@@ -50,7 +50,7 @@ test("formatBoardRow: airborne smokey is UP with minutes, alert tone", () => {
     tail: "N305DK",
     nickname: "Smokey 4",
     base: "KOLM Olympia",
-    role: "smokey",
+    role: "police",
     aloftMin: 47,
   });
   assert.equal(row.status, "UP 47M");
@@ -72,7 +72,7 @@ test("formatBoardRow: SAR up is neutral, not orange", () => {
 });
 
 test("formatBoardRow: landing and first-seen words", () => {
-  const base = { tail: "N422CT", nickname: "Guardian One", base: "KRNT Renton", role: "patrol" as const };
+  const base = { tail: "N422CT", nickname: "Guardian One", base: "KRNT Renton", role: "police" as const };
   assert.equal(formatBoardRow({ ...base, kind: "landing", ts: T0712 }).status, "LANDED 07:12");
   assert.equal(formatBoardRow({ ...base, kind: "first_seen", ts: T0712 }).status, "SPOTTED 07:12");
 });
@@ -134,6 +134,7 @@ function ac(
     base,
     role,
     roleConfidence: "confirmed",
+    sources: [],
     icao24: "a00000",
     airborne: false,
     ...live,
@@ -154,8 +155,8 @@ function ev(tail: string, kind: ActivityEntry["kind"], ts: number, pos = SEATTLE
 test("buildBoardRows: UP first (alert before SAR), then latest event per tail", () => {
   const snap = snapshot([
     ac("N815SC", "sar", "SnoHawk 10", "Taylor's Landing", { airborne: true, time_aloft_min: 90, ...SEATTLE }),
-    ac("N305DK", "smokey", "Smokey 4", "KOLM Olympia", { airborne: true, time_aloft_min: 47, ...SEATTLE }),
-    ac("N422CT", "patrol", "Guardian One", "KRNT Renton"),
+    ac("N305DK", "police", "Smokey 4", "KOLM Olympia", { airborne: true, time_aloft_min: 47, ...SEATTLE }),
+    ac("N422CT", "police", "Guardian One", "KRNT Renton"),
   ]);
   const activity = [
     ev("N422CT", "takeoff", NOW - 3 * 3600_000),
@@ -171,7 +172,7 @@ test("buildBoardRows: UP first (alert before SAR), then latest event per tail", 
 });
 
 test("buildBoardRows: events older than the window drop off", () => {
-  const snap = snapshot([ac("N422CT", "patrol", "Guardian One", "KRNT Renton")]);
+  const snap = snapshot([ac("N422CT", "police", "Guardian One", "KRNT Renton")]);
   const rows = buildBoardRows({
     snapshot: snap,
     activity: [ev("N422CT", "landing", NOW - BOARD_EVENT_WINDOW_MS - 1)],
@@ -183,9 +184,9 @@ test("buildBoardRows: events older than the window drop off", () => {
 
 test("buildBoardRows: region filter uses position, and drops unpositioned rows", () => {
   const snap = snapshot([
-    ac("N305DK", "smokey", "Smokey 4", "KOLM Olympia", { airborne: true, time_aloft_min: 10, ...SEATTLE }),
-    ac("N509DV", "patrol", "Air 1", "KSFF Felts Field, Spokane", { airborne: true, time_aloft_min: 10, ...SPOKANE }),
-    ac("N1977G", "patrol", "TROY 188", "KBLI Bellingham AMB", { airborne: true, time_aloft_min: 10 }),
+    ac("N305DK", "police", "Smokey 4", "KOLM Olympia", { airborne: true, time_aloft_min: 10, ...SEATTLE }),
+    ac("N509DV", "police", "Air 1", "KSFF Felts Field, Spokane", { airborne: true, time_aloft_min: 10, ...SPOKANE }),
+    ac("N1977G", "police", "TROY 188", "KBLI Bellingham AMB", { airborne: true, time_aloft_min: 10 }),
   ]);
   const puget = buildBoardRows({ snapshot: snap, activity: [], regionId: "puget_sound", now: NOW });
   assert.deepEqual(puget.map((r) => r.key), ["N305DK"]);
@@ -195,7 +196,7 @@ test("buildBoardRows: region filter uses position, and drops unpositioned rows",
 
 test("filterSnapshotToRegion: out-of-region birds read as down", () => {
   const snap = snapshot([
-    ac("N509DV", "patrol", "Air 1", "KSFF", { airborne: true, ...SPOKANE }),
+    ac("N509DV", "police", "Air 1", "KSFF", { airborne: true, ...SPOKANE }),
   ]);
   const f = filterSnapshotToRegion(snap, "puget_sound");
   assert.equal(f.aircraft[0]!.airborne, false);
@@ -204,7 +205,7 @@ test("filterSnapshotToRegion: out-of-region birds read as down", () => {
 
 test("buildBoardRows: caps at maxRows", () => {
   const many = Array.from({ length: 12 }, (_, i) =>
-    ac(`N${i}`, "smokey", null, "KOLM", { airborne: true, time_aloft_min: i, ...SEATTLE }),
+    ac(`N${i}`, "police", null, "KOLM", { airborne: true, time_aloft_min: i, ...SEATTLE }),
   );
   const rows = buildBoardRows({ snapshot: snapshot(many), activity: [], regionId: null, now: NOW, maxRows: 8 });
   assert.equal(rows.length, 8);

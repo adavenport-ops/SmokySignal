@@ -388,22 +388,23 @@ test.describe("p14 live-prod audit", () => {
     await filterBtn.first().click();
     await page.waitForTimeout(500);
     const screenshot = await shot(page, "10-hotzones-filter");
-    // Post-PROMPT_17 P1, the filter chevron exposes 3 rider-facing
-    // categories — Smokey / Search & Rescue / Transport — that map onto
-    // the granular FleetRole taxonomy via lib/radar-filter.ts:RIDER_BUCKETS.
-    // The Smokey bucket → {smokey, patrol, unknown} (umbrella set per
-    // P16.5). SMOKY_TAILS is now an empty array; classification is
-    // entirely role-based. This assertion just confirms the Smokey label
-    // is rendered in the panel.
-    const hasSmokey = (await page.locator("text=/^Smokey$/i").count()) > 0;
+    // Mission taxonomy (2026-11): the Missions row lists Everything plus
+    // one chip per mission (lib/radar-filter.ts RIDER_BUCKETS). Default
+    // selection is Smokey (police) only.
+    const smokeyChip = page.locator('button[aria-pressed]', { hasText: /^Smokey$/ });
+    const hasSmokey = (await smokeyChip.count()) > 0;
+    const smokeyOn = hasSmokey && (await smokeyChip.first().getAttribute("aria-pressed")) === "true";
+    const hasEverything =
+      (await page.locator('button[aria-pressed]', { hasText: /^Everything$/ }).count()) > 0;
+    const hasFederal =
+      (await page.locator('button[aria-pressed]', { hasText: /^Federal$/ }).count()) > 0;
+    const pass = hasSmokey && hasEverything && hasFederal;
     record({
       claim:
-        'Hot-zones filter exposes "Smokey" category (role-based: smokey + patrol + unknown)',
-      category: hasSmokey ? "working_as_designed" : "confirmed_bug",
-      pass: hasSmokey,
-      evidence: hasSmokey
-        ? "filter panel opened, Smokey category chip rendered"
-        : "filter panel opened but Smokey label not found",
+        'Radar filter lists missions: "Everything" + one chip per mission, Smokey (police) on by default',
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: `smokey=${hasSmokey} smokeyOn=${smokeyOn} everything=${hasEverything} federal=${hasFederal}`,
       screenshot,
     });
   });
@@ -546,7 +547,7 @@ test.describe("p14 live-prod audit", () => {
     });
   });
 
-  test("15. ?mock=eyes-up returns patrol airborne, no smokey (P20 4.1)", async ({
+  test("15. ?mock=eyes-up returns sheriff airborne, no WSP (P20 4.1)", async ({
     request,
   }) => {
     const r = await request.get("/api/aircraft?mock=eyes-up");
@@ -554,18 +555,18 @@ test.describe("p14 live-prod audit", () => {
     let evidence = `HTTP ${r.status()}`;
     let pass = false;
     if (ok) {
-      const data = (await r.json()) as { aircraft: Array<{ role: string; airborne: boolean }> };
+      const data = (await r.json()) as {
+        aircraft: Array<{ role: string; policeUnit?: string; airborne: boolean }>;
+      };
       const airborne = data.aircraft.filter((a) => a.airborne);
-      const smokeyUp = airborne.some((a) => a.role === "smokey");
-      const patrolOrUnknownUp = airborne.some(
-        (a) => a.role === "patrol" || a.role === "unknown",
-      );
-      pass = !smokeyUp && patrolOrUnknownUp;
-      evidence = `${airborne.length} airborne; smokey=${smokeyUp ? "yes" : "no"}; patrol/unknown=${patrolOrUnknownUp ? "yes" : "no"}`;
+      const wspUp = airborne.some((a) => a.role === "police" && a.policeUnit === "wsp");
+      const otherPoliceUp = airborne.some((a) => a.role === "police" && a.policeUnit !== "wsp");
+      pass = !wspUp && otherPoliceUp;
+      evidence = `${airborne.length} airborne; wsp=${wspUp ? "yes" : "no"}; other police=${otherPoliceUp ? "yes" : "no"}`;
     }
     record({
       claim:
-        "?mock=eyes-up forces a patrol/unknown-class plane airborne with no smokey-class — drives the alert-tier pill (SMOKEY UP under the umbrella relabel)",
+        "?mock=eyes-up forces a non-WSP police airframe (sheriff) airborne with no WSP — still reads SMOKEY UP",
       category: pass ? "working_as_designed" : "confirmed_bug",
       pass,
       evidence,
@@ -1229,5 +1230,40 @@ test.describe("p14 live-prod audit", () => {
       screenshot,
     });
     expect(pass).toBe(true);
+  });
+
+  test("34. /about groups the registry by mission; CBP is not labelled SMOKEY", async ({
+    page,
+  }) => {
+    await page.goto("/about", { waitUntil: "networkidle" });
+    const screenshot = await shot(page, "34-about-missions");
+    const groups = await page.locator("section[data-mission]").evaluateAll((els) =>
+      els.map((e) => e.getAttribute("data-mission")),
+    );
+    // A CBP tail card sits in the federal group and its badge is FEDERAL.
+    const cbp = page.locator('section[data-mission] [data-tail="N1977G"]');
+    const cbpGroup = await page
+      .locator('section[data-mission="federal_le"] [data-tail="N1977G"]')
+      .count();
+    const cbpText = (await cbp.count()) > 0 ? await cbp.first().innerText() : "";
+    const cbpNotSmokey = cbpText.length > 0 && !/\bSMOKEY\b/.test(cbpText) && /FEDERAL/.test(cbpText);
+    const hasSources = (await page.locator('section[data-mission] a[href^="https://registry.faa.gov"]').count()) > 0;
+    const hasConfidence = (await page.locator("section[data-mission] [data-confidence]").count()) > 0;
+    const pass =
+      groups.includes("police") &&
+      groups.includes("federal_le") &&
+      groups[0] === "police" &&
+      cbpGroup > 0 &&
+      cbpNotSmokey &&
+      hasSources &&
+      hasConfidence;
+    record({
+      claim:
+        "/about registry is grouped by mission (Smokey first), each tail shows a confirmed/tentative badge and a source link, and CBP N1977G reads FEDERAL, not SMOKEY",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `groups=${JSON.stringify(groups)} cbpInFederal=${cbpGroup} cbpNotSmokey=${cbpNotSmokey} sources=${hasSources} confidence=${hasConfidence}`,
+      screenshot,
+    });
   });
 });

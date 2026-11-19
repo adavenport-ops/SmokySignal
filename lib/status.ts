@@ -1,22 +1,25 @@
 // Single source of truth for "what's the fleet doing right now," driven by
-// FleetMember.role (not specific tail nicknames). Both the home hero
-// (Glanceable), the radar status pill, the PWA app-icon badge, and the
-// embeddable /api/badge.svg all derive their copy from computeStatus().
+// FleetEntry.role (the mission taxonomy, lib/types.ts). The home hero
+// (Glanceable), the radar status pill, the PWA app-icon badge, the
+// beacon, the board and the embeddable /api/badge.svg all derive their
+// copy from computeStatus().
 //
-// Alert classes (amber pill, all read SMOKEY UP): smokey, patrol, unknown
-// Clear classes (green pill, ALL CLEAR): sar, transport, nothing
-//
-// Smokey-as-umbrella: every law-enforcement aircraft surfaces as SMOKEY UP
-// on the rider-facing pill. The granular role taxonomy still drives body
-// copy (a fixed-wing smokey vs a patrol helicopter read differently
-// underneath the pill), but the headline is uniform.
-//
-// When something clear-class is up alone, we still show ALL CLEAR but
-// surface a small footnote ("SnoHawk 10 on a rescue run.") so riders
-// have context without alarm.
+// Owner decision, 2026-11: "Smokey's up" counts police only. That is WSP,
+// county sheriffs, city / tribal police, and police mutual aid from OR /
+// ID while it is inside Washington airspace (lib/mission.ts
+// countsAsSmokey). Federal, SAR, wildfire, medevac, survey, transport and
+// unconfirmed tails never flip the pill; when one is up alone we still
+// show ALL CLEAR with a footnote ("SnoHawk 10 on a rescue run.") so
+// riders have context without alarm.
 
 import { formatTs } from "./time";
-import type { Aircraft, Snapshot, FleetEntry, FleetRole } from "./types";
+import type { Aircraft, Snapshot, FleetEntry, Mission } from "./types";
+import {
+  countsAsSmokey,
+  isPoliceMission,
+  isRotorcraftModel,
+  normalizeMission,
+} from "./mission";
 
 /**
  * "feed_down": both upstream feeds failed, so the sky state is unknown.
@@ -64,25 +67,57 @@ export type StatusState = {
   /** Lead aircraft + fleet entry, for callers that need raw context. */
   lead: { aircraft: Aircraft; entry: FleetEntry } | null;
   /**
-   * Count of alert-class aircraft (smokey + patrol + unknown). Drives the
-   * "X up" suffix on the embeddable badge and the PWA app-icon badge.
-   * SAR + transport are excluded — they're up but they don't count.
+   * Count of police aircraft up that count as Smokey (mutual aid only
+   * inside WA airspace). Drives the "X up" suffix on the embeddable badge
+   * and the PWA app-icon badge. Every other mission is excluded.
    */
   alertCount: number;
   /** Total airborne across all roles. */
   totalAirborne: number;
 };
 
-const ALERT_ROLES: ReadonlySet<FleetRole> = new Set([
-  "smokey",
-  "patrol",
-  "unknown",
-]);
+type Up = { aircraft: Aircraft; entry: FleetEntry };
 
-function describeClearMission(role: FleetRole): string {
-  if (role === "sar") return "rescue run";
-  if (role === "transport") return "transport";
-  return "watch"; // unreachable for clear classes; defensive
+/** Footnote phrase for a non-Smokey airframe that is up. */
+function describeClearUp(up: Up): string {
+  const name = up.entry.nickname ?? up.aircraft.tail;
+  const mission = normalizeMission(up.entry.role);
+  if (mission === "police") return `${name} up outside Washington.`;
+  return `${name} ${CLEAR_PHRASE[mission]}`;
+}
+
+const CLEAR_PHRASE: Record<Exclude<Mission, "police">, string> = {
+  federal_le: "up. Federal, not Smokey.",
+  sar: "on a rescue run.",
+  wildfire: "on a fire run.",
+  medevac: "on a medical run.",
+  survey: "on a survey run.",
+  transport: "on a transport.",
+  unknown: "up. Not confirmed as Smokey.",
+};
+
+// Lead order inside the Smokey class: WSP first (the speed-enforcement
+// fleet), then everyone else in snapshot order.
+function smokeyRank(e: FleetEntry): number {
+  return e.policeUnit === "wsp" ? 0 : 1;
+}
+
+function alertBody(lead: Up): string {
+  const e = lead.entry;
+  if (e.policeUnit === "wsp" && !isRotorcraftModel(e.model)) {
+    return e.nickname
+      ? `${e.nickname} watching. Mind the throttle.`
+      : "Speed enforcement plane in the air. Mind the throttle.";
+  }
+  if (e.scope === "mutual_aid") {
+    return e.nickname
+      ? `${e.nickname} over Washington. Mind the throttle.`
+      : "Out-of-state bird over Washington. Mind the throttle.";
+  }
+  if (e.nickname) return `${e.nickname} in the air. Could be patrol.`;
+  return e.policeUnit === "sheriff"
+    ? "Sheriff's bird in the air. Mind the throttle."
+    : "Patrol bird in the air. Mind the throttle.";
 }
 
 export function computeStatus(
@@ -90,74 +125,47 @@ export function computeStatus(
   fleet: Map<string, FleetEntry>,
 ): StatusState {
   const airborne = snapshot.aircraft.filter((a) => a.airborne);
-  const upByRole: Record<FleetRole, Array<{ aircraft: Aircraft; entry: FleetEntry }>> = {
-    smokey: [],
-    patrol: [],
-    sar: [],
-    transport: [],
-    unknown: [],
-  };
+  const smokey: Up[] = [];
+  const other: Up[] = [];
   for (const a of airborne) {
     const entry = fleet.get(a.tail);
     if (!entry) continue;
-    upByRole[entry.role].push({ aircraft: a, entry });
+    const up = { aircraft: a, entry };
+    if (countsAsSmokey({ role: entry.role, scope: entry.scope, lat: a.lat, lon: a.lon })) {
+      smokey.push(up);
+    } else {
+      other.push(up);
+    }
   }
-  const alertCount =
-    upByRole.smokey.length + upByRole.patrol.length + upByRole.unknown.length;
+  const alertCount = smokey.length;
 
-  // Alert tier 1 — any smokey-class up. SMOKEY UP, amber.
-  if (upByRole.smokey.length > 0) {
-    const lead = upByRole.smokey[0]!;
-    const otherSmokey = upByRole.smokey.length - 1;
+  if (smokey.length > 0) {
+    const ordered = [...smokey].sort(
+      (x, y) => smokeyRank(x.entry) - smokeyRank(y.entry),
+    );
+    const lead = ordered[0]!;
     return {
       kind: "alert",
       pill: "SMOKEY UP",
       pillSub: alertCount > 1 ? `${alertCount} up` : undefined,
       headline: "Smokey's up.",
-      body: lead.entry.nickname
-        ? `${lead.entry.nickname} watching. Mind the throttle.`
-        : "Speed enforcement plane in the air. Mind the throttle.",
-      footnote:
-        otherSmokey > 0 || upByRole.patrol.length > 0
-          ? buildAlertFootnote(upByRole, lead)
-          : undefined,
+      body: alertBody(lead),
+      footnote: buildAlertFootnote(ordered, lead),
       lead,
       alertCount,
       totalAirborne: airborne.length,
     };
   }
 
-  // Alert tier 2 — patrol or unknown up (no smokey). Per the Smokey
-  // umbrella, the pill reads SMOKEY UP just like tier 1 — body copy
-  // still distinguishes a patrol helicopter from a fixed-wing smokey
-  // for context, but the headline is uniform.
-  if (upByRole.patrol.length > 0 || upByRole.unknown.length > 0) {
-    const lead = upByRole.patrol[0] ?? upByRole.unknown[0]!;
-    return {
-      kind: "alert",
-      pill: "SMOKEY UP",
-      pillSub: alertCount > 1 ? `${alertCount} up` : undefined,
-      headline: "Smokey's up.",
-      body: lead.entry.nickname
-        ? `${lead.entry.nickname} in the air. Could be patrol.`
-        : "Patrol helicopter in the air. Mind the throttle.",
-      lead,
-      alertCount,
-      totalAirborne: airborne.length,
-    };
-  }
-
-  // Clear with footnote — only SAR / transport up. ALL CLEAR, green.
-  if (upByRole.sar.length > 0 || upByRole.transport.length > 0) {
-    const lead = upByRole.sar[0] ?? upByRole.transport[0]!;
-    const mission = describeClearMission(lead.entry.role);
-    const name = lead.entry.nickname ?? lead.aircraft.tail;
+  // Clear with footnote: only non-Smokey airframes up. ALL CLEAR, green.
+  if (other.length > 0) {
+    const lead = other[0]!;
     return {
       kind: "clear",
       pill: "ALL CLEAR",
       headline: "Smokey's down.",
       body: "No bird up over Washington. Send it.",
-      footnote: `${name} on a ${mission}.`,
+      footnote: describeClearUp(lead),
       lead,
       alertCount: 0,
       totalAirborne: airborne.length,
@@ -176,21 +184,10 @@ export function computeStatus(
   };
 }
 
-function buildAlertFootnote(
-  upByRole: Record<FleetRole, Array<{ aircraft: Aircraft; entry: FleetEntry }>>,
-  lead: { aircraft: Aircraft; entry: FleetEntry },
-): string | undefined {
-  const others: string[] = [];
-  for (const r of upByRole.smokey) {
-    if (r.aircraft.tail !== lead.aircraft.tail) {
-      others.push(r.entry.nickname ?? r.aircraft.tail);
-    }
-  }
-  for (const r of upByRole.patrol) {
-    if (r.aircraft.tail !== lead.aircraft.tail) {
-      others.push(r.entry.nickname ?? r.aircraft.tail);
-    }
-  }
+function buildAlertFootnote(smokey: Up[], lead: Up): string | undefined {
+  const others = smokey
+    .filter((r) => r.aircraft.tail !== lead.aircraft.tail)
+    .map((r) => r.entry.nickname ?? r.aircraft.tail);
   if (others.length === 0) return undefined;
   if (others.length === 1) return `${others[0]} also up.`;
   return `${others.length} other watchers up.`;
@@ -201,6 +198,11 @@ export function makeFleetMap(fleet: FleetEntry[]): Map<string, FleetEntry> {
   return new Map(fleet.map((f) => [f.tail, f]));
 }
 
-export function isAlertRole(role: FleetRole): boolean {
-  return ALERT_ROLES.has(role);
+/**
+ * True for the Smokey class (police). Accepts legacy role values too.
+ * Position-blind: callers that need the mutual-aid airspace rule use
+ * countsAsSmokey() from lib/mission.ts.
+ */
+export function isAlertRole(role: Mission | string | undefined | null): boolean {
+  return isPoliceMission(role);
 }

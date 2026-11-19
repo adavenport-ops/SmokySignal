@@ -31,6 +31,7 @@
 // approach from the rationale doc verbatim.
 
 import type { FleetRole } from "@/lib/types";
+import { isRotorcraftModel, normalizeMission } from "@/lib/mission";
 
 export const AIRCRAFT_COLORS = {
   ALERT_FILL: "#F2F4F7",
@@ -154,30 +155,36 @@ export function pathHeliMuted(): string {
 }
 
 /**
- * The aircraft-glyphs file recognizes four roles. The fifth FleetRole
- * value, `unknown`, has no glyph of its own — we render it as `smokey`,
- * matching computeStatus()'s alert-on-unknown stance. A new tail with
- * unconfirmed classification should err toward visible alert until the
- * admin classifies it.
+ * Glyph keys are a visual vocabulary, not the mission taxonomy:
+ *   smokey    = alert fixed-wing     patrol = alert rotorcraft
+ *   transport = muted fixed-wing     sar    = muted rotorcraft
+ * glyphRoleFor() picks one from a mission plus the airframe model. Police
+ * gets the alert glyph; every other mission (including unconfirmed) gets
+ * the muted one. Plane vs rotor comes from the model string; with no
+ * model, SAR reads as rotor and everything else as fixed-wing.
  */
 export type GlyphRole = "smokey" | "patrol" | "sar" | "transport";
 
-export function glyphRoleFor(role: FleetRole | undefined | null): GlyphRole {
-  if (role === "smokey" || role === "patrol" || role === "sar" || role === "transport") {
-    return role;
-  }
-  // 'unknown' or missing → conservative alert.
-  return "smokey";
+export function glyphRoleFor(
+  role: FleetRole | GlyphRole | string | undefined | null,
+  model?: string | null,
+): GlyphRole {
+  // Already a glyph key for the alert pair (used by the map's image preload).
+  if (role === "smokey" || role === "patrol") return role;
+  const mission = normalizeMission(role);
+  const rotor = model ? isRotorcraftModel(model) : mission === "sar";
+  if (mission === "police") return rotor ? "patrol" : "smokey";
+  return rotor ? "sar" : "transport";
 }
 
-export type AircraftSvgOpts = { size?: number };
+export type AircraftSvgOpts = { size?: number; model?: string | null };
 
-/** SVG markup for the role's glyph at the requested pixel size (default 24). */
+/** SVG markup for the glyph at the requested pixel size (default 24). */
 export function aircraftSvg(
-  role: FleetRole | "unknown",
+  role: FleetRole | GlyphRole | string,
   opts: AircraftSvgOpts = {},
 ): string {
-  const r = ROLES[glyphRoleFor(role)];
+  const r = ROLES[glyphRoleFor(role, opts.model)];
   const size = opts.size ?? 24;
   const inner =
     r.family === "plane"
@@ -198,5 +205,5 @@ export function aircraftSvg(
  */
 export function roleFromModel(model: string | null | undefined): GlyphRole {
   if (!model) return "smokey";
-  return /Bell|UH-1|Hughes|407|206|505|MD/i.test(model) ? "patrol" : "smokey";
+  return isRotorcraftModel(model) ? "patrol" : "smokey";
 }

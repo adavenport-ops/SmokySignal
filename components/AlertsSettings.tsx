@@ -1,7 +1,9 @@
 "use client";
 
 // /settings/alerts — single-screen opt-in surface for push notifications.
-// Five sections: status row + tier picker + zones + quiet hours + test.
+// Five sections: status row + mission picker + zones + quiet hours + test.
+// Missions default to Smokey only (lib/mission.ts DEFAULT_MISSIONS); riders
+// can add any other class. Stored in push prefs as `missions`.
 // All copy passes the design/BRAND.md voice rules (no emoji, no '!',
 // 3–6 word headlines, ≤140 char bodies, "Smokey" with the E for the bird).
 
@@ -20,9 +22,13 @@ import {
 } from "@/lib/push/client";
 import {
   DEFAULT_PREFS,
+  effectiveMissions,
+  tierForMissions,
   type AlertPrefs,
-  type AlertTier,
 } from "@/lib/push/types";
+import type { Mission } from "@/lib/types";
+import { DEFAULT_MISSIONS, MISSIONS } from "@/lib/mission";
+import { isAlertMission, missionBlurb, missionLabel } from "@/lib/role-display";
 import {
   DEFAULT_PROXIMITY_NM,
   getProximityThresholdNm,
@@ -141,16 +147,35 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
     if (!ok) flash("Couldn't send the test ping.");
   }, [permission, flash]);
 
+  const missions = effectiveMissions(prefs);
+  const toggleMissionPref = useCallback(
+    (m: Mission) => {
+      const set = new Set(missions);
+      if (set.has(m)) set.delete(m);
+      else set.add(m);
+      const next = MISSIONS.filter((x) => set.has(x));
+      // An empty list would mean "never ping". Fall back to Smokey only;
+      // riders who want silence disarm instead.
+      const list = next.length > 0 ? next : [...DEFAULT_MISSIONS];
+      void persistPrefs({ missions: list, tier: tierForMissions(list) });
+    },
+    [missions, persistPrefs],
+  );
+
+  const missionKey = missions.join(",");
   const statusBadge = useMemo<{ label: string; color: string; bg: string }>(() => {
     if (!subId) return { label: "OFF", color: SS_TOKENS.fg2, bg: SS_TOKENS.bg2 };
-    if (prefs.tier === "all")
+    const list = missionKey.split(",");
+    if (list.length === MISSIONS.length)
       return { label: "ALL", color: SS_TOKENS.alert, bg: SS_TOKENS.alertDim };
+    if (list.length === 1 && isAlertMission(list[0] ?? ""))
+      return { label: "SMOKEY ONLY", color: SS_TOKENS.alert, bg: SS_TOKENS.alertDim };
     return {
-      label: "ALERT-ONLY",
+      label: `${list.length} CLASSES`,
       color: SS_TOKENS.alert,
       bg: SS_TOKENS.alertDim,
     };
-  }, [subId, prefs.tier]);
+  }, [subId, missionKey]);
 
   return (
     <main
@@ -307,20 +332,27 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
             )}
           </Card>
 
-          {/* Tier picker */}
+          {/* Mission picker: multi-select, Smokey only by default */}
           <Section eyebrow="What pings you">
-            <RadioCard
-              active={prefs.tier === "alert_only"}
-              onClick={() => persistPrefs({ tier: "alert_only" satisfies AlertTier })}
-              title="Alert only"
-              body="Bird up. Heads up."
-            />
-            <RadioCard
-              active={prefs.tier === "all"}
-              onClick={() => persistPrefs({ tier: "all" satisfies AlertTier })}
-              title="All aircraft"
-              body="Every wing in the air."
-            />
+            <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: 0, lineHeight: 1.45 }}>
+              Smokey only by default. Add any other class you want to hear
+              about.
+            </p>
+            <div
+              role="group"
+              aria-label="Missions that ping you"
+              style={{ display: "flex", flexDirection: "column", gap: 6 }}
+            >
+              {MISSIONS.map((m) => (
+                <RadioCard
+                  key={m}
+                  active={missions.includes(m)}
+                  onClick={() => toggleMissionPref(m)}
+                  title={missionLabel(m)}
+                  body={missionBlurb(m)}
+                />
+              ))}
+            </div>
           </Section>
 
           {/* Tails — optional allow-list. Empty = all tails (subject to other
@@ -328,7 +360,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
           <Section eyebrow="Tails">
             <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: 0, lineHeight: 1.45 }}>
               Pick specific tails to follow. Leave all unchecked to hear about
-              every bird that passes the tier filter.
+              every bird in the classes above.
             </p>
             <div
               className="ss-mono"
@@ -419,7 +451,7 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                           letterSpacing: ".04em",
                         }}
                       >
-                        {t.role}
+                        {missionLabel(t.role)}
                       </span>
                     </label>
                   );

@@ -91,10 +91,15 @@ test("coherence: home pill tier matches /api/aircraft", async ({ page }, testInf
   await page.waitForTimeout(1500);
   const heroText = (await page.locator("h1").first().innerText().catch(() => "")).toUpperCase();
   const fleet = snap?.aircraft ?? [];
-  const anySmokeyUp = fleet.some((a) => a.airborne && a.role === "smokey");
-  const anyAlertUp = fleet.some(
-    (a) => a.airborne && (a.role === "patrol" || a.role === "unknown"),
+  // Mission taxonomy (2026-11): only police reads SMOKEY UP. Mutual-aid
+  // police counts only inside WA airspace (lat >= 45.5, lon <= -117), so
+  // an out-of-state unit without a fix is not treated as alert here.
+  const inWa = (a: { lat?: number; lon?: number }) =>
+    typeof a.lat === "number" && a.lat >= 45.5 && (typeof a.lon !== "number" || a.lon <= -117);
+  const anySmokeyUp = fleet.some(
+    (a) => a.airborne && a.role === "police" && ((a as { scope?: string }).scope !== "mutual_aid" || inWa(a as { lat?: number; lon?: number })),
   );
+  const anyAlertUp = false;
   const violations: unknown[] = [];
   if (anySmokeyUp && !/SMOKEY/i.test(heroText)) {
     violations.push({
@@ -148,7 +153,7 @@ test("coherence: SAR/transport plane copy doesn't use speed-enforcement language
 }, testInfo) => {
   if (testInfo.project.name !== "chromium-desktop") test.skip();
   const sarTransport = (snap?.aircraft ?? []).filter(
-    (a) => a.role === "sar" || a.role === "transport",
+    (a) => a.role !== "police",
   );
   const violations: unknown[] = [];
   for (const tail of sarTransport) {
