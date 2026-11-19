@@ -6,6 +6,9 @@ import type { Snapshot, SnapshotSource } from "./types";
 
 const KEY = "ss:snapshot:v1";
 const TTL_SECONDS = 10;
+// Degraded snapshots (every upstream feed failed) stay cached just long
+// enough to absorb a burst of requests, then the next caller retries.
+const DEGRADED_TTL_SECONDS = 5;
 // /api/health needs to know "is the snapshot pipeline working?" without
 // being dependent on the 10s hot-path cache, which is empty 50s/min
 // between cron ticks. This mirror gets a 10-min TTL so /api/health
@@ -66,7 +69,7 @@ let inflight: Promise<Snapshot> | null = null;
 export async function getSnapshot(): Promise<Snapshot> {
   const cached = await cacheGet<Snapshot>(KEY);
   if (cached) {
-    lastSource = cached.source;
+    if (!cached.degraded) lastSource = cached.source;
     return cached;
   }
   if (inflight) return inflight;
@@ -74,6 +77,31 @@ export async function getSnapshot(): Promise<Snapshot> {
   inflight = (async () => {
     try {
       const snap = await buildSnapshot();
+      // Write the hot-path cache FIRST. Other instances that miss the cache
+      // rebuild and diff on their own, so the sooner this lands the smaller
+      // the window in which two instances record activity for the same
+      // tick. (lib/activity.ts also dedupes at write time.)
+      //
+      // A degraded snapshot (both feeds down) is cached only briefly so
+      // riders get a fresh retry within seconds instead of a placeholder
+      // for the full TTL.
+      try {
+        await cacheSet(
+          KEY,
+          snap,
+          snap.degraded ? DEGRADED_TTL_SECONDS : TTL_SECONDS,
+        );
+      } catch (e) {
+        console.warn("[snapshot] hot-path cache write failed:", e);
+      }
+
+      if (snap.degraded) {
+        // No observation this tick: skip the activity diff, the track log,
+        // the freshness pointer, the airborne canary and the health mirror,
+        // so none of them report a dead feed as current.
+        return snap;
+      }
+
       // Append airborne positions + record state-change activity events.
       // Both are best-effort: never fail /api/aircraft on a side-channel error.
       try {
@@ -93,7 +121,6 @@ export async function getSnapshot(): Promise<Snapshot> {
           console.warn("[snapshot] last-airborne stamp failed:", e);
         }
       }
-      await cacheSet(KEY, snap, TTL_SECONDS);
       // Health mirror gets a much longer TTL so the cron pipeline is
       // observable between hot-path cache expirations.
       try {

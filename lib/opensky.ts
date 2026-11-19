@@ -18,6 +18,10 @@ const CREDITS_KEY = "opensky:credits_remaining";
 
 const UA = "SmokySignal/0.1 (+https://www.smokysignal.app)";
 
+// Hard ceiling per request (auth and states). Without it a hung upstream
+// stalls the whole snapshot regen until the platform kills the function.
+const OPENSKY_TIMEOUT_MS = 6000;
+
 type CachedToken = { access_token: string; expires_at: number };
 
 /**
@@ -48,6 +52,7 @@ export async function getOpenskyToken(): Promise<string | null> {
     },
     body,
     cache: "no-store",
+    signal: AbortSignal.timeout(OPENSKY_TIMEOUT_MS),
   });
   if (!r.ok) {
     const detail = await r.text().catch(() => "");
@@ -120,7 +125,11 @@ export async function fetchOpenSky(hexes: string[]): Promise<NormalizedAc[]> {
     const token = await getOpenskyToken();
     const headers: Record<string, string> = { "User-Agent": UA };
     if (token) headers.Authorization = `Bearer ${token}`;
-    return fetch(url, { headers, cache: "no-store" });
+    return fetch(url, {
+      headers,
+      cache: "no-store",
+      signal: AbortSignal.timeout(OPENSKY_TIMEOUT_MS),
+    });
   };
 
   let r = await doFetch();

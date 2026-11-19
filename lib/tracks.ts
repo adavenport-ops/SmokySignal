@@ -37,6 +37,10 @@ function utcDateKey(d: Date): string {
  * any failure logs and returns; never throws to the caller.
  */
 export async function logTracks(snap: Snapshot): Promise<void> {
+  // A degraded snapshot is a placeholder from a failed upstream fetch, not
+  // an observation. Writing it would bump the freshness pointer and make
+  // FreshnessLabel read "fresh" while every feed is dead.
+  if (snap.degraded) return;
   const redis = await getRedis();
   if (!redis) return; // dev or unconfigured KV — skip
 
@@ -53,9 +57,9 @@ export async function logTracks(snap: Snapshot): Promise<void> {
   if (points.length > 0) {
     await recordFirstSampleIfMissing(new Date(snap.fetched_at));
   }
-  // Always update the freshness pointer so /radar + / can flip the LAST
-  // SAMPLE label amber when this cron silently dies. Best-effort; never
-  // throws.
+  // Update the freshness pointer on every non-degraded snapshot so /radar
+  // + / can flip the LAST SAMPLE label amber when this cron silently dies
+  // or the upstream feeds fail. Best-effort; never throws.
   await recordLastSample(snap.fetched_at);
 
   const writes = points.map(async (a) => {

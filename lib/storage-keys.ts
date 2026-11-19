@@ -79,3 +79,17 @@ export function pushCooldownKey(tail: string, region?: Region): string {
 export function pushFailCountKey(subscriptionId: string, region?: Region): string {
   return `${regionPrefix(region)}push:fail:${subscriptionId}`;
 }
+
+// ─── activity:* ──────────────────────────────────────────────────────
+/**
+ * Write-time dedupe marker for one activity event kind on one tail. Set
+ * with NX + a short TTL before appending to the feed, so two instances
+ * diffing the same snapshot pair cannot both write the event.
+ */
+export function activityDedupeKey(
+  tail: string,
+  kind: string,
+  region?: Region,
+): string {
+  return `${regionPrefix(region)}activity:dedupe:${tail.toUpperCase()}:${kind}`;
+}

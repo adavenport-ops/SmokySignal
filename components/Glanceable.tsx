@@ -165,7 +165,7 @@ export function Glanceable({
         <Tooltip
           side="bottom"
           align="end"
-          content={`Time since last successful data pull. ${snap.source === "adsbfi" ? "ADSBFI = adsb.fi (primary feed)." : snap.source === "opensky" ? "OPENSKY = OpenSky Network (fallback)." : "MOCK = synthetic data."}`}
+          content={`Time since last successful data pull. ${snap.source === "adsbfi" ? "ADSBFI = adsb.fi (primary feed)." : snap.source === "opensky" ? "OPENSKY = OpenSky Network (fallback)." : snap.source === "none" ? "NONE = both feeds unreachable. Positions are not current." : "MOCK = synthetic data."}`}
         >
           <span
             className="ss-mono"

@@ -40,9 +40,14 @@ const FETCH_OPTS: RequestInit = {
 // classify as airborne:false from launch through 2026-04-30.
 type AdsbFiResp = { aircraft?: NormalizedAc[]; now?: number };
 
+const ADSBFI_TIMEOUT_MS = 4000;
+
 async function fetchAdsbFi(): Promise<NormalizedAc[]> {
   const url = `https://opendata.adsb.fi/api/v2/lat/${REGION.lat}/lon/${REGION.lon}/dist/${REGION.nm}`;
-  const r = await fetch(url, FETCH_OPTS);
+  const r = await fetch(url, {
+    ...FETCH_OPTS,
+    signal: AbortSignal.timeout(ADSBFI_TIMEOUT_MS),
+  });
   if (!r.ok) throw new Error(`adsb.fi ${r.status}`);
   const j = (await r.json()) as AdsbFiResp;
   return j.aircraft ?? [];
@@ -63,18 +68,29 @@ export async function buildSnapshot(): Promise<Snapshot> {
 
   let raw: NormalizedAc[] = [];
   let source: Snapshot["source"] = "adsbfi";
+  // Degraded = no trustworthy observation this tick. The aircraft list
+  // below still gets built (every tail airborne:false) so consumers keep a
+  // valid shape, but the flag tells the activity diff, track log and
+  // freshness pointer to ignore it.
+  let degraded = false;
   try {
     raw = await fetchAdsbFi();
+    // A 250 nm circle over Washington is never empty. Zero rows means the
+    // upstream is broken (or its response shape changed again), not that
+    // the sky is clear, so treat it as a failure and try the fallback.
+    if (raw.length === 0) throw new Error("adsb.fi returned zero rows");
   } catch (e) {
     console.warn("[adsb] primary failed, falling back to OpenSky:", e);
     try {
+      // OpenSky is queried by fleet hex, so an empty result is a legitimate
+      // "none of ours are transmitting" answer, not a failure.
       raw = await fetchOpenSky(fleetHexes);
       source = "opensky";
     } catch (e2) {
       console.error("[adsb] both feeds failed:", e2);
       raw = [];
-      // Both feeds failed; mark as last-attempted so source stays in the type.
-      source = "opensky";
+      source = "none";
+      degraded = true;
     }
   }
 
@@ -141,6 +157,7 @@ export async function buildSnapshot(): Promise<Snapshot> {
     source,
     aircraft,
     live_seen_count: raw.length,
+    ...(degraded ? { degraded: true } : {}),
   };
 }
 

@@ -59,7 +59,13 @@ export type AircraftLive = {
 
 export type Aircraft = FleetEntry & AircraftLive;
 
-export type SnapshotSource = "adsbfi" | "opensky" | "mock";
+/**
+ * "none" means every upstream feed failed (or adsb.fi returned zero rows
+ * and the OpenSky fallback also failed). Such snapshots carry
+ * `degraded: true` and must not be diffed, cached for long, or treated as
+ * evidence of freshness.
+ */
+export type SnapshotSource = "adsbfi" | "opensky" | "mock" | "none";
 
 /**
  * Internal feed-agnostic aircraft shape produced by both adsb.fi and OpenSky
@@ -93,4 +99,12 @@ export type Snapshot = {
    * of P3-debug, 2026-04-30).
    */
   live_seen_count: number;
+  /**
+   * True when the upstream fetch failed or returned no usable rows. The
+   * aircraft list is then a placeholder (every tail airborne:false), not
+   * an observation. Downstream consumers (activity diff, track log,
+   * freshness pointer, health mirror) skip degraded snapshots. Optional
+   * so older cached snapshots and mock fixtures stay valid.
+   */
+  degraded?: boolean;
 };

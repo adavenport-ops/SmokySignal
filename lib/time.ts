@@ -32,10 +32,14 @@ export type FormatOpts = {
   hour12?: boolean;
 };
 
+// 24-hour branches use hourCycle "h23", not hour12:false. With hour12:false
+// some engines resolve to the locale's h24 cycle and render midnight as
+// "24:05". Locale is pinned to en-US everywhere below so server and client
+// render the same string (no hydration drift from the viewer's locale).
 function timeOpts(hour12: boolean): Intl.DateTimeFormatOptions {
   return hour12
     ? { hour: "numeric", minute: "2-digit", hour12: true, timeZone: PT_TZ }
-    : { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: PT_TZ };
+    : { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: PT_TZ };
 }
 
 function timeSecOpts(hour12: boolean): Intl.DateTimeFormatOptions {
@@ -51,7 +55,7 @@ function timeSecOpts(hour12: boolean): Intl.DateTimeFormatOptions {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
-        hour12: false,
+        hourCycle: "h23",
         timeZone: PT_TZ,
       };
 }
@@ -68,10 +72,10 @@ export function formatTs(
   switch (style) {
     case "time":
     case "hour-min":
-      out = d.toLocaleTimeString([], timeOpts(hour12));
+      out = d.toLocaleTimeString("en-US", timeOpts(hour12));
       break;
     case "time-sec":
-      out = d.toLocaleTimeString([], timeSecOpts(hour12));
+      out = d.toLocaleTimeString("en-US", timeSecOpts(hour12));
       break;
     case "date":
       // sv-SE forces ISO-style YYYY-MM-DD regardless of viewer locale.
@@ -83,21 +87,21 @@ export function formatTs(
       });
       break;
     case "date-short":
-      out = d.toLocaleDateString([], {
+      out = d.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         timeZone: PT_TZ,
       });
       break;
     case "date-weekday":
-      out = d.toLocaleDateString([], {
+      out = d.toLocaleDateString("en-US", {
         weekday: "long",
         timeZone: PT_TZ,
       });
       break;
     case "datetime": {
       const date = formatTs(tsMs, "date");
-      const time = d.toLocaleTimeString([], timeOpts(hour12));
+      const time = d.toLocaleTimeString("en-US", timeOpts(hour12));
       return `${date} ${time} PT`;
     }
     case "iso-utc":
@@ -124,7 +128,7 @@ export function pacificNow(): { dow: number; hour: number } {
   const fmt = new Intl.DateTimeFormat("en-US", {
     timeZone: PT_TZ,
     hour: "numeric",
-    hour12: false,
+    hourCycle: "h23",
     weekday: "short",
   });
   const parts = fmt.formatToParts(new Date());
@@ -148,9 +152,13 @@ export function pacificNow(): { dow: number; hour: number } {
   return { dow, hour };
 }
 
-/** "Just now" / "Xm ago" / "Xh ago" / "Xd ago" — tz-agnostic. */
+/**
+ * "Just now" / "Xm ago" / "Xh ago" / "Xd ago" — tz-agnostic.
+ * 0 (and anything under a minute, including small negative clock skew)
+ * is "just now"; only a missing or non-numeric value is "a while".
+ */
 export function fmtAgo(min: number | null | undefined): string {
-  if (min == null || Number.isNaN(min) || min <= 0) return "a while";
+  if (min == null || !Number.isFinite(min)) return "a while";
   if (min < 1) return "just now";
   if (min < 60) return `${min}m ago`;
   if (min < 1440) return `${Math.floor(min / 60)}h ago`;
