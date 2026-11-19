@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { FLEET } from "../seed";
 import { CORRIDORS } from "../corridor";
+import { TOWNS } from "../towns";
 import type { FleetEntry } from "../types";
 import { fillHelpPlaceholders, fleetStats, joinAnd, keyFacts } from "./facts";
 import { PROGRAM_FAQ, helpFaq, stripInlineMarkdown } from "./faq";
@@ -135,6 +136,15 @@ test("llms.txt: H1, summary blockquote, counts, sections, endpoints", () => {
   assert.ok(withPosts.includes("https://www.smokysignal.app/blog/2026-11-19-x"));
 });
 
+test("llms.txt and llms-full.txt list the town pages", () => {
+  const short = buildLlmsTxt(FLEET);
+  assert.match(short, /\/near\b/);
+  assert.match(short, /\/near\/puyallup/);
+  const full = buildLlmsFullTxt(FLEET, CORRIDORS);
+  assert.match(full, /## Towns/);
+  for (const t of TOWNS) assert.ok(full.includes(`/near/${t.slug}`), t.slug);
+});
+
 test("llms-full.txt: every tail and every corridor", () => {
   const txt = buildLlmsFullTxt(FLEET, CORRIDORS, PROGRAM_FAQ);
   assert.ok(!/opensky/i.test(txt));
@@ -158,12 +168,17 @@ test("sitemap: static, tails, roads, wraps, blog, capped flights, lastModified e
     builtAt: now,
     tails: FLEET.map((f) => f.tail),
     corridorIds: CORRIDORS.map((c) => c.id),
+    townSlugs: TOWNS.map((t) => t.slug),
     wrapYears: [2026],
     blog: [{ slug: "first-post", lastModified: new Date("2026-11-01") }],
     sessions,
   });
   const urls = map.map((e) => e.url);
   assert.equal(new Set(urls).size, urls.length, "no duplicate URLs");
+  assert.ok(urls.includes("https://www.smokysignal.app/near"));
+  assert.ok(urls.includes("https://www.smokysignal.app/near/fife"));
+  assert.ok(urls.includes("https://www.smokysignal.app/near/spokane-valley"));
+  assert.equal(urls.filter((u) => u.includes("/near/")).length, TOWNS.length);
   for (const r of STATIC_ROUTES) assert.ok(urls.includes(`https://www.smokysignal.app${r.path}`), r.path);
   assert.ok(urls.includes("https://www.smokysignal.app/plane/N305DK"));
   assert.ok(urls.includes("https://www.smokysignal.app/road/i-5"));

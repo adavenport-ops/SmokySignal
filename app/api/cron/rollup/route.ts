@@ -4,6 +4,8 @@
 // overwrites the same keys with the same content.
 // Schedule: 09:15 UTC daily (01:15 PST / 02:15 PDT), well after the
 // UTC day it summarizes has closed. Auth: Bearer CRON_SECRET.
+// Last, a best-effort IndexNow ping for new /flight pages and blog posts
+// (lib/seo/indexnow-server.ts; production only, deduped in KV).
 
 import { createHash, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
@@ -11,6 +13,7 @@ import { hasKv } from "@/lib/cache";
 import { runRollup } from "@/lib/rollup";
 import { persistTrackHistory } from "@/lib/tracks";
 import { backfillActivityArchive } from "@/lib/activity";
+import { pingIndexNow, type PingResult } from "@/lib/seo/indexnow-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,10 +71,19 @@ export async function GET(req: Request) {
     } catch (e) {
       console.warn("[cron/rollup] backfillActivityArchive failed:", e);
     }
+    // Tell IndexNow about new flight pages and posts. Never fails the run,
+    // and waits for tomorrow when the rollup used most of the budget.
+    let indexnow: PingResult | null = null;
+    try {
+      if (Date.now() - started < 48_000) indexnow = await pingIndexNow(Date.now());
+    } catch (e) {
+      console.warn("[cron/rollup] indexnow ping failed:", e);
+    }
     return NextResponse.json({
       ok: true,
       persisted,
       activity_archived: activity,
+      indexnow,
       built,
       upgraded,
       remaining,

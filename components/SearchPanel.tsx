@@ -34,6 +34,7 @@ function iconFor(r: SearchResult): IconName {
   if (r.kind === "setting") return "settings";
   if (r.kind === "road") return "road";
   if (r.kind === "aircraft") return "aircraft";
+  if (r.kind === "town") return "town";
   return "seen";
 }
 

@@ -9,11 +9,12 @@ checks, and how to add metadata when you ship a page.
 | Surface | Source | Notes |
 |---|---|---|
 | Titles, descriptions, canonicals, Open Graph, Twitter cards | `pageMeta()` in `lib/seo/site.ts`, called from each page's `metadata` / `generateMetadata` | Root template adds ` · SmokySignal`; never put the brand in the page title too. |
-| Sitemap | `app/sitemap.ts` + `lib/seo/sitemap-core.ts` | Static routes (`STATIC_ROUTES`), every `/plane/[tail]`, every `/road/[id]`, `/wrap/[year]`, `/blog`, every `/blog/[slug]` post (read through `lib/blog.ts`) and `/blog/feed.xml`, up to 500 `/flight/*` pages from the last 30 days. Hourly. |
+| Sitemap | `app/sitemap.ts` + `lib/seo/sitemap-core.ts` | Static routes (`STATIC_ROUTES`), every `/plane/[tail]`, every `/road/[id]`, every `/near/[town]` (`lib/towns.ts`), `/wrap/[year]`, `/blog`, every `/blog/[slug]` post (read through `lib/blog.ts`) and `/blog/feed.xml`, up to 500 `/flight/*` pages from the last 30 days. Hourly. |
 | robots.txt | `app/robots.ts` | Disallows `/admin`, `/api/admin`, `/relay/manage`, `/embed` (but allows `/embed/help`), `/qa-dashboard`. Names the AI crawlers explicitly as allowed. Lists `/blog/feed.xml` as a second sitemap. |
 | Structured data | `lib/seo/jsonld.ts` builders, rendered by `components/JsonLd.tsx` | `type="application/ld+json"`, never executed, so the CSP is untouched. Validated by `validateJsonLd()` in tests and in the audit. |
 | llms.txt / llms-full.txt | `app/llms.txt/route.ts`, `app/llms-full.txt/route.ts`, `lib/seo/llms.ts` | Counts come from the registry. Lists the newest blog posts. llms-full adds every post, the registry table, corridors and the FAQ. Sources are adsb.fi and adsb.lol only. |
 | Key facts | `lib/seo/facts.ts`, `components/KeyFacts.tsx` | On `/program` and `/about`; the first two facts also sit under the status on `/`. Computed from the registry, never hardcoded. |
+| IndexNow | `lib/seo/indexnow.ts`, `scripts/indexnow.ts`, `lib/seo/indexnow-server.ts`, `public/<key>.txt` | Pings Bing, Yandex, Seznam and Naver (DuckDuckGo reads Bing). No account: the key is public and served at `/<key>.txt`. The daily rollup cron submits new `/flight` pages and blog posts, deduped in the KV set `seo:indexnow:submitted`. |
 | FAQ content | `lib/seo/faq.ts` | `/program` answers are lifted verbatim from the page (a test fails if one drifts); `/help` is parsed from `content/help.md`, whose fleet numbers are `{{PLACEHOLDERS}}` filled by `fillHelpPlaceholders()` (`lib/seo/facts.ts`). |
 
 Structured data by route:
@@ -27,6 +28,8 @@ Structured data by route:
 | `/data` | Dataset (ODbL 1.0, CSV distribution, temporal coverage from 2026-10-16), BreadcrumbList |
 | `/plane/[tail]` | WebPage about the airframe (Thing typed as aircraft) and the operating GovernmentOrganization, BreadcrumbList |
 | `/road/[id]` | WebPage about a Place with a GeoShape line, BreadcrumbList |
+| `/near` | BreadcrumbList |
+| `/near/[town]` | Place with GeoCoordinates and its county, the page as `subjectOf`, BreadcrumbList |
 | `/flight/[tail]/[id]` | WebPage with dateCreated, about the airframe, BreadcrumbList |
 | `/wrap/[year]` | BreadcrumbList |
 | `/blog/[slug]` | Article, owned by the blog (`lib/blog-core.ts` `articleJsonLd`). The SEO layer adds nothing there, so there is one Article per post. |
@@ -70,6 +73,19 @@ Each week:
 5. If the registry changed (new tails, new agencies), confirm `/llms.txt`
    and the Key facts read right. They recompute on their own; the check
    is that the sentences still make sense.
+6. After the week's PRs are deployed, tell IndexNow what changed:
+
+   ```sh
+   npm run seo:indexnow -- --since <last week's ref> --dry-run   # look first
+   npm run seo:indexnow -- --since <last week's ref>
+   ```
+
+   `<last week's ref>` is the main commit the previous weekly run ended
+   on (e.g. `git log --until="7 days ago" -1 --format=%H origin/main`).
+   It maps changed blog posts and page files to URLs; the daily cron
+   already covers new flights and posts. `--all` resubmits the whole live
+   sitemap; use it after a large change, not every week. A real submit
+   refuses to run until the key file answers on production.
 
 Thin pages that are expected: `/radar`, `/flights` and `/board` are live
 app screens. Their text is the status itself; keep them indexable, do
@@ -98,7 +114,9 @@ Aviation fans:
 Pages that should win them: `/` (is it up), `/circling` (what is that
 plane circling), `/seen` (was that the plane I saw), `/program` (how
 aerial speed enforcement works), `/aircraft` and `/plane/[tail]` (tails
-and airframes), `/road/[id]` (I-5, SR-512 and the towns along them).
+and airframes), `/road/[id]` (I-5, SR-512 and the towns along them),
+`/near/[town]` (plane circling over Puyallup, Fife, Lakewood: a live
+check plus the town's 30-day log).
 
 ## Adding a page
 

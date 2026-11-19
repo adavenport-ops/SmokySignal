@@ -16,6 +16,8 @@ export type SitemapInput = {
   builtAt: Date;
   tails: readonly string[];
   corridorIds: readonly string[];
+  /** Town page slugs (lib/towns.ts); omitted means none. */
+  townSlugs?: readonly string[];
   wrapYears: readonly number[];
   /** Posts from lib/blog.ts; null or empty leaves the blog out. */
   blog: readonly BlogPost[] | null;
@@ -24,7 +26,7 @@ export type SitemapInput = {
 };
 
 /** Live pages: their content is as fresh as the last flight we logged. */
-const LIVE = new Set(["/", "/radar", "/flights", "/circling", "/board", "/road", "/stats", "/forecast", "/data"]);
+const LIVE = new Set(["/", "/radar", "/flights", "/circling", "/board", "/road", "/near", "/stats", "/forecast", "/data"]);
 
 export function buildSitemap(input: SitemapInput): MetadataRoute.Sitemap {
   const newestFlight = input.sessions.reduce((m, s) => Math.max(m, s.end_ts), 0);
@@ -53,6 +55,10 @@ export function buildSitemap(input: SitemapInput): MetadataRoute.Sitemap {
 
   for (const id of input.corridorIds) {
     out.push({ url: absUrl(`/road/${id}`), lastModified: liveStamp, changeFrequency: "daily", priority: 0.7 });
+  }
+
+  for (const slug of input.townSlugs ?? []) {
+    out.push({ url: absUrl(`/near/${slug}`), lastModified: liveStamp, changeFrequency: "daily", priority: 0.7 });
   }
 
   const currentYear = Math.max(0, ...input.wrapYears);

@@ -11,6 +11,8 @@ export function ShareLinkButton({
   size = "md",
   text,
   ariaLabel,
+  variant = "default",
+  testId,
 }: {
   path: string;
   label?: string;
@@ -21,6 +23,9 @@ export function ShareLinkButton({
    */
   text?: string;
   ariaLabel?: string;
+  /** "primary": a filled button for the moment the share is the point. */
+  variant?: "default" | "primary";
+  testId?: string;
 }) {
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,23 +62,27 @@ export function ShareLinkButton({
   };
 
   const isSm = size === "sm";
+  const primary = variant === "primary";
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={ariaLabel ?? `Copy share link${path ? `: ${path}` : ""}`}
       className="ss-mono"
+      data-testid={testId}
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 6,
-        padding: isSm ? "5px 9px" : "7px 12px",
+        justifyContent: "center",
+        gap: primary ? 8 : 6,
+        padding: primary ? "10px 18px" : isSm ? "5px 9px" : "7px 12px",
         borderRadius: 999,
-        background: copied ? SS_TOKENS.clearDim : SS_TOKENS.bg2,
-        border: `.5px solid ${copied ? `${SS_TOKENS.clear}55` : SS_TOKENS.hairline2}`,
-        color: copied ? SS_TOKENS.clear : SS_TOKENS.fg1,
-        fontSize: 12,
-        minHeight: 44,
+        background: copied ? SS_TOKENS.clearDim : primary ? SS_TOKENS.cta : SS_TOKENS.bg2,
+        border: `.5px solid ${copied ? `${SS_TOKENS.clear}55` : primary ? SS_TOKENS.cta : SS_TOKENS.hairline2}`,
+        color: copied ? SS_TOKENS.clear : primary ? SS_TOKENS.ctaInk : SS_TOKENS.fg1,
+        fontSize: primary ? 14 : 12,
+        fontWeight: primary ? 700 : undefined,
+        minHeight: primary ? 48 : 44,
         letterSpacing: ".04em",
         cursor: "pointer",
         whiteSpace: "nowrap",
@@ -81,7 +90,7 @@ export function ShareLinkButton({
         WebkitTapHighlightColor: "transparent",
       }}
     >
-      <ShareIcon size={isSm ? 12 : 14} />
+      <ShareIcon size={primary ? 16 : isSm ? 12 : 14} />
       {copied ? "Copied" : label}
     </button>
   );

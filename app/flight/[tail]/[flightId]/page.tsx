@@ -24,6 +24,7 @@ import { agencyName } from "@/lib/agencies";
 import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbJsonLd, flightPageJsonLd } from "@/lib/seo/jsonld";
 import { pageMeta } from "@/lib/seo/site";
+import { flightShareText } from "@/lib/share-text";
 
 export const dynamic = "force-dynamic";
 
@@ -206,6 +207,15 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
         points={points}
         initialView={initialView}
         hour12={hour12}
+        share={{
+          path: `/flight/${entry.tail}/${params.flightId}`,
+          text: flightShareText({
+            tail: entry.tail,
+            nickname: entry.nickname,
+            startMs: session.start_ts,
+            durationS: session.duration_s,
+          }),
+        }}
       />
 
       <section

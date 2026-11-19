@@ -18,7 +18,6 @@ import {
   departurePhrase,
   emptyMessage,
   fmtMiles,
-  ogTitle,
   outsideMessage,
   placeByName,
   resultsHeading,
@@ -35,6 +34,8 @@ import {
   type SeenPageState,
   type WindowMin,
 } from "@/lib/seen-view";
+import { seenShareText } from "@/lib/share-text";
+import { townByName, townHref } from "@/lib/towns";
 import { ShareLinkButton } from "./ShareLinkButton";
 import { SeenMap } from "./SeenMap";
 import page from "./pattern-pages.module.css";
@@ -335,13 +336,39 @@ function Results({
 
   const { body } = result;
   const area = shared?.place ?? body.area;
+  // The text names a town, never the rider's point; the URL carries the
+  // point already rounded to 2 decimals (seenPageHref).
+  const shareText = seenShareText(body, shared?.place ?? null, opts);
   const share = shared ? (
     <ShareLinkButton
       path={seenPageHref(shared)}
-      label="Share this lookup"
-      ariaLabel="Share a link to this lookup"
-      text={`${ogTitle(area, shared.time)}:`}
+      label="Share this answer"
+      ariaLabel={`Share this answer: ${shareText}`}
+      text={shareText}
+      variant="primary"
+      testId="seen-share"
     />
+  ) : null;
+  const town = area ? townByName(area) : null;
+  const townLink = town ? (
+    <Link
+      href={townHref(town)}
+      prefetch={false}
+      className={`ss-mono ${page.linkRow}`}
+      style={{ fontSize: 13, color: SS_TOKENS.fg0 }}
+      data-testid="seen-town-link"
+    >
+      30 days over {town.name} &rarr;
+    </Link>
+  ) : null;
+  const shareCard = share ? (
+    <div className={page.card} style={{ display: "flex", flexDirection: "column", gap: 10 }} data-testid="seen-share-card">
+      <p style={{ margin: 0, fontSize: 15, lineHeight: 1.45, fontWeight: 600, color: SS_TOKENS.fg0 }}>{shareText}</p>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 16px" }}>
+        {share}
+        {townLink}
+      </div>
+    </div>
   ) : null;
 
   if (body.data.status !== "ok") {
@@ -378,7 +405,7 @@ function Results({
             .
           </p>
         </div>
-        <div>{share}</div>
+        {shareCard}
       </>
     );
   }
@@ -388,6 +415,7 @@ function Results({
       <h2 className={`ss-eyebrow ${page.sectionTitle}`} data-testid="seen-heading">
         {heading} · {date} PT
       </h2>
+      {shareCard}
       <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.5, color: SS_TOKENS.fg1 }}>
         {body.aircraft.length === 1
           ? "One aircraft we track passed within range."
@@ -400,7 +428,6 @@ function Results({
         ))}
       </ul>
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
-        {share}
         <span style={{ fontSize: 12, lineHeight: 1.5, color: SS_TOKENS.fg1 }}>
           This lists what we tracked. Low-level coverage can miss aircraft.{" "}
           <Link href="/program#coverage" style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}>

@@ -14,6 +14,7 @@ import { compass8 } from "./geo";
 import { HISTORY_FLOOR } from "./history-view";
 import { PLACES } from "./places";
 import { REGIONS } from "./regions";
+import { TOWNS } from "./towns";
 import { formatTsBare } from "./time";
 import type { Mission } from "./types";
 
@@ -244,7 +245,17 @@ export type SeenPageState = {
   r: RadiusMi;
 };
 
-const PLACE_BY_LOWER = new Map(PLACES.map((p) => [p.name.toLowerCase(), p]));
+/**
+ * The corridor gazetteer plus the town-page towns that are not on a
+ * corridor (Spokane, Yakima, Bellingham), so a town page's "Was that the
+ * plane I saw?" link opens /seen with its place picked.
+ */
+export const SEEN_PLACES: ReadonlyArray<{ name: string; lat: number; lon: number }> = [
+  ...PLACES,
+  ...TOWNS.filter((t) => !t.gazetteer).map((t) => ({ name: t.name, lat: t.lat, lon: t.lon })),
+];
+
+const PLACE_BY_LOWER = new Map(SEEN_PLACES.map((p) => [p.name.toLowerCase(), p]));
 
 /** A gazetteer place by name (case-insensitive), or null. */
 export function placeByName(name: unknown) {
@@ -253,7 +264,7 @@ export function placeByName(name: unknown) {
 }
 
 /** Places sorted by name, for the picker. */
-export const PLACE_LIST = [...PLACES].sort((a, b) => a.name.localeCompare(b.name));
+export const PLACE_LIST = [...SEEN_PLACES].sort((a, b) => a.name.localeCompare(b.name));
 
 /** Shown before the rider types: the towns people most often ask about. */
 export const POPULAR_PLACES = [

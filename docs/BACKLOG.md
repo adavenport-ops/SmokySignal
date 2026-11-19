@@ -95,14 +95,6 @@ _Nothing picked yet._
 - **Acceptance:** a rider draws or picks a route from corridors; matching happens in the browser against /api/history; nothing about the route is sent or stored; history framing only.
 - **Blog line:** Ride check lays your route over what flew, and the route never leaves your phone.
 
-### B09 · Neighbourhood pages
-- **Why:** The curious local wants "what flies over Puyallup", not a road.
-- **Size:** M
-- **One weekly run:** no
-- **Files:** a new `app/(tabs)/near/[place]/page.tsx`, `lib/places.ts`, `lib/history-digest.ts`, an OG card in `lib/og/`
-- **Acceptance:** one page per gazetteer town with 30-day flights within 3 mi, hour-of-day strip and mission mix; share card; linked from /seen results.
-- **Blog line:** Every town on the map gets its own page: what flew over it this month, and when.
-
 ### B10 · Desktop ops console
 - **Why:** At 1280 px and up the app is still a stretched phone. A roster, a central map and a radio-log ticker use the room.
 - **Size:** L
@@ -186,3 +178,4 @@ _Nothing picked yet._
 ## Shipped
 
 <!-- The weekly job prepends one line per shipped item: - YYYY-MM-DD · B0x · Title · #PR -->
+- 2026-11-19 · B09 · Neighbourhood pages · #181

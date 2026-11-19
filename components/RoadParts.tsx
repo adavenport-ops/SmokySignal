@@ -26,15 +26,24 @@ export function Tile({ label, value, sub }: { label: string; value: string; sub:
   );
 }
 
-export function HourHistogram({ hours }: { hours: number[] }) {
+export function HourHistogram({
+  hours,
+  subject = "over this road",
+  testId = "road-hours",
+}: {
+  hours: number[];
+  /** "over this road" / "near Puyallup", for the screen-reader label. */
+  subject?: string;
+  testId?: string;
+}) {
   const max = Math.max(...hours, 0);
   const total = hours.reduce((a, b) => a + b, 0);
   const label =
     total > 0
-      ? `Minutes over this road by Pacific hour of day. Busiest hour starts ${String(hours.indexOf(max)).padStart(2, "0")}:00.`
-      : "No minutes over this road in the window.";
+      ? `Minutes ${subject} by Pacific hour of day. Busiest hour starts ${String(hours.indexOf(max)).padStart(2, "0")}:00.`
+      : `No minutes ${subject} in the window.`;
   return (
-    <section className={styles.card} data-testid="road-hours">
+    <section className={styles.card} data-testid={testId}>
       <h2 className={`ss-eyebrow ${styles.sectionTitle}`}>Time overhead by hour, PT</h2>
       <div
         role="img"
@@ -119,9 +128,15 @@ export function Stretches({ summary }: { summary: RoadSummary }) {
   );
 }
 
-export function Missions({ summary }: { summary: RoadSummary }) {
+export function Missions({
+  summary,
+  testId = "road-missions",
+}: {
+  summary: Pick<RoadSummary, "missions">;
+  testId?: string;
+}) {
   return (
-    <section className={styles.card} data-testid="road-missions">
+    <section className={styles.card} data-testid={testId}>
       <h2 className={`ss-eyebrow ${styles.sectionTitle}`}>Who flew it</h2>
       {summary.missions.length === 0 ? (
         <p style={{ margin: 0, fontSize: 13, color: SS_TOKENS.fg1 }}>No flights logged.</p>

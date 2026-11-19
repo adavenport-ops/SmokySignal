@@ -5,11 +5,12 @@
 // rider picks 3D, or lands on a `?view=3d` link. The choice lives in the
 // URL so a 3D link shares as 3D.
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import nextDynamic from "next/dynamic";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { TrackPoint } from "@/lib/tracks";
 import type { Flight3DPath } from "./Flight3D";
+import { ShareLinkButton } from "./ShareLinkButton";
 
 const PlaneTrackMap = nextDynamic(() => import("./PlaneTrackMap"), {
   ssr: false,
@@ -58,11 +59,42 @@ type Props = {
   points: TrackPoint[];
   initialView: FlightView;
   hour12?: boolean;
+  /** "Share this flight" once a 3D replay plays to the end. */
+  share?: { path: string; text: string };
 };
 
-export default function FlightMapView({ tail, points, initialView, hour12 = false }: Props) {
+/**
+ * Watches the 3D view's own replay controls from outside (the play
+ * button's aria-pressed and the scrubber's value), so the 3D component
+ * stays untouched: playing, then paused with the scrubber at the end,
+ * means the replay finished.
+ */
+function useReplayEnded(root: React.RefObject<HTMLElement>, active: boolean): boolean {
+  const [ended, setEnded] = useState(false);
+  useEffect(() => {
+    const el = root.current;
+    if (!active || !el) return;
+    let wasPlaying = false;
+    const check = () => {
+      const btn = el.querySelector<HTMLButtonElement>('button[aria-label$="replay"][aria-pressed]');
+      const range = el.querySelector<HTMLInputElement>('input[type="range"][aria-label="Replay position"]');
+      if (!btn || !range) return;
+      const playing = btn.getAttribute("aria-pressed") === "true";
+      if (wasPlaying && !playing && Number(range.value) >= Number(range.max || 1000) - 1) setEnded(true);
+      wasPlaying = playing;
+    };
+    const mo = new MutationObserver(check);
+    mo.observe(el, { subtree: true, childList: true, attributes: true, attributeFilter: ["aria-pressed"] });
+    check();
+    return () => mo.disconnect();
+  }, [root, active]);
+  return ended;
+}
+
+export default function FlightMapView({ tail, points, initialView, hour12 = false, share }: Props) {
   const [view, setView] = useState<FlightView>(initialView);
   const [unavailable, setUnavailable] = useState<string | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
 
   const paths = useMemo<Flight3DPath[]>(() => [{ id: tail, points }], [tail, points]);
 
@@ -77,6 +109,7 @@ export default function FlightMapView({ tail, points, initialView, hour12 = fals
   }, []);
 
   const show3d = view === "3d" && unavailable == null;
+  const replayEnded = useReplayEnded(wrapRef, show3d && Boolean(share));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -126,7 +159,9 @@ export default function FlightMapView({ tail, points, initialView, hour12 = fals
       </div>
 
       {show3d ? (
-        <Flight3D paths={paths} hour12={hour12} onUnavailable={setUnavailable} />
+        <div ref={wrapRef}>
+          <Flight3D paths={paths} hour12={hour12} onUnavailable={setUnavailable} />
+        </div>
       ) : (
         <>
           {view === "3d" && unavailable && (
@@ -150,6 +185,36 @@ export default function FlightMapView({ tail, points, initialView, hour12 = fals
           <PlaneTrackMap tail={tail} points={points} inProgress={false} height={320} />
         </>
       )}
+
+      {share && show3d && replayEnded ? (
+        <div
+          role="status"
+          data-testid="flight-replay-share"
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 10,
+            background: SS_TOKENS.bg1,
+            border: `.5px solid ${SS_TOKENS.hairline}`,
+            borderRadius: 12,
+            padding: "12px 14px",
+          }}
+        >
+          <span style={{ fontSize: 14, lineHeight: 1.45, color: SS_TOKENS.fg0 }}>
+            Replay done. {share.text.replace(/ Replay it:$/, "")}
+          </span>
+          <ShareLinkButton
+            path={share.path}
+            label="Share this flight"
+            ariaLabel={`Share this flight: ${share.text}`}
+            text={share.text}
+            variant="primary"
+            testId="flight-share"
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

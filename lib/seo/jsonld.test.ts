@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { FLEET, fleetHex } from "../seed";
 import { CORRIDORS } from "../corridor";
+import { TOWNS } from "../towns";
 import { LOG_START_DATE } from "../rollup-sessions";
 import { PROGRAM_FAQ, helpFaq } from "./faq";
 import { fillHelpPlaceholders } from "./facts";
@@ -25,6 +26,7 @@ import {
   parseAndValidateJsonLd,
   planePageJsonLd,
   roadPageJsonLd,
+  townPlaceJsonLd,
   serializeJsonLd,
   validateJsonLd,
   websiteJsonLd,
@@ -144,6 +146,21 @@ test("road page: WebPage about a Place with a GeoShape line", () => {
     assert.ok(nums.every((n: number) => Number.isFinite(n)), c.id);
     assertVoice(o, c.id);
   }
+});
+
+test("town page: a Place with GeoCoordinates, its county, and the page as subjectOf", () => {
+  for (const t of TOWNS) {
+    const o = roundTrip(townPlaceJsonLd(t, 12));
+    assert.equal(o["@type"], "Place");
+    assert.equal(o.geo["@type"], "GeoCoordinates");
+    assert.ok(Math.abs(o.geo.latitude - t.lat) < 1e-4 && Math.abs(o.geo.longitude - t.lon) < 1e-4, t.slug);
+    assert.equal(o.url, `https://www.smokysignal.app/near/${t.slug}`);
+    assert.match(o.containedInPlace.name, new RegExp(`^${t.county} County, Washington`));
+    assert.equal(o.subjectOf["@type"], "WebPage");
+    assert.match(o.subjectOf.description, /^12 tracked flights within about 9 mi/);
+    assertVoice(o, t.slug);
+  }
+  assert.match(roundTrip(townPlaceJsonLd(TOWNS[0]!, 1)).subjectOf.description, /^1 tracked flight within/);
 });
 
 test("flight page: WebPage with dateCreated in ISO 8601", () => {

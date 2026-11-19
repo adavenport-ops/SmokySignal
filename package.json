@@ -22,7 +22,9 @@
     "blog:media": "tsx scripts/blog-media.ts",
     "marketing:assets": "tsx scripts/marketing-assets.ts",
     "marketing:poster": "tsx scripts/marketing-poster.ts",
-    "marketing:social": "tsx scripts/social-pack.ts"
+    "marketing:social": "tsx scripts/social-pack.ts",
+    "seo:indexnow": "tsx scripts/indexnow.ts",
+    "towns:check": "tsx scripts/towns-check.ts"
   },
   "dependencies": {
     "@deck.gl/core": "9.4.1",

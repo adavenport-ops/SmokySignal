@@ -186,3 +186,11 @@ export function bskyCooldownKey(tail: string): string {
 export function bskyDailyKey(ptDate: string): string {
   return `bots:bsky:day:${ptDate}`;
 }
+
+// ─── seo:* ───────────────────────────────────────────────────────────
+// IndexNow pings (lib/seo/indexnow-server.ts). Not region-scoped: one
+// canonical host per deployment.
+// seo:indexnow:submitted → SET of absolute URLs already submitted (no TTL)
+export function indexnowSubmittedKey(): string {
+  return "seo:indexnow:submitted";
+}
