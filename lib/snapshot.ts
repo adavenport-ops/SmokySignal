@@ -64,7 +64,7 @@ export async function peekHealthSnapshot(): Promise<Snapshot | null> {
 }
 
 // Single-flight: collapse concurrent calls within the cache window into one
-// upstream fetch so 100 riders = 1 adsb.fi call.
+// upstream fetch so 100 riders = 1 call per feed.
 let inflight: Promise<Snapshot> | null = null;
 
 export async function getSnapshot(): Promise<Snapshot> {

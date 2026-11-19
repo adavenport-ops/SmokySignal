@@ -94,6 +94,15 @@ export function activityDedupeKey(
   return `${regionPrefix(region)}activity:dedupe:${tail.toUpperCase()}:${kind}`;
 }
 
+/**
+ * Permanent per-day activity archive: every event written to the capped,
+ * expiring activity:feed is also appended here, with NO TTL. Keyed by the
+ * UTC day of the event (same convention as tracks:{tail}:{YYYYMMDD}).
+ */
+export function activityDayKey(date: string, region?: Region): string {
+  return `${regionPrefix(region)}activity:day:${date}`;
+}
+
 // ─── dryrun-warnings:{YYYYMMDD} ──────────────────────────────────────
 // N1a dry-run log (app/api/dryrun-warnings). Not region-scoped: the
 // shape is byte-for-byte the literal the route used before this helper.
@@ -103,8 +112,8 @@ export function dryrunWarningsKey(date: string): string {
 }
 
 // ─── rollup:* ────────────────────────────────────────────────────────
-// Permanent daily flight rollup. Written by /api/cron/rollup with NO TTL:
-// this is the only history that outlives the 35-day tracks:* window.
+// Permanent daily flight rollup. Written by /api/cron/rollup with NO TTL.
+// (tracks:* has also been permanent since 2026-11-18.)
 // rollup:daily:{YYYYMMDD} → JSON DailyRollup (lib/rollup-core.ts)
 // rollup:index            → sorted set of YYYYMMDD members, score = Number(YYYYMMDD)
 export function rollupDailyKey(date: string, region?: Region): string {
@@ -112,4 +121,29 @@ export function rollupDailyKey(date: string, region?: Region): string {
 }
 export function rollupIndexKey(region?: Region): string {
   return `${regionPrefix(region)}rollup:index`;
+}
+
+// ─── relay:* ─────────────────────────────────────────────────────────
+// Club relays (Discord / generic webhooks). Not region-scoped: a relay
+// carries its own region filter. See lib/relay/store.ts.
+// relay:{id}                       → JSON StoredRelay (no TTL)
+// relay:index                      → SET of relay ids (capped, MAX_RELAYS)
+// relay:cooldown:{id}:{TAIL}:{evt} → SET NX EX claim, one send per window
+// relay:fail:{id}                  → 404/401 strike counter
+// relay:status:{id}                → JSON { at, status } of the last delivery
+export const RELAY_PREFIX = "relay:";
+export function relayKey(id: string): string {
+  return `${RELAY_PREFIX}${id}`;
+}
+export function relayIndexKey(): string {
+  return `${RELAY_PREFIX}index`;
+}
+export function relayCooldownKey(id: string, tail: string, event: string): string {
+  return `${RELAY_PREFIX}cooldown:${id}:${tail.toUpperCase()}:${event}`;
+}
+export function relayFailCountKey(id: string): string {
+  return `${RELAY_PREFIX}fail:${id}`;
+}
+export function relayStatusKey(id: string): string {
+  return `${RELAY_PREFIX}status:${id}`;
 }

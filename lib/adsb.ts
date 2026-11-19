@@ -1,67 +1,108 @@
-// ADS-B feed adapters: adsb.fi (primary) + OpenSky (fallback).
-// Polite usage: bbox query once per refresh, KV-cached upstream.
+// Snapshot builder. Asks every regional ADS-B feed in parallel (adsb.fi,
+// adsb.lol, airplanes.live when enabled), unions their rows by ICAO hex,
+// and falls back to OpenSky only when none of them answered. Adapters live
+// in lib/feeds/*; the decision table is lib/feed-select.ts; the rate
+// budget is lib/feed-budget.ts.
 
 import { fleetHex } from "./seed";
 import { getRegistry } from "./registry";
 import { fetchOpenSky } from "./opensky";
-import { selectFeed } from "./feed-select";
+import { selectFeed, type FeedSpec } from "./feed-select";
+import { minIntervalS, providerLimits } from "./feed-budget";
+import {
+  backoffFeed,
+  claimFeedSlot,
+  feedBackedOff,
+  recallFeedRows,
+  rememberFeedRows,
+  writeFeedStatus,
+} from "./feed-runtime";
+import { fetchAdsbFi } from "./feeds/adsbfi";
+import { fetchAdsbLol } from "./feeds/adsblol";
+import { airplanesLiveEnabled, fetchAirplanesLive } from "./feeds/airplaneslive";
+import { FeedHttpError } from "./feeds/http";
+import { REGION, regionZeroIsFailure } from "./feeds/region";
+import { captureFields } from "./track-point";
 import type {
   Aircraft,
   AircraftLive,
+  FeedSrc,
   FleetEntry,
   NormalizedAc,
   Snapshot,
 } from "./types";
-
-// State-centroid query covers all four corners of Washington within
-// ~190 nm. adsb.fi v2 caps the radius at 250 nm (501+ returns HTTP 400),
-// so this is the largest single-circle query the API allows. Registry-tail
-// filtering downstream drops any non-fleet leakage from BC / OR / ID.
-const REGION = {
-  lat: Number(process.env.SS_REGION_LAT ?? 47.4),
-  lon: Number(process.env.SS_REGION_LON ?? -120.8),
-  nm: Number(process.env.SS_REGION_NM ?? 250),
-};
 
 // In-memory state across requests — tracks first-seen timestamps so we can
 // derive "minutes aloft" without a track-history table yet.
 type SeenState = { firstSeenAt: number; lastSeenAt: number };
 const seenByIcao = new Map<string, SeenState>();
 
-const FETCH_OPTS: RequestInit = {
-  headers: { "User-Agent": "SmokySignal/0.1 (+https://github.com/)" },
-  // Avoid Next.js's fetch caching layer — we cache ourselves.
-  cache: "no-store",
-};
-
-// ─── adsb.fi ───────────────────────────────────────────────────────────────
-
-// Top-level field is `aircraft`, NOT `ac` (adsbexchange uses `ac` —
-// don't conflate them). Misreading this field caused every tail to
-// classify as airborne:false from launch through 2026-04-30.
-type AdsbFiResp = { aircraft?: NormalizedAc[]; now?: number };
-
-const ADSBFI_TIMEOUT_MS = 4000;
+// One overall budget across every upstream request this tick (all regional
+// feeds in parallel, then OpenSky auth, states and the 401 retry if they
+// all fail). Per-request timeouts still apply inside it.
 const UPSTREAM_BUDGET_MS = 10_000;
 
-// "adsb.fi returned zero rows" is read as a broken feed (the 2026-04-30
-// ac→aircraft rename looked exactly like this) only because the default
-// 250 nm circle over Washington always contains traffic. If SS_REGION_NM
-// is set to a small radius, an empty sky is plausible, so zero rows is
-// accepted as a real answer below this threshold.
-const ZERO_ROWS_MIN_RADIUS_NM = 100;
-const PRIMARY_ZERO_IS_FAILURE = REGION.nm >= ZERO_ROWS_MIN_RADIUS_NM;
+// The hot-path snapshot cache (lib/snapshot.ts) already holds each tick
+// for 10 s, so a feed whose budget allows a request at least that often
+// needs no extra gate. Only slower budgets pay a KV round trip.
+const SNAPSHOT_TTL_S = 10;
 
-async function fetchAdsbFi(budget?: AbortSignal): Promise<NormalizedAc[]> {
-  const url = `https://opendata.adsb.fi/api/v2/lat/${REGION.lat}/lon/${REGION.lon}/dist/${REGION.nm}`;
-  const timeout = AbortSignal.timeout(ADSBFI_TIMEOUT_MS);
-  const r = await fetch(url, {
-    ...FETCH_OPTS,
-    signal: budget ? AbortSignal.any([budget, timeout]) : timeout,
-  });
-  if (!r.ok) throw new Error(`adsb.fi ${r.status}`);
-  const j = (await r.json()) as AdsbFiResp;
-  return j.aircraft ?? [];
+const ZERO_IS_FAILURE = regionZeroIsFailure(REGION);
+
+// A gated feed's last fleet rows are reused on the ticks it sits out, for
+// one interval plus this slack. Past that the rows are dropped, so a feed
+// that stops answering stops vouching for its tails.
+const CARRY_SLACK_S = 60;
+
+function gated(
+  src: FeedSrc,
+  intervalS: number,
+  fleet: Set<string>,
+): Pick<FeedSpec, "claim" | "onError" | "remember" | "recall"> {
+  return {
+    ...(intervalS > SNAPSHOT_TTL_S
+      ? {
+          claim: () => claimFeedSlot(src, intervalS),
+          remember: (rows: NormalizedAc[]) =>
+            rememberFeedRows(
+              src,
+              rows.filter((r) => fleet.has(r.hex)),
+              intervalS + CARRY_SLACK_S,
+            ),
+          recall: () => recallFeedRows(src, intervalS + CARRY_SLACK_S),
+        }
+      : { claim: async () => !feedBackedOff(src) }),
+    onError: async (e) => {
+      if (e instanceof FeedHttpError && e.status === 429) {
+        await backoffFeed(src, e.retryAfterS ?? Math.max(intervalS, 60));
+      }
+    },
+  };
+}
+
+function regionalFeeds(budget: AbortSignal, fleet: Set<string>): FeedSpec[] {
+  const limits = providerLimits();
+  return [
+    {
+      src: "fi",
+      fetch: () => fetchAdsbFi(REGION, budget),
+      zeroIsFailure: ZERO_IS_FAILURE,
+      ...gated("fi", minIntervalS(limits.fi), fleet),
+    },
+    {
+      src: "lol",
+      fetch: () => fetchAdsbLol(REGION, budget),
+      zeroIsFailure: ZERO_IS_FAILURE,
+      ...gated("lol", minIntervalS(limits.lol), fleet),
+    },
+    {
+      src: "apl",
+      enabled: airplanesLiveEnabled(),
+      fetch: () => fetchAirplanesLive(REGION, budget),
+      zeroIsFailure: ZERO_IS_FAILURE,
+      ...gated("apl", minIntervalS(limits.apl), fleet),
+    },
+  ];
 }
 
 // ─── Normalize + merge ─────────────────────────────────────────────────────
@@ -77,21 +118,28 @@ export async function buildSnapshot(): Promise<Snapshot> {
   }
   const fleetHexes = [...fleetByIcao.keys()];
 
-  // One overall budget across every upstream request this tick (adsb.fi,
-  // OpenSky auth, OpenSky states, the 401 retry). Per-request timeouts
-  // still apply inside it; this caps the sum so a slow primary plus a slow
-  // fallback cannot stall the regen past ~10s.
+  // Caps the sum so slow regional feeds plus a slow fallback cannot stall
+  // the regen past ~10s.
   const budget = AbortSignal.timeout(UPSTREAM_BUDGET_MS);
 
   // Degraded = no trustworthy observation this tick. The aircraft list
   // below still gets built (every tail airborne:false) so consumers keep a
   // valid shape, but the flag tells the activity diff, track log, freshness
   // pointer and snapshot cache to treat it as a placeholder.
-  const { raw, source, degraded } = await selectFeed({
-    primary: () => fetchAdsbFi(budget),
-    fallback: () => fetchOpenSky(fleetHexes, budget),
-    primaryZeroIsFailure: PRIMARY_ZERO_IS_FAILURE,
+  const { raw, source, degraded, feeds } = await selectFeed({
+    sources: regionalFeeds(budget, new Set(fleetHexes)),
+    fallback: {
+      src: "os",
+      fetch: () => fetchOpenSky(fleetHexes, budget),
+      zeroIsFailure: true,
+    },
   });
+  // Per-feed status for /api/health. Best-effort: never fail the regen.
+  try {
+    await writeFeedStatus(feeds);
+  } catch (e) {
+    console.warn("[adsb] feed status write failed:", e);
+  }
 
   const now = Date.now();
   const liveByIcao = new Map<string, NormalizedAc>();
@@ -145,6 +193,9 @@ export async function buildSnapshot(): Promise<Snapshot> {
       ground_speed_kt: ac.gs,
       heading: ac.track,
       squawk: ac.squawk ?? null,
+      ...(ac.src ? { src: ac.src } : {}),
+      ...(ac.sources ? { feed_sources: ac.sources } : {}),
+      obs: captureFields(ac),
       time_aloft_min: grounded ? undefined : time_aloft_min,
       last_seen_min: 0,
     };

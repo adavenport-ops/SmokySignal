@@ -5,7 +5,7 @@
 //   --project=chromium-mobile  (rider context)
 //   --project=chromium-desktop (desktop responsiveness)
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, devices, type Page } from "@playwright/test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -336,7 +336,9 @@ test.describe("p14 live-prod audit", () => {
       .locator('a[href="/settings/alerts"]:has-text("Arm")')
       .count();
     const blockedText = await page
-      .locator(':has-text("Browser blocked alerts")')
+      // "Alerts are blocked" is the platform-aware copy (lib/alerts-ux.ts),
+      // shown only after the rider has tapped Arm on this device.
+      .locator(':has-text("Browser blocked alerts"), :has-text("Alerts are blocked")')
       .count();
     // Look for the IOSInstallPrompt's distinctive "Add to Home Screen"
     // step copy. Robust to quote-character variants.
@@ -1267,11 +1269,468 @@ test.describe("p14 live-prod audit", () => {
     });
   });
 
-  test("35. /data open ledger renders with methods + license, linked from /about (Logbook ledger)", async ({
+  test("35. no fixed install bar overlaps /radar controls on iPhone (design pass)", async ({
+    browser,
+    baseURL,
+  }) => {
+    // iPhone Safari UA, not installed: the old fixed "iOS push: 2 steps"
+    // bar rendered here and sat over the radar's bottom controls. The
+    // install tip is now an inline card on home only.
+    const ctx = await browser.newContext({
+      ...devices["iPhone 15 Pro"],
+      baseURL,
+    });
+    const page = await ctx.newPage();
+    await page.goto("/radar?mock=up", { waitUntil: "networkidle" });
+    await page.waitForTimeout(2500);
+    const screenshot = await shot(page, "35-radar-no-install-bar");
+    const result = await page.evaluate(() => {
+      const fixedInstall = [...document.querySelectorAll("body *")].filter(
+        (el) => {
+          const cs = getComputedStyle(el);
+          if (cs.position !== "fixed") return false;
+          const t = (el as HTMLElement).innerText ?? "";
+          return /Add to Home Screen|iOS push/i.test(t);
+        },
+      ).length;
+      // Every visible radar control must be the topmost element at its
+      // own centre point (nothing fixed painted over it).
+      const controls = [
+        ...document.querySelectorAll<HTMLElement>("main button, main select"),
+      ].filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && r.bottom <= window.innerHeight;
+      });
+      const covered: string[] = [];
+      for (const el of controls) {
+        const r = el.getBoundingClientRect();
+        const top = document.elementFromPoint(
+          r.left + r.width / 2,
+          r.top + r.height / 2,
+        );
+        if (top && !el.contains(top) && !top.contains(el)) {
+          const coverFixed = (() => {
+            let n: Element | null = top;
+            while (n) {
+              if (getComputedStyle(n).position === "fixed") return n;
+              n = n.parentElement;
+            }
+            return null;
+          })();
+          const coverText = (coverFixed as HTMLElement | null)?.innerText ?? "";
+          if (coverFixed && /Add to Home Screen|iOS push/i.test(coverText)) {
+            covered.push(el.getAttribute("aria-label") ?? el.innerText.slice(0, 30));
+          }
+        }
+      }
+      return { fixedInstall, controls: controls.length, covered };
+    });
+    const pass = result.fixedInstall === 0 && result.covered.length === 0;
+    record({
+      claim:
+        "No fixed install bar on /radar; no radar control is covered by an install prompt (iPhone UA)",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: `fixedInstallEls=${result.fixedInstall} controlsChecked=${result.controls} covered=${JSON.stringify(result.covered)}`,
+      screenshot,
+    });
+    await ctx.close();
+  });
+
+  test("36. up-state hero uses alert orange #FF7A1A (design pass)", async ({
+    page,
+  }) => {
+    await page.goto("/?mock=up", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1500);
+    const screenshot = await shot(page, "36-home-up-hero-orange");
+    const color = await page
+      .locator('[data-testid="hero-headline"], main section h1')
+      .first()
+      .evaluate((el) => getComputedStyle(el).color)
+      .catch(() => "missing");
+    // #FF7A1A = rgb(255, 122, 26). The old amber was rgb(245, 184, 64).
+    const pass = color.replace(/\s+/g, "") === "rgb(255,122,26)";
+    record({
+      claim: "Up-state hero headline renders in --alert #FF7A1A (orange means only 'Smokey is up')",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: `hero color=${color}`,
+      screenshot,
+    });
+  });
+
+  test("37. home minimum rendered font size >= 12px (design pass)", async ({
+    page,
+  }) => {
+    const results: Record<string, { min: number; text: string | null }> = {};
+    for (const mock of ["up", "down"]) {
+      await page.goto(`/?mock=${mock}`, { waitUntil: "networkidle" });
+      await page.waitForTimeout(2000);
+      results[mock] = await page.evaluate(() => {
+        let min = Infinity;
+        let text: string | null = null;
+        const scope = document.querySelectorAll("main *, nav *");
+        for (const el of scope) {
+          const hasText = [...el.childNodes].some(
+            (c) => c.nodeType === Node.TEXT_NODE && (c.textContent ?? "").trim(),
+          );
+          if (!hasText) continue;
+          const r = el.getBoundingClientRect();
+          if (!r.width || !r.height) continue;
+          const cs = getComputedStyle(el);
+          if (cs.visibility === "hidden" || cs.display === "none") continue;
+          // Skip text painted inside a map canvas container (MapLibre
+          // attribution), which the page does not style.
+          if (el.closest(".maplibregl-map")) continue;
+          const fs = parseFloat(cs.fontSize);
+          if (fs < min) {
+            min = fs;
+            text = (el.textContent ?? "").trim().slice(0, 40);
+          }
+        }
+        return { min, text };
+      });
+    }
+    const screenshot = await shot(page, "37-home-type-floor");
+    const pass = Object.values(results).every((r) => r.min >= 12);
+    record({
+      claim: "Home (up + down) renders no text below the 12px type floor",
+      category: pass ? "working_as_designed" : "polish_needed",
+      pass,
+      evidence: JSON.stringify(results),
+      screenshot,
+    });
+  });
+
+  test("38. /api/history returns sessions for a recent 7-day range (flight history)", async ({
+    request,
+  }) => {
+    // Pacific calendar dates: the 7 days ending yesterday, so the range is
+    // closed and CDN-cacheable.
+    const ptDate = (offsetDays: number) =>
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Los_Angeles",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date(Date.now() - offsetDays * 86_400_000));
+    const from = ptDate(7);
+    const to = ptDate(1);
+    const r = await request.get(`/api/history?from=${from}&to=${to}`);
+    let evidence = `HTTP ${r.status()} for ${from}..${to}`;
+    let pass = false;
+    let category: Finding["category"] = r.status() === 404 ? "unshipped" : "confirmed_bug";
+    if (r.ok()) {
+      const data = (await r.json()) as {
+        v: number;
+        range: { from: string; to: string; days: number };
+        sessions: { id: string; tail: string; start_ts: number; end_ts: number }[];
+        polylines: { id: string; points: unknown[] }[];
+        heat: { cells: unknown[] };
+        summary: { flights: number; vertices: number };
+      };
+      const shapeOk =
+        data.v === 1 &&
+        data.range?.days === 7 &&
+        Array.isArray(data.sessions) &&
+        Array.isArray(data.polylines) &&
+        Array.isArray(data.heat?.cells) &&
+        data.summary?.flights === data.sessions.length &&
+        data.summary.vertices <= 20_000;
+      const hasSessions = data.sessions.length > 0;
+      const linesMatch = data.polylines.length === data.sessions.length;
+      // A bad param must be refused, not ignored.
+      const bad = await request.get(`/api/history?from=${to}&to=${from}`);
+      const rejects = from === to || bad.status() === 400;
+      pass = shapeOk && hasSessions && linesMatch && rejects;
+      category = pass ? "working_as_designed" : shapeOk && !hasSessions ? "indeterminate" : "confirmed_bug";
+      evidence += `; sessions=${data.sessions.length} polylines=${data.polylines.length} heat=${data.heat?.cells?.length} vertices=${data.summary?.vertices}; reversed-range HTTP ${bad.status()}`;
+    }
+    record({
+      claim:
+        "/api/history?from&to returns flight sessions, one simplified polyline per session, a heat grid and summary for the last 7 Pacific days, and rejects a reversed range with 400",
+      category,
+      pass,
+      evidence,
+    });
+  });
+
+  test("39. /forecast has a month selector: Last 30 days plus each month on record", async ({
+    page,
+  }) => {
+    await page.goto("/forecast", { waitUntil: "networkidle" });
+    const select = page.locator('[data-testid="forecast-month-select"]');
+    const present = (await select.count()) > 0;
+    const options = present
+      ? await select.locator("option").evaluateAll((els) =>
+          els.map((e) => ({ value: (e as HTMLOptionElement).value, label: e.textContent ?? "" })),
+        )
+      : [];
+    const hasDefault = options[0]?.value === "last30" && /Last 30 days/.test(options[0]?.label ?? "");
+    const months = options.slice(1);
+    const monthsOk = months.every(
+      (o) => /^\d{4}-\d{2}$/.test(o.value) && /^[A-Z][a-z]+ \d{4}$/.test(o.label),
+    );
+    let monthEvidence = "no month on record yet";
+    let monthOk = true;
+    let screenshot = await shot(page, "39-forecast-last30");
+    if (months.length > 0) {
+      await page.goto(`/forecast?month=${months[0]!.value}`, { waitUntil: "networkidle" });
+      screenshot = await shot(page, "39-forecast-month");
+      const title = (await page.locator('[data-testid="forecast-month-title"]').innerText().catch(() => "")).trim();
+      const days = (await page.locator('[data-testid="forecast-month-days"]').innerText().catch(() => "")).trim();
+      const grid = await page.locator('[data-testid="forecast-month-grid"]').count();
+      // Mobile-first: no horizontal page scroll.
+      const noHScroll = await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+      );
+      monthOk =
+        title === months[0]!.label &&
+        /^\d+ days? of data in this month/.test(days) &&
+        grid > 0 &&
+        noHScroll;
+      monthEvidence = `title="${title}" days="${days}" grid=${grid} noHScroll=${noHScroll}`;
+    }
+    const pass = present && hasDefault && monthsOk && monthOk;
+    record({
+      claim:
+        "/forecast shows a period selector ('Last 30 days' + 'Month YYYY' options); a month view renders its title, 'N days of data in this month' and the hour × weekday grid without horizontal page scroll",
+      category: pass ? "working_as_designed" : present ? "confirmed_bug" : "unshipped",
+      pass,
+      evidence: `select=${present}; options=${options.map((o) => o.label).join(" | ")}; ${monthEvidence}`,
+      screenshot,
+    });
+  });
+
+  test("40. /embed is frameable; every other route still sends X-Frame-Options DENY", async ({
+    request,
+  }) => {
+    const embed = await request.get("/embed");
+    const home = await request.get("/");
+    const eh = embed.headers();
+    const hh = home.headers();
+    const embedCsp = eh["content-security-policy"] ?? "";
+    const pass =
+      embed.ok() &&
+      eh["x-frame-options"] == null &&
+      /frame-ancestors \*/.test(embedCsp) &&
+      /deny/i.test(hh["x-frame-options"] ?? "") &&
+      /frame-ancestors 'none'/.test(hh["content-security-policy"] ?? "");
+    record({
+      claim:
+        "/embed has no X-Frame-Options and frame-ancestors *, while / keeps X-Frame-Options DENY",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `embed ${embed.status()} xfo=${eh["x-frame-options"] ?? "(none)"} csp-fa=${(embedCsp.match(/frame-ancestors [^;]+/) ?? ["(none)"])[0]} · home xfo=${hh["x-frame-options"] ?? "(none)"}`,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("41. /calendar.ics is text/calendar with VEVENTs and a Los Angeles VTIMEZONE", async ({
+    request,
+  }) => {
+    const r = await request.get("/calendar.ics");
+    const body = await r.text();
+    const ct = r.headers()["content-type"] ?? "";
+    const events = (body.match(/BEGIN:VEVENT/g) ?? []).length;
+    // An empty feed is valid while the forecast is still learning. Ask
+    // /forecast how many takeoffs it has logged; VEVENTs are required
+    // only at >= 30 (lib/ics.ts MIN_TOTAL_EVENTS).
+    const fh = await (await request.get("/forecast")).text();
+    const m = /(\d+)<\/span>\s*(?:<!--\s*-->)?\s*logged\s*(?:<!--\s*-->)?\s*takeoff/.exec(fh);
+    const logged = m ? Number(m[1]) : null;
+    const needEvents = logged != null && logged >= 30;
+    const shape =
+      r.ok() &&
+      /^text\/calendar/.test(ct) &&
+      /BEGIN:VCALENDAR/.test(body) &&
+      /TZID:America\/Los_Angeles/.test(body);
+    const pass = shape && (!needEvents || events > 0);
+    record({
+      claim: "/calendar.ics serves valid text/calendar; VEVENT busy windows once the forecast has 30+ takeoffs",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `status=${r.status()} content-type=${ct} vevents=${events} logged_takeoffs=${logged ?? "unknown"} cache-control=${r.headers()["cache-control"] ?? "(none)"}`,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("42. /glance renders UP/DOWN/NO READ, a 24h clock and no tab bar", async ({ page }) => {
+    await page.goto("/glance", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1200);
+    const screenshot = await shot(page, "42-glance");
+    const word = (await page.locator("[data-glance-word]").innerText().catch(() => "")).trim();
+    const clock = await page.locator("[data-glance-clock]").innerText().catch(() => "");
+    const tabBar = await page.locator('nav[aria-label="Main"]').count();
+    const pass =
+      /^(UP|DOWN|NO READ)$/.test(word) && /\b([01]\d|2[0-3]):[0-5]\d:[0-5]\d\b/.test(clock) && tabBar === 0;
+    record({
+      claim: "/glance renders a status word and a 24-hour clock with no tab bar",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `word=${word} clock=${clock} tabBar=${tabBar}`,
+      screenshot,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("43. /offline exists with the no-signal copy", async ({ page }) => {
+    await page.goto("/offline", { waitUntil: "networkidle" });
+    const screenshot = await shot(page, "43-offline");
+    const body = await page.locator("body").innerText();
+    const pass =
+      /No signal\./.test(body) &&
+      /Last update unknown\./.test(body) &&
+      /needs a connection to see the sky/.test(body);
+    record({
+      claim: "/offline renders the No signal copy",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: pass ? "copy present" : `body=${body.slice(0, 120)}`,
+      screenshot,
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("44. the service worker registers and API JSON is never cached", async ({ page }) => {
+    await page.goto("/", { waitUntil: "networkidle" });
+    const r = await page.evaluate(async () => {
+      if (!("serviceWorker" in navigator)) return { supported: false };
+      const reg = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<null>((res) => setTimeout(() => res(null), 8000)),
+      ]);
+      if (!reg) return { supported: true, scope: null };
+      await fetch("/api/status.json", { cache: "no-store" }).catch(() => null);
+      const names = await caches.keys();
+      const shell = names.filter((n) => n.startsWith("ss-shell-"));
+      let apiCached = 0;
+      let offlineCached = false;
+      for (const n of shell) {
+        const c = await caches.open(n);
+        for (const k of await c.keys()) {
+          const u = new URL(k.url);
+          if (u.pathname.startsWith("/api/")) apiCached++;
+          if (u.pathname === "/offline") offlineCached = true;
+        }
+      }
+      return { supported: true, scope: reg.scope, shell, apiCached, offlineCached };
+    });
+    const pass =
+      !r.supported ||
+      (!!r.scope && (r.apiCached ?? 0) === 0 && (r.shell?.length ?? 0) >= 1);
+    record({
+      claim: "Service worker registers, caches /offline, and holds no /api/* responses",
+      category: !r.supported ? "indeterminate" : pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: JSON.stringify(r),
+    });
+    expect(pass).toBe(true);
+  });
+
+  test("45. /relay renders the create form and is linked from /about (Relay)", async ({
+    page,
+  }) => {
+    await page.goto("/relay", { waitUntil: "networkidle" });
+    const screenshot = await shot(page, "40-relay");
+    const body = await page.locator("body").innerText();
+    const checks = {
+      heading: /Relay\./.test(body),
+      urlField: (await page.locator('input[name="url"]').count()) > 0,
+      armButton: (await page.getByRole("button", { name: "Arm relay" }).count()) > 0,
+      missionsDefault: /Default is Smokey only/.test(body),
+      feeds: /\/feed\.xml/.test(body) && /\/rss\.xml/.test(body),
+      siri: /status\.txt/.test(body),
+      noExclamation: !/[A-Za-z]!/.test(body),
+    };
+    await page.goto("/about", { waitUntil: "domcontentloaded" });
+    const aboutLink = await page
+      .locator('nav[aria-label="Site sections"] a[href="/relay"]')
+      .count();
+    const pass = Object.values(checks).every(Boolean) && aboutLink > 0;
+    record({
+      claim: "/relay renders the webhook form, Smokey-only default, feed + Siri recipes; /about links to it",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `${JSON.stringify(checks)} aboutLink=${aboutLink}`,
+      screenshot,
+    });
+  });
+
+  test("46. /feed.xml is Atom with entries; /rss.xml is RSS; both s-maxage=60 (Relay)", async ({
+    request,
+    page,
+  }) => {
+    const atom = await request.get("/feed.xml");
+    const atomText = atom.ok() ? await atom.text() : "";
+    const entries = (atomText.match(/<entry>/g) ?? []).length;
+    const atomCc = atom.headers()["cache-control"] ?? "";
+    const atomType = atom.headers()["content-type"] ?? "";
+    const okAtom =
+      atom.ok() &&
+      atomType.startsWith("application/atom+xml") &&
+      /^<\?xml version="1\.0" encoding="utf-8"\?>\s*<feed xmlns="http:\/\/www\.w3\.org\/2005\/Atom">/.test(atomText) &&
+      atomText.trimEnd().endsWith("</feed>") &&
+      entries > 0 &&
+      entries === (atomText.match(/<\/entry>/g) ?? []).length &&
+      !/&(?!(amp|lt|gt|quot|apos);)/.test(atomText) &&
+      /s-maxage=60/.test(atomCc);
+    // Parse it as XML in the browser too: DOMParser flags any well-formedness error.
+    await page.goto("/about", { waitUntil: "domcontentloaded" });
+    const parseOk = await page.evaluate((xml) => {
+      const doc = new DOMParser().parseFromString(xml, "application/xml");
+      return doc.getElementsByTagName("parsererror").length === 0 && doc.documentElement.localName === "feed";
+    }, atomText);
+    const rss = await request.get("/rss.xml");
+    const rssText = rss.ok() ? await rss.text() : "";
+    const okRss =
+      rss.ok() &&
+      /<rss version="2\.0"/.test(rssText) &&
+      /s-maxage=60/.test(rss.headers()["cache-control"] ?? "");
+    const alternate = await page
+      .locator('link[rel="alternate"][type="application/atom+xml"]')
+      .count();
+    const firstTitle = /<entry>[\s\S]*?<title>([^<]*)<\/title>/.exec(atomText)?.[1] ?? "";
+    const pass = okAtom && parseOk && okRss && alternate > 0;
+    record({
+      claim: "/feed.xml is well-formed Atom with >=1 entry, /rss.xml is RSS 2.0, s-maxage=60, advertised via <link rel=alternate>",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: `atom HTTP ${atom.status()} type=${atomType} entries=${entries} parse=${parseOk} cache="${atomCc}" first="${firstTitle}" · rss HTTP ${rss.status()} ok=${okRss} · alternate=${alternate}`,
+    });
+  });
+
+  test("47. POST /api/relay with an invalid webhook returns 400 (Relay)", async ({
+    request,
+  }) => {
+    const cases = [
+      { url: "https://127.0.0.1/hook" },
+      { url: "http://hooks.example.com/hook" },
+      { url: "https://discord.com/api/channels/1/messages" },
+    ];
+    const statuses: number[] = [];
+    const errors: string[] = [];
+    for (const data of cases) {
+      const r = await request.post("/api/relay", { data });
+      statuses.push(r.status());
+      errors.push(((await r.json().catch(() => ({}))) as { error?: string }).error ?? "");
+    }
+    // Shape checks run before the per-IP create limiter, so repeat audit
+    // runs keep getting 400s rather than 429s.
+    const pass = statuses.every((s) => s === 400);
+    record({
+      claim: "Relay create refuses private-IP, plain-http, and wrong-shape Discord URLs with a 400 (nothing stored)",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: `statuses=${statuses.join(",")} errors=${errors.join(",")}`,
+    });
+  });
+
+  test("48. /data open ledger renders with methods + license, linked from /about (Logbook ledger)", async ({
     page,
   }) => {
     const r = await page.goto("/data", { waitUntil: "networkidle" });
-    const screenshot = await shot(page, "35-data-ledger");
+    const screenshot = await shot(page, "48-data-ledger");
     const body = await page.locator("main").innerText();
     const checks = {
       status: r?.status() === 200,
@@ -1297,7 +1756,7 @@ test.describe("p14 live-prod audit", () => {
     });
   });
 
-  test("36. /data/flight-hours.csv starts with the header row (Logbook ledger)", async ({
+  test("49. /data/flight-hours.csv starts with the header row (Logbook ledger)", async ({
     request,
   }) => {
     const r = await request.get("/data/flight-hours.csv");
@@ -1320,11 +1779,11 @@ test.describe("p14 live-prod audit", () => {
     });
   });
 
-  test("37. /wrap/2026 renders and says the log starts 2026-10-16 (Season wrap)", async ({
+  test("50. /wrap/2026 renders and says the log starts 2026-10-16 (Season wrap)", async ({
     page,
   }) => {
     const r = await page.goto("/wrap/2026", { waitUntil: "networkidle" });
-    const screenshot = await shot(page, "37-wrap-2026");
+    const screenshot = await shot(page, "50-wrap-2026");
     const body = await page.locator("main").innerText();
     const ogUrl = await page.locator('meta[property="og:image"]').first().getAttribute("content");
     const checks = {
@@ -1348,7 +1807,7 @@ test.describe("p14 live-prod audit", () => {
     });
   });
 
-  test("38. flight card is a 1200x1500 PNG for a recent flight (Flight card)", async ({
+  test("51. flight card is a 1200x1500 PNG for a recent flight (Flight card)", async ({
     page,
     request,
   }) => {
@@ -1368,7 +1827,7 @@ test.describe("p14 live-prod audit", () => {
       const h = isPng ? body.readUInt32BE(20) : 0;
       const cc = r.headers()["cache-control"] ?? "";
       pass = r.ok() && isPng && w === 1200 && h === 1500 && /max-age=\d+/.test(cc);
-      fs.writeFileSync(path.join(AUDIT_DIR, "38-flight-card.png"), body);
+      fs.writeFileSync(path.join(AUDIT_DIR, "51-flight-card.png"), body);
       evidence += ` · HTTP ${r.status()} ${w}x${h} cache-control="${cc}"`;
       await page.goto(href, { waitUntil: "domcontentloaded" });
       const save = await page.locator('[data-testid="save-flight-card"]').count();
@@ -1381,7 +1840,7 @@ test.describe("p14 live-prod audit", () => {
       category: pass ? "working_as_designed" : href ? "confirmed_bug" : "indeterminate",
       pass,
       evidence,
-      screenshot: path.join(AUDIT_DIR, "38-flight-card.png"),
+      screenshot: path.join(AUDIT_DIR, "51-flight-card.png"),
     });
   });
 });

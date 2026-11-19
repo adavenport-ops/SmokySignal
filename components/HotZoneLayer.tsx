@@ -32,6 +32,9 @@ import {
   HEAT_OPACITY_STOPS,
   HEAT_RADIUS_STOPS,
   zoomInterpolate,
+  heatColorExpression,
+  HEAT_SWATCH,
+  ROUTE_COLOR,
 } from "@/lib/radar-zoom";
 import { extentOfPoints } from "@/lib/radar-view";
 import { Tooltip } from "./Tooltip";
@@ -282,25 +285,10 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
               // the radius outruns cell spacing so the grid never shows.
               "heatmap-intensity": zoomInterpolate(HEAT_INTENSITY_STOPS),
               "heatmap-radius": zoomInterpolate(HEAT_RADIUS_STOPS),
-              // Same hue progression — amber at low density, deep red
-              // at peak — with the top stop dialed back to 0.65 so even
-              // dense corridors remain map-readable rather than going
-              // fully solid.
-              "heatmap-color": [
-                "interpolate",
-                ["linear"],
-                ["heatmap-density"],
-                0,
-                "rgba(0,0,0,0)",
-                0.05,
-                "rgba(245,184,64,0.15)",
-                0.35,
-                "rgba(245,184,64,0.45)",
-                0.7,
-                "rgba(245,140,40,0.55)",
-                1.0,
-                "rgba(220,38,38,0.65)",
-              ],
+              // Cool ramp (indigo -> teal -> ice, lib/radar-zoom.ts) so
+              // live aircraft are the only warm thing on the map. The top
+              // stop stays translucent so dense corridors remain readable.
+              "heatmap-color": heatColorExpression(),
               // Drop opacity at deep zoom so dense corridors don't go
               // opaque; the polyline overlay (FlightPathLayer.tsx) sits
               // beneath the heat and stays visible through it.
@@ -466,7 +454,7 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
           <div
             className="ss-mono"
             style={{
-              fontSize: 11,
+              fontSize: 12,
               color: SS_TOKENS.fg0,
               letterSpacing: ".06em",
               marginBottom: 4,
@@ -498,7 +486,7 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
             backdropFilter: "blur(10px)",
             WebkitBackdropFilter: "blur(10px)",
             color: SS_TOKENS.fg1,
-            fontSize: 11,
+            fontSize: 12,
             letterSpacing: ".04em",
           }}
         >
@@ -527,7 +515,7 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
             onClick={toggleHotZones}
             aria-pressed={enabled}
             className="ss-mono"
-            style={pillStyle(enabled ? SS_TOKENS.alert : SS_TOKENS.fg1)}
+            style={pillStyle(enabled ? HEAT_SWATCH : SS_TOKENS.fg1)}
           >
             {enabled ? "● HOT ZONES" : "○ HOT ZONES"}
           </button>
@@ -543,7 +531,7 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
             aria-pressed={flightPathsEnabled}
             className="ss-mono"
             style={pillStyle(
-              flightPathsEnabled ? SS_TOKENS.alert : SS_TOKENS.fg1,
+              flightPathsEnabled ? ROUTE_COLOR : SS_TOKENS.fg1,
             )}
           >
             {flightPathsEnabled ? "● FLIGHT PATHS" : "○ FLIGHT PATHS"}
@@ -557,7 +545,7 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
             aria-expanded={panelOpen}
             className="ss-mono"
             style={{
-              ...pillStyle(panelOpen ? SS_TOKENS.alert : SS_TOKENS.fg1),
+              ...pillStyle(panelOpen ? SS_TOKENS.fg0 : SS_TOKENS.fg1),
               padding: "8px 10px",
             }}
           >
@@ -593,7 +581,7 @@ function pillStyle(color: string): React.CSSProperties {
     background: "rgba(11,13,16,0.78)",
     border: `.5px solid ${SS_TOKENS.hairline2}`,
     color,
-    fontSize: 11,
+    fontSize: 12,
     letterSpacing: ".06em",
     backdropFilter: "blur(8px)",
     WebkitBackdropFilter: "blur(8px)",

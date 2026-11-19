@@ -6,6 +6,8 @@ import {
   getLastAirborneTs,
 } from "@/lib/snapshot";
 import { cacheGet, cacheSet, hasKv } from "@/lib/cache";
+import { readFeedStatus, type FeedStatusRecord } from "@/lib/feed-runtime";
+import { FEED_ORDER } from "@/lib/feed-sources";
 import {
   getOpenskyToken,
   getOpenskyCreditsRemaining,
@@ -91,6 +93,47 @@ async function pingOpensky(): Promise<OpenskyPing> {
   }
 }
 
+// Per-feed status from the last snapshot regen. Read from KV rather than
+// probed here: adsb.lol is metered (500 requests/day without a key), so a
+// health probe per hit would spend the quota the snapshot needs. Only
+// whitelisted fields go out; error_code is a fixed short code, never the
+// upstream error text.
+const FEED_STATUS_FRESH_MS = 10 * 60 * 1000;
+
+type PublicFeedStatus = {
+  status: string;
+  error_code?: string;
+  latency_ms?: number;
+  count?: number;
+  checked_at?: string;
+};
+
+function publicFeeds(rec: FeedStatusRecord | null): {
+  feeds: Record<string, PublicFeedStatus>;
+  anyRegionalOk: boolean;
+} {
+  const feeds: Record<string, PublicFeedStatus> = {};
+  let anyRegionalOk = false;
+  const fresh = rec != null && Date.now() - rec.at < FEED_STATUS_FRESH_MS;
+  for (const src of FEED_ORDER) {
+    const f = rec?.feeds.find((x) => x.src === src) as
+      | (FeedStatusRecord["feeds"][number] & { at?: number })
+      | undefined;
+    if (!f) {
+      feeds[src] = { status: "unknown" };
+      continue;
+    }
+    const out: PublicFeedStatus = { status: f.status };
+    if (f.error_code) out.error_code = f.error_code;
+    if (typeof f.latency_ms === "number") out.latency_ms = f.latency_ms;
+    if (typeof f.count === "number") out.count = f.count;
+    if (typeof f.at === "number") out.checked_at = new Date(f.at).toISOString();
+    feeds[src] = out;
+    if (fresh && src !== "os" && f.status === "ok") anyRegionalOk = true;
+  }
+  return { feeds, anyRegionalOk };
+}
+
 export async function GET() {
   const adsbfiUrl =
     "https://opendata.adsb.fi/api/v2/lat/47.6/lon/-122.3/dist/1";
@@ -112,9 +155,16 @@ export async function GET() {
     getLastAirborneTs(),
     cacheGet<number>("meta:last_heartbeat"),
   ]);
+  let feedRecord: FeedStatusRecord | null = null;
+  try {
+    feedRecord = await readFeedStatus();
+  } catch (e) {
+    console.warn("[health] feed status read failed:", e);
+  }
+  const { feeds, anyRegionalOk } = publicFeeds(feedRecord);
 
-  // Counts derived from the cached snapshot. live_seen_count = total
-  // aircraft adsb.fi returned in the bbox before fleet filtering;
+  // Counts derived from the cached snapshot. live_seen_count = unique
+  // aircraft (union across feeds) in the region before fleet filtering;
   // airborne_count = how many of OUR fleet are airborne. Together they
   // discriminate failure modes (parser broken vs. fleet just not flying).
   const airborne_count = snap
@@ -127,9 +177,10 @@ export async function GET() {
     ? Math.max(0, Math.round((Date.now() - snap.fetched_at) / 1000))
     : null;
 
-  // adsb.fi is the only path that must work for the app to be useful;
-  // OpenSky is a fallback. KV is optional (in-memory fallback exists).
-  const ok = adsbfi === "ok";
+  // The app is useful while any regional feed works: adsb.fi answering the
+  // probe above, or another regional feed (adsb.lol) answering on the last
+  // regen. OpenSky is a fallback. KV is optional (in-memory fallback exists).
+  const ok = adsbfi === "ok" || anyRegionalOk;
   // CI heartbeat — written by .github/workflows/heartbeat.yml hourly.
   // Surfaced here so the nightly persona-walk workflow can detect Mac
   // Mini outages and verify-prod can assert freshness.
@@ -159,6 +210,8 @@ export async function GET() {
       ? { opensky_error_code: openskyResult.error }
       : {}),
     opensky_credits_remaining,
+    feeds,
+    feeds_checked_at: feedRecord ? new Date(feedRecord.at).toISOString() : null,
     tails: FLEET.length,
     source_last: getLastSource(),
     ts: new Date().toISOString(),

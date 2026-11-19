@@ -66,7 +66,7 @@ export default async function WrapPage({ params }: Props) {
       </header>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-.03em", color: SS_TOKENS.fg0, margin: 0, lineHeight: 1.1 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-.03em", color: SS_TOKENS.fg0, margin: 0, lineHeight: 1.1 }}>
           The {year} season, from overhead.
         </h1>
         <p style={{ fontSize: 13, color: SS_TOKENS.fg1, lineHeight: 1.5, margin: 0 }}>
@@ -79,7 +79,7 @@ export default async function WrapPage({ params }: Props) {
           </p>
         )}
         {w && (
-          <p className="ss-mono" data-testid="wrap-span" style={{ fontSize: 11, color: SS_TOKENS.fg2, letterSpacing: ".04em", margin: 0 }}>
+          <p className="ss-mono" data-testid="wrap-span" style={{ fontSize: 12, color: SS_TOKENS.fg2, letterSpacing: ".04em", margin: 0 }}>
             {w.from} to {w.to}
             {w.in_progress ? " · season still running" : ""}
           </p>
@@ -166,7 +166,7 @@ function WrapBody({ w, hour12 }: { w: WrapSummary; hour12: boolean }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {w.months.map((m) => (
             <div key={m.month} style={{ display: "grid", gridTemplateColumns: "64px 1fr 108px", alignItems: "center", gap: 10 }}>
-              <span className="ss-mono" style={{ fontSize: 11, color: SS_TOKENS.fg1 }}>
+              <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
                 {m.month}
                 {m.partial ? "*" : ""}
               </span>
@@ -179,7 +179,7 @@ function WrapBody({ w, hour12 }: { w: WrapSummary; hour12: boolean }) {
             </div>
           ))}
         </div>
-        <p className="ss-mono" style={{ fontSize: 10.5, color: SS_TOKENS.fg2, margin: "6px 0 0" }}>
+        <p className="ss-mono" style={{ fontSize: 12.5, color: SS_TOKENS.fg2, margin: "6px 0 0" }}>
           * partial month
         </p>
       </section>
@@ -239,7 +239,7 @@ function Tile({ label, value, sub }: { label: string; value: string; sub: string
       <span className="ss-mono" style={{ fontSize: 22, fontWeight: 700, color: SS_TOKENS.fg0, letterSpacing: "-.02em", overflowWrap: "anywhere" }}>
         {value}
       </span>
-      <span className="ss-mono" style={{ fontSize: 11, color: SS_TOKENS.fg1, letterSpacing: ".02em", overflowWrap: "anywhere" }}>
+      <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".02em", overflowWrap: "anywhere" }}>
         {sub}
       </span>
     </div>
@@ -262,7 +262,7 @@ function Th({ children, align }: { children: React.ReactNode; align: "left" | "r
     <th
       scope="col"
       className="ss-mono"
-      style={{ textAlign: align, fontSize: 10, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: SS_TOKENS.fg2, padding: "0 6px 8px" }}
+      style={{ textAlign: align, fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: SS_TOKENS.fg2, padding: "0 6px 8px" }}
     >
       {children}
     </th>

@@ -13,6 +13,7 @@ import {
   formatBeaconJson,
   formatBeaconText,
 } from "./beacon";
+import { parseEmbedRegion, restrictSnapshotToRegion } from "./embed";
 import type { FleetEntry, Snapshot } from "./types";
 
 // Upper bound on a cache-miss rebuild. Past this the beacon answers from
@@ -45,8 +46,14 @@ export async function beaconResponse(
   variant: "txt" | "json",
 ): Promise<Response> {
   const [rawSnap, registry] = await Promise.all([readSnapshot(), getRegistry()]);
+  // ?region=<id> narrows "up" to birds inside that region (used by the
+  // /embed widget). Unknown ids and all_wa mean the whole state.
+  const region = parseEmbedRegion(new URL(req.url).searchParams.get("region"));
   const snap = rawSnap
-    ? applyMockState(rawSnap, getMockStateFromRequest(req))
+    ? restrictSnapshotToRegion(
+        applyMockState(rawSnap, getMockStateFromRequest(req)),
+        region,
+      )
     : null;
   const fleet = new Map<string, FleetEntry>(registry.map((f) => [f.tail, f]));
   const beacon = beaconFromSnapshot(snap, fleet, Date.now());

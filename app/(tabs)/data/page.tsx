@@ -60,7 +60,7 @@ export default async function DataPage() {
           href="/about"
           className="ss-mono"
           style={{
-            fontSize: 11,
+            fontSize: 12,
             color: SS_TOKENS.fg1,
             textDecoration: "none",
             display: "inline-flex",
@@ -75,7 +75,7 @@ export default async function DataPage() {
       </header>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-.02em", color: SS_TOKENS.fg0, margin: 0 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-.02em", color: SS_TOKENS.fg0, margin: 0 }}>
           The open ledger.
         </h1>
         <p style={{ fontSize: 13, color: SS_TOKENS.fg1, lineHeight: 1.5, margin: 0 }}>
@@ -86,7 +86,7 @@ export default async function DataPage() {
           </Link>{" "}
           reads the same log.
         </p>
-        <p className="ss-mono" data-testid="data-span" style={{ fontSize: 11, color: SS_TOKENS.fg2, letterSpacing: ".04em", margin: 0 }}>
+        <p className="ss-mono" data-testid="data-span" style={{ fontSize: 12, color: SS_TOKENS.fg2, letterSpacing: ".04em", margin: 0 }}>
           {months.length === 0
             ? `No months on file yet. Log starts ${LOG_START_DATE}.`
             : `${months.length} month${months.length === 1 ? "" : "s"} on file, ${months[0]} to ${months[months.length - 1]}`}
@@ -205,7 +205,7 @@ function Download({ months }: { months: string[] }) {
           </button>
         </form>
       )}
-      <p className="ss-mono" style={{ fontSize: 11, color: SS_TOKENS.fg2, margin: 0, lineHeight: 1.5, overflowWrap: "anywhere" }}>
+      <p className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg2, margin: 0, lineHeight: 1.5, overflowWrap: "anywhere" }}>
         {`${CSV_PATH}?from=YYYY-MM&to=YYYY-MM`}
       </p>
     </section>
@@ -214,7 +214,7 @@ function Download({ months }: { months: string[] }) {
 
 function MonthSelect({ name, label, months, value }: { name: string; label: string; months: string[]; value: string }) {
   return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: SS_TOKENS.fg2 }}>
+    <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: SS_TOKENS.fg2 }}>
       <span className="ss-mono" style={{ letterSpacing: ".08em" }}>
         {label.toUpperCase()}
       </span>
@@ -322,7 +322,7 @@ function Th({ children, right }: { children: React.ReactNode; right?: boolean })
       className="ss-mono"
       style={{
         textAlign: right ? "right" : "left",
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 600,
         letterSpacing: ".08em",
         textTransform: "uppercase",

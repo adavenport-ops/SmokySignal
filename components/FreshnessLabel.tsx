@@ -28,7 +28,7 @@ export function FreshnessLabel({ lastSampleMs, className, style }: Props) {
     return (
       <span
         className={`ss-mono ${className ?? ""}`}
-        style={{ fontSize: 10, color: SS_TOKENS.fg2, ...style }}
+        style={{ fontSize: 12, color: SS_TOKENS.fg1, ...style }}
       >
         LAST SAMPLE — UNKNOWN
       </span>
@@ -43,8 +43,10 @@ export function FreshnessLabel({ lastSampleMs, className, style }: Props) {
     <span
       className={`ss-mono ${className ?? ""}`}
       style={{
-        fontSize: 10,
-        color: stale ? SS_TOKENS.alert : SS_TOKENS.fg2,
+        fontSize: 12,
+        // Stale is a data-health warning, not "Smokey is up": bright
+        // neutral, never orange.
+        color: stale ? SS_TOKENS.fg0 : SS_TOKENS.fg1,
         letterSpacing: ".06em",
         ...style,
       }}

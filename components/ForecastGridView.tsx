@@ -10,6 +10,15 @@ import { pacificNow } from "@/lib/time";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
+// The weekday column stays pinned while the hours scroll sideways on a
+// phone, so a rider never loses track of which row is which.
+const STICKY: React.CSSProperties = {
+  position: "sticky",
+  left: 0,
+  zIndex: 1,
+  background: SS_TOKENS.bg0,
+};
+
 export function ForecastGridView({
   grid,
   hour12 = false,
@@ -46,7 +55,7 @@ export function ForecastGridView({
             minWidth: 560,
           }}
         >
-          <div />
+          <div style={STICKY} />
           {Array.from({ length: 24 }, (_, h) => (
             <div
               key={h}
@@ -100,11 +109,14 @@ function DowRow({
       <div
         className="ss-mono"
         style={{
+          ...STICKY,
           fontSize: 10,
           color: dow === now.dow ? SS_TOKENS.alert : SS_TOKENS.fg2,
           letterSpacing: ".06em",
           paddingRight: 6,
-          alignSelf: "center",
+          alignSelf: "stretch",
+          display: "flex",
+          alignItems: "center",
         }}
       >
         {DAYS[dow]}

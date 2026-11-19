@@ -233,6 +233,9 @@ export function RadarShell({
 
   return (
     <main
+      // ss-type-floor lifts sub-12px overlay text from shared panels
+      // (LearningPanel) to the 12px floor.
+      className="ss-type-floor"
       style={{
         position: "fixed",
         inset: 0,
@@ -331,7 +334,7 @@ export function RadarShell({
               className="ss-mono"
               tabIndex={0}
               style={{
-                fontSize: 10.5,
+                fontSize: 12,
                 color: counterColor,
                 letterSpacing: ".06em",
                 cursor: "help",
@@ -482,9 +485,9 @@ function Toast({
         borderRadius: 8,
         background: SS_TOKENS.bg2,
         border: `.5px solid ${SS_TOKENS.hairline}`,
-        color: SS_TOKENS.fg2,
+        color: SS_TOKENS.fg1,
         fontFamily: "var(--font-mono)",
-        fontSize: 11,
+        fontSize: 12,
         letterSpacing: ".04em",
         zIndex: 20,
         whiteSpace: "nowrap",
@@ -517,7 +520,7 @@ function CompassN() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: 700,
           color: SS_TOKENS.fg1,
           zIndex: 10,
@@ -603,12 +606,12 @@ function PlaneCard({ p }: { p: Aircraft }) {
           {p.tail}
         </span>
         {p.nickname && (
-          <span style={{ fontSize: 11, color: SS_TOKENS.fg1 }}>
+          <span style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
             &ldquo;{p.nickname}&rdquo;
           </span>
         )}
       </div>
-      <div style={{ fontSize: 11, color: SS_TOKENS.fg2, marginTop: 5 }}>
+      <div style={{ fontSize: 12, color: SS_TOKENS.fg1, marginTop: 5 }}>
         {p.operator}
       </div>
       <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
@@ -639,8 +642,8 @@ function Stat({ label, value }: { label: string; value: string }) {
       <div
         className="ss-mono"
         style={{
-          fontSize: 9.5,
-          color: SS_TOKENS.fg2,
+          fontSize: 12,
+          color: SS_TOKENS.fg1,
           letterSpacing: ".08em",
         }}
       >
@@ -709,9 +712,9 @@ function DistanceRingsToggle({
           color: disabled
             ? SS_TOKENS.fg3
             : active
-              ? SS_TOKENS.alert
+              ? SS_TOKENS.fg0
               : SS_TOKENS.fg1,
-          fontSize: 11,
+          fontSize: 12,
           letterSpacing: ".06em",
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",

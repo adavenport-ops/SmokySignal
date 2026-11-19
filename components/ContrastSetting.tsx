@@ -19,8 +19,8 @@ export function ContrastSetting({ current }: { current: ContrastMode }) {
         <div
           className="ss-mono"
           style={{
-            fontSize: 9.5,
-            color: SS_TOKENS.fg2,
+            fontSize: 12,
+            color: SS_TOKENS.fg1,
             letterSpacing: ".12em",
             textTransform: "uppercase",
             marginBottom: 6,
@@ -85,8 +85,8 @@ function Choice({
         minWidth: 140,
         padding: "12px 14px",
         borderRadius: 12,
-        border: `.5px solid ${active ? SS_TOKENS.alert : SS_TOKENS.hairline2}`,
-        background: active ? SS_TOKENS.alertDim : SS_TOKENS.bg2,
+        border: active ? `1px solid ${SS_TOKENS.fg0}` : `.5px solid ${SS_TOKENS.hairline2}`,
+        background: active ? SS_TOKENS.bg2 : SS_TOKENS.bg1,
         color: SS_TOKENS.fg0,
         cursor: "pointer",
         textAlign: "left",
@@ -97,7 +97,7 @@ function Choice({
         style={{
           fontSize: 12,
           letterSpacing: ".06em",
-          color: active ? SS_TOKENS.alert : SS_TOKENS.fg1,
+          color: active ? SS_TOKENS.fg0 : SS_TOKENS.fg1,
           fontWeight: 700,
         }}
       >

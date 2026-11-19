@@ -26,7 +26,11 @@ export type RateLimitBucket =
   | "push-subscribe"
   | "push-prefs"
   | "push-unsubscribe"
-  | "admin-login";
+  | "relay-create"
+  | "relay-test"
+  | "relay-manage"
+  | "admin-login"
+  | "history";
 
 type Duration = `${number} ${"s" | "m"}`;
 
@@ -43,7 +47,15 @@ export const RATE_LIMITS: Record<RateLimitBucket, BucketConfig> = {
   "push-subscribe": { limit: 20, window: "1 m", failClosed: false },
   "push-prefs": { limit: 20, window: "1 m", failClosed: false },
   "push-unsubscribe": { limit: 20, window: "1 m", failClosed: false },
+  // Relays POST to third-party hosts, so creation and test sends are
+  // tighter than rider writes: a club sets one up once.
+  "relay-create": { limit: 5, window: "10 m", failClosed: false },
+  "relay-test": { limit: 5, window: "1 m", failClosed: false },
+  "relay-manage": { limit: 30, window: "1 m", failClosed: false },
   "admin-login": { limit: 5, window: "15 m", failClosed: true },
+  // Read endpoint, but each miss can fan out to thousands of KV reads.
+  // CDN-cached hits never reach the limiter.
+  history: { limit: 30, window: "1 m", failClosed: false },
 };
 
 export const RATE_LIMIT_PREFIX = "ratelimit";

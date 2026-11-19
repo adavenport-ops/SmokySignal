@@ -261,10 +261,10 @@ export default async function ProgramPage() {
       <section>
         <h1
           style={{
-            fontSize: 34,
+            fontSize: 28,
             fontWeight: 800,
-            letterSpacing: "-.04em",
-            lineHeight: 1.05,
+            letterSpacing: "-.03em",
+            lineHeight: 1.1,
             color: SS_TOKENS.fg0,
             margin: "0 0 12px",
           }}
@@ -402,8 +402,10 @@ export default async function ProgramPage() {
         </P>
         <P>
           SmokySignal reads those broadcasts from{" "}
-          <ExtLink href="https://adsb.fi">adsb.fi</ExtLink>, a network of
-          volunteer receivers. Some aircraft don&rsquo;t broadcast, or fly
+          <ExtLink href="https://adsb.fi">adsb.fi</ExtLink> and{" "}
+          <ExtLink href="https://adsb.lol">adsb.lol</ExtLink>, two networks of
+          volunteer receivers. Each hears some aircraft the other misses, so
+          the two are merged. Some aircraft don&rsquo;t broadcast, or fly
           where no receiver hears them. A quiet map doesn&rsquo;t always mean
           a quiet sky.
         </P>

@@ -56,7 +56,7 @@ export function SaveFlightCardButton({ tail, flightId }: { tail: string; flightI
         background: SS_TOKENS.bg2,
         border: `.5px solid ${SS_TOKENS.hairline2}`,
         color: SS_TOKENS.fg1,
-        fontSize: 11,
+        fontSize: 12,
         letterSpacing: ".04em",
         textDecoration: "none",
         whiteSpace: "nowrap",

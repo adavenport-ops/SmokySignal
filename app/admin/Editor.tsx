@@ -20,6 +20,7 @@ import {
 import { Logo } from "@/components/brand/Logo";
 import { FLEET } from "@/lib/seed";
 import { MISSIONS, POLICE_UNITS } from "@/lib/mission";
+import { MigrationPanel } from "./MigrationPanel";
 
 const OPERATORS: readonly string[] = [
   ...Array.from(new Set(FLEET.map((f) => f.operator))),
@@ -118,6 +119,10 @@ export function Editor({
 
       <Section title="Settings">
         <FlagsForm enabled={flags.speedWarningEnabled} />
+      </Section>
+
+      <Section title="Registry migration" subtitle="dry run first, apply backs up">
+        <MigrationPanel />
       </Section>
 
       <Section title="Push" subtitle="broadcast test ping">

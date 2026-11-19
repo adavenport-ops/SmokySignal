@@ -76,7 +76,7 @@ export async function Logbook({
     <section aria-label="Logbook" data-testid="logbook">
       <Card>
         <div className="ss-eyebrow">Logbook</div>
-        <p style={{ fontSize: 11.5, color: SS_TOKENS.fg2, margin: "2px 0 0", lineHeight: 1.45 }}>
+        <p style={{ fontSize: 12.5, color: SS_TOKENS.fg2, margin: "2px 0 0", lineHeight: 1.45 }}>
           From the permanent daily log, which starts {LOG_START_DATE}. Times Pacific.
         </p>
         {!lb || lb.totals.sorties === 0 ? (
@@ -115,11 +115,11 @@ function LogbookBody({ lb, hour12 }: { lb: LogbookData; hour12: boolean }) {
               key={m.month}
               style={{ display: "grid", gridTemplateColumns: "62px 1fr 92px", alignItems: "center", gap: 8 }}
             >
-              <span className="ss-mono" style={{ fontSize: 11, color: SS_TOKENS.fg1 }}>
+              <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
                 {m.month}
               </span>
               <Bar frac={m.airborne_s / maxMonth} />
-              <span className="ss-mono" style={{ fontSize: 11.5, color: SS_TOKENS.fg0, textAlign: "right" }}>
+              <span className="ss-mono" style={{ fontSize: 12.5, color: SS_TOKENS.fg0, textAlign: "right" }}>
                 {m.sorties} · {(m.airborne_s / 3600).toFixed(1)} h
               </span>
             </div>
@@ -194,7 +194,7 @@ function LogbookBody({ lb, hour12 }: { lb: LogbookData; hour12: boolean }) {
                       </span>
                       {c.place && <span style={{ color: SS_TOKENS.fg1 }}> · mostly {c.place}</span>}
                     </span>
-                    <span className="ss-mono" style={{ fontSize: 11.5, color: SS_TOKENS.fg1, textAlign: "right" }}>
+                    <span className="ss-mono" style={{ fontSize: 12.5, color: SS_TOKENS.fg1, textAlign: "right" }}>
                       {fmtStation(c.s)}
                     </span>
                   </li>
@@ -232,11 +232,11 @@ function LogbookBody({ lb, hour12 }: { lb: LogbookData; hour12: boolean }) {
                 <span className="ss-mono" style={{ fontSize: 12.5, textAlign: "right" }}>
                   {f.inProgress ? "UP NOW" : fmtDurationHuman(f.duration_s)}
                 </span>
-                <span className="ss-mono" style={{ fontSize: 11, color: SS_TOKENS.fg1, minWidth: 0, overflowWrap: "anywhere" }}>
+                <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1, minWidth: 0, overflowWrap: "anywhere" }}>
                   {f.dep ?? "—"} → {f.arr ?? (f.inProgress ? "up" : "—")}
                   {f.corridor ? ` · ${f.corridor}` : ""}
                 </span>
-                <span className="ss-mono" style={{ fontSize: 11, color: SS_TOKENS.fg2, textAlign: "right" }}>
+                <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg2, textAlign: "right" }}>
                   {f.max_alt_ft > 0 ? `${f.max_alt_ft.toLocaleString("en-US")}′` : ""}
                 </span>
               </Link>
@@ -251,14 +251,14 @@ function LogbookBody({ lb, hour12 }: { lb: LogbookData; hour12: boolean }) {
 function Stat({ label, value, sub, href }: { label: string; value: string; sub?: string; href?: string }) {
   const body = (
     <>
-      <div className="ss-mono" style={{ fontSize: 9.5, color: SS_TOKENS.fg2, letterSpacing: ".1em" }}>
+      <div className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg2, letterSpacing: ".1em" }}>
         {label}
       </div>
       <div className="ss-mono" style={{ fontSize: 18, fontWeight: 600, color: SS_TOKENS.fg0, marginTop: 3 }}>
         {value}
       </div>
       {sub && (
-        <div className="ss-mono" style={{ fontSize: 10.5, color: SS_TOKENS.fg1, marginTop: 2 }}>
+        <div className="ss-mono" style={{ fontSize: 12.5, color: SS_TOKENS.fg1, marginTop: 2 }}>
           {sub}
         </div>
       )}
@@ -280,7 +280,7 @@ function Head({ title, note }: { title: string; note: string }) {
       <h3 className="ss-eyebrow" style={{ margin: 0, fontWeight: 600 }}>
         {title}
       </h3>
-      <p style={{ fontSize: 11.5, color: SS_TOKENS.fg2, margin: "2px 0 0", lineHeight: 1.45 }}>{note}</p>
+      <p style={{ fontSize: 12.5, color: SS_TOKENS.fg2, margin: "2px 0 0", lineHeight: 1.45 }}>{note}</p>
     </div>
   );
 }
@@ -319,7 +319,7 @@ function HourStrip({ minutes }: { minutes: number[] }) {
           />
         ))}
       </div>
-      <div className="ss-mono" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", fontSize: 9, color: SS_TOKENS.fg2, marginTop: 3 }}>
+      <div className="ss-mono" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", fontSize: 12, color: SS_TOKENS.fg1, marginTop: 3 }}>
         <span>00</span>
         <span>06</span>
         <span>12</span>

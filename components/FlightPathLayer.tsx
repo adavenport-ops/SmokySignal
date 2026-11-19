@@ -33,6 +33,7 @@ import {
   ROUTE_OPACITY_STOPS,
   ROUTE_WIDTH_STOPS,
   zoomInterpolate,
+  ROUTE_COLOR,
 } from "@/lib/radar-zoom";
 import { extentOfPoints } from "@/lib/radar-view";
 import {
@@ -181,7 +182,8 @@ export function FlightPathLayer({ map }: Props) {
               "line-join": "round",
             },
             paint: {
-              "line-color": SS_TOKENS.alert,
+              // Cool thread: history, not a live bird (lib/radar-zoom.ts).
+              "line-color": ROUTE_COLOR,
               "line-width": zoomInterpolate(ROUTE_WIDTH_STOPS),
               "line-opacity": zoomInterpolate(ROUTE_OPACITY_STOPS),
             },
