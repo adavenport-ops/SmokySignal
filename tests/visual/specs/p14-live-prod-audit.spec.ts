@@ -1500,6 +1500,8 @@ test.describe("p14 live-prod audit", () => {
       evidence: `select=${present}; options=${options.map((o) => o.label).join(" | ")}; ${monthEvidence}`,
       screenshot,
     });
+  });
+
   test("40. /embed is frameable; every other route still sends X-Frame-Options DENY", async ({
     request,
   }) => {
@@ -1749,5 +1751,111 @@ test.describe("p14 live-prod audit", () => {
       evidence: JSON.stringify(results),
     });
     expect(pass).toBe(true);
+  });
+
+  test("49. /circling renders the live pattern list with a coverage caveat (What's circling)", async ({
+    page,
+  }) => {
+    const resp = await page.goto("/circling", { waitUntil: "networkidle" });
+    const screenshot = await shot(page, "35-circling");
+    const title = await page.title();
+    const h1 = (await page.locator("h1").first().innerText().catch(() => "")).trim();
+    const live = await page.locator('[data-testid="circling-live"]').count();
+    // One of: pattern cards, the empty state, or the honest feed-quiet state.
+    const items = await page.locator('[data-testid="circling-item"]').count();
+    const empty = await page.locator('[data-testid="circling-empty"]').count();
+    const degraded = await page.locator('[data-testid="circling-degraded"]').count();
+    const note = (await page.locator('[data-testid="coverage-note"]').first().innerText().catch(() => "")).trim();
+    const nearMe = await page.locator('[data-testid="near-me"]').count();
+    const hubLink = await (async () => {
+      await page.goto("/about", { waitUntil: "networkidle" });
+      return page.locator('nav[aria-label="Site sections"] a[href="/circling"]').count();
+    })();
+    const pass =
+      resp?.status() === 200 &&
+      /circling/i.test(title) &&
+      /circling/i.test(h1) &&
+      live > 0 &&
+      items + empty + degraded > 0 &&
+      /^Quiet here can mean unseen\./.test(note) &&
+      nearMe > 0 &&
+      hubLink > 0;
+    record({
+      claim:
+        "/circling renders (title + h1 mention circling), shows pattern cards or an honest empty/feed-quiet state, a Near me button, the coverage caveat, and is linked from the /about hub",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `status=${resp?.status()} title="${title}" items=${items} empty=${empty} degraded=${degraded} note="${note}" nearMe=${nearMe} hub=${hubLink}`,
+      screenshot,
+    });
+  });
+
+  test("50. /road/i-5 renders history, histogram, missions and its own share card (Road pages)", async ({
+    page,
+    request,
+  }) => {
+    const resp = await page.goto("/road/i-5", { waitUntil: "networkidle" });
+    const screenshot = await shot(page, "36-road-i5");
+    const h1 = (await page.locator('[data-testid="road-title"]').innerText().catch(() => "")).trim();
+    const headline = (await page.locator('[data-testid="road-headline"]').innerText().catch(() => "")).trim();
+    const hours = await page.locator('[data-testid="road-hours"]').count();
+    const missions = await page.locator('[data-testid="road-missions"]').count();
+    const note = await page.locator('[data-testid="coverage-note"]').count();
+    const og = await page.locator('meta[property="og:image"]').getAttribute("content").catch(() => null);
+    let ogOk = false;
+    if (og && /\/road\/i-5\/opengraph-image/.test(og)) {
+      const img = await request.get(new URL(og).pathname);
+      ogOk = img.ok() && (img.headers()["content-type"] ?? "").startsWith("image/png");
+    }
+    const index = await request.get("/road");
+    const pass =
+      resp?.status() === 200 &&
+      h1 === "I-5" &&
+      /^Planes over I-5 this week: \d+ flights?\.$/.test(headline) &&
+      hours > 0 &&
+      missions > 0 &&
+      note > 0 &&
+      ogOk &&
+      index.ok();
+    record({
+      claim:
+        "/road/i-5 renders the week headline, hour-of-day histogram, mission breakdown and coverage caveat; og:image is the road card; /road index is up",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `status=${resp?.status()} h1="${h1}" headline="${headline}" hours=${hours} missions=${missions} note=${note} og=${og} ogOk=${ogOk} index=${index.status()}`,
+      screenshot,
+    });
+  });
+
+  test("51. /api/coverage returns drop-out cells as JSON (Coverage honesty)", async ({ request }) => {
+    const r = await request.get("/api/coverage");
+    let pass = false;
+    let evidence = `HTTP ${r.status()}`;
+    if (r.ok()) {
+      const ctype = r.headers()["content-type"] ?? "";
+      const cc = r.headers()["cache-control"] ?? "";
+      const body = (await r.json().catch(() => null)) as {
+        window_days?: number;
+        dropouts?: number;
+        cells?: { id: string; lat: number; lon: number; count: number }[];
+        weakest?: { name: string; count: number } | null;
+      } | null;
+      const cellsOk =
+        Array.isArray(body?.cells) &&
+        body!.cells!.every((c) => typeof c.id === "string" && typeof c.count === "number");
+      pass =
+        ctype.startsWith("application/json") &&
+        body?.window_days === 30 &&
+        typeof body?.dropouts === "number" &&
+        cellsOk &&
+        (body?.weakest === null || typeof body?.weakest?.name === "string");
+      evidence = `type=${ctype} cache="${cc}" window=${body?.window_days} dropouts=${body?.dropouts} cells=${body?.cells?.length} weakest=${JSON.stringify(body?.weakest)}`;
+    }
+    record({
+      claim: "/api/coverage returns {window_days:30, dropouts, cells[], weakest} JSON",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence,
+    });
   });
 });
