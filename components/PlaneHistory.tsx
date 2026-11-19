@@ -160,7 +160,7 @@ export default function PlaneHistory({ tail }: { tail: string }) {
               fill
               scene="plane-history"
               replay={replayAllowed(paths)}
-              annotate={paths.length === 1}
+              annotate
               onPick={onPick}
               frameKey={body ? query : null}
               onUnavailable={setUnavailable}

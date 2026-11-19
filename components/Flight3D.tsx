@@ -41,6 +41,18 @@ import type { TrackPoint } from "@/lib/tracks";
 import { detectOrbits, type OrbitSegment } from "@/lib/orbit";
 import { inferArrival, inferDeparture, type AirportMatch } from "@/lib/airports";
 import { formatTs } from "@/lib/time";
+import { SELECTED_FLIGHT_COLOR } from "@/lib/history-3d";
+import {
+  mergeFields,
+  nudgeX,
+  placeLabels,
+  selectMultiPathLabels,
+  selectSinglePathLabels,
+  textBox,
+  type LabelBox,
+  type OrbitInput,
+  type Rect,
+} from "@/lib/label-declutter";
 import {
   MAX_VERTICES,
   TERRAIN_EXAGGERATION,
@@ -289,23 +301,148 @@ function framingPoints(models: ReadonlyArray<{ positions: Position3[] }>, max = 
   return out;
 }
 
-/** Label footprints for framing: orbit callouts above rings, field tags below. */
-function labelBoxes(
-  models: ReadonlyArray<{ orbits: OrbitSegment[]; orbitAlts: number[]; dep: AirportMatch | null; arr: AirportMatch | null }>,
-): Box[] {
-  const out: Box[] = [];
-  for (const m of models) {
-    m.orbits.forEach((o, k) => {
-      const lines = orbitLabel(o).split(" · ");
-      const longest = Math.max(lines[0]!.length, lines.slice(1).join(" · ").length);
-      const half = (longest * 7.4) / 2 + 10;
-      const z = altitudeZ(m.orbitAlts[k] ?? 0);
-      out.push({ pos: [o.centroid.lon, o.centroid.lat, z], left: half, right: half, up: 70, down: 0 });
+/**
+ * One label the declutter pass may show or hide. Orbit labels float on a
+ * leader above their ring (anchor at z + lift); field tags hang below the
+ * airport dot.
+ */
+type LabelCand = {
+  id: string;
+  kind: "orbit" | "field";
+  text: string;
+  priority: number;
+  lon: number;
+  lat: number;
+  /** Ring altitude (orbit) or ground lift (field), m. */
+  z: number;
+  /** Leader height above the ring, m (orbit only). */
+  lift: number;
+  /** Label size and padding, px. */
+  size: number;
+  padX: number;
+  padY: number;
+};
+
+const LABEL_SIZE = 12;
+const FIELD_PRIORITY = 900;
+const SELECTED_PRIORITY = 1e7;
+
+function buildLabels(
+  models: ReadonlyArray<PathModel>,
+  selectedId: string | null,
+): LabelCand[] {
+  const multi = models.length > 1;
+  const orbits: OrbitInput[] = models.flatMap((m) =>
+    m.orbits.map((o, k) => ({
+      pathId: m.id,
+      corridor: o.corridor,
+      durationS: o.durationS,
+      lat: o.centroid.lat,
+      lon: o.centroid.lon,
+      altFt: m.orbitAlts[k] ?? 0,
+      radiusNm: o.radiusNm,
+    })),
+  );
+  const picked = multi ? selectMultiPathLabels(orbits, selectedId) : selectSinglePathLabels(orbits);
+  const out: LabelCand[] = picked.map((l) => {
+    const a = l.group.anchor;
+    return {
+      id: l.id,
+      kind: "orbit",
+      text: l.text,
+      priority: (l.selected ? SELECTED_PRIORITY : 0) + l.group.totalS,
+      lon: a.lon,
+      lat: a.lat,
+      z: altitudeZ(a.altFt),
+      lift: Math.max(350, Math.max(a.radiusNm, MIN_RING_NM) * NM_TO_M * 0.75),
+      size: LABEL_SIZE,
+      padX: 8,
+      padY: 5,
+    };
+  });
+  const fields = mergeFields(
+    models.flatMap((m) => [
+      ...(m.dep ? [{ id: m.dep.id, lat: m.dep.lat, lon: m.dep.lon, tag: "DEP" as const }] : []),
+      ...(m.arr ? [{ id: m.arr.id, lat: m.arr.lat, lon: m.arr.lon, tag: "ARR" as const }] : []),
+    ]),
+  );
+  for (const f of fields) {
+    out.push({
+      id: `field:${f.id}`,
+      kind: "field",
+      text: f.text,
+      priority: FIELD_PRIORITY,
+      lon: f.lon,
+      lat: f.lat,
+      z: 3,
+      lift: 0,
+      size: LABEL_SIZE,
+      padX: 6,
+      padY: 4,
     });
-    for (const a of [m.dep, m.arr]) {
-      if (a) out.push({ pos: [a.lon, a.lat, 0], left: 60, right: 60, up: 0, down: 34 });
-    }
   }
+  return out;
+}
+
+/** Label footprints for framing: orbit callouts above rings, field tags below. */
+function labelBoxes(labels: ReadonlyArray<LabelCand>): Box[] {
+  return labels.map((l) => {
+    const t = textBox(l.text, l.size, l.padX, l.padY);
+    const half = t.w / 2;
+    return l.kind === "orbit"
+      ? { pos: [l.lon, l.lat, l.z] as Position3, left: half, right: half, up: t.h + 36, down: 0 }
+      : { pos: [l.lon, l.lat, 0] as Position3, left: half, right: half, up: 0, down: t.h + 16 };
+  });
+}
+
+/**
+ * Ground-anchored screen position for a lon/lat/altitude, matching what
+ * MapLibre draws with terrain on: its terrain-aware project() for the
+ * ground point plus the lift from a plain mercator viewport.
+ */
+function screenProjector(map: MaplibreMap) {
+  const c = map.getContainer();
+  const center = map.getCenter();
+  const vp = new WebMercatorViewport({
+    width: c.clientWidth,
+    height: c.clientHeight,
+    longitude: center.lng,
+    latitude: center.lat,
+    zoom: map.getZoom(),
+    pitch: map.getPitch(),
+    bearing: map.getBearing(),
+  });
+  return (lon: number, lat: number, z: number, ground: number): [number, number] => {
+    const g = map.project([lon, lat]);
+    const a = vp.project([lon, lat, z]) as number[];
+    const b = vp.project([lon, lat, ground]) as number[];
+    return [g.x + a[0]! - b[0]!, g.y + a[1]! - b[1]!];
+  };
+}
+
+/** On-screen overlays (controls column, reset, readout, scrubber) no label may sit under. */
+const OBSTACLE_SELECTOR =
+  '[data-label-obstacle],[data-testid="map3d-controls"],[data-testid="map3d-hint"],button[aria-label="Reset view"]';
+const OBSTACLE_PAD = 6;
+/** Width of the Map3DControls column (BTN), px. */
+const CONTROLS_COL_W = 44;
+/** Below this frame width the controls column eats real map room. */
+const NARROW_W = 640;
+
+function obstacleRects(wrap: HTMLElement | null): Rect[] {
+  if (!wrap) return [];
+  const wr = wrap.getBoundingClientRect();
+  const out: Rect[] = [];
+  wrap.querySelectorAll<HTMLElement>(OBSTACLE_SELECTOR).forEach((el) => {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return;
+    out.push({
+      x: r.left - wr.left - OBSTACLE_PAD,
+      y: r.top - wr.top - OBSTACLE_PAD,
+      w: r.width + OBSTACLE_PAD * 2,
+      h: r.height + OBSTACLE_PAD * 2,
+    });
+  });
   return out;
 }
 
@@ -360,6 +497,8 @@ export default function Flight3D({
   emptyViewRef.current = emptyView;
   const framePadRef = useRef(framePadding);
   framePadRef.current = framePadding;
+  const resetInsetRef = useRef(resetInset);
+  resetInsetRef.current = resetInset;
   const pitchRef = useRef(pitch);
   pitchRef.current = pitch;
   const fontRef = useRef<string>("monospace");
@@ -367,6 +506,9 @@ export default function Flight3D({
   const progressRef = useRef(0);
   const playingRef = useRef(false);
   const readyRef = useRef(false);
+  /** Label ids that survived the last collision pass; null = not run yet. */
+  const visRef = useRef<{ vis: Set<string>; dx: Map<string, number>; key: string } | null>(null);
+  const labelTimerRef = useRef<number | null>(null);
 
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
@@ -414,7 +556,12 @@ export default function Flight3D({
       markers.map((m) => ({ lat: m.lat, lon: m.lon })),
     ]);
     const axis = principalBearing(resolved.flat());
-    return { models, markers, clock, axis, bounds: bounds ? padBounds(bounds, 2) : null };
+    // Several paths: the tapped one (the orange one) keeps its labels.
+    const sel = SELECTED_FLIGHT_COLOR.toLowerCase();
+    const selectedId =
+      paths.length > 1 ? (paths.find((p) => p.color?.toLowerCase() === sel)?.id ?? null) : null;
+    const labels = buildLabels(models, selectedId);
+    return { models, markers, clock, axis, labels, selectedId, bounds: bounds ? padBounds(bounds, 2) : null };
   }, [paths, markers, annotate]);
 
   const modelRef = useRef(model);
@@ -432,8 +579,62 @@ export default function Flight3D({
     layers: Layer[];
   } | null>(null);
 
+  /**
+   * Collision pass: project each label's box to the screen and keep the
+   * highest-priority ones that clear each other and the on-screen controls.
+   * A few dozen boxes, so cheap enough to run on every camera settle.
+   */
+  const computeVisible = useCallback((): { vis: Set<string>; dx: Map<string, number>; key: string } | null => {
+    const map = mapRef.current;
+    const labels = modelRef.current.labels;
+    if (!map || labels.length === 0) return null;
+    const c = map.getContainer();
+    const w = c.clientWidth;
+    const h = c.clientHeight;
+    if (w <= 0 || h <= 0) return null;
+    const project = screenProjector(map);
+    const boxes: LabelBox[] = [];
+    const keep = new Set<string>();
+    const dxs = new Map<string, number>();
+    const obstacles = obstacleRects(c.parentElement);
+    for (const l of labels) {
+      const elev = Math.max(0, map.queryTerrainElevation([l.lon, l.lat]) ?? 0);
+      const t = textBox(l.text, l.size, l.padX, l.padY);
+      let box: LabelBox;
+      if (l.kind === "orbit") {
+        const [sx, sy] = project(l.lon, l.lat, l.z + l.lift, elev);
+        box = { id: l.id, x: sx - t.w / 2, y: sy - 6 - t.h, w: t.w, h: t.h, priority: l.priority };
+      } else {
+        const [sx, sy] = project(l.lon, l.lat, elev + l.z, elev);
+        box = { id: l.id, x: sx - t.w / 2, y: sy + 14, w: t.w, h: t.h, priority: l.priority };
+      }
+      // Fully off-screen labels cannot collide with anything visible.
+      if (box.x + box.w < 0 || box.x > w || box.y + box.h < 0 || box.y > h) {
+        keep.add(l.id);
+        continue;
+      }
+      // Slide a label in from the edge or out from under the controls
+      // rather than dropping it.
+      const dx = nudgeX(box, obstacles, { w, h });
+      if (dx !== 0) {
+        box.x += dx;
+        dxs.set(l.id, dx);
+      }
+      boxes.push(box);
+    }
+    for (const id of placeLabels(boxes, obstacles)) keep.add(id);
+    const key = [...keep].sort().map((id) => `${id}@${dxs.get(id) ?? 0}`).join("|");
+    return { vis: keep, dx: dxs, key };
+  }, []);
+
   const buildStatic = useCallback((): Layer[] => {
-    const { models } = modelRef.current;
+    const { models, labels } = modelRef.current;
+    const multi = models.length > 1;
+    const selectedId = modelRef.current.selectedId;
+    const placed = computeVisible();
+    visRef.current = placed;
+    const shown = (id: string) => !placed || placed.vis.has(id);
+    const shiftOf = (id: string) => placed?.dx.get(id) ?? 0;
     const ground = groundRef.current;
     const font = fontRef.current;
     const map = mapRef.current;
@@ -535,22 +736,14 @@ export default function Flight3D({
       );
     });
 
-    // Orbit rings + labels.
-    const rings: { path: Position3[]; label: string; mid: Position3; top: Position3 }[] = [];
+    // Orbit rings (faint when many flights share the view) + labels.
+    const rings: { path: Position3[]; alpha: number }[] = [];
     for (const m of models) {
       m.orbits.forEach((o, k) => {
         const z = altitudeZ(m.orbitAlts[k] ?? 0);
-        const path = ringPositions(o.centroid, o.radiusNm, z);
-        // Two short lines read on a phone; the chip under the map has the full line.
-        const [head, ...rest] = orbitLabel(o).split(" · ");
-        // The label floats on a short leader above the ring so it never
-        // sits on top of the pattern it describes.
-        const lift = Math.max(350, Math.max(o.radiusNm, MIN_RING_NM) * NM_TO_M * 0.75);
         rings.push({
-          path,
-          label: `${head}\n${rest.join(" · ")}`,
-          mid: [o.centroid.lon, o.centroid.lat, z],
-          top: [o.centroid.lon, o.centroid.lat, z + lift],
+          path: ringPositions(o.centroid, o.radiusNm, z),
+          alpha: !multi ? 210 : m.id === selectedId ? 210 : 70,
         });
       });
     }
@@ -560,15 +753,29 @@ export default function Flight3D({
           id: "orbit-ring",
           data: rings,
           getPath: (d) => d.path,
-          getColor: [242, 244, 247, 210],
+          getColor: (d) => [242, 244, 247, d.alpha],
           getWidth: 2,
           widthUnits: "pixels",
           billboard: true,
           parameters: noDepthWrite,
         }),
-        new LineLayer<(typeof rings)[number]>({
+      );
+    }
+    // The label floats on a short leader above the ring so it never sits on
+    // top of the pattern it describes.
+    const orbitLabels = labels
+      .filter((l) => l.kind === "orbit" && shown(l.id))
+      .map((l) => ({
+        text: l.text,
+        dx: shiftOf(l.id),
+        mid: [l.lon, l.lat, l.z] as Position3,
+        top: [l.lon, l.lat, l.z + l.lift] as Position3,
+      }));
+    if (orbitLabels.length > 0) {
+      layers.push(
+        new LineLayer<(typeof orbitLabels)[number]>({
           id: "orbit-leader",
-          data: rings,
+          data: orbitLabels,
           getSourcePosition: (d) => d.mid,
           getTargetPosition: (d) => d.top,
           getColor: [242, 244, 247, 140],
@@ -576,20 +783,20 @@ export default function Flight3D({
           widthUnits: "pixels",
           parameters: { depthCompare: "always", depthWriteEnabled: false },
         }),
-        new TextLayer<(typeof rings)[number]>({
+        new TextLayer<(typeof orbitLabels)[number]>({
           id: "orbit-label",
-          data: rings,
+          data: orbitLabels,
           getPosition: (d) => d.top,
-          getText: (d) => d.label,
+          getText: (d) => d.text,
           fontFamily: font,
           characterSet: "auto",
-          getSize: 12,
+          getSize: LABEL_SIZE,
           getColor: [242, 244, 247, 255],
           getAlignmentBaseline: "bottom",
-          getPixelOffset: [0, -6],
+          getPixelOffset: (d) => [d.dx, -6],
           lineHeight: 1.25,
           background: true,
-          getBackgroundColor: [11, 13, 16, 215],
+          getBackgroundColor: [11, 13, 16, 235],
           getBorderColor: [242, 244, 247, 60],
           getBorderWidth: 1,
           backgroundPadding: [8, 5],
@@ -599,26 +806,18 @@ export default function Flight3D({
       );
     }
 
-    // Departure / arrival fields.
-    const fields = new Map<string, { a: AirportMatch; tags: Set<string>; z: number }>();
-    models.forEach((m) => {
-      for (const [a, tag] of [
-        [m.dep, "DEP"],
-        [m.arr, "ARR"],
-      ] as const) {
-        if (!a) continue;
-        const prev = fields.get(a.id);
-        if (prev) prev.tags.add(tag);
-        else fields.set(a.id, { a, tags: new Set([tag]), z: 0 });
-      }
-    });
-    const fieldData = [...fields.values()].map((f) => {
-      const elev = map?.queryTerrainElevation([f.a.lon, f.a.lat]) ?? 0;
-      return {
-        pos: [f.a.lon, f.a.lat, Math.max(0, elev) + 3] as Position3,
-        text: `${f.a.id} · ${[...f.tags].join("/")}`,
-      };
-    });
+    // Departure / arrival fields: one dot per airport, one tag per airport.
+    const fieldData = labels
+      .filter((l) => l.kind === "field")
+      .map((l) => {
+        const elev = map?.queryTerrainElevation([l.lon, l.lat]) ?? 0;
+        return {
+          id: l.id,
+          dx: shiftOf(l.id),
+          pos: [l.lon, l.lat, Math.max(0, elev) + 3] as Position3,
+          text: l.text,
+        };
+      });
     if (fieldData.length > 0) {
       layers.push(
         new ScatterplotLayer<(typeof fieldData)[number]>({
@@ -636,18 +835,18 @@ export default function Flight3D({
         }),
         new TextLayer<(typeof fieldData)[number]>({
           id: "field-label",
-          data: fieldData,
+          data: fieldData.filter((d) => shown(d.id)),
           getPosition: (d) => d.pos,
           getText: (d) => d.text,
           fontFamily: font,
           characterSet: "auto",
-          getSize: 11,
-          getColor: [168, 174, 184, 255],
-          getPixelOffset: [0, 14],
+          getSize: LABEL_SIZE,
+          getColor: [200, 205, 214, 255],
+          getPixelOffset: (d) => [d.dx, 14],
           getAlignmentBaseline: "top",
           background: true,
-          getBackgroundColor: [11, 13, 16, 190],
-          backgroundPadding: [5, 3],
+          getBackgroundColor: [11, 13, 16, 235],
+          backgroundPadding: [6, 4],
           backgroundBorderRadius: 4,
           parameters: { depthCompare: "always", depthWriteEnabled: false },
         }),
@@ -699,11 +898,11 @@ export default function Flight3D({
           getText: (d) => d.label,
           fontFamily: font,
           characterSet: "auto",
-          getSize: 11,
+          getSize: LABEL_SIZE,
           getColor: [242, 244, 247, 255],
           getPixelOffset: [0, -18],
           background: true,
-          getBackgroundColor: [11, 13, 16, 200],
+          getBackgroundColor: [11, 13, 16, 235],
           backgroundPadding: [5, 3],
           parameters: { depthCompare: "always", depthWriteEnabled: false },
         }),
@@ -711,7 +910,7 @@ export default function Flight3D({
     }
     return layers;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [markers]);
+  }, [markers, computeVisible]);
 
   const buildDynamic = useCallback(
     (prog: number): Layer[] => {
@@ -931,7 +1130,13 @@ export default function Flight3D({
       const z = altitudeZ(mk.altFt ?? 0);
       pts.push([mk.lon, mk.lat, z], [mk.lon, mk.lat, 0]);
     }
-    const fp = framePadRef.current ?? { top: 0, bottom: 0, left: 0, right: 0 };
+    const fp0 = framePadRef.current ?? { top: 0, bottom: 0, left: 0, right: 0 };
+    // Narrow frames: keep the path out from under the controls column
+    // (its width + its inset + 12 px of air).
+    const fp =
+      c.clientWidth < NARROW_W
+        ? { ...fp0, right: Math.max(fp0.right, CONTROLS_COL_W + (resetInsetRef.current?.right ?? 10) + 12 - pad) }
+        : fp0;
     if (pts.length === 0) pts.push([b.minLon, b.minLat, 0], [b.maxLon, b.maxLat, 0]);
     const cam = fitCamera(
       pts,
@@ -947,7 +1152,9 @@ export default function Flight3D({
         right: pad + fp.right,
       },
       14,
-      labelBoxes(modelRef.current.models),
+      // Many flights: labels are thinned by collision, so they do not widen
+      // the frame (a dozen 270 px plates would zoom a phone right out).
+      modelRef.current.models.length > 1 ? [] : labelBoxes(modelRef.current.labels),
     );
     if (!cam) return;
     const target = { ...cam, bearing, pitch: pitchRef.current };
@@ -1094,6 +1301,21 @@ export default function Flight3D({
       );
     }
 
+    // Re-run label collision when the camera moves: at most every 150 ms
+    // while it moves, and once more when it settles.
+    const scheduleLabels = () => {
+      if (labelTimerRef.current != null) return;
+      labelTimerRef.current = window.setTimeout(() => {
+        labelTimerRef.current = null;
+        if (disposed || !readyRef.current) return;
+        const prev = visRef.current;
+        const next = computeVisible();
+        if (prev?.key === next?.key) return;
+        staticRef.current = null;
+        render(progressRef.current);
+      }, 150);
+    };
+
     let lastGroundZoom = -1;
     const onIdle = () => {
       const z = map.getZoom();
@@ -1155,6 +1377,8 @@ export default function Flight3D({
       );
       render(progressRef.current);
       map.on("idle", onIdle);
+      map.on("move", scheduleLabels);
+      map.on("idle", scheduleLabels);
       readyRef.current = true;
       setReady(true);
       setMapObj(map);
@@ -1173,6 +1397,10 @@ export default function Flight3D({
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
       disposed = true;
       readyRef.current = false;
+      if (labelTimerRef.current != null) {
+        window.clearTimeout(labelTimerRef.current);
+        labelTimerRef.current = null;
+      }
       map.off("click", onMapClick);
       map.off("mousemove", onMapMove);
       try {
@@ -1308,6 +1536,7 @@ export default function Flight3D({
       {replay && primary && (
         <div
           aria-live="off"
+          data-label-obstacle="readout"
           className="ss-mono"
           style={{
             position: "absolute",
@@ -1376,6 +1605,7 @@ export default function Flight3D({
       {/* Replay controls */}
       {replay && primary && (
         <div
+          data-label-obstacle="scrubber"
           style={{
             position: "absolute",
             left: 10,
