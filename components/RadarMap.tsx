@@ -327,7 +327,8 @@ export default function RadarMap({
       // Load all four role glyphs in parallel + the rider dot. The map's
       // symbol layer expression picks the right one per feature via
       // properties.icon = "aircraft-${role}".
-      applyNeutralBasemap(map);
+      // Greys + the palette's road tint; follows later palette picks.
+      applyNeutralBasemap(map, palRef.current.id);
       const roleKeys = Object.values(ROLE_ICON_KEY);
       const markerPal = palRef.current;
       const [riderImg, roleImgs] = await Promise.all([

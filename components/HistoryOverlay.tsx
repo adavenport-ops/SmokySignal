@@ -144,6 +144,9 @@ type Props = {
   chipBottom: string;
   /** Palette the server rendered with (ss_palette cookie). */
   initialPalette?: PaletteId;
+  /** Fired when the history 3D view comes and goes (the static north
+   *  indicator steps aside; 3D has its own compass). */
+  on3dChange?: (on: boolean) => void;
 };
 
 function defaultState(today: string): HistoryState {
@@ -161,6 +164,7 @@ export function HistoryOverlay({
   bannerTop,
   chipBottom,
   initialPalette,
+  on3dChange,
 }: Props) {
   const [palette] = useRadarPalette(initialPalette);
   const [today, setToday] = useState<string | null>(null);
@@ -365,6 +369,11 @@ export function HistoryOverlay({
     return () => cancelAnimationFrame(raf);
   }, [map, isDesktop, selectedKey, body]);
   const show3d = applied !== null && view3d;
+  const on3dChangeRef = useRef(on3dChange);
+  on3dChangeRef.current = on3dChange;
+  useEffect(() => {
+    on3dChangeRef.current?.(show3d);
+  }, [show3d]);
   const selectedPathKey = selected ? historyPathKey(selected) : null;
   const paths3d = useMemo(
     () => (show3d && body ? historyPaths3D(body.polylines, selectedPathKey) : []),
