@@ -12,14 +12,21 @@ export const metadata = {
 };
 
 export default async function HelpPage() {
-  const [md, registry] = await Promise.all([
+  const [md, md3d, registry] = await Promise.all([
     fs.readFile(path.join(process.cwd(), "content", "help.md"), "utf8"),
+    fs.readFile(path.join(process.cwd(), "content", "help-3d.md"), "utf8"),
     getRegistry(),
   ]);
+  // The 3D flight view note lives in its own file and slots in at the end
+  // of "Sharing flights" (appended if that heading ever moves).
+  const anchor = "\n## Why we don't track you";
+  const merged = md.includes(anchor)
+    ? md.replace(anchor, `\n${md3d.trim()}\n${anchor}`)
+    : `${md.trimEnd()}\n\n${md3d}`;
   // Templating placeholders so the registry size + operator list don't
   // go stale on every fleet expansion. Replace before passing to the
   // markdown renderer.
-  const source = md.replace(/\{\{TAIL_COUNT\}\}/g, String(registry.length));
+  const source = merged.replace(/\{\{TAIL_COUNT\}\}/g, String(registry.length));
 
   return (
     <main
