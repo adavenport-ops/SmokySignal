@@ -86,8 +86,11 @@ export function getMockStateFromRequest(req: Request): MockState | null {
   return parseMockState(new URL(req.url).searchParams.get("mock"));
 }
 
-export function applyMockState(snap: Snapshot, state: MockState | null): Snapshot {
-  if (!state) return snap;
+export function applyMockState(input: Snapshot, state: MockState | null): Snapshot {
+  if (!state) return input;
+  // Snapshot-level mock states are synthetic, so they must render the same
+  // during a real upstream outage: drop the degraded flag for them.
+  const { degraded: _degraded, ...snap } = input;
   switch (state) {
     case "down":
       // All clear — every aircraft grounded, even if upstream had something
@@ -142,8 +145,8 @@ export function applyMockState(snap: Snapshot, state: MockState | null): Snapsho
       // These two states are data-layer (forecast/learning), not
       // snapshot-level. Fall through to the dedicated transformers
       // (applyMockLearning, applyMockForecastGrid). Snapshot itself
-      // unchanged.
-      return snap;
+      // unchanged, degraded flag included.
+      return input;
   }
 }
 

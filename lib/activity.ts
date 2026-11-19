@@ -12,6 +12,7 @@ import { activityDedupeKey } from "./storage-keys";
 import {
   diffActivity,
   type ActivityEntry,
+  type ActivityKind,
   type PrevState,
 } from "./activity-diff";
 import type { Snapshot } from "./types";
@@ -29,33 +30,82 @@ const FEED_TTL_SECONDS = 35 * 24 * 60 * 60;
 const PREV_TTL_SECONDS = 24 * 60 * 60;
 const READ_CACHE_TTL = 8;
 // Same (tail, kind) cannot be appended twice inside this window, no matter
-// how many instances race on the same snapshot pair.
+// how many instances race on the same snapshot pair. A genuine opposite
+// transition clears the slot early (see OPPOSITE_KIND), so a real
+// down→up inside the window still records both rows.
 const DEDUPE_TTL_SECONDS = 600;
+
+/**
+ * Claiming one side of an airborne/grounded transition releases the other
+ * side's slot. Without this, takeoff → landing → takeoff inside 10 min
+ * dropped the second takeoff and the feed ended on "down" while the tail
+ * was airborne.
+ */
+const OPPOSITE_KIND: Partial<Record<ActivityKind, ActivityKind>> = {
+  takeoff: "landing",
+  first_seen: "landing",
+  landing: "takeoff",
+};
+
+/** The two KV calls the dedupe needs. @upstash/redis satisfies it. */
+export type DedupeStore = {
+  set(
+    key: string,
+    value: string,
+    opts: { nx: true; ex: number },
+  ): Promise<unknown>;
+  del(...keys: string[]): Promise<unknown>;
+};
 
 /**
  * Claim the write-time dedupe slot for each event. Returns only the events
  * this caller won. Fails open on a KV error: a rare duplicate row beats
  * silently dropping a real takeoff.
  */
-async function claimEvents(
-  redis: NonNullable<Awaited<ReturnType<typeof getRedis>>>,
+export async function claimEvents(
+  store: DedupeStore,
   events: ActivityEntry[],
 ): Promise<ActivityEntry[]> {
   const claimed = await Promise.all(
     events.map(async (e) => {
       try {
-        const ok = await redis.set(activityDedupeKey(e.tail, e.kind), "1", {
+        const ok = await store.set(activityDedupeKey(e.tail, e.kind), "1", {
           nx: true,
           ex: DEDUPE_TTL_SECONDS,
         });
-        return ok === null ? null : e;
+        if (ok === null) return null;
       } catch (err) {
         console.warn("[activity] dedupe claim failed, writing anyway:", err);
         return e;
       }
+      const opposite = OPPOSITE_KIND[e.kind];
+      if (opposite) {
+        try {
+          await store.del(activityDedupeKey(e.tail, opposite));
+        } catch (err) {
+          console.warn("[activity] dedupe release (opposite) failed:", err);
+        }
+      }
+      return e;
     }),
   );
   return claimed.filter((e): e is ActivityEntry => e !== null);
+}
+
+/**
+ * Give back slots claimed for events that never reached the feed, so the
+ * next tick (which re-diffs against the unchanged prev) can write them.
+ */
+export async function releaseClaims(
+  store: DedupeStore,
+  events: ActivityEntry[],
+): Promise<void> {
+  if (events.length === 0) return;
+  try {
+    await store.del(...events.map((e) => activityDedupeKey(e.tail, e.kind)));
+  } catch (err) {
+    console.warn("[activity] dedupe release failed:", err);
+  }
 }
 
 /**
@@ -87,6 +137,7 @@ export async function recordActivity(curr: Snapshot): Promise<void> {
 
   const events =
     diff.events.length > 0 ? await claimEvents(redis, diff.events) : [];
+  let feedWritten = true;
   if (events.length > 0) {
     try {
       const payload = events.map((e) => JSON.stringify(e));
@@ -95,8 +146,26 @@ export async function recordActivity(curr: Snapshot): Promise<void> {
       await redis.expire(FEED_KEY, FEED_TTL_SECONDS);
     } catch (e) {
       console.warn("[activity] rpush failed:", e);
+      feedWritten = false;
+      await releaseClaims(redis, events);
     }
+  }
 
+  // Persist prev BEFORE the push fan-out, so a slow dispatch does not keep
+  // other instances diffing against the old prev. If the feed write
+  // failed, leave prev unchanged: the next tick re-diffs the same
+  // transition and, with the claims released above, writes it then.
+  if (feedWritten) {
+    try {
+      await redis.set(PREV_KEY, JSON.stringify(diff.next), {
+        ex: PREV_TTL_SECONDS,
+      });
+    } catch (e) {
+      console.warn("[activity] write prev failed:", e);
+    }
+  }
+
+  if (events.length > 0) {
     // Fan out push notifications for each takeoff. Best-effort; the
     // dispatcher's own try/catch + dedupe key keep this from breaking
     // the snapshot pipeline. Fire all in parallel since the dispatcher
@@ -130,14 +199,6 @@ export async function recordActivity(curr: Snapshot): Promise<void> {
         console.warn("[activity] push dispatch import/init failed:", e);
       }
     }
-  }
-
-  try {
-    await redis.set(PREV_KEY, JSON.stringify(diff.next), {
-      ex: PREV_TTL_SECONDS,
-    });
-  } catch (e) {
-    console.warn("[activity] write prev failed:", e);
   }
 }
 

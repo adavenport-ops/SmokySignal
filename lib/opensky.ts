@@ -22,6 +22,16 @@ const UA = "SmokySignal/0.1 (+https://www.smokysignal.app)";
 // stalls the whole snapshot regen until the platform kills the function.
 const OPENSKY_TIMEOUT_MS = 6000;
 
+/**
+ * Per-request timeout, combined with the caller's overall budget when one
+ * is passed (lib/adsb.ts shares a single budget across every upstream
+ * request in a snapshot regen, including the 401 retry).
+ */
+function openskySignal(budget?: AbortSignal): AbortSignal {
+  const timeout = AbortSignal.timeout(OPENSKY_TIMEOUT_MS);
+  return budget ? AbortSignal.any([budget, timeout]) : timeout;
+}
+
 type CachedToken = { access_token: string; expires_at: number };
 
 /**
@@ -29,7 +39,9 @@ type CachedToken = { access_token: string; expires_at: number };
  * the cached one is missing or within 60s of expiry. Returns null when the env
  * has no credentials (signals: fall back to anonymous requests).
  */
-export async function getOpenskyToken(): Promise<string | null> {
+export async function getOpenskyToken(
+  budget?: AbortSignal,
+): Promise<string | null> {
   const id = process.env.OPENSKY_CLIENT_ID;
   const secret = process.env.OPENSKY_CLIENT_SECRET;
   if (!id || !secret) return null;
@@ -52,7 +64,7 @@ export async function getOpenskyToken(): Promise<string | null> {
     },
     body,
     cache: "no-store",
-    signal: AbortSignal.timeout(OPENSKY_TIMEOUT_MS),
+    signal: openskySignal(budget),
   });
   if (!r.ok) {
     const detail = await r.text().catch(() => "");
@@ -117,18 +129,21 @@ function normalizeStates(states: unknown[][]): NormalizedAc[] {
  * shape adsb.fi gets normalized to. Throws on rate-limit or upstream error so
  * the caller can fall through (or surface stale data).
  */
-export async function fetchOpenSky(hexes: string[]): Promise<NormalizedAc[]> {
+export async function fetchOpenSky(
+  hexes: string[],
+  budget?: AbortSignal,
+): Promise<NormalizedAc[]> {
   if (hexes.length === 0) return [];
   const url = `${STATES_URL}?icao24=${hexes.join(",")}`;
 
   const doFetch = async (): Promise<Response> => {
-    const token = await getOpenskyToken();
+    const token = await getOpenskyToken(budget);
     const headers: Record<string, string> = { "User-Agent": UA };
     if (token) headers.Authorization = `Bearer ${token}`;
     return fetch(url, {
       headers,
       cache: "no-store",
-      signal: AbortSignal.timeout(OPENSKY_TIMEOUT_MS),
+      signal: openskySignal(budget),
     });
   };
 

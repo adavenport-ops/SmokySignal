@@ -2,6 +2,7 @@ import { buildSnapshot } from "./adsb";
 import { cacheGet, cacheSet, getRedis } from "./cache";
 import { logTracks } from "./tracks";
 import { recordActivity } from "./activity";
+import { degradedView } from "./feed-select";
 import type { Snapshot, SnapshotSource } from "./types";
 
 const KEY = "ss:snapshot:v1";
@@ -77,29 +78,38 @@ export async function getSnapshot(): Promise<Snapshot> {
   inflight = (async () => {
     try {
       const snap = await buildSnapshot();
+
+      if (snap.degraded) {
+        // No observation this tick. Serve the last good snapshot (health
+        // mirror) with its original fetched_at and degraded:true, so every
+        // "updated" label keeps aging instead of reading fresh; the
+        // all-grounded placeholder is used only when no good snapshot is
+        // on hand. Skip the activity diff, the track log, the freshness
+        // pointer, the airborne canary and the health mirror. Cache only
+        // briefly so the next caller retries the upstream within seconds.
+        let lastGood: Snapshot | null = null;
+        try {
+          lastGood = await cacheGet<Snapshot>(HEALTH_KEY);
+        } catch (e) {
+          console.warn("[snapshot] health-mirror read failed:", e);
+        }
+        const view = degradedView(snap, lastGood);
+        try {
+          await cacheSet(KEY, view, DEGRADED_TTL_SECONDS);
+        } catch (e) {
+          console.warn("[snapshot] hot-path cache write failed:", e);
+        }
+        return view;
+      }
+
       // Write the hot-path cache FIRST. Other instances that miss the cache
       // rebuild and diff on their own, so the sooner this lands the smaller
       // the window in which two instances record activity for the same
       // tick. (lib/activity.ts also dedupes at write time.)
-      //
-      // A degraded snapshot (both feeds down) is cached only briefly so
-      // riders get a fresh retry within seconds instead of a placeholder
-      // for the full TTL.
       try {
-        await cacheSet(
-          KEY,
-          snap,
-          snap.degraded ? DEGRADED_TTL_SECONDS : TTL_SECONDS,
-        );
+        await cacheSet(KEY, snap, TTL_SECONDS);
       } catch (e) {
         console.warn("[snapshot] hot-path cache write failed:", e);
-      }
-
-      if (snap.degraded) {
-        // No observation this tick: skip the activity diff, the track log,
-        // the freshness pointer, the airborne canary and the health mirror,
-        // so none of them report a dead feed as current.
-        return snap;
       }
 
       // Append airborne positions + record state-change activity events.

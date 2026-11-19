@@ -34,6 +34,12 @@ test("fmtAgo: null / undefined / NaN are 'a while'", () => {
   assert.equal(fmtAgo(Number.NaN), "a while");
 });
 
+test("fmtAgo: fractional minutes are floored", () => {
+  assert.equal(fmtAgo(5.7), "5m ago");
+  assert.equal(fmtAgo(59.9), "59m ago");
+  assert.equal(fmtAgo(1.2), "1m ago");
+});
+
 test("fmtAgo: minute / hour / day buckets", () => {
   assert.equal(fmtAgo(1), "1m ago");
   assert.equal(fmtAgo(59), "59m ago");

@@ -159,10 +159,12 @@ export function pacificNow(): { dow: number; hour: number } {
  */
 export function fmtAgo(min: number | null | undefined): string {
   if (min == null || !Number.isFinite(min)) return "a while";
-  if (min < 1) return "just now";
-  if (min < 60) return `${min}m ago`;
-  if (min < 1440) return `${Math.floor(min / 60)}h ago`;
-  return `${Math.floor(min / 1440)}d ago`;
+  // Callers can pass fractional minutes; never render "5.7m ago".
+  const m = Math.floor(min);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  if (m < 1440) return `${Math.floor(m / 60)}h ago`;
+  return `${Math.floor(m / 1440)}d ago`;
 }
 
 /** Same as fmtAgo, but takes an absolute timestamp instead of pre-computed minutes. */
