@@ -707,4 +707,62 @@ test.describe("p14 live-prod audit", () => {
       evidence,
     });
   });
+
+  test("21. /api/aircraft returns a valid snapshot; healthy ticks are CDN-cacheable, degraded ticks are no-store (#74)", async ({
+    request,
+  }) => {
+    const r = await request.get("/api/aircraft");
+    // Vercel strips s-maxage / stale-while-revalidate before the response
+    // reaches the client, so only the presence of no-store is asserted.
+    const cacheControl = r.headers()["cache-control"] ?? "";
+    const noStore = /no-store/i.test(cacheControl);
+    let pass = false;
+    let category: Finding["category"] = "confirmed_bug";
+    let evidence = `HTTP ${r.status()}, cache-control="${cacheControl}"`;
+    if (r.ok()) {
+      const data = (await r.json()) as {
+        fetched_at?: unknown;
+        source?: unknown;
+        aircraft?: unknown;
+        live_seen_count?: unknown;
+        degraded?: unknown;
+      };
+      const valid =
+        typeof data.fetched_at === "number" &&
+        typeof data.source === "string" &&
+        Array.isArray(data.aircraft) &&
+        data.aircraft.length > 0 &&
+        typeof data.live_seen_count === "number";
+      const degraded = data.degraded === true;
+      const ageS =
+        typeof data.fetched_at === "number"
+          ? Math.round((Date.now() - data.fetched_at) / 1000)
+          : null;
+      evidence += `, source=${String(data.source)}, degraded=${degraded}, age=${ageS}s, x-vercel-cache=${r.headers()["x-vercel-cache"] ?? "n/a"}`;
+      if (!valid) {
+        pass = false;
+        category = "confirmed_bug";
+        evidence += " — snapshot shape invalid";
+      } else if (degraded) {
+        // Upstream outage during the audit. The contract is no-store.
+        pass = noStore;
+        category = noStore ? "indeterminate" : "confirmed_bug";
+        evidence += noStore
+          ? " — feeds down at audit time; degraded tick correctly no-store"
+          : " — degraded tick is CDN-cacheable";
+      } else {
+        pass = !noStore;
+        category = pass ? "working_as_designed" : "confirmed_bug";
+        if (!pass) evidence += " — healthy tick unexpectedly no-store";
+      }
+    }
+    record({
+      claim:
+        "/api/aircraft responds with a valid snapshot; healthy → Cache-Control without no-store, degraded → no-store",
+      category,
+      pass,
+      evidence,
+    });
+    expect(r.ok()).toBe(true);
+  });
 });

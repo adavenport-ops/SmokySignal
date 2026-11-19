@@ -42,6 +42,9 @@ jobs:
       - name: Typecheck (root project)
         run: npx tsc --noEmit
 
+      - name: Unit tests (lib/**/*.test.ts via node:test)
+        run: npm test
+
       - name: Build (Vercel-equivalent env)
         run: npm run build
         env:

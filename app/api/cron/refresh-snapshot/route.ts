@@ -34,8 +34,12 @@ export async function GET(req: Request) {
   const snap = await getSnapshot();
   const airborne = snap.aircraft.filter((a) => a.airborne).length;
 
+  // Degraded = both upstream feeds failed this tick; fetched_at is then the
+  // last good read (or the placeholder's), not this run.
+  const degraded = snap.degraded === true;
   return NextResponse.json({
-    ok: true,
+    ok: !degraded,
+    degraded,
     fetched_at: snap.fetched_at,
     source: snap.source,
     airborne,

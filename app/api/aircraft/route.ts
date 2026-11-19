@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSnapshot } from "@/lib/snapshot";
+import { aircraftCacheControl } from "@/lib/feed-select";
 import { applyMockState, getMockStateFromRequest } from "@/lib/mock-state";
 
 export const runtime = "nodejs";
@@ -13,8 +14,10 @@ export async function GET(req: Request) {
   const out = applyMockState(snap, getMockStateFromRequest(req));
   return NextResponse.json(out, {
     headers: {
-      // Browser won't cache; CDN can hold the same 10s the server does.
-      "Cache-Control": "public, max-age=0, s-maxage=10, stale-while-revalidate=30",
+      // Healthy: browser won't cache, CDN holds the same 10s the server
+      // does. Degraded (both feeds down): no-store, so the CDN cannot keep
+      // serving a dead-feed tick after the upstream recovers.
+      "Cache-Control": aircraftCacheControl(out),
     },
   });
 }

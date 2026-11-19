@@ -3,22 +3,25 @@
 // Surfaced on /activity, on the Glanceable home as a one-line strip,
 // and via /api/activity.
 //
-// Event kinds:
-//   takeoff           — was grounded (or absent), now airborne
-//   landing           — was airborne, now grounded
-//   first_seen        — no prev entry for this tail and now airborne
-//                       (effectively "newly added to the registry and
-//                        already in the air on first observation")
-//   squawk_emergency  — current squawk is 7500/7600/7700 AND prev
-//                       squawk differed (so we only fire on transitions,
-//                       not continuously while the alert is active)
-//
-// `altitude_change` is preserved as a tolerated kind on read for any
-// pre-existing entries written by the previous activity-detection
-// implementation; we no longer emit it.
+// The pure diff (event kinds, landing debounce, degraded-snapshot guard)
+// lives in lib/activity-diff.ts so it can be tested without Redis. This
+// module owns the KV side: read prev, write-time dedupe, append, persist.
 
 import { getRedis, cacheGet, cacheSet } from "./cache";
-import type { Aircraft, FleetRole, Snapshot } from "./types";
+import { activityDedupeKey } from "./storage-keys";
+import {
+  diffActivity,
+  type ActivityEntry,
+  type ActivityKind,
+  type PrevState,
+} from "./activity-diff";
+import type { Snapshot } from "./types";
+
+export {
+  describeEvent,
+  type ActivityEntry,
+  type ActivityKind,
+} from "./activity-diff";
 
 const FEED_KEY = "activity:feed";
 const PREV_KEY = "aircraft:prev";
@@ -26,216 +29,115 @@ const FEED_LIMIT = 500;
 const FEED_TTL_SECONDS = 35 * 24 * 60 * 60;
 const PREV_TTL_SECONDS = 24 * 60 * 60;
 const READ_CACHE_TTL = 8;
+// Same (tail, kind) cannot be appended twice inside this window, no matter
+// how many instances race on the same snapshot pair. A genuine opposite
+// transition clears the slot early (see OPPOSITE_KIND), so a real
+// down→up inside the window still records both rows.
+const DEDUPE_TTL_SECONDS = 600;
 
-const EMERGENCY_SQUAWKS = new Set(["7500", "7600", "7700"]);
+/**
+ * Claiming one side of an airborne/grounded transition releases the other
+ * side's slot. Without this, takeoff → landing → takeoff inside 10 min
+ * dropped the second takeoff and the feed ended on "down" while the tail
+ * was airborne.
+ */
+const OPPOSITE_KIND: Partial<Record<ActivityKind, ActivityKind>> = {
+  takeoff: "landing",
+  first_seen: "landing",
+  landing: "takeoff",
+};
 
-export type ActivityKind =
-  | "takeoff"
-  | "landing"
-  | "first_seen"
-  | "squawk_emergency"
-  | "altitude_change"; // tolerated for read-back; never emitted by current code
-
-export type ActivityEntry = {
-  /** ms since epoch (Date.now()) */
-  ts: number;
-  tail: string;
-  icao24?: string;
-  /** FleetRole at the time the event was recorded — used to color the
-   *  event icon in the activity feed. Older entries may not have this. */
-  role?: FleetRole;
-  kind: ActivityKind;
-  squawk?: string | null;
-  lat?: number | null;
-  lon?: number | null;
-  alt_ft?: number | null;
-  description: string;
+/** The two KV calls the dedupe needs. @upstash/redis satisfies it. */
+export type DedupeStore = {
+  set(
+    key: string,
+    value: string,
+    opts: { nx: true; ex: number },
+  ): Promise<unknown>;
+  del(...keys: string[]): Promise<unknown>;
 };
 
 /**
- * Generates the human-readable description for an event. Branches on
- * fleet role so SAR / transport events read calmer than smokey / patrol
- * events ("on a run" vs "off the deck"). Older callers without the role
- * arg get the conservative default behavior.
+ * Claim the write-time dedupe slot for each event. Returns only the events
+ * this caller won. Fails open on a KV error: a rare duplicate row beats
+ * silently dropping a real takeoff.
  */
-export function describeEvent(
-  tail: string,
-  nickname: string | null | undefined,
-  kind: ActivityKind,
-  squawk?: string | null,
-  role: FleetRole = "unknown",
-): string {
-  const name = nickname ?? tail;
-
-  if (kind === "takeoff") {
-    if (role === "smokey") {
-      if (nickname === "Smokey 4") return "Smokey off the deck";
-      return `${name} off the deck`;
-    }
-    if (role === "patrol") {
-      return `${name} up`;
-    }
-    if (role === "sar") {
-      return `${name} on a run`;
-    }
-    if (role === "transport") {
-      return `${name} up`;
-    }
-    return `${name} up`;
-  }
-
-  if (kind === "landing") {
-    if (role === "sar") return `${name} back on the ground`;
-    if (role === "smokey" && nickname === "Smokey 4") return "Smokey down";
-    return `${name} down`;
-  }
-
-  if (kind === "first_seen") {
-    return `${name} on watch`;
-  }
-
-  if (kind === "squawk_emergency") {
-    const meaning =
-      squawk === "7700"
-        ? "emergency"
-        : squawk === "7600"
-          ? "radio failure"
-          : squawk === "7500"
-            ? "hijack"
-            : "alert";
-    return `${name} squawking ${meaning}`;
-  }
-
-  // altitude_change (legacy) or unknown
-  return `${tail} ${kind}`;
+export async function claimEvents(
+  store: DedupeStore,
+  events: ActivityEntry[],
+): Promise<ActivityEntry[]> {
+  const claimed = await Promise.all(
+    events.map(async (e) => {
+      try {
+        const ok = await store.set(activityDedupeKey(e.tail, e.kind), "1", {
+          nx: true,
+          ex: DEDUPE_TTL_SECONDS,
+        });
+        if (ok === null) return null;
+      } catch (err) {
+        console.warn("[activity] dedupe claim failed, writing anyway:", err);
+        return e;
+      }
+      const opposite = OPPOSITE_KIND[e.kind];
+      if (opposite) {
+        try {
+          await store.del(activityDedupeKey(e.tail, opposite));
+        } catch (err) {
+          console.warn("[activity] dedupe release (opposite) failed:", err);
+        }
+      }
+      return e;
+    }),
+  );
+  return claimed.filter((e): e is ActivityEntry => e !== null);
 }
 
-function readPrev(snap: Snapshot | null): Map<string, Aircraft> {
-  const m = new Map<string, Aircraft>();
-  if (!snap) return m;
-  for (const a of snap.aircraft) m.set(a.tail, a);
-  return m;
-}
-
-function diffEvents(prev: Snapshot | null, curr: Snapshot): ActivityEntry[] {
-  const prevByTail = readPrev(prev);
-  const ts = Date.now();
-  const out: ActivityEntry[] = [];
-
-  for (const a of curr.aircraft) {
-    const p = prevByTail.get(a.tail);
-    const currentPos = {
-      lat: a.lat ?? null,
-      lon: a.lon ?? null,
-      alt_ft: a.altitude_ft ?? null,
-    };
-    // For landings the current snapshot has the plane at on_ground=true
-    // (or absent), so its lat/lon are stale or null. The previous
-    // snapshot is when we last saw it airborne — that's the position
-    // worth recording.
-    const lastAirbornePos = {
-      lat: p?.lat ?? currentPos.lat,
-      lon: p?.lon ?? currentPos.lon,
-      alt_ft: p?.altitude_ft ?? currentPos.alt_ft,
-    };
-
-    const role: FleetRole = a.role ?? "unknown";
-
-    // first_seen: tail wasn't in prev snapshot at all and is currently
-    // airborne. Fires once per registry add for any tail that's already
-    // up when it joins.
-    if (!p && a.airborne) {
-      out.push({
-        ts,
-        tail: a.tail,
-        icao24: a.icao24,
-        role,
-        ...currentPos,
-        kind: "first_seen",
-        squawk: a.squawk ?? null,
-        description: describeEvent(a.tail, a.nickname, "first_seen", null, role),
-      });
-      // intentional: don't also emit takeoff for the same instant
-      continue;
-    }
-
-    // takeoff — current position is the moment of liftoff
-    if (p && !p.airborne && a.airborne) {
-      out.push({
-        ts,
-        tail: a.tail,
-        icao24: a.icao24,
-        role,
-        ...currentPos,
-        kind: "takeoff",
-        squawk: a.squawk ?? null,
-        description: describeEvent(a.tail, a.nickname, "takeoff", null, role),
-      });
-    }
-
-    // landing — use the LAST airborne position (prev snapshot), since
-    // the current one is on the ground with stale coords or missing.
-    if (p && p.airborne && !a.airborne) {
-      out.push({
-        ts,
-        tail: a.tail,
-        icao24: a.icao24,
-        role,
-        ...lastAirbornePos,
-        kind: "landing",
-        squawk: a.squawk ?? null,
-        description: describeEvent(a.tail, a.nickname, "landing", null, role),
-      });
-    }
-
-    // squawk transition into emergency code
-    const cs = a.squawk ?? null;
-    const ps = p?.squawk ?? null;
-    if (cs && EMERGENCY_SQUAWKS.has(cs) && cs !== ps) {
-      out.push({
-        ts,
-        tail: a.tail,
-        icao24: a.icao24,
-        role,
-        ...currentPos,
-        kind: "squawk_emergency",
-        squawk: cs,
-        description: describeEvent(
-          a.tail,
-          a.nickname,
-          "squawk_emergency",
-          cs,
-          role,
-        ),
-      });
-    }
+/**
+ * Give back slots claimed for events that never reached the feed, so the
+ * next tick (which re-diffs against the unchanged prev) can write them.
+ */
+export async function releaseClaims(
+  store: DedupeStore,
+  events: ActivityEntry[],
+): Promise<void> {
+  if (events.length === 0) return;
+  try {
+    await store.del(...events.map((e) => activityDedupeKey(e.tail, e.kind)));
+  } catch (err) {
+    console.warn("[activity] dedupe release failed:", err);
   }
-
-  return out;
 }
 
 /**
  * Diff current snapshot vs previous, append events to the feed, persist
  * current as the new "previous" for next call. Best-effort; never throws.
+ * Degraded snapshots (upstream outage) are ignored entirely: no events,
+ * and the stored prev is left as the last real observation.
  */
 export async function recordActivity(curr: Snapshot): Promise<void> {
+  if (curr.degraded) return;
   const redis = await getRedis();
   if (!redis) return;
 
-  let prev: Snapshot | null = null;
+  let prev: PrevState | null = null;
   try {
     const raw = await redis.get(PREV_KEY);
     if (raw) {
       prev =
         typeof raw === "string"
-          ? (JSON.parse(raw) as Snapshot)
-          : (raw as Snapshot);
+          ? (JSON.parse(raw) as PrevState)
+          : (raw as PrevState);
     }
   } catch (e) {
     console.warn("[activity] read prev failed:", e);
   }
 
-  const events = diffEvents(prev, curr);
+  const diff = diffActivity(prev, curr, Date.now());
+  if (!diff.next) return;
+
+  const events =
+    diff.events.length > 0 ? await claimEvents(redis, diff.events) : [];
+  let feedWritten = true;
   if (events.length > 0) {
     try {
       const payload = events.map((e) => JSON.stringify(e));
@@ -244,8 +146,26 @@ export async function recordActivity(curr: Snapshot): Promise<void> {
       await redis.expire(FEED_KEY, FEED_TTL_SECONDS);
     } catch (e) {
       console.warn("[activity] rpush failed:", e);
+      feedWritten = false;
+      await releaseClaims(redis, events);
     }
+  }
 
+  // Persist prev BEFORE the push fan-out, so a slow dispatch does not keep
+  // other instances diffing against the old prev. If the feed write
+  // failed, leave prev unchanged: the next tick re-diffs the same
+  // transition and, with the claims released above, writes it then.
+  if (feedWritten) {
+    try {
+      await redis.set(PREV_KEY, JSON.stringify(diff.next), {
+        ex: PREV_TTL_SECONDS,
+      });
+    } catch (e) {
+      console.warn("[activity] write prev failed:", e);
+    }
+  }
+
+  if (events.length > 0) {
     // Fan out push notifications for each takeoff. Best-effort; the
     // dispatcher's own try/catch + dedupe key keep this from breaking
     // the snapshot pipeline. Fire all in parallel since the dispatcher
@@ -279,12 +199,6 @@ export async function recordActivity(curr: Snapshot): Promise<void> {
         console.warn("[activity] push dispatch import/init failed:", e);
       }
     }
-  }
-
-  try {
-    await redis.set(PREV_KEY, JSON.stringify(curr), { ex: PREV_TTL_SECONDS });
-  } catch (e) {
-    console.warn("[activity] write prev failed:", e);
   }
 }
 

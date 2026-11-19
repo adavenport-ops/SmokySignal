@@ -6,9 +6,9 @@ import type { Aircraft, FleetEntry, Snapshot } from "@/lib/types";
 import type { ActivityEntry } from "@/lib/activity";
 import type { LearningState } from "@/lib/learning";
 import { SS_TOKENS } from "@/lib/tokens";
-import { fmtAgoTs, fmtAloft } from "@/lib/time";
+import { fmtAgoTs, fmtAloft, formatTsBare } from "@/lib/time";
 import { useAircraft } from "@/lib/hooks/useAircraft";
-import { computeStatus, type StatusState } from "@/lib/status";
+import { computeStatus, feedDownStatus, type StatusState } from "@/lib/status";
 import { StatusPill } from "./StatusPill";
 import { Card } from "./Card";
 import { PlaneIcon } from "./PlaneIcon";
@@ -93,7 +93,19 @@ export function Glanceable({
     () => new Map<string, FleetEntry>(snap.aircraft.map((a) => [a.tail, a])),
     [snap.aircraft],
   );
-  const status = useMemo(() => computeStatus(snap, fleetMap), [snap, fleetMap]);
+  // Degraded = both upstream feeds failed. The snapshot is then the last
+  // good read (original fetched_at) or, when none is on hand, an
+  // all-grounded placeholder (source "none"). Either way the sky state is
+  // unknown, so the hero must not claim "Smokey's down."
+  const feedDown = snap.degraded === true;
+  const lastGoodMs = feedDown && snap.source !== "none" ? snap.fetched_at : null;
+  const status = useMemo(
+    () =>
+      feedDown
+        ? feedDownStatus(lastGoodMs, hour12)
+        : computeStatus(snap, fleetMap),
+    [feedDown, lastGoodMs, hour12, snap, fleetMap],
+  );
   // Drop the headline plane from the also-up list. Without this filter
   // the lead appears twice — once as the hero, once at the top of the
   // also-up card — and the count in the also-up header disagrees with
@@ -165,7 +177,11 @@ export function Glanceable({
         <Tooltip
           side="bottom"
           align="end"
-          content={`Time since last successful data pull. ${snap.source === "adsbfi" ? "ADSBFI = adsb.fi (primary feed)." : snap.source === "opensky" ? "OPENSKY = OpenSky Network (fallback)." : "MOCK = synthetic data."}`}
+          content={
+            feedDown
+              ? "Both feeds are quiet. Showing the last good read; positions may be out of date."
+              : `Time since last successful data pull. ${snap.source === "adsbfi" ? "ADSBFI = adsb.fi (primary feed)." : snap.source === "opensky" ? "OPENSKY = OpenSky Network (fallback)." : "MOCK = synthetic data."}`
+          }
         >
           <span
             className="ss-mono"
@@ -184,13 +200,15 @@ export function Glanceable({
                 width: 6,
                 height: 6,
                 borderRadius: "50%",
-                background: SS_TOKENS.clear,
+                background: feedDown ? SS_TOKENS.fg2 : SS_TOKENS.clear,
                 marginRight: 6,
                 verticalAlign: "middle",
-                animation: "ss-blink 1.6s infinite",
+                animation: feedDown ? undefined : "ss-blink 1.6s infinite",
               }}
             />
-            UPDATED {updatedAgo}s · {snap.source.toUpperCase()}
+            {feedDown
+              ? `FEED QUIET · LAST ${lastGoodMs != null ? formatTsBare(lastGoodMs, "time", { hour12 }) : "—"}`
+              : `UPDATED ${updatedAgo}s · ${snap.source.toUpperCase()}`}
           </span>
         </Tooltip>
       </header>
@@ -331,8 +349,18 @@ function ActivityStrip({ latest }: { latest: ActivityEntry }) {
 
 function Hero({ status }: { status: StatusState }) {
   const isAlert = status.kind === "alert";
-  const accentColor = isAlert ? SS_TOKENS.alert : SS_TOKENS.clear;
-  const halo = isAlert ? SS_TOKENS.alertDim : SS_TOKENS.clearDim;
+  // Feed-down renders grey: not alert, not all clear.
+  const neutral = status.kind === "feed_down";
+  const accentColor = neutral
+    ? SS_TOKENS.fg1
+    : isAlert
+      ? SS_TOKENS.alert
+      : SS_TOKENS.clear;
+  const halo = neutral
+    ? SS_TOKENS.hairline2
+    : isAlert
+      ? SS_TOKENS.alertDim
+      : SS_TOKENS.clearDim;
   return (
     <section
       className="ss-hero-bg"

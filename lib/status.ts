@@ -15,9 +15,39 @@
 // surface a small footnote ("SnoHawk 10 on a rescue run.") so riders
 // have context without alarm.
 
+import { formatTs } from "./time";
 import type { Aircraft, Snapshot, FleetEntry, FleetRole } from "./types";
 
-export type StatusKind = "alert" | "clear";
+/**
+ * "feed_down": both upstream feeds failed, so the sky state is unknown.
+ * Rendered neutral (grey), never as alert or all clear. Produced only by
+ * feedDownStatus(); computeStatus() still returns alert | clear.
+ */
+export type StatusKind = "alert" | "clear" | "feed_down";
+
+/**
+ * Hero copy for a degraded snapshot. Deliberately neither "up" nor
+ * "down": with both feeds quiet we do not know where Smokey is.
+ * `lastGoodMs` is the fetched_at of the last good read, or null when the
+ * snapshot is the all-grounded placeholder.
+ */
+export function feedDownStatus(
+  lastGoodMs: number | null,
+  hour12 = false,
+): StatusState {
+  return {
+    kind: "feed_down",
+    pill: "FEED QUIET",
+    headline: "Feed's quiet.",
+    body:
+      lastGoodMs != null
+        ? `Last good read ${formatTs(lastGoodMs, "time", { hour12 })}. Positions below may be out of date. Checking again every few seconds.`
+        : "No good read from either feed yet. Checking again every few seconds.",
+    lead: null,
+    alertCount: 0,
+    totalAirborne: 0,
+  };
+}
 
 export type StatusState = {
   kind: StatusKind;

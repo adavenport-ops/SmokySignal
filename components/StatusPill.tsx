@@ -1,10 +1,12 @@
 "use client";
 
 import { SS_TOKENS } from "@/lib/tokens";
+import type { StatusKind } from "@/lib/status";
 import { Tooltip } from "./Tooltip";
 
 type Props = {
-  kind?: "alert" | "clear";
+  /** "feed_down" renders neutral grey (both feeds quiet, sky state unknown). */
+  kind?: StatusKind;
   label: string;
   sub?: string;
   big?: boolean;
@@ -19,8 +21,13 @@ export function StatusPill({
   tooltip,
 }: Props) {
   const isAlert = kind === "alert";
-  const c = isAlert ? SS_TOKENS.alert : SS_TOKENS.clear;
-  const bg = isAlert ? SS_TOKENS.alertDim : SS_TOKENS.clearDim;
+  const neutral = kind === "feed_down";
+  const c = neutral ? SS_TOKENS.fg1 : isAlert ? SS_TOKENS.alert : SS_TOKENS.clear;
+  const bg = neutral
+    ? SS_TOKENS.hairline2
+    : isAlert
+      ? SS_TOKENS.alertDim
+      : SS_TOKENS.clearDim;
   const pill = (
     <span
       role="status"

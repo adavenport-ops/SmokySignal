@@ -2,6 +2,9 @@
   "name": "smokysignal",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.3"
+  },
   "scripts": {
     "predev": "node scripts/check-env.mjs",
     "dev": "next dev",
@@ -10,6 +13,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test": "node scripts/run-tests.mjs",
     "env:pull": "vercel env pull .env.local --environment=development --yes",
     "verify-prod": "./scripts/verify-prod.zsh",
     "backfill:first-sample": "tsx --env-file=.env.local scripts/backfill-first-sample.ts",

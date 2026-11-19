@@ -4,6 +4,7 @@
 import { fleetHex } from "./seed";
 import { getRegistry } from "./registry";
 import { fetchOpenSky } from "./opensky";
+import { selectFeed } from "./feed-select";
 import type {
   Aircraft,
   AircraftLive,
@@ -40,9 +41,24 @@ const FETCH_OPTS: RequestInit = {
 // classify as airborne:false from launch through 2026-04-30.
 type AdsbFiResp = { aircraft?: NormalizedAc[]; now?: number };
 
-async function fetchAdsbFi(): Promise<NormalizedAc[]> {
+const ADSBFI_TIMEOUT_MS = 4000;
+const UPSTREAM_BUDGET_MS = 10_000;
+
+// "adsb.fi returned zero rows" is read as a broken feed (the 2026-04-30
+// ac→aircraft rename looked exactly like this) only because the default
+// 250 nm circle over Washington always contains traffic. If SS_REGION_NM
+// is set to a small radius, an empty sky is plausible, so zero rows is
+// accepted as a real answer below this threshold.
+const ZERO_ROWS_MIN_RADIUS_NM = 100;
+const PRIMARY_ZERO_IS_FAILURE = REGION.nm >= ZERO_ROWS_MIN_RADIUS_NM;
+
+async function fetchAdsbFi(budget?: AbortSignal): Promise<NormalizedAc[]> {
   const url = `https://opendata.adsb.fi/api/v2/lat/${REGION.lat}/lon/${REGION.lon}/dist/${REGION.nm}`;
-  const r = await fetch(url, FETCH_OPTS);
+  const timeout = AbortSignal.timeout(ADSBFI_TIMEOUT_MS);
+  const r = await fetch(url, {
+    ...FETCH_OPTS,
+    signal: budget ? AbortSignal.any([budget, timeout]) : timeout,
+  });
   if (!r.ok) throw new Error(`adsb.fi ${r.status}`);
   const j = (await r.json()) as AdsbFiResp;
   return j.aircraft ?? [];
@@ -61,22 +77,21 @@ export async function buildSnapshot(): Promise<Snapshot> {
   }
   const fleetHexes = [...fleetByIcao.keys()];
 
-  let raw: NormalizedAc[] = [];
-  let source: Snapshot["source"] = "adsbfi";
-  try {
-    raw = await fetchAdsbFi();
-  } catch (e) {
-    console.warn("[adsb] primary failed, falling back to OpenSky:", e);
-    try {
-      raw = await fetchOpenSky(fleetHexes);
-      source = "opensky";
-    } catch (e2) {
-      console.error("[adsb] both feeds failed:", e2);
-      raw = [];
-      // Both feeds failed; mark as last-attempted so source stays in the type.
-      source = "opensky";
-    }
-  }
+  // One overall budget across every upstream request this tick (adsb.fi,
+  // OpenSky auth, OpenSky states, the 401 retry). Per-request timeouts
+  // still apply inside it; this caps the sum so a slow primary plus a slow
+  // fallback cannot stall the regen past ~10s.
+  const budget = AbortSignal.timeout(UPSTREAM_BUDGET_MS);
+
+  // Degraded = no trustworthy observation this tick. The aircraft list
+  // below still gets built (every tail airborne:false) so consumers keep a
+  // valid shape, but the flag tells the activity diff, track log, freshness
+  // pointer and snapshot cache to treat it as a placeholder.
+  const { raw, source, degraded } = await selectFeed({
+    primary: () => fetchAdsbFi(budget),
+    fallback: () => fetchOpenSky(fleetHexes, budget),
+    primaryZeroIsFailure: PRIMARY_ZERO_IS_FAILURE,
+  });
 
   const now = Date.now();
   const liveByIcao = new Map<string, NormalizedAc>();
@@ -141,6 +156,7 @@ export async function buildSnapshot(): Promise<Snapshot> {
     source,
     aircraft,
     live_seen_count: raw.length,
+    ...(degraded ? { degraded: true } : {}),
   };
 }
 
