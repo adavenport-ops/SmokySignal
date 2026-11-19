@@ -15,6 +15,11 @@ import { FlightPathLayer } from "./FlightPathLayer";
 import { UserZoneLayer } from "./UserZoneLayer";
 import { AircraftTrailLayer } from "./AircraftTrailLayer";
 import { TrailStatusBadge } from "./TrailStatusBadge";
+import {
+  HISTORY_BANNER_SPACE,
+  HistoryOverlay,
+  HistoryPill,
+} from "./HistoryOverlay";
 import { addUserZone } from "@/lib/user-zones";
 import {
   detectProximityHits,
@@ -132,6 +137,12 @@ export function RadarShell({
   const [fitNonce, setFitNonce] = useState(0);
   const [viewHydrated, setViewHydrated] = useState(false);
   const [dataExtent, setDataExtent] = useState<Bounds | null>(null);
+  // History mode (components/HistoryOverlay.tsx): past flights for a
+  // date range. Hides live trails + the 30-day layers and pushes the
+  // top-row controls down under the HISTORY banner.
+  const [historyOn, setHistoryOn] = useState(false);
+  const [historySheetOpen, setHistorySheetOpen] = useState(false);
+  const topShift = historyOn ? HISTORY_BANNER_SPACE : 0;
   // Hydrate the rings pref + region from localStorage on mount.
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -230,6 +241,17 @@ export function RadarShell({
     }),
     [bottomBoost],
   );
+  const historyInsets = useMemo(
+    () => ({
+      ...fitInsets,
+      top: fitInsets.top + HISTORY_BANNER_SPACE,
+      // Summary chip, which sits above the rings + history row and
+      // clears the spotted button.
+      bottom: fitInsets.bottom + 96,
+    }),
+    [fitInsets],
+  );
+  const rowBottom = TABBAR_HEIGHT + 16 + bottomBoost;
 
   return (
     <main
@@ -253,17 +275,29 @@ export function RadarShell({
           insets={fitInsets}
           onLeaveView={() => setViewCustom(true)}
           onMapReady={setMap}
+          cameraLocked={historyOn}
         />
       )}
       <HotZoneLayer
         map={map}
         bottomBoost={airborne.length > 0 ? 130 : 0}
         learning={learning}
+        suppressed={historyOn}
       />
-      <FlightPathLayer map={map} />
+      <FlightPathLayer map={map} suppressed={historyOn} />
       <UserZoneLayer map={map} />
-      <AircraftTrailLayer map={map} airborne={airborne} />
+      <AircraftTrailLayer map={map} airborne={airborne} hidden={historyOn} />
+      <HistoryOverlay
+        map={map}
+        sheetOpen={historySheetOpen}
+        onSheetOpenChange={setHistorySheetOpen}
+        onActiveChange={setHistoryOn}
+        insets={historyInsets}
+        bannerTop={PICKER_TOP}
+        chipBottom={`calc(${rowBottom + 80}px + var(--ss-install-prompt-h, 0px))`}
+      />
       <AddZoneButton
+        top={52 + topShift}
         rider={rider}
         onAdded={(label) => flashToast(setToast, `Zone "${label}" added`)}
       />
@@ -274,6 +308,13 @@ export function RadarShell({
           TABBAR_HEIGHT + 16 + (airborne.length > 0 ? 130 : 0)
         }px + var(--ss-install-prompt-h, 0px))`}
         disabled={!rider}
+        raised={!historyOn}
+        trailing={
+          <HistoryPill
+            active={historyOn}
+            onClick={() => setHistorySheetOpen(true)}
+          />
+        }
       />
       {/* PROMPT_19C diagnostic — sits two rows above the HOT ZONES /
           FLIGHT PATHS pill row (which is at TABBAR_HEIGHT + 16 +
@@ -282,18 +323,20 @@ export function RadarShell({
           the badge stays visible above the prompt on iOS Safari.
           Removed in the follow-up PR once trail rendering is
           confirmed in the wild. */}
-      <div
-        style={{
-          position: "absolute",
-          left: 12,
-          bottom: `calc(${
-            TABBAR_HEIGHT + 16 + (airborne.length > 0 ? 130 : 0) + 88
-          }px + var(--ss-install-prompt-h, 0px))`,
-          zIndex: 12,
-        }}
-      >
-        <TrailStatusBadge airborne={airborne} />
-      </div>
+      {!historyOn && (
+        <div
+          style={{
+            position: "absolute",
+            left: 12,
+            bottom: `calc(${
+              TABBAR_HEIGHT + 16 + (airborne.length > 0 ? 130 : 0) + 88
+            }px + var(--ss-install-prompt-h, 0px))`,
+            zIndex: 12,
+          }}
+        >
+          <TrailStatusBadge airborne={airborne} />
+        </div>
+      )}
       <HelpIcon />
 
       <header
@@ -352,7 +395,7 @@ export function RadarShell({
       <div
         style={{
           position: "absolute",
-          top: PICKER_TOP,
+          top: PICKER_TOP + topShift,
           right: 12,
           zIndex: 10,
         }}
@@ -364,12 +407,12 @@ export function RadarShell({
         />
       </div>
 
-      <CompassN />
+      <CompassN top={PICKER_TOP + 52 + topShift} />
 
       <div
         style={{
           position: "absolute",
-          top: 60,
+          top: 60 + topShift,
           left: 12,
           padding: "4px 8px",
           borderRadius: 6,
@@ -407,9 +450,11 @@ function flashToast(
 // intentionally not used here since the radar map below already swallows
 // long-press gestures for chevron interactions.
 function AddZoneButton({
+  top,
   rider,
   onAdded,
 }: {
+  top: number;
   rider: RiderPos | null;
   onAdded: (label: string) => void;
 }) {
@@ -437,7 +482,7 @@ function AddZoneButton({
         aria-label="Add geofence at your location"
         style={{
           position: "absolute",
-          top: 52,
+          top,
           left: 56,
           width: 44,
           height: 44,
@@ -498,7 +543,7 @@ function Toast({
   );
 }
 
-function CompassN() {
+function CompassN({ top }: { top: number }) {
   return (
     <Tooltip side="left" content="Map orientation: north is up.">
       <div
@@ -508,7 +553,7 @@ function CompassN() {
         style={{
           position: "absolute",
           // Sits under the region picker (PICKER_TOP + 44 + 8).
-          top: PICKER_TOP + 52,
+          top,
           right: 20,
           width: 28,
           height: 28,
@@ -669,17 +714,39 @@ function DistanceRingsToggle({
   onToggle,
   bottom,
   disabled,
+  raised = true,
+  trailing,
 }: {
   active: boolean;
   onToggle: () => void;
   bottom: number | string;
   disabled?: boolean;
+  /** Sit one row (44px) above `bottom`. False in history mode, where
+   *  the hot-zone pill row is hidden and this row drops into its slot. */
+  raised?: boolean;
+  /** Controls placed to the right of the toggle (the HISTORY pill). */
+  trailing?: React.ReactNode;
 }) {
   // Sit just above the hot-zones toggle row so it doesn't compete for the
   // same horizontal space. Also disabled when there's no rider position to
   // pin the rings to — the toggle stays visible (so the user knows the
   // feature exists) but greys out.
+  const lift = raised ? 44 : 0;
   return (
+    <div
+      style={{
+        position: "absolute",
+        left: 12,
+        bottom:
+          typeof bottom === "number"
+            ? bottom + lift
+            : `calc(${bottom} + ${lift}px)`,
+        zIndex: 12,
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+      }}
+    >
     <Tooltip
       side="top"
       align="start"
@@ -698,13 +765,6 @@ function DistanceRingsToggle({
         aria-disabled={disabled}
         className="ss-mono"
         style={{
-          position: "absolute",
-          left: 12,
-          bottom:
-            typeof bottom === "number"
-              ? bottom + 44
-              : `calc(${bottom} + 44px)`,
-          zIndex: 12,
           padding: "8px 12px",
           borderRadius: 999,
           background: "rgba(11,13,16,0.78)",
@@ -728,5 +788,7 @@ function DistanceRingsToggle({
         {active ? "● RINGS" : "○ RINGS"}
       </button>
     </Tooltip>
+    {trailing}
+    </div>
   );
 }

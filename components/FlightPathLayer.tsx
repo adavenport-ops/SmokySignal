@@ -64,14 +64,16 @@ function buildQueryString(f: Filter): string {
 
 type Props = {
   map: MaplibreMap | null;
+  /** History mode is on: hide the 30-day threads, keep the saved pref. */
+  suppressed?: boolean;
 };
 
-export function FlightPathLayer({ map }: Props) {
+export function FlightPathLayer({ map, suppressed = false }: Props) {
   const [enabled, setEnabled] = useState<boolean>(true);
   const [filter, setFilter] = useState<Filter>(DEFAULT_RADAR_FILTER);
   const [features, setFeatures] = useState<GeoJSON.Feature[] | null>(null);
   const enabledRef = useRef(enabled);
-  enabledRef.current = enabled;
+  enabledRef.current = enabled && !suppressed;
 
   // Mirror persisted state + cross-component change events same as
   // HotZoneLayer — both layers respond identically to filter and
@@ -244,12 +246,12 @@ export function FlightPathLayer({ map }: Props) {
       map.setLayoutProperty(
         LAYER_ID,
         "visibility",
-        enabled ? "visible" : "none",
+        enabled && !suppressed ? "visible" : "none",
       );
     } catch {
       /* layer not yet attached */
     }
-  }, [map, enabled]);
+  }, [map, enabled, suppressed]);
 
   return null;
 }

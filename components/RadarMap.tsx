@@ -129,6 +129,7 @@ export default function RadarMap({
   insets,
   onLeaveView,
   onMapReady,
+  cameraLocked = false,
 }: {
   aircraft: Aircraft[];
   rider: RiderPos | null;
@@ -147,6 +148,9 @@ export default function RadarMap({
    *  rider auto-zoom, auto-recenter, follow-a-plane). */
   onLeaveView?: () => void;
   onMapReady?: (map: MaplibreMap | null) => void;
+  /** History mode fits the camera to past flights; once set, the rider
+   *  auto-zoom and 5 s auto-recenter stand down (same as a region pick). */
+  cameraLocked?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MaplibreMap | null>(null);
@@ -185,6 +189,7 @@ export default function RadarMap({
   // rider auto-zoom and the 5 s auto-recenter, which would otherwise
   // drag the camera off the view they just asked for.
   const viewLockedRef = useRef(false);
+  if (cameraLocked) viewLockedRef.current = true;
 
   const leaveView = () => {
     if (!onViewRef.current) return;

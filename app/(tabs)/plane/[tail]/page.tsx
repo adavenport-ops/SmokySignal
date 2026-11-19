@@ -56,6 +56,12 @@ const PerPlaneHeatLayer = nextDynamic(
   },
 );
 
+// Flight history (period presets + custom range) on a 2D map.
+const PlaneHistory = nextDynamic(() => import("@/components/PlaneHistory"), {
+  ssr: false,
+  loading: () => <div style={{ height: 440, background: SS_TOKENS.bg0 }} />,
+});
+
 type Props = {
   params: { tail: string };
   searchParams: { mock?: string };
@@ -221,6 +227,19 @@ export default async function PlanePage({ params, searchParams }: Props) {
       </section>
 
       <Logbook tail={entry.tail} nickname={entry.nickname} hour12={hour12} />
+
+      {/* Flight history: kept as its own block (see components/PlaneHistory.tsx). */}
+      <section aria-label="Flight history" data-testid="flight-history-section">
+        <Card padded={false}>
+          <div style={{ padding: "12px 14px 10px" }}>
+            <div className="ss-eyebrow">Flight history</div>
+            <div style={{ fontSize: 12, color: SS_TOKENS.fg1, marginTop: 2 }}>
+              Every flight on record for a period. Pacific dates.
+            </div>
+          </div>
+          <PlaneHistory tail={entry.tail} />
+        </Card>
+      </section>
 
       <FleetMeta tail={entry.tail} hex={fleetHex(entry).toUpperCase()} role={entry.roleDescription} />
     </main>
