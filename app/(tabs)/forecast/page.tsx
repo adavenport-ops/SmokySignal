@@ -31,12 +31,15 @@ import {
   parseMockState,
 } from "@/lib/mock-state";
 import { BackLink } from "@/components/BackLink";
+import { pageMeta } from "@/lib/seo/site";
 
 export const dynamic = "force-dynamic";
-export const metadata = {
-  title: "SmokySignal · Forecast",
-  description: "Weekly probability of fleet takeoffs by hour and day, plus each month on record.",
-};
+export const metadata = pageMeta({
+  title: "Forecast: when the WSP plane usually flies",
+  description:
+    "Hour-by-weekday odds of a Washington State Patrol or sheriff aircraft takeoff, from the flight log, plus each month on record.",
+  path: "/forecast",
+});
 
 const FORECAST_LEARNING_EVENT_FLOOR = 30;
 const CACHE_SECONDS = 300;

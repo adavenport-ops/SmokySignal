@@ -6,16 +6,18 @@ import { CoverageNote } from "@/components/CoverageNote";
 import { fmtMinutes } from "@/components/RoadParts";
 import styles from "@/components/pattern-pages.module.css";
 import { BackLink } from "@/components/BackLink";
+import { pageMeta } from "@/lib/seo/site";
 
 // The 30-day digest behind this page is cached for 5 minutes
 // (lib/history-digest.ts); the route itself renders per request.
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Road history",
+export const metadata = pageMeta({
+  title: "Road history: flights over I-5, I-405 and SR-512",
   description:
-    "Thirty days of tracked flights over I-5, I-405, SR-167, SR-512 and the other Puget Sound corridors.",
-};
+    "Thirty days of tracked WSP and sheriff flights over I-5, I-405, SR-167, SR-512, SR-16, I-90 and the other Puget Sound corridors, road by road.",
+  path: "/road",
+});
 
 export default async function RoadIndexPage() {
   const digest = await getHistoryDigest();

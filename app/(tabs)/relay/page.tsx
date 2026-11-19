@@ -3,27 +3,20 @@ import { RelayCreate } from "@/components/RelayCreate";
 import { BotsCallout } from "@/components/BotsCallout";
 import { getBotsPublicInfo } from "@/lib/bots/public-info";
 import { BackLink } from "@/components/BackLink";
+import { pageMeta } from "@/lib/seo/site";
 
 // /relay: get Smokey takeoff alerts into the tools riders and clubs
 // already use. A Discord channel or any HTTPS webhook, plus zero-setup
 // feeds and phone recipes. No accounts: a relay belongs to whoever holds
 // its manage link.
 
-export const metadata = {
-  title: "Discord and webhooks",
+export const metadata = pageMeta({
+  title: "Discord and webhooks: Smokey takeoff posts",
   description:
     "Post Smokey takeoffs to a Discord channel or any HTTPS webhook. Feeds, Siri, and widget recipes. No accounts.",
-  openGraph: {
-    title: "Discord and webhooks · SmokySignal",
-    description: "Smokey takeoffs, posted where your club already talks.",
-    images: [{ url: "/icons/og-image.png", width: 1200, height: 630, alt: "SmokySignal" }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Discord and webhooks · SmokySignal",
-    images: ["/icons/og-image.png"],
-  },
-};
+  path: "/relay",
+  socialDescription: "Smokey takeoffs, posted where your club already talks.",
+});
 
 // The Telegram / Discord bot cards (BotsCallout) depend on env vars and
 // the bot's public username; re-read them hourly.

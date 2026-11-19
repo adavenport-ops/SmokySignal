@@ -3,6 +3,11 @@ import { SS_TOKENS, TYPE } from "@/lib/tokens";
 import { Tooltip } from "@/components/Tooltip";
 import { Logo } from "@/components/brand/Logo";
 import { currentWrapYear } from "@/lib/wrap";
+import { pageMeta } from "@/lib/seo/site";
+import { getRegistry } from "@/lib/registry";
+import { JsonLd } from "@/components/JsonLd";
+import { KeyFacts } from "@/components/KeyFacts";
+import { organizationJsonLd } from "@/lib/seo/jsonld";
 
 export const dynamic = "force-dynamic";
 
@@ -10,11 +15,12 @@ export const dynamic = "force-dynamic";
 const BEACON_DOC_URL =
   "https://github.com/adavenport-ops/SmokySignal/blob/main/docs/beacon.md";
 
-export const metadata = {
-  title: "More",
+export const metadata = pageMeta({
+  title: "About: key facts, tools and open data",
   description:
-    "Everything past the four main tabs: live tools, history, sharing, and what SmokySignal is.",
-};
+    "What SmokySignal is, key facts about the aircraft it tracks over Washington, and every tool past the main tabs: history, data, sharing and help.",
+  path: "/about",
+});
 
 type HubItem = {
   href: string;
@@ -76,8 +82,10 @@ function hubGroups(wrapYear: number): HubGroup[] {
 
 export default async function AboutPage() {
   const groups = hubGroups(currentWrapYear(Date.now()));
+  const fleet = await getRegistry();
   return (
     <main className="ss-page" style={{ gap: 22 }}>
+      <JsonLd data={organizationJsonLd()} />
       <header style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
         <span className="ss-eyebrow">SmokySignal</span>
         <h1
@@ -139,6 +147,8 @@ export default async function AboutPage() {
           signal, the oldest warning beacon there is, and you have the app.
         </p>
       </Section>
+
+      <KeyFacts fleet={fleet} />
 
       <section style={CALLOUT}>
         <div className="ss-eyebrow" style={{ marginBottom: 8 }}>

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo/site";
 import { DashShell } from "@/components/DashShell";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { getSnapshot } from "@/lib/snapshot";
@@ -12,15 +14,22 @@ import { SS_TOKENS, TYPE } from "@/lib/tokens";
 // /dash and /activity redirect here (next.config.mjs) with ?tab= set
 // and every other query param (mock, etc.) carried over.
 
-export const metadata = {
-  title: "Flights",
-  description: "What's up now, the nearest watchers, and the recent takeoffs and landings.",
-};
-
 export const dynamic = "force-dynamic";
 
 type Tab = "now" | "recent";
 type SP = Record<string, string | string[] | undefined>;
+
+// ?tab=recent (and mock states) are views of the same page: canonical to
+// /flights and kept out of the index.
+export function generateMetadata({ searchParams }: { searchParams: SP }): Metadata {
+  return pageMeta({
+    title: "Flights: patrol aircraft up now and recent takeoffs",
+    description:
+      "Which Washington State Patrol and sheriff aircraft are up right now, the nearest ones to you, and the latest takeoffs and landings across Washington.",
+    path: "/flights",
+    noindex: Object.keys(searchParams ?? {}).length > 0,
+  });
+}
 
 function parseTab(v: SP["tab"]): Tab {
   return v === "recent" ? "recent" : "now";

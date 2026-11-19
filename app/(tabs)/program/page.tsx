@@ -5,6 +5,12 @@ import type { FleetEntry, Mission } from "@/lib/types";
 import { MISSIONS, isRotorcraftModel, normalizeMission } from "@/lib/mission";
 import { roleBadgeStyle, roleBadgeText } from "@/lib/role-display";
 import { BackLink } from "@/components/BackLink";
+import { AGENCY } from "@/lib/agencies";
+import { JsonLd } from "@/components/JsonLd";
+import { KeyFacts } from "@/components/KeyFacts";
+import { PROGRAM_FAQ } from "@/lib/seo/faq";
+import { breadcrumbJsonLd, faqPageJsonLd } from "@/lib/seo/jsonld";
+import { pageMeta } from "@/lib/seo/site";
 
 // "The program." Plain-language explainer for curious locals (the Dana
 // persona in the 2026-11 audit): who flies over Puget Sound, in what,
@@ -14,26 +20,17 @@ import { BackLink } from "@/components/BackLink";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "The program",
+// Keep the static brand card here. The live status card is the home
+// route's image and would otherwise cascade into this segment.
+export const metadata = pageMeta({
+  title: "How aerial speed enforcement works in Washington",
   description:
-    "Who flies over Puget Sound, in what, how aerial speed enforcement works in Washington, and what SmokySignal is.",
-  // Keep the static brand card here. The live status card is the home
-  // route's image and would otherwise cascade into this segment.
-  openGraph: {
-    title: "The program · SmokySignal",
-    description:
-      "Who flies over Puget Sound, in what, and how aerial speed enforcement works in Washington.",
-    images: [
-      { url: "/icons/og-image.png", width: 1200, height: 630, alt: "SmokySignal" },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "The program · SmokySignal",
-    images: ["/icons/og-image.png"],
-  },
-};
+    "Who flies over Puget Sound, in what, how Washington State Patrol aerial speed enforcement works, and what SmokySignal is. Agencies, airframes and sources.",
+  path: "/program",
+  socialTitle: "The program · SmokySignal",
+  socialDescription:
+    "Who flies over Puget Sound, in what, and how aerial speed enforcement works in Washington.",
+});
 
 const GITHUB_URL = "https://github.com/adavenport-ops/SmokySignal";
 // Verified public sources (fetched 2026-11-18).
@@ -41,83 +38,6 @@ const WSP_AVIATION_URL =
   "https://wsp.wa.gov/2023/05/10/aviation-becoming-increasingly-important-tool-for-states-law-enforcement/";
 const FOX13_MARKS_URL =
   "https://www.fox13seattle.com/washingtons-most-wanted/surface-to-air-speed-traps-hash-marks-on-ground-helping-troopers-high-in-the-sky";
-
-// Display names + home turf for the registry's operator codes. Codes not
-// listed here fall back to the raw operator string.
-const AGENCY: Record<string, { name: string; area: string }> = {
-  WSP: {
-    name: "Washington State Patrol",
-    area: "Statewide, out of Olympia. The speed-enforcement fleet.",
-  },
-  "State of WA": {
-    name: "State of Washington (WSP-flown)",
-    area: "Owned by the state, flown by WSP when the Cessnas can't go.",
-  },
-  "Chelan SO": {
-    name: "Chelan County Sheriff's Office",
-    area: "Wenatchee and the east slopes. Mostly searches and rescues.",
-  },
-  "WA DNR": {
-    name: "Washington Department of Natural Resources",
-    area: "Wildfire duty, out of Olympia and Yakima.",
-  },
-  "Chelan FD1": {
-    name: "Chelan County Fire District 1",
-    area: "Wenatchee. Fire duty.",
-  },
-  WDFW: {
-    name: "Washington Department of Fish and Wildlife",
-    area: "Wildlife survey flights, out of Olympia.",
-  },
-  "Portland PB": {
-    name: "Portland air unit (Oregon, mutual aid)",
-    area: "Portland. Has followed a pursuit across the river into Vancouver.",
-  },
-  OSP: {
-    name: "Oregon State (mutual aid)",
-    area: "Salem. No record we found of regular Washington flights.",
-  },
-  "Multnomah SO": {
-    name: "Multnomah County Sheriff (Oregon, mutual aid)",
-    area: "Portland area.",
-  },
-  "Clackamas SO": {
-    name: "Clackamas County Sheriff (Oregon, mutual aid)",
-    area: "Oregon City. Likely Oregon only.",
-  },
-  "Washington Co SO": {
-    name: "Washington County Sheriff (Oregon, mutual aid)",
-    area: "Hillsboro, west of Portland.",
-  },
-  "Hood River SO": {
-    name: "Hood River County Sheriff (Oregon, mutual aid)",
-    area: "The Gorge. Use not verified.",
-  },
-  "Kootenai RAS": {
-    name: "Kootenai County Regional Air Support (Idaho, mutual aid)",
-    area: "Coeur d'Alene, next door to Spokane.",
-  },
-  KCSO: {
-    name: "King County Sheriff's Office",
-    area: "King County, out of Renton.",
-  },
-  "Pierce SO": {
-    name: "Pierce County Sheriff's Department",
-    area: "Pierce County, out of Thun Field.",
-  },
-  "Snohomish SO": {
-    name: "Snohomish County Sheriff's Office",
-    area: "Snohomish County and the mountains east of it.",
-  },
-  "Spokane SO": {
-    name: "Spokane County Sheriff's Office",
-    area: "East of the Cascades. Rarely over Puget Sound.",
-  },
-  CBP: {
-    name: "U.S. Customs and Border Protection, Air and Marine Operations",
-    area: "The northern border and Salish Sea, out of Bellingham and Spokane. Federal, not Smokey.",
-  },
-};
 
 function isFixedWing(model: string): boolean {
   return !isRotorcraftModel(model);
@@ -222,6 +142,15 @@ export default async function ProgramPage() {
 
   return (
     <main className="ss-page" style={{ gap: 26 }}>
+      <JsonLd
+        data={[
+          faqPageJsonLd(PROGRAM_FAQ, "/program"),
+          breadcrumbJsonLd([
+            { name: "SmokySignal", path: "/" },
+            { name: "The program", path: "/program" },
+          ]),
+        ]}
+      />
       <BackLink />
       <span className="ss-eyebrow">SmokySignal · The program</span>
 
@@ -260,6 +189,8 @@ export default async function ProgramPage() {
           Already gone? Check what flew over →
         </Link>
       </section>
+
+      <KeyFacts fleet={fleet} />
 
       <Section eyebrow="Who flies" title="Agencies in the registry">
         <P>

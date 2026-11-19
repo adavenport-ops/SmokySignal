@@ -4,12 +4,17 @@ import { SS_TOKENS } from "@/lib/tokens";
 import { getRegistry } from "@/lib/registry";
 import { HelpMarkdown, HelpScrollTopButton } from "./HelpView";
 import { BackLink } from "@/components/BackLink";
+import { pageMeta } from "@/lib/seo/site";
+import { JsonLd } from "@/components/JsonLd";
+import { helpFaq } from "@/lib/seo/faq";
+import { breadcrumbJsonLd, faqPageJsonLd } from "@/lib/seo/jsonld";
 
-export const metadata = {
-  title: "Help",
+export const metadata = pageMeta({
+  title: "Help: reading the screens, alerts and data",
   description:
-    "What SmokySignal shows you, where the data comes from, and how to read each screen.",
-};
+    "What SmokySignal shows you, where the data comes from, how to read each screen, and how push alerts work. Answers to the questions riders ask.",
+  path: "/help",
+});
 
 export default async function HelpPage() {
   const [md, md3d, registry] = await Promise.all([
@@ -27,6 +32,8 @@ export default async function HelpPage() {
   // go stale on every fleet expansion. Replace before passing to the
   // markdown renderer.
   const source = merged.replace(/\{\{TAIL_COUNT\}\}/g, String(registry.length));
+  // FAQPage from the same text riders read (lib/seo/faq.ts helpFaq).
+  const faq = helpFaq(source);
 
   return (
     <main
@@ -41,6 +48,15 @@ export default async function HelpPage() {
         paddingBottom: 120,
       }}
     >
+      <JsonLd
+        data={[
+          ...(faq.length > 0 ? [faqPageJsonLd(faq, "/help")] : []),
+          breadcrumbJsonLd([
+            { name: "SmokySignal", path: "/" },
+            { name: "Help", path: "/help" },
+          ]),
+        ]}
+      />
       <header
         style={{
           position: "sticky",

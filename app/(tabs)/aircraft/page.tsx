@@ -18,6 +18,7 @@ import {
 } from "@/lib/role-display";
 import { normalizeMission } from "@/lib/mission";
 import type { FleetEntry } from "@/lib/types";
+import { pageMeta } from "@/lib/seo/site";
 
 // All aircraft: the tail registry, grouped by job. Moved off the More
 // hub (/about) so the hub stays a hub. One compact row per tail, each
@@ -25,10 +26,12 @@ import type { FleetEntry } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "All aircraft",
-  description: "Every tail SmokySignal watches, grouped by job, with the source for each.",
-};
+export const metadata = pageMeta({
+  title: "All aircraft: every tracked WSP and sheriff tail",
+  description:
+    "Every tail SmokySignal watches over Washington, grouped by job, with the model, base and public source for each: WSP, county sheriffs, CBP, DNR.",
+  path: "/aircraft",
+});
 
 export default async function AircraftPage() {
   const fleet = await getRegistry();

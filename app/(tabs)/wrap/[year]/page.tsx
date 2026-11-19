@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { JsonLd } from "@/components/JsonLd";
+import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
+import { pageMeta } from "@/lib/seo/site";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { BackLink } from "@/components/BackLink";
 import { SS_TOKENS } from "@/lib/tokens";
@@ -18,13 +22,15 @@ function parseYear(raw: string): number | null {
   return /^\d{4}$/.test(raw) && isWrapYear(Number(raw), Date.now()) ? Number(raw) : null;
 }
 
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const year = parseYear(params.year);
-  if (!year) return { title: "SmokySignal · Wrap" };
-  return {
-    title: `SmokySignal · ${year} season wrap`,
-    description: `How the birds flew in ${year}: sorties, hours aloft, busiest month and the corridor worked most. Built from public ADS-B.`,
-  };
+  if (!year) return { title: "Season wrap", robots: { index: false, follow: false } };
+  return pageMeta({
+    title: `${year} season wrap: how the patrol aircraft flew`,
+    description: `How the birds flew over Washington in ${year}: sorties, hours aloft, busiest month and the corridor worked most. Built from public ADS-B.`,
+    path: `/wrap/${year}`,
+    inheritImage: true,
+  });
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
@@ -50,6 +56,13 @@ export default async function WrapPage({ params }: Props) {
 
   return (
     <main className="ss-page" style={{ gap: 22 }}>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "SmokySignal", path: "/" },
+          { name: "Data and CSV", path: "/data" },
+          { name: `${year} season wrap`, path: `/wrap/${year}` },
+        ])}
+      />
       <BackLink />
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
         <span className="ss-eyebrow">SmokySignal · Wrap</span>

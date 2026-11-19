@@ -14,12 +14,14 @@ import {
 } from "@/lib/embed";
 import { SS_TOKENS } from "@/lib/tokens";
 import { BackLink } from "@/components/BackLink";
+import { pageMeta } from "@/lib/seo/site";
 
-export const metadata = {
-  title: "Embed the status widget",
+export const metadata = pageMeta({
+  title: "Embed the status widget on your site",
   description:
     "Paste an iframe into a club site or forum to show whether Smokey is up. Two sizes, one optional region.",
-};
+  path: "/embed/help",
+});
 
 const VARIANTS: Array<{ title: string; blurb: string; params: EmbedParams }> = [
   {

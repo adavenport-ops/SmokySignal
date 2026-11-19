@@ -15,14 +15,17 @@ import { applyMockState, parseMockState } from "@/lib/mock-state";
 import { parseBoardRegion } from "@/lib/board";
 import type { Snapshot } from "@/lib/types";
 import { BoardView } from "./BoardView";
+import { pageMeta } from "@/lib/seo/site";
+import { VisuallyHidden } from "@/components/VisuallyHidden";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Board",
+export const metadata = pageMeta({
+  title: "Shop board: a departures board for the shop TV",
   description:
     "Departures board for the shop TV. Which birds are up, which came down, on a 24-hour Pacific clock.",
-};
+  path: "/board",
+});
 
 type Props = {
   searchParams: { [key: string]: string | string[] | undefined };
@@ -45,12 +48,15 @@ export default async function BoardPage({ searchParams }: Props) {
   const activity: ActivityEntry[] = actRes.status === "fulfilled" ? actRes.value : [];
 
   return (
-    <BoardView
-      initialSnapshot={snapshot}
-      initialActivity={activity}
-      regionId={regionId}
-      mock={mock}
-      serverNow={Date.now()}
-    />
+    <>
+      <VisuallyHidden as="h1">Shop board: patrol aircraft up and down</VisuallyHidden>
+      <BoardView
+        initialSnapshot={snapshot}
+        initialActivity={activity}
+        regionId={regionId}
+        mock={mock}
+        serverNow={Date.now()}
+      />
+    </>
   );
 }

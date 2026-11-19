@@ -4,11 +4,14 @@ import { BackLink } from "@/components/BackLink";
 import { ScreenAwakeToggle } from "@/components/ScreenAwake";
 import { SpeedWarningSettings } from "@/components/SpeedWarningSettings";
 import { PaletteSetting } from "@/components/PaletteSetting";
+import { pageMeta } from "@/lib/seo/site";
 
-export const metadata = {
+export const metadata = pageMeta({
   title: "Settings",
-  description: "Tune SmokySignal for how you ride.",
-};
+  description:
+    "Tune SmokySignal for how you ride.",
+  path: "/settings",
+});
 
 export const dynamic = "force-static";
 

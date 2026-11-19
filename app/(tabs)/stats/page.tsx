@@ -13,14 +13,18 @@ import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 import { BackLink } from "@/components/BackLink";
 import { ScrollX } from "@/components/ScrollX";
 import { SeasonWrapCard } from "@/components/SeasonWrapCard";
+import { pageMeta } from "@/lib/seo/site";
+import { getRegistry } from "@/lib/registry";
 
 // Cookies (time-format pref, flags in the tabs layout) make the route
 // dynamic; the KV reads behind it are cached for 5 minutes instead.
 export const dynamic = "force-dynamic";
-export const metadata = {
-  title: "SmokySignal · Stats",
-  description: "How the bird flew: a permanent daily log of flight hours for every tracked tail.",
-};
+export const metadata = pageMeta({
+  title: "Stats: daily flight hours for every tracked tail",
+  description:
+    "How the bird flew: a permanent daily log of flight hours for every tracked WSP, sheriff and other aircraft over Washington.",
+  path: "/stats",
+});
 
 // Cap the docs one render reads. A year of daily docs is a few hundred KB.
 const MAX_DAYS_LOADED = 366;
@@ -47,6 +51,7 @@ export default async function StatsPage() {
     console.warn("[stats] load failed:", e);
   }
   const empty = !stats || stats.days_on_record === 0;
+  const known = new Set((await getRegistry()).map((f) => f.tail));
 
   return (
     <main className="ss-page" style={{ gap: 22 }}>
@@ -81,7 +86,7 @@ export default async function StatsPage() {
         </p>
       </section>
 
-      {empty ? <EmptyState /> : <StatsBody stats={stats!} hour12={hour12} />}
+      {empty ? <EmptyState /> : <StatsBody stats={stats!} hour12={hour12} known={known} />}
 
       <SeasonWrapCard />
     </main>
@@ -117,7 +122,7 @@ function EmptyState() {
   );
 }
 
-function StatsBody({ stats, hour12 }: { stats: StatsSummary; hour12: boolean }) {
+function StatsBody({ stats, hour12, known }: { stats: StatsSummary; hour12: boolean; known: ReadonlySet<string> }) {
   const { totals, busiest_day: busiest, longest_sortie: longest } = stats;
   return (
     <>
@@ -153,7 +158,7 @@ function StatsBody({ stats, hour12 }: { stats: StatsSummary; hour12: boolean }) 
 
       <WeeklyBars stats={stats} />
       <WeekGrid grid={stats.week_grid} hour12={hour12} days={stats.days_on_record} />
-      <TailTable rows={stats.per_tail} />
+      <TailTable rows={stats.per_tail} known={known} />
 
       <p
         style={{
@@ -371,7 +376,7 @@ function coolHeat(v: number, max: number): string {
   return `rgba(91,182,255,${alpha.toFixed(3)})`;
 }
 
-function TailTable({ rows }: { rows: TailStat[] }) {
+function TailTable({ rows, known }: { rows: TailStat[]; known: ReadonlySet<string> }) {
   return (
     <section data-testid="stats-tails">
       <SectionHead title="By tail" note="Flights and hours aloft for every tail on record." />
@@ -391,14 +396,21 @@ function TailTable({ rows }: { rows: TailStat[] }) {
             {rows.map((r) => (
               <tr key={r.tail} style={{ borderTop: `.5px solid ${SS_TOKENS.hairline}` }}>
                 <td style={{ padding: "10px 6px 10px 0" }}>
-                  <Link
-                    href={`/plane/${r.tail}`}
-                    prefetch={false}
-                    className="ss-mono"
-                    style={{ color: SS_TOKENS.fg0, textDecoration: "none", fontWeight: 700 }}
-                  >
-                    {r.tail}
-                  </Link>
+                  {known.has(r.tail) ? (
+                    <Link
+                      href={`/plane/${r.tail}`}
+                      prefetch={false}
+                      className="ss-mono"
+                      style={{ color: SS_TOKENS.fg0, textDecoration: "none", fontWeight: 700 }}
+                    >
+                      {r.tail}
+                    </Link>
+                  ) : (
+                    // Tail since dropped from the registry: no page to link.
+                    <span className="ss-mono" style={{ color: SS_TOKENS.fg0, fontWeight: 700 }}>
+                      {r.tail}
+                    </span>
+                  )}
                   {r.nickname && (
                     <span style={{ display: "block", fontSize: 12, color: SS_TOKENS.fg1 }}>
                       {r.nickname}
