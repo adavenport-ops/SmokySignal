@@ -3392,7 +3392,7 @@ function jsonLdBlocks(html: string): Record<string, any>[] {
 }
 
 test.describe("p14 live-prod audit · towns + IndexNow", () => {
-  test("85. /near/puyallup renders the town page with Place JSON-LD (geo) and a BreadcrumbList", async ({ request }) => {
+  test("89. /near/puyallup renders the town page with Place JSON-LD (geo) and a BreadcrumbList", async ({ request }) => {
     const r = await request.get("/near/puyallup");
     const html = await r.text();
     const blocks = jsonLdBlocks(html);
@@ -3416,7 +3416,7 @@ test.describe("p14 live-prod audit · towns + IndexNow", () => {
     expect(pass).toBe(true);
   });
 
-  test("86. /near lists at least 10 towns, each linking to /near/[town]", async ({ request }) => {
+  test("90. /near lists at least 10 towns, each linking to /near/[town]", async ({ request }) => {
     const r = await request.get("/near");
     const html = await r.text();
     const towns = new Set([...html.matchAll(/href="\/near\/([a-z0-9-]+)"/g)].map((m) => m[1]!));
