@@ -7,14 +7,30 @@
 //   - the position (lat, lon, seen_pos, pos_ts, src) comes as one unit
 //     from the freshest fix: largest pos_ts, then smallest seen_pos, then
 //     feed order (fi, lol, apl, os) as the tie-break;
-//   - every other field missing on that row is filled from the other
-//     rows, freshest first;
+//   - every other field missing on that row (FILL_FIELDS, including the
+//     track-log extras such as alt_geom and category) is filled from the
+//     other rows, freshest first;
 //   - `sources` lists every feed that reported the hex.
 
 import { FEED_ORDER, sortFeeds } from "./feed-sources";
 import type { FeedSrc, NormalizedAc } from "./types";
 
-const FILL_FIELDS = ["r", "alt_baro", "gs", "track", "squawk"] as const;
+// Fields filled from other feeds when the winning row lacks them. The
+// position-quality fields (seen_pos, pos_ts, nic, rc, nac_p, mlat, type,
+// rssi) are NOT here: they describe the winning fix and travel with it.
+const FILL_FIELDS = [
+  "r",
+  "alt_baro",
+  "gs",
+  "track",
+  "squawk",
+  "alt_geom",
+  "baro_rate",
+  "geom_rate",
+  "emergency",
+  "category",
+  "flight",
+] as const;
 
 function hasPos(a: NormalizedAc): boolean {
   return typeof a.lat === "number" && typeof a.lon === "number";

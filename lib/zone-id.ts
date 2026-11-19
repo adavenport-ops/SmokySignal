@@ -8,6 +8,14 @@
 // individual position pings.
 export const GRID_CELL_DEG = 0.0083;
 
+/** South-west corner of the GRID_CELL_DEG cell holding (lat, lon). */
+export function cellOrigin(lat: number, lon: number): { cellLat: number; cellLon: number } {
+  return {
+    cellLat: Math.floor(lat / GRID_CELL_DEG) * GRID_CELL_DEG,
+    cellLon: Math.floor(lon / GRID_CELL_DEG) * GRID_CELL_DEG,
+  };
+}
+
 /**
  * Stable string ID for the hot-zone cell containing (lat, lon). Same scheme
  * used by aggregateHotZones() to bucket pings, so a rider opting into zone

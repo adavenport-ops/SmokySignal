@@ -1401,4 +1401,104 @@ test.describe("p14 live-prod audit", () => {
       screenshot,
     });
   });
+
+  test("38. /api/history returns sessions for a recent 7-day range (flight history)", async ({
+    request,
+  }) => {
+    // Pacific calendar dates: the 7 days ending yesterday, so the range is
+    // closed and CDN-cacheable.
+    const ptDate = (offsetDays: number) =>
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Los_Angeles",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date(Date.now() - offsetDays * 86_400_000));
+    const from = ptDate(7);
+    const to = ptDate(1);
+    const r = await request.get(`/api/history?from=${from}&to=${to}`);
+    let evidence = `HTTP ${r.status()} for ${from}..${to}`;
+    let pass = false;
+    let category: Finding["category"] = r.status() === 404 ? "unshipped" : "confirmed_bug";
+    if (r.ok()) {
+      const data = (await r.json()) as {
+        v: number;
+        range: { from: string; to: string; days: number };
+        sessions: { id: string; tail: string; start_ts: number; end_ts: number }[];
+        polylines: { id: string; points: unknown[] }[];
+        heat: { cells: unknown[] };
+        summary: { flights: number; vertices: number };
+      };
+      const shapeOk =
+        data.v === 1 &&
+        data.range?.days === 7 &&
+        Array.isArray(data.sessions) &&
+        Array.isArray(data.polylines) &&
+        Array.isArray(data.heat?.cells) &&
+        data.summary?.flights === data.sessions.length &&
+        data.summary.vertices <= 20_000;
+      const hasSessions = data.sessions.length > 0;
+      const linesMatch = data.polylines.length === data.sessions.length;
+      // A bad param must be refused, not ignored.
+      const bad = await request.get(`/api/history?from=${to}&to=${from}`);
+      const rejects = from === to || bad.status() === 400;
+      pass = shapeOk && hasSessions && linesMatch && rejects;
+      category = pass ? "working_as_designed" : shapeOk && !hasSessions ? "indeterminate" : "confirmed_bug";
+      evidence += `; sessions=${data.sessions.length} polylines=${data.polylines.length} heat=${data.heat?.cells?.length} vertices=${data.summary?.vertices}; reversed-range HTTP ${bad.status()}`;
+    }
+    record({
+      claim:
+        "/api/history?from&to returns flight sessions, one simplified polyline per session, a heat grid and summary for the last 7 Pacific days, and rejects a reversed range with 400",
+      category,
+      pass,
+      evidence,
+    });
+  });
+
+  test("39. /forecast has a month selector: Last 30 days plus each month on record", async ({
+    page,
+  }) => {
+    await page.goto("/forecast", { waitUntil: "networkidle" });
+    const select = page.locator('[data-testid="forecast-month-select"]');
+    const present = (await select.count()) > 0;
+    const options = present
+      ? await select.locator("option").evaluateAll((els) =>
+          els.map((e) => ({ value: (e as HTMLOptionElement).value, label: e.textContent ?? "" })),
+        )
+      : [];
+    const hasDefault = options[0]?.value === "last30" && /Last 30 days/.test(options[0]?.label ?? "");
+    const months = options.slice(1);
+    const monthsOk = months.every(
+      (o) => /^\d{4}-\d{2}$/.test(o.value) && /^[A-Z][a-z]+ \d{4}$/.test(o.label),
+    );
+    let monthEvidence = "no month on record yet";
+    let monthOk = true;
+    let screenshot = await shot(page, "39-forecast-last30");
+    if (months.length > 0) {
+      await page.goto(`/forecast?month=${months[0]!.value}`, { waitUntil: "networkidle" });
+      screenshot = await shot(page, "39-forecast-month");
+      const title = (await page.locator('[data-testid="forecast-month-title"]').innerText().catch(() => "")).trim();
+      const days = (await page.locator('[data-testid="forecast-month-days"]').innerText().catch(() => "")).trim();
+      const grid = await page.locator('[data-testid="forecast-month-grid"]').count();
+      // Mobile-first: no horizontal page scroll.
+      const noHScroll = await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+      );
+      monthOk =
+        title === months[0]!.label &&
+        /^\d+ days? of data in this month/.test(days) &&
+        grid > 0 &&
+        noHScroll;
+      monthEvidence = `title="${title}" days="${days}" grid=${grid} noHScroll=${noHScroll}`;
+    }
+    const pass = present && hasDefault && monthsOk && monthOk;
+    record({
+      claim:
+        "/forecast shows a period selector ('Last 30 days' + 'Month YYYY' options); a month view renders its title, 'N days of data in this month' and the hour × weekday grid without horizontal page scroll",
+      category: pass ? "working_as_designed" : present ? "confirmed_bug" : "unshipped",
+      pass,
+      evidence: `select=${present}; options=${options.map((o) => o.label).join(" | ")}; ${monthEvidence}`,
+      screenshot,
+    });
+  });
 });

@@ -22,6 +22,7 @@ import { fetchAdsbLol } from "./feeds/adsblol";
 import { airplanesLiveEnabled, fetchAirplanesLive } from "./feeds/airplaneslive";
 import { FeedHttpError } from "./feeds/http";
 import { REGION, regionZeroIsFailure } from "./feeds/region";
+import { captureFields } from "./track-point";
 import type {
   Aircraft,
   AircraftLive,
@@ -194,6 +195,7 @@ export async function buildSnapshot(): Promise<Snapshot> {
       squawk: ac.squawk ?? null,
       ...(ac.src ? { src: ac.src } : {}),
       ...(ac.sources ? { feed_sources: ac.sources } : {}),
+      obs: captureFields(ac),
       time_aloft_min: grounded ? undefined : time_aloft_min,
       last_seen_min: 0,
     };

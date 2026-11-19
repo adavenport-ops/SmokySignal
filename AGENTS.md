@@ -78,7 +78,11 @@ waiting for a live event.
 ## Architecture quick-reference
 
 - `lib/snapshot.ts` — fleet snapshot; `lib/adsb.ts` merges adsb.fi + adsb.lol (+ airplanes.live when `SS_FEED_APL=1`) by ICAO hex via `lib/feed-select.ts` / `lib/feed-merge.ts`, OpenSky as fallback; adapters in `lib/feeds/`, rate budget in `lib/feed-budget.ts`, live check `npm run feeds:check`
-- `lib/tracks.ts` — per-tail position history, KV-backed, 35-day TTL
+- `lib/tracks.ts` — per-tail position history, KV-backed, permanent (no TTL since 2026-11-18)
+- `lib/track-point.ts` — TrackPoint shape + per-point capture (alt_geom, vertical rate, squawk, MLAT flag, category, NIC/RC, seen_pos, RSSI, callsign, `src` feed tag) via `captureFields()`; rows are normalized once in `lib/feeds/readsb.ts` / `lib/opensky.ts` and merged in `lib/feed-merge.ts`
+- `lib/history-core.ts` + `lib/history.ts` — `GET /api/history` (sessions, simplified polylines, heat grid, summary for a PT date range ≤ 366 days)
+- `lib/forecast-month.ts` — monthly hour × weekday view on /forecast, folded from `rollup:daily:*`
+- `activity:day:{YYYYMMDD}` — permanent per-day activity archive (`lib/activity.ts`), backfilled from `activity:feed` by the rollup cron
 - `lib/hotzones.ts` — 30-day grid aggregate; geo-fenced via `SS_REGION_*` env vars
 - `lib/push/*` — VAPID push pipeline (subscribe / dispatcher / dedupe / quiet hours)
 - `lib/radar-filter.ts` — shared filter state (operator/tail/region) for /radar

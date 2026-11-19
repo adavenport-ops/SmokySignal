@@ -5,6 +5,9 @@
 // Storage shape:
 //   tracks:{tail}:{YYYYMMDD}  →  Redis list of compact JSON strings
 //   each entry: {"lat":47.5,"lon":-122.3,"alt":3200,"spd":118,"trk":85,"ts":1746024518}
+//   plus, since 2026-11-18, optional compact capture keys (ag, vr, vg, sq,
+//   em, ml, cat, nic, rc, nacp, sp, rs, rx, cs, src) documented in
+//   lib/track-point.ts. Older points without them still parse.
 //
 // Daily keys are permanent (no TTL) since 2026-11-18: this is the flight history.
 
@@ -12,16 +15,10 @@ import { getRedis } from "./cache";
 import { recordFirstSampleIfMissing } from "./learning";
 import { recordLastSample } from "./freshness";
 import { trackKey, trackScanPattern, trackScanAllPattern } from "./storage-keys";
+import { parseTrackPoint, type TrackPoint } from "./track-point";
 import type { Snapshot } from "./types";
 
-export type TrackPoint = {
-  lat: number;
-  lon: number;
-  alt: number | null;
-  spd: number | null;
-  trk: number | null;
-  ts: number;
-};
+export type { TrackPoint } from "./track-point";
 
 
 function utcDateKey(d: Date): string {
@@ -70,6 +67,8 @@ export async function logTracks(snap: Snapshot): Promise<void> {
       spd: a.ground_speed_kt ?? null,
       trk: a.heading ?? null,
       ts: tsSec,
+      // Optional capture keys; undefined ones vanish in JSON.stringify.
+      ...(a.obs ?? {}),
     };
     try {
       // No TTL: tracks are the permanent flight history (owner decision
@@ -178,16 +177,80 @@ export async function getTrackSummary(tail: string): Promise<TrackSummary> {
 }
 
 function safeParse(s: unknown): TrackPoint | null {
-  if (typeof s !== "string") {
-    // Upstash sometimes auto-deserializes JSON strings into objects.
-    if (s && typeof s === "object") return s as TrackPoint;
-    return null;
+  return parseTrackPoint(s);
+}
+
+/** Keys per pipeline when reading many track days at once. */
+const PIPELINE_CHUNK = 100;
+
+/**
+ * LLEN for many (tail, UTC day) pairs in pipelined batches. Deterministic
+ * keys, no SCAN. Missing keys read as 0.
+ */
+export async function getTrackLengths(
+  pairs: { tail: string; date: string }[],
+): Promise<number[]> {
+  const redis = await getRedis();
+  if (!redis || pairs.length === 0) return pairs.map(() => 0);
+  const out: number[] = [];
+  for (let i = 0; i < pairs.length; i += PIPELINE_CHUNK * 5) {
+    const chunk = pairs.slice(i, i + PIPELINE_CHUNK * 5);
+    const p = redis.pipeline();
+    for (const { tail, date } of chunk) p.llen(trackKey(tail, date));
+    const res = (await p.exec()) as unknown[];
+    for (const v of res) out.push(typeof v === "number" ? v : Number(v) || 0);
   }
-  try {
-    return JSON.parse(s) as TrackPoint;
-  } catch {
-    return null;
+  return out;
+}
+
+/**
+ * Read whole track days for many (tail, UTC day) pairs, pipelined in
+ * batches sized by `lengths` so no single pipeline response grows past
+ * ~`pointsPerBatch` points. Returns points per pair, oldest → newest.
+ */
+export async function getTracksForPairs(
+  pairs: { tail: string; date: string }[],
+  lengths: number[],
+  pointsPerBatch = 20_000,
+  concurrency = 4,
+): Promise<TrackPoint[][]> {
+  const redis = await getRedis();
+  const out: TrackPoint[][] = pairs.map(() => []);
+  if (!redis || pairs.length === 0) return out;
+
+  const batches: number[][] = [];
+  let cur: number[] = [];
+  let curPoints = 0;
+  pairs.forEach((_, i) => {
+    const n = lengths[i] ?? 0;
+    if (n <= 0) return;
+    if (cur.length > 0 && (curPoints + n > pointsPerBatch || cur.length >= PIPELINE_CHUNK)) {
+      batches.push(cur);
+      cur = [];
+      curPoints = 0;
+    }
+    cur.push(i);
+    curPoints += n;
+  });
+  if (cur.length > 0) batches.push(cur);
+
+  const queue = [...batches];
+  async function worker() {
+    while (queue.length > 0) {
+      const batch = queue.shift()!;
+      const p = redis!.pipeline();
+      for (const i of batch) p.lrange(trackKey(pairs[i]!.tail, pairs[i]!.date), 0, -1);
+      const res = (await p.exec()) as unknown[];
+      batch.forEach((pairIdx, k) => {
+        const raw = Array.isArray(res[k]) ? (res[k] as unknown[]) : [];
+        out[pairIdx] = raw
+          .map((s) => safeParse(s))
+          .filter((pt): pt is TrackPoint => pt !== null);
+      });
+    }
   }
+  await Promise.all(Array.from({ length: Math.min(concurrency, batches.length) }, worker));
+  return out;
 }
 
 /**

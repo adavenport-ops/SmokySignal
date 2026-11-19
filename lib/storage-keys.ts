@@ -94,6 +94,15 @@ export function activityDedupeKey(
   return `${regionPrefix(region)}activity:dedupe:${tail.toUpperCase()}:${kind}`;
 }
 
+/**
+ * Permanent per-day activity archive: every event written to the capped,
+ * expiring activity:feed is also appended here, with NO TTL. Keyed by the
+ * UTC day of the event (same convention as tracks:{tail}:{YYYYMMDD}).
+ */
+export function activityDayKey(date: string, region?: Region): string {
+  return `${regionPrefix(region)}activity:day:${date}`;
+}
+
 // ─── dryrun-warnings:{YYYYMMDD} ──────────────────────────────────────
 // N1a dry-run log (app/api/dryrun-warnings). Not region-scoped: the
 // shape is byte-for-byte the literal the route used before this helper.
@@ -103,8 +112,8 @@ export function dryrunWarningsKey(date: string): string {
 }
 
 // ─── rollup:* ────────────────────────────────────────────────────────
-// Permanent daily flight rollup. Written by /api/cron/rollup with NO TTL:
-// this is the only history that outlives the 35-day tracks:* window.
+// Permanent daily flight rollup. Written by /api/cron/rollup with NO TTL.
+// (tracks:* has also been permanent since 2026-11-18.)
 // rollup:daily:{YYYYMMDD} → JSON DailyRollup (lib/rollup-core.ts)
 // rollup:index            → sorted set of YYYYMMDD members, score = Number(YYYYMMDD)
 export function rollupDailyKey(date: string, region?: Region): string {
