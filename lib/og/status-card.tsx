@@ -34,7 +34,7 @@ const TONE_COLOR: Record<CardTone, string> = {
   unknown: SS_TOKENS.fg1,
 };
 
-type OgFont = {
+export type OgFont = {
   name: string;
   data: ArrayBuffer;
   weight: 400 | 600 | 700 | 800;

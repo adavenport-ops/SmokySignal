@@ -92,7 +92,17 @@ test("buildRollupDoc: per-tail counts, airborne seconds, max alt, takeoff stamps
   assert.equal(t.max_alt_ft, 2500);
   assert.equal(t.first_takeoff_ts, a1);
   assert.equal(t.last_takeoff_ts, a2);
-  assert.deepEqual(Object.keys(t.sessions[0]!).sort(), ["duration_s", "end_ts", "max_alt_ft", "start_ts"]);
+  // Summary fields only, never points.
+  assert.deepEqual(Object.keys(t.sessions[0]!).sort(), [
+    "arr",
+    "corridors",
+    "dep",
+    "duration_s",
+    "end_ts",
+    "max_alt_ft",
+    "orbit_s",
+    "start_ts",
+  ]);
   assert.deepEqual(doc.totals, { flights: 2, airborne_s: 5400, max_alt_ft: 2500, tails_flown: 1 });
   // 17:00Z = 09:00 PST (30 min), 20:00Z = 12:00 PST (60 min)
   assert.equal(doc.pt_hour_minutes[9], 30);

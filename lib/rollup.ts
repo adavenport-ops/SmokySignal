@@ -14,6 +14,7 @@ import { rollupDailyKey, rollupIndexKey } from "./storage-keys";
 import {
   buildRollupDoc,
   planRollupDates,
+  rollupHasDetail,
   type DailyRollup,
 } from "./rollup-core";
 
@@ -94,6 +95,8 @@ function parseRollup(v: unknown): DailyRollup | null {
 
 export type RollupRunResult = {
   built: string[];
+  /** Older days rebuilt to add flight detail (departures, patterns). */
+  upgraded: string[];
   /** Days the deadline cut off; the next run picks them up. */
   remaining: string[];
 };
@@ -109,10 +112,21 @@ export async function runRollup(opts: {
   nowMs: number;
   deadlineMs: number;
 }): Promise<RollupRunResult> {
-  const indexed = new Set(await getRollupIndex());
+  const index = await getRollupIndex();
+  const indexed = new Set(index);
   const plan = planRollupDates(opts.nowMs, indexed, ROLLUP_BACKFILL_DAYS);
   const built: string[] = [];
+  const upgraded: string[] = [];
   const queue = [...plan];
+
+  // Docs written before flight detail existed get rebuilt from tracks,
+  // newest first, after the regular plan. Tracks are permanent now, but a
+  // day whose points were pruned under the old TTL would rebuild thinner
+  // than the stored doc; those keep the stored doc.
+  const planned = new Set(plan);
+  const stale = (await getRollups(index.filter((d) => !planned.has(d))))
+    .filter((d) => !rollupHasDetail(d))
+    .sort((a, b) => b.date.localeCompare(a.date));
 
   async function worker() {
     while (queue.length > 0 && Date.now() < opts.deadlineMs) {
@@ -121,8 +135,19 @@ export async function runRollup(opts: {
       await writeDailyRollup(doc);
       built.push(date);
     }
+    while (stale.length > 0 && Date.now() < opts.deadlineMs) {
+      const old = stale.shift()!;
+      const doc = await buildDailyRollup(old.date);
+      if (doc.sample_count < old.sample_count) continue;
+      await writeDailyRollup(doc);
+      upgraded.push(old.date);
+    }
   }
   await Promise.all(Array.from({ length: DAY_CONCURRENCY }, worker));
 
-  return { built: built.sort().reverse(), remaining: queue };
+  return {
+    built: built.sort().reverse(),
+    upgraded: upgraded.sort().reverse(),
+    remaining: [...queue, ...stale.map((d) => d.date)],
+  };
 }
