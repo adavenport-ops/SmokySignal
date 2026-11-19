@@ -670,6 +670,46 @@ test.describe("p14 live-prod audit", () => {
     });
   });
 
+  test("21. /stats renders the permanent rollup or its empty state, reachable from /about", async ({
+    page,
+  }) => {
+    await page.goto("/about", { waitUntil: "networkidle" });
+    const hubLink = await page
+      .locator('nav[aria-label="Site sections"] a[href="/stats"]')
+      .count();
+    const resp = await page.goto("/stats", { waitUntil: "networkidle" });
+    await page.waitForTimeout(800);
+    const screenshot = await shot(page, "21-stats");
+    const status = resp?.status() ?? 0;
+    const body = await page.locator("main").innerText();
+    const hasHeading = /How the bird flew\./.test(body);
+    const span = (
+      await page.locator('[data-testid="stats-span"]').innerText().catch(() => "")
+    ).trim();
+    // Either the empty state, or the data label + all four data sections.
+    const isEmpty = (await page.locator('[data-testid="stats-empty"]').count()) > 0;
+    const spanOk = isEmpty
+      ? /^0 days of data$/.test(span)
+      : /^\d+ days? of data since \d{4}-\d{2}-\d{2}$/.test(span);
+    const sections = await Promise.all(
+      ["stats-weekly", "stats-grid", "stats-tails"].map((id) =>
+        page.locator(`[data-testid="${id}"]`).count(),
+      ),
+    );
+    const dataOk = isEmpty || sections.every((n) => n > 0);
+    const noBang = !/[A-Za-z]!(\s|$)/.test(body);
+    const pass =
+      status === 200 && hubLink > 0 && hasHeading && spanOk && dataOk && noBang;
+    record({
+      claim:
+        "/stats returns 200, is linked from the /about hub, shows 'How the bird flew.', an 'N days of data since YYYY-MM-DD' label and the weekly / grid / per-tail sections (or the empty state before the first rollup)",
+      category: pass ? "working_as_designed" : status === 404 ? "unshipped" : "confirmed_bug",
+      pass,
+      evidence: `HTTP ${status}; hub link=${hubLink}; heading=${hasHeading}; span="${span}"; empty=${isEmpty}; sections=${sections.join("/")}; no-exclamation=${noBang}`,
+      screenshot,
+    });
+  });
+
   test("19. /api/health surfaces last_heartbeat fields (P22 5)", async ({
     request,
   }) => {
