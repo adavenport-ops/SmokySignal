@@ -59,6 +59,24 @@ export function organizationJsonLd(): JsonLdObject {
   };
 }
 
+/** /press: a WebPage about the project, published by the Organization. */
+export function pressPageJsonLd(): JsonLdObject {
+  const url = absUrl("/press");
+  return {
+    "@context": CONTEXT,
+    "@type": "WebPage",
+    "@id": url,
+    url,
+    name: "SmokySignal press kit",
+    description:
+      "Description, key facts, logos, screenshots, a 3D clip and citation guidance for writing about SmokySignal.",
+    inLanguage: "en-US",
+    isPartOf: { "@id": WEBSITE_ID },
+    about: { "@id": ORG_ID },
+    publisher: { "@id": ORG_ID },
+  };
+}
+
 export function faqPageJsonLd(entries: readonly FaqEntry[], path: string): JsonLdObject {
   return {
     "@context": CONTEXT,

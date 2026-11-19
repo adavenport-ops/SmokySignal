@@ -134,6 +134,7 @@ export const STATIC_ROUTES: readonly StaticRoute[] = [
   { path: "/embed/help", changeFrequency: "monthly", priority: 0.4 },
   { path: "/board", changeFrequency: "always", priority: 0.3 },
   { path: "/legal", changeFrequency: "monthly", priority: 0.3 },
+  { path: "/press", changeFrequency: "monthly", priority: 0.5 },
 ];
 
 /** Paths robots.txt keeps crawlers out of. */

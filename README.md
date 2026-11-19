@@ -1,26 +1,56 @@
-# Handoff: SmokySignal
+# SmokySignal
 
-A web app + PWA that helps motorcyclists in the Puget Sound region know in real time whether **Smoky** (WSP airplane N907SP) or one of its sibling traffic-enforcement aircraft is airborne, where it's circling, and whether the rider is currently speeding inside one of its known patrol zones.
+[![SmokySignal 3D flight replay: a real flight path over terrain](public/blog/media/2026-11-19-the-big-update/hero-3d.jpg)](https://www.smokysignal.app/blog/2026-11-19-the-big-update)
 
-This bundle contains **design references** — interactive HTML prototypes that show intended look, behavior, and information architecture. **They are not production code to copy directly.** Recreate them in a real codebase using the stack described below.
+**Is Smokey up?** A live tracker for Washington State Patrol and county sheriff
+aircraft, built on public ADS-B, with 3D replays and an open flight-hours dataset.
 
----
+Live: **https://www.smokysignal.app** · Press kit: [/press](https://www.smokysignal.app/press) · Data: [/data](https://www.smokysignal.app/data)
 
-## What's in this bundle
+The hero image above is the launch post's 3D poster, served from
+`public/blog/media/2026-11-19-the-big-update/`.
 
-```
-design_handoff_smokysignal/
-├── README.md                ← you are here
-├── design/
-│   ├── SmokySignal.html     ← entry point — open this in a browser
-│   ├── data.jsx             ← mock aircraft + tail registry + activity feed
-│   ├── ui.jsx               ← shared primitives (StatusPill, PhoneFrame, Speedometer…)
-│   ├── map.jsx              ← stylized SVG radar
-│   ├── screens.jsx          ← all screens (3 home variants + 4 supporting)
-│   └── tail-numbers-source-photo.jpg  ← rider's printed tail-number list (scan this)
-```
+## Features
 
-Open `design/SmokySignal.html` in any modern browser. Use the **Tweaks** toggle in the toolbar to flip Smoky airborne/grounded and adjust rider speed/limit live.
+- One-glance status: up, down, or the feed is quiet. Never "down" on a dead feed.
+- Live radar and a History mode that draws a month of routes.
+- 3D flight replays at true altitude, with an Orbit control.
+- A permanent flight log: flights, hours aloft, busiest day and hour, per tail and per road corridor.
+- "What flew over?": pick a place and a time, see what passed and how close.
+- A sourced registry of every tracked aircraft, grouped by mission, each fact with its source.
+- Open data: monthly flight hours by tail and mission as CSV, ODbL 1.0.
+- Alerts by web push, Telegram, Discord or webhook. Optional foreground speed warning.
+- Handlebar glance view, a shop-TV board (`/board`), an embeddable widget, a status badge, RSS and calendar feeds.
+- A weekly "when the bird flew" blog post, a press kit (`/press`) and a printable shop poster (`/poster`).
+
+## Stack
+
+Next.js 14 (App Router) and React 18 on Vercel, TypeScript, Tailwind CSS.
+MapLibre GL for the radar and deck.gl for the 3D view. Upstash Redis (Vercel KV)
+for snapshots, tracks and rollups. Web Push (VAPID). `node:test` for unit tests,
+Playwright for the visual and live-prod audits. Architecture notes are in
+[AGENTS.md](AGENTS.md); brand voice is in [design/BRAND.md](design/BRAND.md).
+
+## Data sources and licences
+
+- Positions: public ADS-B from [adsb.fi](https://adsb.fi) and
+  [adsb.lol](https://adsb.lol), merged by aircraft. adsb.lol data is under the
+  Open Database License.
+- Registry: FAA registry, agency pages and local reporting; each entry says
+  which and how sure.
+- The flight-hours dataset is published under
+  [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/). Cite it as:
+  "Source: SmokySignal (smokysignal.app), built on public ADS-B from adsb.fi and adsb.lol (ODbL)".
+- Basemap tiles: MapTiler, with OpenStreetMap data.
+
+## Privacy
+
+No accounts. Location and speed stay on the device. The only server-side
+identifier is a push subscription endpoint, kept only if a rider opts in.
+Geolocation is browser-only and never persisted. Full data flow on
+[/legal](https://www.smokysignal.app/legal).
+
+A hobby project, not affiliated with WSP or any other agency.
 
 ---
 
@@ -66,6 +96,12 @@ rules (hard) live in `design/BRAND.md`. Both docs are load-bearing — read
 once at the start of any meaningful contribution.
 
 ---
+
+---
+
+## Design handoff notes (original brief, historical)
+
+The notes below are the original design handoff and predate the rebuild. Where they differ from the code or from AGENTS.md, the code and AGENTS.md win.
 
 ## Fidelity
 

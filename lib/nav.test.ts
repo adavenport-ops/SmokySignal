@@ -46,7 +46,7 @@ test("each section carries the pages the owner asked for, in order", () => {
     "/feed.xml",
   ]);
   assert.deepStrictEqual(byId.modes, ["/glance", "/board"]);
-  assert.deepStrictEqual(byId.about, ["/program", "/blog", "/help", "/legal", "/settings"]);
+  assert.deepStrictEqual(byId.about, ["/program", "/blog", "/press", "/help", "/legal", "/settings"]);
 });
 
 test("ids are unique and every label is free of emoji and exclamation marks", () => {

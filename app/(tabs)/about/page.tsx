@@ -98,6 +98,23 @@ export default async function AboutPage() {
 
       <EmbedBadgeCallout />
 
+      <section style={CALLOUT} data-testid="about-press">
+        <div className="ss-eyebrow" style={{ marginBottom: 8 }}>
+          Press
+        </div>
+        <p style={BODY}>
+          Writing about SmokySignal? The{" "}
+          <Link href="/press" style={INLINE_LINK}>
+            press kit
+          </Link>{" "}
+          has logos, screenshots, key facts and how to cite the open data. Printing a sheet for the shop? Try the{" "}
+          <Link href="/poster" style={INLINE_LINK}>
+            poster
+          </Link>
+          .
+        </p>
+      </section>
+
       <Section eyebrow="Data sources">
         <p style={BODY}>
           Positions come from the public ADS-B network:{" "}
