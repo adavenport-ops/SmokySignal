@@ -212,7 +212,9 @@ export function pageIssues(path: string, status: number, f: PageFacts | null, ex
   else {
     if (f.title.length > TITLE_MAX) out.push({ severity: "P1", code: "title-long", detail: `${f.title.length} chars` });
     if (f.title.length < TITLE_MIN) out.push({ severity: "P1", code: "title-short", detail: `${f.title.length} chars` });
-    if (/SmokySignal.*·.*SmokySignal/.test(f.title)) out.push({ severity: "P1", code: "title-double-brand", detail: f.title });
+    // Brand both as the page's own prefix and as the template suffix
+    // (a post titled "SmokySignal, rebuilt…" is fine).
+    if (/^SmokySignal\s*·.*·\s*SmokySignal$|·\s*SmokySignal\s*·\s*SmokySignal$/.test(f.title)) out.push({ severity: "P1", code: "title-double-brand", detail: f.title });
   }
   if (f.titleCount > 1) out.push({ severity: "P1", code: "title-multiple", detail: `${f.titleCount} <title> tags` });
   if (!f.description) out.push({ severity: "P0", code: "description-missing", detail: "" });

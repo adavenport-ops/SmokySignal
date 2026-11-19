@@ -12,6 +12,7 @@ import { FLEET, fleetHex } from "../seed";
 import { CORRIDORS } from "../corridor";
 import { LOG_START_DATE } from "../rollup-sessions";
 import { PROGRAM_FAQ, helpFaq } from "./faq";
+import { fillHelpPlaceholders } from "./facts";
 import {
   CSV_PATH,
   ODBL_URL,
@@ -83,7 +84,7 @@ test("FAQPage from /program: one Question per entry, answers non-empty", () => {
 });
 
 test("FAQPage from content/help.md parses and validates", () => {
-  const md = fs.readFileSync(path.join(process.cwd(), "content", "help.md"), "utf8").replace(/\{\{TAIL_COUNT\}\}/g, "58");
+  const md = fillHelpPlaceholders(fs.readFileSync(path.join(process.cwd(), "content", "help.md"), "utf8"), FLEET);
   const faq = helpFaq(md);
   assert.ok(faq.length >= 5, `expected at least 5 help Q&A, got ${faq.length}`);
   const o = roundTrip(faqPageJsonLd(faq, "/help"));
@@ -193,4 +194,17 @@ test("serializer escapes markup characters", () => {
   const text = serializeJsonLd({ "@context": "https://schema.org", "@type": "Thing", name: "</script><b>&" });
   assert.ok(!/[<>&]/.test(text));
   assert.equal(JSON.parse(text).name, "</script><b>&");
+});
+
+test("an Article whose mainEntityOfPage is a typed @id reference validates", () => {
+  const article = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: "h",
+    datePublished: "2026-11-19T20:00:00.000Z",
+    author: { "@type": "Organization", name: "SmokySignal" },
+    mainEntityOfPage: { "@type": "WebPage", "@id": "https://www.smokysignal.app/blog/x" },
+  };
+  assert.deepEqual(validateJsonLd(article), []);
+  assert.ok(validateJsonLd({ ...article, headline: "" }).some((e) => e.includes("headline")));
 });

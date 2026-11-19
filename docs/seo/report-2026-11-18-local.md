@@ -1,23 +1,23 @@
 # SEO audit 2026-11-18
 
-Base: http://localhost:3000 · 86 pages crawled (86 in sitemap) · 2 s
+Base: http://localhost:3000 · 89 pages crawled (89 in sitemap) · 1 s
 
 | P0 | P1 | P2 | JSON-LD pages | Canonical pages | Duplicate titles | Broken links | Links checked |
 |---|---|---|---|---|---|---|---|
-| 0 | 0 | 10 | 74 | 86 | 0 | 0 | 99 |
+| 0 | 0 | 12 | 75 | 88 | 0 | 0 | 106 |
 
 ## Site checks
 
 | Check | Result | Detail |
 |---|---|---|
 | robots.txt | pass | HTTP 200 |
-| robots.txt references the sitemap | pass | https://www.smokysignal.app/sitemap.xml |
+| robots.txt references the sitemap | pass | https://www.smokysignal.app/sitemap.xml, https://www.smokysignal.app/blog/feed.xml |
 | robots.txt disallows /admin | pass |  |
 | AI crawlers allowed | pass | GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-SearchBot, Claude-User, PerplexityBot, Perplexity-User, Google-Extended, CCBot, Applebot-Extended |
 | / crawlable | pass |  |
-| sitemap.xml | pass | HTTP 200, 86 URLs |
-| llms.txt | pass | HTTP 200, 9615 bytes |
-| llms-full.txt | pass | HTTP 200, 26028 bytes |
+| sitemap.xml | pass | HTTP 200, 89 URLs |
+| llms.txt | pass | HTTP 200, 10054 bytes |
+| llms-full.txt | pass | HTTP 200, 26462 bytes |
 | unknown URL returns 404 | pass | HTTP 404 |
 | unknown tail returns 404 | pass | HTTP 404 |
 | sitemap lists /plane/N305DK | pass |  |
@@ -27,8 +27,8 @@ Base: http://localhost:3000 · 86 pages crawled (86 in sitemap) · 2 s
 
 | Path | Status | Title (len) | Desc len | Canonical | H1 | JSON-LD | OG image | Words | Noindex | Issues |
 |---|---|---|---|---|---|---|---|---|---|---|
-| / | 200 | SmokySignal · Live Washington State Patrol aircraft tracker (59) | 161 | yes | 1 | WebSite, Organization | 200 | 125 |  |  |
-| /radar | 200 | Radar: live map of patrol aircraft over Washington · SmokySignal (64) | 153 | yes | 1 | - | 200 | 51 |  | P2 thin |
+| / | 200 | SmokySignal · Live Washington State Patrol aircraft tracker (59) | 161 | yes | 1 | WebSite, Organization | 200 | 124 |  |  |
+| /radar | 200 | Radar: live map of patrol aircraft over Washington · SmokySignal (64) | 153 | yes | 1 | - | 200 | 52 |  | P2 thin |
 | /flights | 200 | Flights: patrol aircraft up now and recent takeoffs · SmokySignal (65) | 149 | yes | 1 | - | 200 | 50 |  | P2 thin |
 | /circling | 200 | What's that plane circling over Tacoma? · SmokySignal (53) | 150 | yes | 1 | - | 200 | 294 |  |  |
 | /seen | 200 | Was that the plane I saw? · SmokySignal (39) | 134 | yes | 1 | - | 200 | 248 |  |  |
@@ -37,13 +37,14 @@ Base: http://localhost:3000 · 86 pages crawled (86 in sitemap) · 2 s
 | /road | 200 | Road history: flights over I-5, I-405 and SR-512 · SmokySignal (62) | 142 | yes | 1 | - | 200 | 175 |  |  |
 | /forecast | 200 | Forecast: when the WSP plane usually flies · SmokySignal (56) | 126 | yes | 1 | - | 200 | 151 |  |  |
 | /stats | 200 | Stats: daily flight hours for every tracked tail · SmokySignal (62) | 123 | yes | 1 | - | 200 | 92 |  | P2 thin |
-| /data | 200 | Data and CSV: open flight-hours dataset · SmokySignal (53) | 134 | yes | 1 | Dataset, BreadcrumbList | 200 | 289 |  |  |
-| /about | 200 | About: key facts, tools and open data · SmokySignal (51) | 144 | yes | 1 | Organization | 200 | 595 |  |  |
-| /help | 200 | Help: reading the screens, alerts and data · SmokySignal (56) | 142 | yes | 1 | FAQPage, BreadcrumbList | 200 | 2858 |  |  |
+| /data | 200 | Data and CSV: open flight-hours dataset · SmokySignal (53) | 134 | yes | 1 | Dataset, BreadcrumbList | 200 | 285 |  |  |
+| /about | 200 | About: key facts, tools and open data · SmokySignal (51) | 144 | yes | 1 | Organization | 200 | 599 |  |  |
+| /help | 200 | Help: reading the screens, alerts and data · SmokySignal (56) | 142 | yes | 1 | FAQPage, BreadcrumbList | 200 | 3357 |  |  |
+| /blog | 200 | Blog · SmokySignal (18) | 68 | yes | 1 | - | 200 | 81 |  | P2 description-short; P2 thin |
 | /relay | 200 | Discord and webhooks: Smokey takeoff posts · SmokySignal (56) | 109 | yes | 1 | - | 200 | 479 |  |  |
 | /embed/help | 200 | Embed the status widget on your site · SmokySignal (50) | 103 | yes | 1 | - | 200 | 286 |  |  |
 | /board | 200 | Shop board: a departures board for the shop TV · SmokySignal (60) | 98 | yes | 1 | - | 200 | 40 |  | P2 thin |
-| /legal | 200 | Legal: privacy, disclaimers and data attribution · SmokySignal (62) | 128 | yes | 1 | - | 200 | 451 |  |  |
+| /legal | 200 | Legal: privacy, disclaimers and data attribution · SmokySignal (62) | 126 | yes | 1 | - | 200 | 443 |  |  |
 | /plane/N305DK | 200 | N305DK "Smokey 4": WSP Cessna 206H Stationair · SmokySignal (59) | 155 | yes | 1 | WebPage, BreadcrumbList | 200 | 131 |  |  |
 | /plane/N2446X | 200 | N2446X "Smokey 3": WSP Cessna 206H Stationair · SmokySignal (59) | 155 | yes | 1 | WebPage, BreadcrumbList | 200 | 131 |  |  |
 | /plane/N646JS | 200 | N646JS: WSP Cessna T206H Stationair · SmokySignal (49) | 156 | yes | 1 | WebPage, BreadcrumbList | 200 | 127 |  |  |
@@ -113,9 +114,13 @@ Base: http://localhost:3000 · 86 pages crawled (86 in sitemap) · 2 s
 | /road/sr-18 | 200 | Planes over SR-18, Federal Way to Snoqualmie · SmokySignal (58) | 129 | yes | 1 | WebPage, BreadcrumbList | 200 | 214 |  |  |
 | /road/us-101-hood-canal | 200 | Planes over US-101, Olympia to Discovery Bay · SmokySignal (58) | 129 | yes | 1 | WebPage, BreadcrumbList | 200 | 217 |  |  |
 | /wrap/2026 | 200 | 2026 season wrap: how the patrol aircraft flew · SmokySignal (60) | 134 | yes | 1 | BreadcrumbList | 200 | 121 |  |  |
+| /blog/feed.xml | 200 | - (0) | 0 | no | 0 | - | - | 0 |  |  |
+| /blog/2026-11-19-the-big-update | 200 | SmokySignal, rebuilt: what's new · SmokySignal (46) | 110 | yes | 1 | Article | 200 | 1166 |  |  |
 
 ## Issues
 
+- P2 `/blog` description-short: 68 chars
+- P2 `/blog` thin: 81 words
 - P2 `/board` thin: 40 words
 - P2 `/flights` thin: 50 words
 - P2 `/plane/N357PN` thin: 115 words
@@ -124,7 +129,7 @@ Base: http://localhost:3000 · 86 pages crawled (86 in sitemap) · 2 s
 - P2 `/plane/N78906` thin: 118 words
 - P2 `/plane/N911MR` thin: 118 words
 - P2 `/plane/N911PR` thin: 118 words
-- P2 `/radar` thin: 51 words
+- P2 `/radar` thin: 52 words
 - P2 `/stats` thin: 92 words
 
 ## Broken internal links

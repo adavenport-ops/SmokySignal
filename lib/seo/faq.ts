@@ -105,7 +105,7 @@ const HELP_HEADING_QUESTIONS: Record<string, string> = {
   "Push notifications": "How do SmokySignal push alerts work?",
 };
 
-/** FAQ entries from content/help.md (after {{TAIL_COUNT}} substitution). */
+/** FAQ entries from content/help.md (after fillHelpPlaceholders()). */
 export function helpFaq(md: string): FaqEntry[] {
   const out: FaqEntry[] = [];
   for (const s of sections(md)) {

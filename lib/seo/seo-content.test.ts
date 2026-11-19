@@ -11,10 +11,10 @@ import path from "node:path";
 import { FLEET } from "../seed";
 import { CORRIDORS } from "../corridor";
 import type { FleetEntry } from "../types";
-import { fleetStats, joinAnd, keyFacts } from "./facts";
+import { fillHelpPlaceholders, fleetStats, joinAnd, keyFacts } from "./facts";
 import { PROGRAM_FAQ, helpFaq, stripInlineMarkdown } from "./faq";
 import { buildLlmsFullTxt, buildLlmsTxt } from "./llms";
-import { MAX_FLIGHT_URLS, blogSlug, buildSitemap, frontMatterDate } from "./sitemap-core";
+import { MAX_FLIGHT_URLS, buildSitemap } from "./sitemap-core";
 import { ROBOTS_DISALLOW, STATIC_ROUTES, pageMeta } from "./site";
 
 const BANNED_VISIBLE = ["police", "cop", "law enforcement", "drone", "surveilling", "snitch", "evade"];
@@ -128,10 +128,16 @@ test("llms.txt: H1, summary blockquote, counts, sections, endpoints", () => {
   assert.ok(txt.includes("https://www.smokysignal.app/api/status.json"));
   assert.ok(txt.includes("ODbL"));
   assert.ok(!/[A-Za-z]!(\s|$)/.test(txt), "no exclamation marks");
+  assert.ok(!/opensky/i.test(txt), "OpenSky is gone; adsb.fi and adsb.lol only");
+  assert.ok(txt.includes("https://www.smokysignal.app/blog/feed.xml"));
+  const withPosts = buildLlmsTxt(FLEET, [{ slug: "2026-11-19-x", title: "T", date: "2026-11-19", summary: "S." }]);
+  assert.ok(withPosts.includes("## Blog posts"));
+  assert.ok(withPosts.includes("https://www.smokysignal.app/blog/2026-11-19-x"));
 });
 
 test("llms-full.txt: every tail and every corridor", () => {
   const txt = buildLlmsFullTxt(FLEET, CORRIDORS, PROGRAM_FAQ);
+  assert.ok(!/opensky/i.test(txt));
   for (const f of FLEET) assert.ok(txt.includes(`| ${f.tail} |`), f.tail);
   for (const c of CORRIDORS) assert.ok(txt.includes(`/road/${c.id})`), c.id);
   assert.ok(txt.includes("## Aircraft registry"));
@@ -164,26 +170,24 @@ test("sitemap: static, tails, roads, wraps, blog, capped flights, lastModified e
   assert.ok(urls.includes("https://www.smokysignal.app/wrap/2026"));
   assert.ok(urls.includes("https://www.smokysignal.app/blog"));
   assert.ok(urls.includes("https://www.smokysignal.app/blog/first-post"));
+  assert.ok(urls.includes("https://www.smokysignal.app/blog/feed.xml"));
+  assert.equal(
+    (map.find((e) => e.url === "https://www.smokysignal.app/blog")!.lastModified as Date).toISOString().slice(0, 10),
+    "2026-11-01",
+    "/blog is as fresh as its newest post",
+  );
   assert.ok(urls.filter((u) => u.includes("/flight/")).length <= MAX_FLIGHT_URLS);
   assert.ok(map.every((e) => e.lastModified instanceof Date), "every entry has lastModified");
   for (const d of ROBOTS_DISALLOW) assert.ok(!urls.some((u) => new URL(u).pathname === d), `${d} must not be listed`);
 });
 
-test("sitemap without a blog or KV still lists the core URLs", () => {
+test("sitemap without posts or KV still lists the core URLs", () => {
   const now = new Date();
   const map = buildSitemap({ now, builtAt: now, tails: ["N305DK"], corridorIds: ["i-5"], wrapYears: [2026], blog: null, sessions: [] });
   const urls = map.map((e) => e.url);
-  assert.ok(!urls.some((u) => u.includes("/blog")));
+  assert.ok(urls.includes("https://www.smokysignal.app/blog"), "the blog index is a static route");
+  assert.ok(!urls.some((u) => u.includes("/blog/")), "no posts, no feed");
   assert.ok(urls.includes("https://www.smokysignal.app/plane/N305DK"));
-});
-
-test("blog slug and front matter", () => {
-  assert.equal(blogSlug("Hello-World.md"), "hello-world");
-  assert.equal(blogSlug("_draft.md"), null);
-  assert.equal(blogSlug("notes.txt"), null);
-  assert.equal(frontMatterDate("---\ntitle: x\ndate: 2026-11-02\n---\nbody")?.toISOString().slice(0, 10), "2026-11-02");
-  assert.equal(frontMatterDate("---\ndate: 2026-11-02\nupdated: 2026-11-09\n---")?.toISOString().slice(0, 10), "2026-11-09");
-  assert.equal(frontMatterDate("no front matter"), null);
 });
 
 test("pageMeta: canonical, og, twitter agree; noindex flag; default image", () => {
@@ -197,4 +201,18 @@ test("pageMeta: canonical, og, twitter agree; noindex flag; default image", () =
   const inherit = pageMeta({ title: "t", description: "d", path: "/", inheritImage: true, absoluteTitle: true });
   assert.equal((inherit.openGraph as { images?: unknown }).images, undefined);
   assert.deepEqual(inherit.title, { absolute: "t" });
+});
+
+test("content/help.md matches the registry: placeholders fill, no stale fleet lines", () => {
+  const raw = fs.readFileSync(path.join(process.cwd(), "content", "help.md"), "utf8");
+  const md = fillHelpPlaceholders(raw, FLEET);
+  assert.ok(!/\{\{[A-Z_]+\}\}/.test(md), "every placeholder filled");
+  assert.ok(!/USCG/.test(md), "USCG left the registry");
+  assert.ok(!/five of these|WSP runs five/i.test(md), "WSP count comes from the registry");
+  assert.ok(!/opensky/i.test(md));
+  const s = fleetStats(FLEET);
+  assert.ok(md.includes(`**SMOKEY** — ${s.smokey} patrol aircraft. ${s.wsp} are WSP Cessnas`));
+  assert.ok(md.includes(`We track ${s.total} aircraft from ${s.agencies} agencies`));
+  const wspModels = FLEET.filter((f) => f.operator === "WSP" && f.role === "police").map((f) => f.model);
+  assert.ok(wspModels.every((m) => m.startsWith("Cessna")), "help.md calls the WSP patrol fleet Cessnas");
 });

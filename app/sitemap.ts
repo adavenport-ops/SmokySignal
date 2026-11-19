@@ -1,5 +1,5 @@
 // /sitemap.xml: static pages, one page per tail and per corridor, the
-// season wraps, blog posts when content/blog exists, and up to 500 flight
+// season wraps, the blog (index, every post, its Atom feed), and up to 500 flight
 // share pages from the last 30 days. Regenerated hourly.
 //
 // Flights come from the same history pipeline as GET /api/history
@@ -8,8 +8,6 @@
 // being reachable. A range too large for one read falls back to a
 // shorter window; no KV means no flight URLs, never an error.
 
-import fs from "node:fs/promises";
-import path from "node:path";
 import type { MetadataRoute } from "next";
 import { unstable_cache } from "next/cache";
 import { getRegistry } from "@/lib/registry";
@@ -19,13 +17,9 @@ import { loadHistory } from "@/lib/history";
 import { parseHistoryQuery } from "@/lib/history-core";
 import { formatTs } from "@/lib/time";
 import { FIRST_WRAP_YEAR, currentWrapYear } from "@/lib/wrap";
-import {
-  blogSlug,
-  buildSitemap,
-  frontMatterDate,
-  type BlogPost,
-  type SitemapSession,
-} from "@/lib/seo/sitemap-core";
+import { getAllPosts } from "@/lib/blog";
+import { postTimestamp } from "@/lib/blog-core";
+import { buildSitemap, type BlogPost, type SitemapSession } from "@/lib/seo/sitemap-core";
 
 export const revalidate = 3600;
 
@@ -54,27 +48,14 @@ async function recentSessions(): Promise<SitemapSession[]> {
 
 const cachedSessions = unstable_cache(recentSessions, ["sitemap-sessions-v1"], { revalidate: 3600 });
 
-async function blogPosts(): Promise<BlogPost[] | null> {
-  const dir = path.join(process.cwd(), "content", "blog");
-  let names: string[];
+/** The blog's own loader (lib/blog.ts), so slugs always match its routes. */
+function blogPosts(): BlogPost[] | null {
   try {
-    names = await fs.readdir(dir);
-  } catch {
-    return null; // no blog on this deployment yet
+    return getAllPosts().map((p) => ({ slug: p.slug, lastModified: new Date(postTimestamp(p.date)) }));
+  } catch (e) {
+    console.warn("[sitemap] blog read failed:", e);
+    return null;
   }
-  const posts: BlogPost[] = [];
-  for (const name of names.sort()) {
-    const slug = blogSlug(name);
-    if (!slug) continue;
-    try {
-      const md = await fs.readFile(path.join(dir, name), "utf8");
-      if (/^---\n[\s\S]*?^draft:\s*true\s*$[\s\S]*?\n---/m.test(md)) continue;
-      posts.push({ slug, lastModified: frontMatterDate(md) });
-    } catch {
-      /* unreadable post: skip */
-    }
-  }
-  return posts;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

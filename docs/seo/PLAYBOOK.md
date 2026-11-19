@@ -9,12 +9,12 @@ checks, and how to add metadata when you ship a page.
 | Surface | Source | Notes |
 |---|---|---|
 | Titles, descriptions, canonicals, Open Graph, Twitter cards | `pageMeta()` in `lib/seo/site.ts`, called from each page's `metadata` / `generateMetadata` | Root template adds ` · SmokySignal`; never put the brand in the page title too. |
-| Sitemap | `app/sitemap.ts` + `lib/seo/sitemap-core.ts` | Static routes (`STATIC_ROUTES`), every `/plane/[tail]`, every `/road/[id]`, `/wrap/[year]`, `/blog/*` when `content/blog` exists, up to 500 `/flight/*` pages from the last 30 days. Hourly. |
-| robots.txt | `app/robots.ts` | Disallows `/admin`, `/api/admin`, `/relay/manage`, `/embed` (but allows `/embed/help`), `/qa-dashboard`. Names the AI crawlers explicitly as allowed. |
+| Sitemap | `app/sitemap.ts` + `lib/seo/sitemap-core.ts` | Static routes (`STATIC_ROUTES`), every `/plane/[tail]`, every `/road/[id]`, `/wrap/[year]`, `/blog`, every `/blog/[slug]` post (read through `lib/blog.ts`) and `/blog/feed.xml`, up to 500 `/flight/*` pages from the last 30 days. Hourly. |
+| robots.txt | `app/robots.ts` | Disallows `/admin`, `/api/admin`, `/relay/manage`, `/embed` (but allows `/embed/help`), `/qa-dashboard`. Names the AI crawlers explicitly as allowed. Lists `/blog/feed.xml` as a second sitemap. |
 | Structured data | `lib/seo/jsonld.ts` builders, rendered by `components/JsonLd.tsx` | `type="application/ld+json"`, never executed, so the CSP is untouched. Validated by `validateJsonLd()` in tests and in the audit. |
-| llms.txt / llms-full.txt | `app/llms.txt/route.ts`, `app/llms-full.txt/route.ts`, `lib/seo/llms.ts` | Counts come from the registry. llms-full adds the registry table, corridors and the FAQ. |
+| llms.txt / llms-full.txt | `app/llms.txt/route.ts`, `app/llms-full.txt/route.ts`, `lib/seo/llms.ts` | Counts come from the registry. Lists the newest blog posts. llms-full adds every post, the registry table, corridors and the FAQ. Sources are adsb.fi and adsb.lol only. |
 | Key facts | `lib/seo/facts.ts`, `components/KeyFacts.tsx` | On `/program` and `/about`; the first two facts also sit under the status on `/`. Computed from the registry, never hardcoded. |
-| FAQ content | `lib/seo/faq.ts` | `/program` answers are lifted verbatim from the page (a test fails if one drifts); `/help` is parsed from `content/help.md`. |
+| FAQ content | `lib/seo/faq.ts` | `/program` answers are lifted verbatim from the page (a test fails if one drifts); `/help` is parsed from `content/help.md`, whose fleet numbers are `{{PLACEHOLDERS}}` filled by `fillHelpPlaceholders()` (`lib/seo/facts.ts`). |
 
 Structured data by route:
 
@@ -29,6 +29,7 @@ Structured data by route:
 | `/road/[id]` | WebPage about a Place with a GeoShape line, BreadcrumbList |
 | `/flight/[tail]/[id]` | WebPage with dateCreated, about the airframe, BreadcrumbList |
 | `/wrap/[year]` | BreadcrumbList |
+| `/blog/[slug]` | Article, owned by the blog (`lib/blog-core.ts` `articleJsonLd`). The SEO layer adds nothing there, so there is one Article per post. |
 
 No SearchAction: there is no search results route. Add one to
 `websiteJsonLd()` only when a URL like `/search?q=` exists.

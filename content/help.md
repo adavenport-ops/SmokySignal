@@ -6,19 +6,19 @@ A short tour of what SmokySignal shows you, where the data comes from, what you 
 
 SmokySignal is a situational-awareness tool for motorcyclists in Washington state. It tells you, in one glance, whether a known traffic-enforcement aircraft is up and roughly where it's working. The point is to be informed, not to dodge — knowing the bird is up is the same as seeing a marked patrol car ahead. Ride within the limit and ride well.
 
-We track {{TAIL_COUNT}} fixed-wing planes and rotorcraft across WSP, KCSO, Pierce SO, Snohomish SO, Spokane SO, State of WA, CBP, and USCG. The full list is on [All aircraft](/aircraft).
+We track {{TAIL_COUNT}} aircraft from {{AGENCY_COUNT}} agencies: WSP, the {{SHERIFF_COUNTIES}} county sheriffs, Oregon and Idaho units that cross the line on mutual aid, U.S. Customs and Border Protection, the state's wildfire crews and a Fish and Wildlife survey plane. The full list is on [All aircraft](/aircraft).
 
 ## Status tiers
 
-SmokySignal tracks the law-enforcement aircraft over Washington. Anything in the air with an enforcement mission reads as "Smokey" — that's the umbrella. Underneath, we keep four backend roles so plane-detail pages can tell you exactly what airframe is up.
+Only one class flips the pill: **Smokey**, the patrol aircraft. Every other class stays green with a footnote. Each tail carries a mission class, so its page tells you what's up.
 
-**SMOKEY (speed enforcement)** — fixed-wing planes, usually Cessnas with FLIR cameras, used for clocking speed from the air. WSP runs five of these. Pierce SO runs one. Pill: SMOKEY UP. Headline: "Smokey's up."
+**SMOKEY** — {{SMOKEY_COUNT}} patrol aircraft. {{WSP_COUNT}} are WSP Cessnas out of Olympia, the 206s fitted with FLIR cameras for clocking speed from the air. {{SHERIFF_COUNT}} belong to county sheriffs, mostly rotorcraft that may be on traffic, a pursuit or a search. {{MUTUAL_AID_COUNT}} are Oregon and Idaho mutual-aid units, counted only once they're over Washington. Pill: SMOKEY UP. Headline: "Smokey's up."
 
-**SMOKEY (patrol rotorcraft)** — county sheriff rotorcraft that may be doing traffic, pursuit, or SAR. Same SMOKEY UP pill. Body text still says "patrol rotorcraft" so you know the airframe.
+**FEDERAL** — Customs and Border Protection, out of Bellingham and Spokane. Border work, not traffic. Status stays green.
 
-**SAR** (search and rescue) — Hueys and similar. Almost always responding to a rescue, not enforcement. Status stays green; we just note the rescue in a footnote.
+**WILDFIRE**, **SURVEY** and **TRANSPORT** — DNR and fire-district crews on fire duty, Fish and Wildlife survey flights, and the WSP-flown King Air. Status stays green.
 
-**TRANSPORT** — state aircraft used for executive transport or aerial photography. Status stays green.
+**SEARCH & RESCUE** and **MEDEVAC** — rescue runs and air ambulances. Sheriff rotorcraft that also fly rescues stay Smokey. Status stays green.
 
 Roles are best-guess from public records. The admin tail editor lets us refine them as we learn. A "(tentative)" suffix on the badge means we're not 100% certain about the classification yet.
 

@@ -17,7 +17,7 @@ export type SitemapInput = {
   tails: readonly string[];
   corridorIds: readonly string[];
   wrapYears: readonly number[];
-  /** null when content/blog does not exist on this deployment. */
+  /** Posts from lib/blog.ts; null or empty leaves the blog out. */
   blog: readonly BlogPost[] | null;
   /** Flight sessions from the last 30 days, any order. */
   sessions: readonly SitemapSession[];
@@ -70,7 +70,10 @@ export function buildSitemap(input: SitemapInput): MetadataRoute.Sitemap {
       (m, p) => (p.lastModified && (!m || p.lastModified > m) ? p.lastModified : m),
       null,
     );
-    out.push({ url: absUrl("/blog"), lastModified: newest ?? input.builtAt, changeFrequency: "weekly", priority: 0.6 });
+    // /blog itself is a static route; it is as fresh as its newest post.
+    const index = out.find((e) => e.url === absUrl("/blog"));
+    if (index && newest) index.lastModified = newest;
+    out.push({ url: absUrl("/blog/feed.xml"), lastModified: newest ?? input.builtAt, changeFrequency: "weekly", priority: 0.3 });
     for (const p of input.blog) {
       out.push({
         url: absUrl(`/blog/${p.slug}`),
@@ -93,22 +96,4 @@ export function buildSitemap(input: SitemapInput): MetadataRoute.Sitemap {
   }
 
   return out;
-}
-
-/** "my-post.md" → "my-post"; null for anything that is not a post file. */
-export function blogSlug(filename: string): string | null {
-  const m = /^([a-z0-9][a-z0-9-]*)\.mdx?$/i.exec(filename);
-  if (!m || filename.startsWith("_")) return null;
-  return m[1]!.toLowerCase();
-}
-
-/** The `date:` / `updated:` front-matter value of a Markdown post, if any. */
-export function frontMatterDate(md: string): Date | null {
-  const fm = /^---\n([\s\S]*?)\n---/.exec(md);
-  if (!fm) return null;
-  const pick = (key: string) => new RegExp(`^${key}:\\s*["']?([0-9]{4}-[0-9]{2}-[0-9]{2}[^"'\\n]*)`, "m").exec(fm[1]!)?.[1];
-  const raw = pick("updated") ?? pick("date");
-  if (!raw) return null;
-  const d = new Date(raw);
-  return Number.isNaN(d.getTime()) ? null : d;
 }

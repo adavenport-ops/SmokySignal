@@ -2,17 +2,17 @@
   "summary": {
     "base": "http://localhost:3000",
     "date": "2026-11-18",
-    "durationS": 2,
-    "pages": 86,
-    "sitemapUrls": 86,
+    "durationS": 1,
+    "pages": 89,
+    "sitemapUrls": 89,
     "p0": 0,
     "p1": 0,
-    "p2": 10,
-    "pagesWithJsonLd": 74,
-    "pagesWithCanonical": 86,
+    "p2": 12,
+    "pagesWithJsonLd": 75,
+    "pagesWithCanonical": 88,
     "duplicateTitles": 0,
     "brokenLinks": 0,
-    "linksChecked": 99
+    "linksChecked": 106
   },
   "site": [
     {
@@ -25,7 +25,7 @@
       "name": "robots.txt references the sitemap",
       "ok": true,
       "severity": "P0",
-      "detail": "https://www.smokysignal.app/sitemap.xml"
+      "detail": "https://www.smokysignal.app/sitemap.xml, https://www.smokysignal.app/blog/feed.xml"
     },
     {
       "name": "robots.txt disallows /admin",
@@ -49,19 +49,19 @@
       "name": "sitemap.xml",
       "ok": true,
       "severity": "P0",
-      "detail": "HTTP 200, 86 URLs"
+      "detail": "HTTP 200, 89 URLs"
     },
     {
       "name": "llms.txt",
       "ok": true,
       "severity": "P0",
-      "detail": "HTTP 200, 9615 bytes"
+      "detail": "HTTP 200, 10054 bytes"
     },
     {
       "name": "llms-full.txt",
       "ok": true,
       "severity": "P1",
-      "detail": "HTTP 200, 26028 bytes"
+      "detail": "HTTP 200, 26462 bytes"
     },
     {
       "name": "unknown URL returns 404",
@@ -105,7 +105,7 @@
       "jsonLdValid": true,
       "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
       "ogImageStatus": 200,
-      "wordCount": 125,
+      "wordCount": 124,
       "noindex": false,
       "issues": []
     },
@@ -122,13 +122,13 @@
       "jsonLdValid": true,
       "ogImage": "https://www.smokysignal.app/icons/og-image.png",
       "ogImageStatus": 200,
-      "wordCount": 51,
+      "wordCount": 52,
       "noindex": false,
       "issues": [
         {
           "severity": "P2",
           "code": "thin",
-          "detail": "51 words"
+          "detail": "52 words"
         }
       ]
     },
@@ -299,7 +299,7 @@
       "jsonLdValid": true,
       "ogImage": "https://www.smokysignal.app/icons/og-image.png",
       "ogImageStatus": 200,
-      "wordCount": 289,
+      "wordCount": 285,
       "noindex": false,
       "issues": []
     },
@@ -318,7 +318,7 @@
       "jsonLdValid": true,
       "ogImage": "https://www.smokysignal.app/icons/og-image.png",
       "ogImageStatus": 200,
-      "wordCount": 595,
+      "wordCount": 599,
       "noindex": false,
       "issues": []
     },
@@ -338,9 +338,37 @@
       "jsonLdValid": true,
       "ogImage": "https://www.smokysignal.app/icons/og-image.png",
       "ogImageStatus": 200,
-      "wordCount": 2858,
+      "wordCount": 3357,
       "noindex": false,
       "issues": []
+    },
+    {
+      "path": "/blog",
+      "status": 200,
+      "title": "Blog · SmokySignal",
+      "titleLength": 18,
+      "description": "What shipped on SmokySignal, and a weekly log of when the bird flew.",
+      "descriptionLength": 68,
+      "canonical": "https://www.smokysignal.app/blog",
+      "h1Count": 1,
+      "jsonLdTypes": [],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/opengraph-image-12oj6r?dde9c708d6f11b21",
+      "ogImageStatus": 200,
+      "wordCount": 81,
+      "noindex": false,
+      "issues": [
+        {
+          "severity": "P2",
+          "code": "description-short",
+          "detail": "68 chars"
+        },
+        {
+          "severity": "P2",
+          "code": "thin",
+          "detail": "81 words"
+        }
+      ]
     },
     {
       "path": "/relay",
@@ -404,15 +432,15 @@
       "status": 200,
       "title": "Legal: privacy, disclaimers and data attribution · SmokySignal",
       "titleLength": 62,
-      "description": "What SmokySignal stores and what it does not, disclaimers, and attribution for the adsb.fi, adsb.lol and OpenSky data behind it.",
-      "descriptionLength": 128,
+      "description": "What SmokySignal stores and what it does not, disclaimers, and attribution for the adsb.fi and adsb.lol (ODbL) data behind it.",
+      "descriptionLength": 126,
       "canonical": "https://www.smokysignal.app/legal",
       "h1Count": 1,
       "jsonLdTypes": [],
       "jsonLdValid": true,
       "ogImage": "https://www.smokysignal.app/icons/og-image.png",
       "ogImageStatus": 200,
-      "wordCount": 451,
+      "wordCount": 443,
       "noindex": false,
       "issues": []
     },
@@ -1828,6 +1856,42 @@
       "ogImage": "https://www.smokysignal.app/wrap/2026/opengraph-image-ahva28?352381c72cf8ba1b",
       "ogImageStatus": 200,
       "wordCount": 121,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/blog/feed.xml",
+      "status": 200,
+      "title": null,
+      "titleLength": 0,
+      "description": null,
+      "descriptionLength": 0,
+      "canonical": null,
+      "h1Count": 0,
+      "jsonLdTypes": [],
+      "jsonLdValid": false,
+      "ogImage": null,
+      "ogImageStatus": null,
+      "wordCount": 0,
+      "noindex": false,
+      "issues": []
+    },
+    {
+      "path": "/blog/2026-11-19-the-big-update",
+      "status": 200,
+      "title": "SmokySignal, rebuilt: what's new · SmokySignal",
+      "titleLength": 46,
+      "description": "Truer data, a stricter Smokey, a radar with a memory, a dozen new pages, and ways to take the signal with you.",
+      "descriptionLength": 110,
+      "canonical": "https://www.smokysignal.app/blog/2026-11-19-the-big-update",
+      "h1Count": 1,
+      "jsonLdTypes": [
+        "Article"
+      ],
+      "jsonLdValid": true,
+      "ogImage": "https://www.smokysignal.app/blog/2026-11-19-the-big-update/og",
+      "ogImageStatus": 200,
+      "wordCount": 1166,
       "noindex": false,
       "issues": []
     }

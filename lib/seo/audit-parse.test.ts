@@ -121,6 +121,8 @@ test("pageIssues: P0 for missing canonical / description, noindex in sitemap, ba
 test("pageIssues flags a doubled brand suffix", () => {
   const f = parsePage("<html><head><title>SmokySignal · Stats · SmokySignal</title></head><body><h1>x</h1></body></html>");
   assert.ok(pageIssues("/stats", 200, f).some((i) => i.code === "title-double-brand"));
+  const post = parsePage("<html><head><title>SmokySignal, rebuilt: what's new · SmokySignal</title></head><body><h1>x</h1></body></html>");
+  assert.ok(!pageIssues("/blog/x", 200, post).some((i) => i.code === "title-double-brand"));
 });
 
 test("internalLinks keeps same-site paths only", () => {

@@ -35,6 +35,7 @@ export const KEY_PAGES: readonly Link[] = [
   { path: "/stats", title: "Stats", note: "Daily flight hours for every tracked tail." },
   { path: "/data", title: "Data and CSV", note: "Open monthly flight-hours dataset, ODbL 1.0." },
   { path: "/help", title: "Help", note: "How to read each screen, alerts, and where the data comes from." },
+  { path: "/blog", title: "Blog", note: "What shipped on SmokySignal, and a weekly log of when the bird flew." },
   { path: "/legal", title: "Legal", note: "Privacy, disclaimers and data attribution." },
 ];
 
@@ -44,6 +45,7 @@ export const MACHINE_ENDPOINTS: readonly Link[] = [
   { path: "/api/status.txt", title: "status.txt", note: "The same state as one line of plain text." },
   { path: "/feed.xml", title: "Atom feed", note: "Takeoffs and landings." },
   { path: "/rss.xml", title: "RSS feed", note: "Takeoffs and landings." },
+  { path: "/blog/feed.xml", title: "Blog feed", note: "Atom feed of blog posts." },
   { path: "/calendar.ics", title: "Calendar feed", note: "Usual busy windows as calendar events." },
   { path: "/sitemap.xml", title: "Sitemap", note: "Every indexable page, including one per tail and per corridor." },
 ];
@@ -80,6 +82,19 @@ function agencyLines(fleet: readonly FleetEntry[]): string[] {
     });
 }
 
+/** A blog post as llms.txt lists it (lib/blog-core.ts BlogPost fits). */
+export type LlmsPost = { slug: string; title: string; date: string; summary: string };
+
+function postLines(posts: readonly LlmsPost[]): string[] {
+  if (posts.length === 0) return [];
+  return [
+    "## Blog posts",
+    "",
+    ...posts.map((p) => `- [${p.title}](${SITE_URL}/blog/${p.slug}) (${p.date}): ${p.summary}`),
+    "",
+  ];
+}
+
 function header(fleet: readonly FleetEntry[]): string[] {
   const s = fleetStats(fleet);
   return [
@@ -114,7 +129,7 @@ function header(fleet: readonly FleetEntry[]): string[] {
     "",
     "## Data sources and licences",
     "",
-    "- Positions: public ADS-B position reports from the adsb.fi and adsb.lol volunteer receiver networks, merged by aircraft; OpenSky Network as a live fallback. adsb.lol data is under the Open Database License (ODbL). Attribution is given on every data surface.",
+    "- Positions: public ADS-B position reports from the adsb.fi and adsb.lol volunteer receiver networks, merged by aircraft. These two are the only position sources. adsb.lol data is under the Open Database License (ODbL). Attribution is given on every data surface.",
     `- The flight log starts ${LOG_START_DATE}. The monthly flight-hours dataset is published under ODbL 1.0 (${ODBL_URL}); attribute SmokySignal, adsb.fi and adsb.lol.`,
     "- The tail registry comes from FAA registration records and public agency or press sources, listed per tail on /aircraft.",
     "- Coverage gaps: aircraft flying low, in terrain or with the transponder off may not be heard. A quiet map is not proof of a quiet sky.",
@@ -139,9 +154,10 @@ function header(fleet: readonly FleetEntry[]): string[] {
   ];
 }
 
-export function buildLlmsTxt(fleet: readonly FleetEntry[]): string {
+export function buildLlmsTxt(fleet: readonly FleetEntry[], posts: readonly LlmsPost[] = []): string {
   return [
     ...header(fleet),
+    ...postLines(posts.slice(0, 10)),
     "## Optional",
     "",
     `- [llms-full.txt](${SITE_URL}/llms-full.txt): this file plus the full aircraft registry, the corridor list and the FAQ.`,
@@ -157,6 +173,7 @@ export function buildLlmsFullTxt(
   fleet: readonly FleetEntry[],
   corridors: readonly Corridor[],
   faq: readonly FaqEntry[] = PROGRAM_FAQ,
+  posts: readonly LlmsPost[] = [],
 ): string {
   const registry = [
     "## Aircraft registry",
@@ -187,5 +204,5 @@ export function buildLlmsFullTxt(
     "",
     ...faq.flatMap((e) => [`### ${e.question}`, "", e.answer, ""]),
   ];
-  return [...header(fleet), ...registry, ...roads, ...qa].join("\n");
+  return [...header(fleet), ...postLines(posts), ...registry, ...roads, ...qa].join("\n");
 }

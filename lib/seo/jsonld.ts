@@ -276,11 +276,14 @@ const REQUIRED: Record<string, string[]> = {
   WebPage: ["name", "url"],
   Place: ["name", "geo"],
   Thing: ["name"],
+  Article: ["headline", "datePublished", "author"],
 };
 
 function checkNode(node: Record<string, unknown>, path: string, errors: string[]): void {
   const ts = types(node);
-  const isRef = ts.length === 0 && Object.keys(node).every((k) => k === "@id");
+  // {"@id": ...} or {"@type": ..., "@id": ...} points at an entity defined
+  // elsewhere (e.g. an Article's mainEntityOfPage); nothing to require.
+  const isRef = path !== "$" && Object.keys(node).every((k) => k === "@id" || k === "@type") && "@id" in node;
   if (isRef) return;
   if (ts.length === 0 && path !== "$") {
     // Untyped nested value objects (rare) are allowed.

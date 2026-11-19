@@ -6,7 +6,7 @@ import { pageMeta } from "@/lib/seo/site";
 export const metadata = pageMeta({
   title: "Legal: privacy, disclaimers and data attribution",
   description:
-    "What SmokySignal stores and what it does not, disclaimers, and attribution for the adsb.fi, adsb.lol and OpenSky data behind it.",
+    "What SmokySignal stores and what it does not, disclaimers, and attribution for the adsb.fi and adsb.lol (ODbL) data behind it.",
   path: "/legal",
 });
 

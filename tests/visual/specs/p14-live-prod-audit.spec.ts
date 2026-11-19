@@ -2848,6 +2848,9 @@ test.describe("p14 live-prod audit · 3D radar", () => {
     } finally {
       await ownBrowser?.close();
     }
+  });
+});
+
 // SEO / GEO surfaces (feat/seo-geo). Read-only HTTP checks; the weekly
 // `npm run seo:audit` covers the rest (docs/seo/PLAYBOOK.md).
 test.describe("p14 live-prod audit · SEO", () => {
@@ -2933,7 +2936,7 @@ test.describe("p14 live-prod audit · SEO", () => {
   test("78. every top-level page has a unique <title> and a canonical", async ({ request }) => {
     const paths = [
       "/", "/radar", "/flights", "/circling", "/seen", "/program", "/aircraft", "/road",
-      "/forecast", "/stats", "/data", "/about", "/help", "/relay", "/embed/help", "/board", "/legal",
+      "/forecast", "/stats", "/data", "/about", "/help", "/blog", "/relay", "/embed/help", "/board", "/legal",
     ];
     const titles: Record<string, string> = {};
     const missingCanonical: string[] = [];

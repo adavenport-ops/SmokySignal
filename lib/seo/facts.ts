@@ -144,3 +144,22 @@ export function keyFacts(fleet: readonly FleetEntry[]): string[] {
   );
   return facts.slice(0, 8);
 }
+
+/**
+ * content/help.md placeholders → registry values. The help page, its
+ * FAQPage JSON-LD and /llms-full.txt all read help.md through this, so
+ * the counts in the prose can't go stale.
+ */
+export function fillHelpPlaceholders(md: string, fleet: readonly FleetEntry[]): string {
+  const s = fleetStats(fleet);
+  const values: Record<string, string> = {
+    TAIL_COUNT: String(s.total),
+    AGENCY_COUNT: String(s.agencies),
+    SMOKEY_COUNT: String(s.smokey),
+    WSP_COUNT: String(s.wsp),
+    SHERIFF_COUNT: String(s.waSheriffTails),
+    SHERIFF_COUNTIES: joinAnd(s.waSheriffOffices.map(sheriffCounty)),
+    MUTUAL_AID_COUNT: String(s.mutualAid),
+  };
+  return md.replace(/\{\{([A-Z_]+)\}\}/g, (m, key: string) => values[key] ?? m);
+}

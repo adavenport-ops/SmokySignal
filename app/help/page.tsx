@@ -7,6 +7,7 @@ import { BackLink } from "@/components/BackLink";
 import { pageMeta } from "@/lib/seo/site";
 import { JsonLd } from "@/components/JsonLd";
 import { helpFaq } from "@/lib/seo/faq";
+import { fillHelpPlaceholders } from "@/lib/seo/facts";
 import { breadcrumbJsonLd, faqPageJsonLd } from "@/lib/seo/jsonld";
 
 export const metadata = pageMeta({
@@ -31,7 +32,7 @@ export default async function HelpPage() {
   // Templating placeholders so the registry size + operator list don't
   // go stale on every fleet expansion. Replace before passing to the
   // markdown renderer.
-  const source = merged.replace(/\{\{TAIL_COUNT\}\}/g, String(registry.length));
+  const source = fillHelpPlaceholders(merged, registry);
   // FAQPage from the same text riders read (lib/seo/faq.ts helpFaq).
   const faq = helpFaq(source);
 
