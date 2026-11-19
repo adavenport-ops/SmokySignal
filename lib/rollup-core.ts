@@ -13,6 +13,7 @@ import { PT_TZ } from "./time";
 import type { TrackPoint } from "./tracks";
 import type { FleetEntry, FleetRole } from "./types";
 import { normalizeMission } from "./mission";
+import { flightDetailFromPoints, mergeCorridors, type CorridorTime } from "./flight-detail";
 
 export const ROLLUP_VERSION = 1 as const;
 
@@ -25,7 +26,22 @@ export type RollupSession = {
   end_ts: number; // ms
   duration_s: number;
   max_alt_ft: number;
+  // Optional detail (lib/flight-detail.ts). Absent on docs built before
+  // the logbook shipped; runRollup rebuilds those while tracks exist.
+  /** Departure field id, null when unresolved. */
+  dep?: string | null;
+  /** Arrival field id, null when unresolved. */
+  arr?: string | null;
+  /** Seconds in orbit / loiter patterns. */
+  orbit_s?: number;
+  /** Orbit seconds by corridor label. */
+  corridors?: CorridorTime[];
 };
+
+/** True when every session in the doc carries the flight-detail fields. */
+export function rollupHasDetail(doc: DailyRollup): boolean {
+  return doc.tails.every((t) => t.sessions.every((s) => typeof s.orbit_s === "number"));
+}
 
 export type RollupTail = {
   tail: string;
@@ -164,11 +180,17 @@ export function buildRollupDoc(
     for (const s of sessions) {
       airborne += s.duration_s;
       if (s.max_alt_ft > maxAlt) maxAlt = s.max_alt_ft;
+      const startSec = Math.floor(s.start_ts / 1000);
+      const endSec = Math.ceil(s.end_ts / 1000);
+      const detail = flightDetailFromPoints(
+        samples.filter((p) => p.ts >= startSec && p.ts <= endSec),
+      );
       out.push({
         start_ts: s.start_ts,
         end_ts: s.end_ts,
         duration_s: s.duration_s,
         max_alt_ft: s.max_alt_ft,
+        ...detail,
       });
       distributeMinutes(s.start_ts, s.end_ts, (pt, min) => {
         hourMinutes[pt.hour]! += min;
@@ -284,6 +306,15 @@ export function stitchSessions(
       prev.end_ts = Math.max(prev.end_ts, s.end_ts);
       prev.duration_s = Math.round((prev.end_ts - prev.start_ts) / 1000);
       prev.max_alt_ft = Math.max(prev.max_alt_ft, s.max_alt_ft);
+      // Detail: departure from the first part, arrival from the last.
+      if ("arr" in s) prev.arr = s.arr;
+      if (typeof prev.orbit_s === "number" && typeof s.orbit_s === "number") {
+        prev.orbit_s += s.orbit_s;
+        prev.corridors = mergeCorridors([prev.corridors ?? [], s.corridors ?? []]);
+      } else {
+        delete prev.orbit_s;
+        delete prev.corridors;
+      }
       continue;
     }
     out.push({ ...s, tail, nickname });

@@ -16,6 +16,7 @@ import type { TrackPoint } from "@/lib/tracks";
 import { BackLink } from "@/components/BackLink";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { FlightIntel } from "@/components/FlightIntel";
+import { Logbook } from "@/components/Logbook";
 import { Tooltip } from "@/components/Tooltip";
 import {
   confidenceBadgeStyle,
@@ -218,6 +219,8 @@ export default async function PlanePage({ params, searchParams }: Props) {
           <PerPlaneHeatLayer tail={entry.tail} />
         </Card>
       </section>
+
+      <Logbook tail={entry.tail} nickname={entry.nickname} hour12={hour12} />
 
       <FleetMeta tail={entry.tail} hex={fleetHex(entry).toUpperCase()} role={entry.roleDescription} />
     </main>

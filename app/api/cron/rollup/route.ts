@@ -48,7 +48,7 @@ export async function GET(req: Request) {
 
   const started = Date.now();
   try {
-    const { built, remaining } = await runRollup({
+    const { built, upgraded, remaining } = await runRollup({
       nowMs: started,
       deadlineMs: started + BUDGET_MS,
     });
@@ -63,6 +63,7 @@ export async function GET(req: Request) {
       ok: true,
       persisted,
       built,
+      upgraded,
       remaining,
       elapsed_ms: Date.now() - started,
     });

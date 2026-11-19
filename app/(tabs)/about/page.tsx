@@ -92,6 +92,7 @@ export default async function AboutPage() {
         <HubLink href="/stats" label="Flight stats: how the bird flew">
           Stats
         </HubLink>
+        <HubLink href="/data" label="Open ledger: monthly flight hours and CSV">Ledger</HubLink>
         <HubLink href="/board" label="Departures board for the shop TV">
           Board
         </HubLink>

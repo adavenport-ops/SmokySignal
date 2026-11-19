@@ -11,6 +11,7 @@ import { fleetHex } from "@/lib/seed";
 import { getFlightById, parseFlightId } from "@/lib/flights";
 import { SS_TOKENS } from "@/lib/tokens";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
+import { SaveFlightCardButton } from "@/components/SaveFlightCardButton";
 import { fmtDurationHuman, formatTs } from "@/lib/time";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 
@@ -133,10 +134,13 @@ export default async function FlightSharePage({ params }: Props) {
             {entry.operator} · {entry.model}
           </div>
         </div>
-        <ShareLinkButton
-          path={`/flight/${entry.tail}/${params.flightId}`}
-          label="Copy share link"
-        />
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <ShareLinkButton
+            path={`/flight/${entry.tail}/${params.flightId}`}
+            label="Copy share link"
+          />
+          <SaveFlightCardButton tail={entry.tail} flightId={params.flightId} />
+        </div>
       </header>
 
       <div

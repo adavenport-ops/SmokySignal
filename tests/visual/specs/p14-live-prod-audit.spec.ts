@@ -1266,4 +1266,122 @@ test.describe("p14 live-prod audit", () => {
       screenshot,
     });
   });
+
+  test("35. /data open ledger renders with methods + license, linked from /about (Logbook ledger)", async ({
+    page,
+  }) => {
+    const r = await page.goto("/data", { waitUntil: "networkidle" });
+    const screenshot = await shot(page, "35-data-ledger");
+    const body = await page.locator("main").innerText();
+    const checks = {
+      status: r?.status() === 200,
+      heading: /The open ledger\./.test(body),
+      license: /CC BY 4\.0, attribute SmokySignal/.test(body),
+      start: /2026-10-16/.test(body),
+      csvLink: (await page.locator('a[href="/data/flight-hours.csv"]').count()) > 0,
+      tables: (await page.locator('[data-testid="data-tails"] table').count()) > 0,
+      noSideScroll: await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+      ),
+    };
+    await page.goto("/about", { waitUntil: "domcontentloaded" });
+    const fromAbout = (await page.locator('nav a[href="/data"]').count()) > 0;
+    const pass = Object.values(checks).every(Boolean) && fromAbout;
+    record({
+      claim:
+        "/data renders the open ledger (tables, CSV link, methods with the 2026-10-16 start, CC BY 4.0 line), no sideways page scroll, linked from the /about hub",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `${JSON.stringify(checks)} fromAbout=${fromAbout}`,
+      screenshot,
+    });
+  });
+
+  test("36. /data/flight-hours.csv starts with the header row (Logbook ledger)", async ({
+    request,
+  }) => {
+    const r = await request.get("/data/flight-hours.csv");
+    const text = await r.text();
+    const first = text.split(/\r?\n/)[0] ?? "";
+    const ct = r.headers()["content-type"] ?? "";
+    const bad = await request.get("/data/flight-hours.csv?from=nope");
+    const pass =
+      r.ok() &&
+      /text\/csv/.test(ct) &&
+      first === "month,tail,nickname,operator,mission,flights,hours,max_alt_ft" &&
+      !/\b(lat|lon)\b/i.test(first) &&
+      bad.status() === 400;
+    record({
+      claim:
+        "CSV export returns text/csv whose first line is month,tail,nickname,operator,mission,flights,hours,max_alt_ft; a bad ?from= is a 400",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `HTTP ${r.status()} ct="${ct}" first="${first}" rows=${text.trim().split(/\r?\n/).length - 1} bad=${bad.status()}`,
+    });
+  });
+
+  test("37. /wrap/2026 renders and says the log starts 2026-10-16 (Season wrap)", async ({
+    page,
+  }) => {
+    const r = await page.goto("/wrap/2026", { waitUntil: "networkidle" });
+    const screenshot = await shot(page, "37-wrap-2026");
+    const body = await page.locator("main").innerText();
+    const ogUrl = await page.locator('meta[property="og:image"]').first().getAttribute("content");
+    const checks = {
+      status: r?.status() === 200,
+      heading: /The 2026 season, from overhead\./.test(body),
+      limited: /Our log starts 2026-10-16\. Next year.s wrap covers the whole season\./.test(body),
+      ogImage: /\/wrap\/2026\/opengraph-image/.test(ogUrl ?? ""),
+      noBang: !/[A-Za-z]!(\s|$)/.test(body),
+      noSideScroll: await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+      ),
+    };
+    const pass = Object.values(checks).every(Boolean);
+    record({
+      claim:
+        "/wrap/2026 renders the season wrap, states the 2026-10-16 log start honestly, carries its own og:image, no sideways page scroll",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: JSON.stringify(checks),
+      screenshot,
+    });
+  });
+
+  test("38. flight card is a 1200x1500 PNG for a recent flight (Flight card)", async ({
+    page,
+    request,
+  }) => {
+    await page.goto("/plane/N305DK", { waitUntil: "networkidle" });
+    const href = await page
+      .locator('[data-testid="logbook-flight"]')
+      .first()
+      .getAttribute("href")
+      .catch(() => null);
+    let evidence = `flight=${href ?? "none in logbook"}`;
+    let pass = false;
+    if (href) {
+      const r = await request.get(`${href}/card`);
+      const body = await r.body();
+      const isPng = body.length > 24 && body.readUInt32BE(0) === 0x89504e47;
+      const w = isPng ? body.readUInt32BE(16) : 0;
+      const h = isPng ? body.readUInt32BE(20) : 0;
+      const cc = r.headers()["cache-control"] ?? "";
+      pass = r.ok() && isPng && w === 1200 && h === 1500 && /max-age=\d+/.test(cc);
+      fs.writeFileSync(path.join(AUDIT_DIR, "38-flight-card.png"), body);
+      evidence += ` · HTTP ${r.status()} ${w}x${h} cache-control="${cc}"`;
+      await page.goto(href, { waitUntil: "domcontentloaded" });
+      const save = await page.locator('[data-testid="save-flight-card"]').count();
+      pass = pass && save > 0;
+      evidence += ` saveButton=${save}`;
+    }
+    record({
+      claim:
+        "/plane/N305DK logbook links a recent flight whose /card is a 1200x1500 PNG with a max-age, and the flight page shows Save flight card",
+      category: pass ? "working_as_designed" : href ? "confirmed_bug" : "indeterminate",
+      pass,
+      evidence,
+      screenshot: path.join(AUDIT_DIR, "38-flight-card.png"),
+    });
+  });
 });
