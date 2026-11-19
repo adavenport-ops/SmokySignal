@@ -6,12 +6,12 @@
 //   tracks:{tail}:{YYYYMMDD}  →  Redis list of compact JSON strings
 //   each entry: {"lat":47.5,"lon":-122.3,"alt":3200,"spd":118,"trk":85,"ts":1746024518}
 //
-// Each daily key gets a 35-day TTL so the rolling window auto-cleans.
+// Daily keys are permanent (no TTL) since 2026-11-18: this is the flight history.
 
 import { getRedis } from "./cache";
 import { recordFirstSampleIfMissing } from "./learning";
 import { recordLastSample } from "./freshness";
-import { trackKey, trackScanPattern } from "./storage-keys";
+import { trackKey, trackScanPattern, trackScanAllPattern } from "./storage-keys";
 import type { Snapshot } from "./types";
 
 export type TrackPoint = {
@@ -23,7 +23,6 @@ export type TrackPoint = {
   ts: number;
 };
 
-const TTL_SECONDS = 35 * 24 * 60 * 60; // 35 days
 
 function utcDateKey(d: Date): string {
   const y = d.getUTCFullYear();
@@ -73,8 +72,9 @@ export async function logTracks(snap: Snapshot): Promise<void> {
       ts: tsSec,
     };
     try {
+      // No TTL: tracks are the permanent flight history (owner decision
+      // 2026-11-18). ~5 MB/month at a 30s cadence.
       await redis.rpush(key, JSON.stringify(point));
-      await redis.expire(key, TTL_SECONDS);
     } catch (e) {
       console.warn(`[tracks] rpush failed for ${a.tail}:`, e);
     }
@@ -188,4 +188,30 @@ function safeParse(s: unknown): TrackPoint | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * One-time-and-idempotent: strip the legacy 35-day TTL from every stored
+ * track day so history is kept forever. Called by the daily rollup cron.
+ * Returns how many keys were made permanent.
+ */
+export async function persistTrackHistory(): Promise<number> {
+  const redis = await getRedis();
+  if (!redis) return 0;
+  let cursor: string | number = 0;
+  let persisted = 0;
+  do {
+    const [next, keys] = (await redis.scan(cursor, {
+      match: trackScanAllPattern(),
+      count: 500,
+    })) as [string | number, string[]];
+    cursor = next;
+    for (const k of keys) {
+      if ((await redis.ttl(k)) > 0) {
+        await redis.persist(k);
+        persisted++;
+      }
+    }
+  } while (String(cursor) !== "0");
+  return persisted;
 }

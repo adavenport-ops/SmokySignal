@@ -9,6 +9,7 @@ import { createHash, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { hasKv } from "@/lib/cache";
 import { runRollup } from "@/lib/rollup";
+import { persistTrackHistory } from "@/lib/tracks";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,8 +52,16 @@ export async function GET(req: Request) {
       nowMs: started,
       deadlineMs: started + BUDGET_MS,
     });
+    // Strip the legacy 35-day TTL from older track days. Best-effort.
+    let persisted = 0;
+    try {
+      persisted = await persistTrackHistory();
+    } catch (e) {
+      console.warn("[cron/rollup] persistTrackHistory failed:", e);
+    }
     return NextResponse.json({
       ok: true,
+      persisted,
       built,
       remaining,
       elapsed_ms: Date.now() - started,
