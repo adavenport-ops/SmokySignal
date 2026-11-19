@@ -2,7 +2,7 @@
 //
 // Pins the upstream decision table and what riders get when it degrades:
 // a dead feed must never read as a fresh, all-grounded fleet. Regional
-// feeds are merged; OpenSky is asked only when none of them answered.
+// feeds are merged; with none answering the tick is degraded.
 
 import { mock, test } from "node:test";
 import assert from "node:assert";
@@ -43,20 +43,13 @@ const feed = (
 const statusOf = (r: { feeds: { src: FeedSrc; status: string }[] }, src: FeedSrc) =>
   r.feeds.find((f) => f.src === src)?.status;
 
-test("primary rows: fi, not degraded, fallback never called", async () => {
-  let fallbackCalled = false;
+test("primary rows: fi, not degraded", async () => {
   const r = await selectFeed({
     sources: [feed("fi", rows(3))],
-    fallback: feed("os", async () => {
-      fallbackCalled = true;
-      return [];
-    }),
   });
   assert.equal(r.source, "fi");
   assert.equal(r.degraded, false);
   assert.equal(r.raw.length, 3);
-  assert.equal(fallbackCalled, false);
-  assert.equal(statusOf(r, "os"), "standby");
   assert.ok(r.raw.every((a) => a.src === "fi"), "rows are tagged with their feed");
 });
 
@@ -66,7 +59,6 @@ test("two regional feeds both answer: merged, summary fi+lol, union by hex", asy
       feed("fi", async () => [row("aaaaaa"), row("bbbbbb")]),
       feed("lol", async () => [row("BBBBBB"), row("cccccc")]),
     ],
-    fallback: feed("os", boom),
   });
   assert.equal(r.source, "fi+lol");
   assert.equal(r.degraded, false);
@@ -77,7 +69,6 @@ test("two regional feeds both answer: merged, summary fi+lol, union by hex", asy
 });
 
 test("one regional feed down: the other carries the tick, not degraded", async () => {
-  let fallbackCalled = false;
   const r = await selectFeed({
     sources: [
       feed("fi", async () => {
@@ -85,15 +76,10 @@ test("one regional feed down: the other carries the tick, not degraded", async (
       }),
       feed("lol", rows(2)),
     ],
-    fallback: feed("os", async () => {
-      fallbackCalled = true;
-      return [];
-    }),
   });
   assert.equal(r.source, "lol");
   assert.equal(r.degraded, false);
   assert.equal(r.raw.length, 2);
-  assert.equal(fallbackCalled, false);
   const fi = r.feeds.find((f) => f.src === "fi")!;
   assert.equal(fi.status, "error");
   assert.equal(fi.error_code, "http_5xx");
@@ -110,20 +96,9 @@ test("a slow feed failing does not reject the others", async () => {
   assert.equal(statusOf(r, "lol"), "error");
 });
 
-test("all regional down, fallback has fleet rows: os, not degraded", async () => {
-  const r = await selectFeed({
-    sources: [feed("fi", boom), feed("lol", boom)],
-    fallback: feed("os", rows(1)),
-  });
-  assert.equal(r.source, "os");
-  assert.equal(r.degraded, false);
-  assert.equal(r.raw[0]!.src, "os");
-});
-
 test("every feed throws: degraded, source none", async () => {
   const r = await selectFeed({
     sources: [feed("fi", boom), feed("lol", boom), feed("apl", boom)],
-    fallback: feed("os", boom),
   });
   assert.equal(r.degraded, true);
   assert.equal(r.source, "none");
@@ -134,7 +109,6 @@ test("every feed throws: degraded, source none", async () => {
       ["fi", "error"],
       ["lol", "error"],
       ["apl", "error"],
-      ["os", "error"],
     ],
   );
 });
@@ -142,26 +116,15 @@ test("every feed throws: degraded, source none", async () => {
 test("every feed empty: degraded, source none", async () => {
   const r = await selectFeed({
     sources: [feed("fi", rows(0)), feed("lol", rows(0))],
-    fallback: feed("os", rows(0)),
   });
   assert.equal(r.degraded, true);
   assert.equal(r.source, "none");
   assert.equal(statusOf(r, "fi"), "empty");
 });
 
-test("regional throws and fallback empty: degraded, source none", async () => {
-  const r = await selectFeed({
-    sources: [feed("fi", boom)],
-    fallback: feed("os", rows(0)),
-  });
-  assert.equal(r.degraded, true);
-  assert.equal(r.source, "none");
-});
-
 test("narrow region: empty answer is accepted as a real answer", async () => {
   const r = await selectFeed({
     sources: [feed("fi", rows(0), { zeroIsFailure: false })],
-    fallback: feed("os", boom),
   });
   assert.equal(r.source, "fi");
   assert.equal(r.degraded, false);
@@ -226,13 +189,12 @@ test("a recent answer with no carried rows keeps the source summary steady", asy
   assert.equal(r.feeds.find((f) => f.src === "apl")!.carried, undefined);
 });
 
-test("remembered rows alone are not an observation: still falls back / degrades", async () => {
+test("remembered rows alone are not an observation: degrades", async () => {
   const r = await selectFeed({
     sources: [
       feed("fi", boom),
       feed("lol", boom, { claim: async () => false, recall: async () => [row("eeeeee")] }),
     ],
-    fallback: feed("os", boom),
   });
   assert.equal(r.degraded, true);
   assert.equal(r.source, "none");
@@ -272,12 +234,12 @@ test("a throwing gate skips the feed instead of spending quota", async () => {
   assert.equal(statusOf(r, "lol"), "skipped");
 });
 
-test("only skipped and failed regional feeds: falls back", async () => {
+test("only skipped and failed regional feeds: degraded", async () => {
   const r = await selectFeed({
     sources: [feed("fi", boom), feed("lol", rows(1), { claim: async () => false })],
-    fallback: feed("os", rows(1)),
   });
-  assert.equal(r.source, "os");
+  assert.equal(r.degraded, true);
+  assert.equal(r.source, "none");
 });
 
 test("429 runs the onError hook with the Retry-After", async () => {
@@ -330,7 +292,6 @@ function placeholder(): Snapshot {
 test("every feed down with a last good snapshot: old fetched_at, degraded, no-store", async () => {
   const fed = await selectFeed({
     sources: [feed("fi", boom), feed("lol", boom)],
-    fallback: feed("os", boom),
   });
   assert.equal(fed.degraded, true);
   const lastGood: Snapshot = {

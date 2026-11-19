@@ -73,7 +73,7 @@ The bird is not the threat. The app is. Until it isn't.
 **Values:**
 - A clear "no accounts, no server-side persistence of personal data" statement on the about page.
 - A linked GitHub repo showing the source. (The product does not have one publicly. They notice. Some of them will ask.)
-- A network-tab story they can verify. They want to see exactly which third-party origins the app talks to: adsb.fi, OpenSky fallback, MapTiler, web-push endpoints. Anything else triggers an alarm.
+- A network-tab story they can verify. They want to see exactly which third-party origins the app talks to: adsb.fi, adsb.lol, MapTiler, web-push endpoints. Anything else triggers an alarm.
 - A service worker that does not cache PII and does not phone home.
 - A push payload that contains only the bird's data, not the user's data.
 - A public statement that the operator will not comply with subpoenas for user-level data because no user-level data exists.

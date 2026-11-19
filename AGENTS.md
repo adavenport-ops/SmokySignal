@@ -77,9 +77,9 @@ waiting for a live event.
 
 ## Architecture quick-reference
 
-- `lib/snapshot.ts` — fleet snapshot; `lib/adsb.ts` merges adsb.fi + adsb.lol (+ airplanes.live when `SS_FEED_APL=1`) by ICAO hex via `lib/feed-select.ts` / `lib/feed-merge.ts`, OpenSky as fallback; adapters in `lib/feeds/`, rate budget in `lib/feed-budget.ts`, live check `npm run feeds:check`
+- `lib/snapshot.ts` — fleet snapshot; `lib/adsb.ts` merges adsb.fi + adsb.lol (+ airplanes.live when `SS_FEED_APL=1`) by ICAO hex via `lib/feed-select.ts` / `lib/feed-merge.ts` (all feeds failing or empty marks the tick degraded); adapters in `lib/feeds/`, rate budget in `lib/feed-budget.ts`, live check `npm run feeds:check`
 - `lib/tracks.ts` — per-tail position history, KV-backed, permanent (no TTL since 2026-11-18)
-- `lib/track-point.ts` — TrackPoint shape + per-point capture (alt_geom, vertical rate, squawk, MLAT flag, category, NIC/RC, seen_pos, RSSI, callsign, `src` feed tag) via `captureFields()`; rows are normalized once in `lib/feeds/readsb.ts` / `lib/opensky.ts` and merged in `lib/feed-merge.ts`
+- `lib/track-point.ts` — TrackPoint shape + per-point capture (alt_geom, vertical rate, squawk, MLAT flag, category, NIC/RC, seen_pos, RSSI, callsign, `src` feed tag) via `captureFields()`; rows are normalized once in `lib/feeds/readsb.ts` and merged in `lib/feed-merge.ts`
 - `lib/history-core.ts` + `lib/history.ts` — `GET /api/history` (sessions, simplified polylines, heat grid, summary for a PT date range ≤ 366 days)
 - `lib/forecast-month.ts` — monthly hour × weekday view on /forecast, folded from `rollup:daily:*`
 - `activity:day:{YYYYMMDD}` — permanent per-day activity archive (`lib/activity.ts`), backfilled from `activity:feed` by the rollup cron
@@ -118,11 +118,10 @@ waiting for a live event.
 
 ## Operational notes
 
-- OpenSky historical backfill (`scripts/backfill.ts`) is **deprecated**
-  as of 2026-05-02 — the rate-limit window is exhausted on this cred
-  and adsb.fi has no historical equivalent. The 30-day track tank fills
-  forward via the live cron only. OpenSky is still used as a live
-  states-snapshot fallback in `lib/snapshot.ts`.
+- OpenSky was removed 2026-11 (integration, backfill scripts and
+  `OPENSKY_*` env vars). adsb.fi has no historical equivalent, so the
+  track tank fills forward via the live cron only. Stored points tagged
+  `src: "os"` stay readable (`StoredFeedSrc` in `lib/types.ts`).
 - Vercel preview-scope env vars for VAPID + ADMIN_PASSCODE are
   intentionally empty — `vercel env pull` cannot decrypt sensitive
   vars from production. Generate fresh values manually if you need

@@ -107,9 +107,8 @@ Primary and fallback **must both** be implemented; primary fails ~hourly during 
 - `https://opendata.adsb.fi/api/v2/lat/<lat>/lon/<lon>/dist/<nm>` — bbox query
 - Free, no key, ~5s refresh upstream, CORS-friendly. Be a good citizen: cache 10s, max 1 req/s.
 
-**Fallback — OpenSky Network**
-- `https://opensky-network.org/api/states/all?icao24=<hex>,<hex>,...`
-- Free anonymous tier (rate-limited), authenticated tier higher. Returns flat array — see their states-vector schema.
+**Second feed — adsb.lol**
+- `https://api.adsb.lol/v2/point/<lat>/<lon>/<nm>` — same readsb v2 shape, merged with adsb.fi by ICAO hex. Data under ODbL.
 
 **Tail → ICAO hex mapping**
 - Tail numbers come from the registry (see "Tail registry" below)
@@ -228,7 +227,7 @@ Pulled from the prototype's inline styles. Promote these to CSS variables / Tail
 ## Caveats — read before building
 
 1. **Background geolocation on iOS Safari is foreground-only.** The speed warning works while the app is open. For background ("phone in pocket while riding"), you need a native wrapper — Capacitor is the lightest path; quote the user a v2.
-2. **adsb.fi/OpenSky terms** are permissive but require attribution. Add a footer credit on the about page.
+2. **adsb.fi/adsb.lol terms** are permissive but require attribution. Add a footer credit on the about page.
 3. **Hot-zone learning needs ~30 days** of logged data before confidence numbers are meaningful. Ship with a "Learning your sky" state for the first month.
 4. **Tail registry from the photo** — the rider's printed list may be partial or stale. Verify each N-number on FAA registry (`registry.faa.gov`) before launch; some Cessnas in the photo may have been sold.
 5. **MapLibre tiles cost money at scale.** Free tier of MapTiler is ~100k loads/mo. If this hits front page of /r/motorcycles, self-host PMTiles from a Cloudflare R2 bucket.

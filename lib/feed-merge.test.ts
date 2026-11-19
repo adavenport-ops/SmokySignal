@@ -108,7 +108,7 @@ test("source summary: canonical order, readable label, legacy values", () => {
   assert.match(d.detail, /FI = adsb\.fi\. LOL = adsb\.lol\./);
   assert.equal(describeSource("adsbfi").label, "ADSBFI");
   assert.equal(describeSource("mock").label, "MOCK");
-  assert.equal(describeSource("os").detail, "OS = OpenSky Network.");
+  assert.equal(describeSource("os").label, "OS", "legacy tag degrades to a plain label");
   for (const s of ["fi+lol", "adsbfi", "mock", "none", "os"]) {
     const { label, detail } = describeSource(s);
     assert.ok(!/!/.test(label + detail), "no exclamation marks");

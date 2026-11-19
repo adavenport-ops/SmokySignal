@@ -8,19 +8,11 @@ import {
 import { cacheGet, cacheSet, hasKv } from "@/lib/cache";
 import { readFeedStatus, type FeedStatusRecord } from "@/lib/feed-runtime";
 import { FEED_ORDER } from "@/lib/feed-sources";
-import {
-  getOpenskyToken,
-  getOpenskyCreditsRemaining,
-  peekOpenskyToken,
-} from "@/lib/opensky";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// 8s — Vercel→Keycloak (auth.opensky-network.org) round-trip on cold token
-// refresh has been observed to take 5-7s. From a residential IP the same call
-// is ~500ms; the latency is paid by Vercel's datacenter egress to the OpenSky
-// auth endpoint, so we accept a longer health-check ceiling here.
+// 8s ceiling for each upstream probe.
 const PING_TIMEOUT_MS = 8000;
 
 async function pingUrl(url: string): Promise<"ok" | "err"> {
@@ -53,43 +45,6 @@ async function pingKv(): Promise<"ok" | "err" | "memory"> {
     return "ok";
   } catch {
     return "err";
-  }
-}
-
-// Short, fixed error codes only. The raw upstream error text (which can
-// include auth-server URLs or response bodies) is logged server-side,
-// never returned from this public endpoint.
-type OpenskyErrorCode = "timeout" | "no_token" | "auth_failed";
-type OpenskyPing =
-  | { status: "ok" | "anonymous"; error?: undefined }
-  | { status: "err"; error: OpenskyErrorCode };
-
-async function pingOpensky(): Promise<OpenskyPing> {
-  if (!process.env.OPENSKY_CLIENT_ID || !process.env.OPENSKY_CLIENT_SECRET) {
-    return { status: "anonymous" };
-  }
-  // Cheap path: a cached token (fresh OR stale) is evidence that auth has
-  // worked recently. Skip the multi-second roundtrip on the common case.
-  const cached = await peekOpenskyToken();
-  if (cached?.access_token) return { status: "ok" };
-
-  // Cold cache: try once. If this fails the next deploy or a successful
-  // /api/aircraft fallback will re-seed the cache.
-  try {
-    const token = await Promise.race([
-      getOpenskyToken(),
-      new Promise<null>((_, rej) =>
-        setTimeout(() => rej(new Error("opensky auth timeout")), PING_TIMEOUT_MS),
-      ),
-    ]);
-    return token ? { status: "ok" } : { status: "err", error: "no_token" };
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.warn("[health] opensky auth failed:", msg.slice(0, 240));
-    return {
-      status: "err",
-      error: msg === "opensky auth timeout" ? "timeout" : "auth_failed",
-    };
   }
 }
 
@@ -129,7 +84,7 @@ function publicFeeds(rec: FeedStatusRecord | null): {
     if (typeof f.count === "number") out.count = f.count;
     if (typeof f.at === "number") out.checked_at = new Date(f.at).toISOString();
     feeds[src] = out;
-    if (fresh && src !== "os" && f.status === "ok") anyRegionalOk = true;
+    if (fresh && f.status === "ok") anyRegionalOk = true;
   }
   return { feeds, anyRegionalOk };
 }
@@ -141,16 +96,12 @@ export async function GET() {
   const [
     kv,
     adsbfi,
-    openskyResult,
-    opensky_credits_remaining,
     snap,
     last_airborne_ts,
     last_heartbeat_ts,
   ] = await Promise.all([
     pingKv(),
     pingUrl(adsbfiUrl),
-    pingOpensky(),
-    getOpenskyCreditsRemaining(),
     peekHealthSnapshot(),
     getLastAirborneTs(),
     cacheGet<number>("meta:last_heartbeat"),
@@ -179,7 +130,7 @@ export async function GET() {
 
   // The app is useful while any regional feed works: adsb.fi answering the
   // probe above, or another regional feed (adsb.lol) answering on the last
-  // regen. OpenSky is a fallback. KV is optional (in-memory fallback exists).
+  // regen. KV is optional (in-memory fallback exists).
   const ok = adsbfi === "ok" || anyRegionalOk;
   // CI heartbeat — written by .github/workflows/heartbeat.yml hourly.
   // Surfaced here so the nightly persona-walk workflow can detect Mac
@@ -205,11 +156,6 @@ export async function GET() {
       : null,
     last_heartbeat_iso,
     last_heartbeat_age_s,
-    opensky: openskyResult.status,
-    ...(openskyResult.error
-      ? { opensky_error_code: openskyResult.error }
-      : {}),
-    opensky_credits_remaining,
     feeds,
     feeds_checked_at: feedRecord ? new Date(feedRecord.at).toISOString() : null,
     tails: FLEET.length,

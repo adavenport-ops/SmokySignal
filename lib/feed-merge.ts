@@ -6,7 +6,7 @@
 // one feed alone. For each hex:
 //   - the position (lat, lon, seen_pos, pos_ts, src) comes as one unit
 //     from the freshest fix: largest pos_ts, then smallest seen_pos, then
-//     feed order (fi, lol, apl, os) as the tie-break;
+//     feed order (fi, lol, apl) as the tie-break;
 //   - every other field missing on that row (FILL_FIELDS, including the
 //     track-log extras such as alt_geom and category) is filled from the
 //     other rows, freshest first;

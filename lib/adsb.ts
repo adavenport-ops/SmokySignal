@@ -1,12 +1,11 @@
 // Snapshot builder. Asks every regional ADS-B feed in parallel (adsb.fi,
-// adsb.lol, airplanes.live when enabled), unions their rows by ICAO hex,
-// and falls back to OpenSky only when none of them answered. Adapters live
-// in lib/feeds/*; the decision table is lib/feed-select.ts; the rate
-// budget is lib/feed-budget.ts.
+// adsb.lol, airplanes.live when enabled) and unions their rows by ICAO
+// hex. When none of them answered the tick is degraded. Adapters live in
+// lib/feeds/*; the decision table is lib/feed-select.ts; the rate budget
+// is lib/feed-budget.ts.
 
 import { fleetHex } from "./seed";
 import { getRegistry } from "./registry";
-import { fetchOpenSky } from "./opensky";
 import { selectFeed, type FeedSpec } from "./feed-select";
 import { minIntervalS, providerLimits } from "./feed-budget";
 import {
@@ -38,8 +37,7 @@ type SeenState = { firstSeenAt: number; lastSeenAt: number };
 const seenByIcao = new Map<string, SeenState>();
 
 // One overall budget across every upstream request this tick (all regional
-// feeds in parallel, then OpenSky auth, states and the 401 retry if they
-// all fail). Per-request timeouts still apply inside it.
+// feeds in parallel). Per-request timeouts still apply inside it.
 const UPSTREAM_BUDGET_MS = 10_000;
 
 // The hot-path snapshot cache (lib/snapshot.ts) already holds each tick
@@ -118,8 +116,7 @@ export async function buildSnapshot(): Promise<Snapshot> {
   }
   const fleetHexes = [...fleetByIcao.keys()];
 
-  // Caps the sum so slow regional feeds plus a slow fallback cannot stall
-  // the regen past ~10s.
+  // Caps the sum so slow regional feeds cannot stall the regen past ~10s.
   const budget = AbortSignal.timeout(UPSTREAM_BUDGET_MS);
 
   // Degraded = no trustworthy observation this tick. The aircraft list
@@ -128,11 +125,6 @@ export async function buildSnapshot(): Promise<Snapshot> {
   // pointer and snapshot cache to treat it as a placeholder.
   const { raw, source, degraded, feeds } = await selectFeed({
     sources: regionalFeeds(budget, new Set(fleetHexes)),
-    fallback: {
-      src: "os",
-      fetch: () => fetchOpenSky(fleetHexes, budget),
-      zeroIsFailure: true,
-    },
   });
   // Per-feed status for /api/health. Best-effort: never fail the regen.
   try {

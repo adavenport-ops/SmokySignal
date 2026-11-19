@@ -130,9 +130,15 @@ export type Aircraft = FleetEntry & AircraftLive;
  *   fi  = adsb.fi          (regional circle, every tick)
  *   lol = adsb.lol         (regional circle, rate-budgeted, see lib/feed-budget.ts)
  *   apl = airplanes.live   (regional circle, off until access is approved)
- *   os  = OpenSky Network  (per-fleet-hex fallback, only when the rest fail)
  */
-export type FeedSrc = "fi" | "lol" | "apl" | "os";
+export type FeedSrc = "fi" | "lol" | "apl";
+
+/**
+ * Tag as it can appear on a stored track point. Adds "os", written by a
+ * feed that was retired in 2026-11; old points keep it and must stay
+ * readable, but nothing produces it any more.
+ */
+export type StoredFeedSrc = FeedSrc | "os";
 
 /**
  * Summary of which feeds produced this snapshot: the FeedSrc tags that
@@ -140,20 +146,19 @@ export type FeedSrc = "fi" | "lol" | "apl" | "os";
  * means every upstream feed failed or returned nothing; such snapshots
  * carry `degraded: true` and must not be diffed, cached for long, or
  * treated as evidence of freshness. "mock" is the ?mock= state machine.
- * "adsbfi" / "opensky" are the pre-merge values; they can still appear
- * in cached snapshots and fixtures. Render via describeSource() in
+ * "adsbfi" is the pre-merge value; it can still appear in cached
+ * snapshots and fixtures. Render via describeSource() in
  * lib/feed-sources.ts rather than switching on the raw string.
  */
 export type SnapshotSource =
   | "adsbfi"
-  | "opensky"
   | "mock"
   | "none"
   | (string & {});
 
 /**
  * Internal feed-agnostic aircraft shape produced by every feed adapter
- * (lib/feeds/*, lib/opensky.ts). Field names match the readsb v2 JSON
+ * (lib/feeds/*). Field names match the readsb v2 JSON
  * that adsb.fi, adsb.lol and airplanes.live all serve.
  */
 export type NormalizedAc = {
@@ -183,7 +188,7 @@ export type NormalizedAc = {
   sources?: FeedSrc[];
   // ── Optional extras (readsb v2 names), kept for the permanent track
   // log. Feeds that lack a field leave it undefined. Set by
-  // lib/feeds/readsb.ts (readsb feeds) and lib/opensky.ts.
+  // lib/feeds/readsb.ts.
   /** Geometric (GNSS) altitude, ft. */
   alt_geom?: number;
   /** Barometric vertical rate, ft/min. */

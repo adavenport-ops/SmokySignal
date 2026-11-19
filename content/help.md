@@ -137,7 +137,7 @@ Flights are kept for 30 days; older ones are pruned automatically.
 
 ## Why we don't track you
 
-SmokySignal is a one-way receiver. We pull public aircraft signals from [adsb.fi](https://adsb.fi) and OpenSky and render them. Your location, your speed, your taps — none of it leaves the device.
+SmokySignal is a one-way receiver. We pull public aircraft signals from [adsb.fi](https://adsb.fi) and [adsb.lol](https://adsb.lol) and render them. Your location, your speed, your taps — none of it leaves the device.
 
 There are no rider accounts, no individual analytics, no back channel to any agency. The repository is public; the data flow is fully visible at [/legal](/legal).
 
@@ -185,7 +185,7 @@ The counter on the panel shows where we are in the 30-day window. Past day 30, t
 
 ## Where the data comes from
 
-Aircraft positions are pulled from public ADS-B telemetry. The primary source is [adsb.fi](https://adsb.fi); the fallback is [OpenSky Network](https://opensky-network.org). Both are anonymous, free, and require attribution, provided in the app footer and on the legal page.
+Aircraft positions are pulled from public ADS-B telemetry. The sources are [adsb.fi](https://adsb.fi) and [adsb.lol](https://adsb.lol), merged by aircraft. Both are anonymous, free, and require attribution, provided in the app footer and on the legal page.
 
 The tail registry is built from publicly available state and county fleet records. If you spot a wrong tail or a misclassified aircraft, email **feedback@smokysignal.app**.
 

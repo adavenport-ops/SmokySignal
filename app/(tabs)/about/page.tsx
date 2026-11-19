@@ -170,18 +170,7 @@ export default async function AboutPage() {
               adsb.lol
             </a>
           </Tooltip>{" "}
-          (ODbL), with{" "}
-          <Tooltip content="Academic ADS-B network at opensky-network.org. Used as a live fallback.">
-            <a
-              href="https://opensky-network.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={INLINE_LINK}
-            >
-              OpenSky Network
-            </a>
-          </Tooltip>{" "}
-          as the fallback. All are free and ask for attribution, given here
+          (ODbL). Both are free and ask for attribution, given here
           and in the home footer. Snapshots are cached for 10 seconds, so a
           hundred riders watching make one call per feed.
         </p>

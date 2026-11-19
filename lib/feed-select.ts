@@ -1,8 +1,7 @@
 // Pure upstream-feed selection and merge. Every regional feed (adsb.fi,
 // adsb.lol, airplanes.live) is asked in parallel and the answers are
-// unioned by ICAO hex (lib/feed-merge.ts). OpenSky stays a fallback: it is
-// asked only when no regional feed produced a trustworthy answer. If that
-// fails too, the tick is degraded. Fetchers are injected so the decision
+// unioned by ICAO hex (lib/feed-merge.ts). When no feed produced a
+// trustworthy answer the tick is degraded. Fetchers are injected so the decision
 // table is unit-testable without network or KV (lib/feed-select.test.ts);
 // lib/adsb.ts wires the real fetchers in.
 
@@ -21,9 +20,7 @@ export type FeedStatusCode =
   /** Inside its rate-budget interval this tick; not asked. */
   | "skipped"
   /** Turned off by config (e.g. airplanes.live without SS_FEED_APL=1). */
-  | "disabled"
-  /** Fallback that was not needed this tick. */
-  | "standby";
+  | "disabled";
 
 export type SourceStatus = {
   src: FeedSrc;
@@ -42,7 +39,7 @@ export type FeedResult = {
   source: SnapshotSource;
   /** True when no feed produced a trustworthy observation this tick. */
   degraded: boolean;
-  /** One entry per configured feed (regional feeds, then the fallback). */
+  /** One entry per configured feed. */
   feeds: SourceStatus[];
 };
 
@@ -86,8 +83,6 @@ export type FeedSpec = {
 export type FeedSelectOpts = {
   /** Regional feeds, asked in parallel and merged. */
   sources: FeedSpec[];
-  /** Asked only when no regional feed answered. */
-  fallback?: FeedSpec;
   /** Injected for tests; defaults to Date.now. */
   clock?: () => number;
 };
@@ -192,7 +187,6 @@ export async function selectFeed(opts: FeedSelectOpts): Promise<FeedResult> {
 
   if (answered.length > 0) {
     const feeds = outcomes.map((o) => o.status);
-    if (opts.fallback) feeds.push({ src: opts.fallback.src, status: "standby" });
     // Spec order, so first-appearance order in the merge follows the
     // primary feed.
     const used = outcomes.filter((o) => o.answered || o.carried);
@@ -204,30 +198,8 @@ export async function selectFeed(opts: FeedSelectOpts): Promise<FeedResult> {
     };
   }
 
-  const feeds = outcomes.map((o) => o.status);
-  if (!opts.fallback) {
-    console.error("[adsb] every regional feed failed and no fallback; tick degraded");
-    return { raw: [], source: "none", degraded: true, feeds };
-  }
-
-  console.warn("[adsb] no regional feed answered, falling back to", opts.fallback.src);
-  // The fallback is queried by fleet hex, so zero rows could mean "none of
-  // ours are transmitting". But we only get here when every regional feed
-  // is already broken, and an empty fallback cannot be told apart from one
-  // more broken feed. Be conservative: no rows from any feed is a degraded
-  // tick, not a fleet-wide landing.
-  const fb = await runFeed({ ...opts.fallback, zeroIsFailure: true }, clock);
-  feeds.push(fb.status);
-  if (!fb.answered) {
-    console.error("[adsb] every feed failed or came back empty; tick degraded");
-    return { raw: [], source: "none", degraded: true, feeds };
-  }
-  return {
-    raw: mergeByHex([fb.rows]),
-    source: summarizeSources([fb.status.src]),
-    degraded: false,
-    feeds,
-  };
+  console.error("[adsb] every feed failed or came back empty; tick degraded");
+  return { raw: [], source: "none", degraded: true, feeds: outcomes.map((o) => o.status) };
 }
 
 /**
