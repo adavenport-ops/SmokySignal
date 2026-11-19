@@ -202,6 +202,27 @@ export async function updatePrefs(
   return next;
 }
 
+/**
+ * Silent re-sync from a browser that already holds a subscription (lost
+ * server-side, e.g. after the 2026-11-19 store overwrite). Never touches an
+ * existing row's prefs: present → refresh the TTL only; missing → save with
+ * default prefs. Returns whether a row was created.
+ */
+export async function resyncSubscription(
+  sub: StoredPushSubscription,
+): Promise<{ id: string; created: boolean }> {
+  const redis = await getRedis();
+  if (!redis) throw new Error("KV not configured");
+  const id = subscriptionId(sub);
+  const key = `${SUB_PREFIX}${id}`;
+  const refreshed = await redis.expire(key, SUB_TTL_SECONDS);
+  if (refreshed) {
+    await redis.sadd(SUBS_INDEX, id);
+    return { id, created: false };
+  }
+  return { id: await saveSubscription(sub), created: true };
+}
+
 export async function removeSubscription(id: string): Promise<void> {
   const redis = await getRedis();
   if (!redis) return;
