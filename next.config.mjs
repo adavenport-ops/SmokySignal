@@ -1,6 +1,9 @@
 // Content-Security-Policy, built from an inventory of what the app loads:
 //   - MapTiler: style.json, vector tiles, sprites, glyphs all on
 //     api.maptiler.com (components/*Map.tsx, RadarMap.tsx)
+//   - 3D flight view (components/Flight3D.tsx): DEM tiles come from MapTiler
+//     terrain-rgb-v2 (same host). With no MapTiler key it falls back to the
+//     AWS Terrarium bucket, allowed by path prefix only.
 //   - MapLibre GL spins its worker from a blob: URL → worker-src blob:
 //   - Aircraft glyphs are SVG data: URIs fed to the map image atlas
 //   - next/font/google self-hosts fonts under /_next/static
@@ -18,13 +21,14 @@
 const isDev = process.env.NODE_ENV !== "production";
 const isPreview = process.env.VERCEL_ENV === "preview";
 const live = isPreview ? " https://vercel.live" : "";
+const terrarium = "https://s3.amazonaws.com/elevation-tiles-prod/";
 const buildCsp = (frameAncestors) => [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://va.vercel-scripts.com${live}`,
   `style-src 'self' 'unsafe-inline'${live}`,
-  `img-src 'self' data: blob: https://api.maptiler.com${isPreview ? " https://vercel.live https://vercel.com" : ""}`,
+  `img-src 'self' data: blob: https://api.maptiler.com ${terrarium}${isPreview ? " https://vercel.live https://vercel.com" : ""}`,
   `font-src 'self' data:${isPreview ? " https://vercel.live https://assets.vercel.com" : ""}`,
-  `connect-src 'self' https://api.maptiler.com https://va.vercel-scripts.com https://vitals.vercel-insights.com${isPreview ? " https://vercel.live wss://ws-us3.pusher.com" : ""}`,
+  `connect-src 'self' https://api.maptiler.com ${terrarium} https://va.vercel-scripts.com https://vitals.vercel-insights.com${isPreview ? " https://vercel.live wss://ws-us3.pusher.com" : ""}`,
   `frame-src ${isPreview ? "https://vercel.live" : "'none'"}`,
   "worker-src 'self' blob:",
   "child-src 'self' blob:",

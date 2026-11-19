@@ -23,6 +23,14 @@
     "backfill:resume": "tsx --env-file=.env.local scripts/backfill.ts --resume --yes"
   },
   "dependencies": {
+    "@deck.gl/core": "9.4.1",
+    "@deck.gl/extensions": "9.4.1",
+    "@deck.gl/geo-layers": "9.4.1",
+    "@deck.gl/layers": "9.4.1",
+    "@deck.gl/mapbox": "9.4.1",
+    "@deck.gl/mesh-layers": "9.4.1",
+    "@luma.gl/core": "9.4.2",
+    "@luma.gl/engine": "9.4.2",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@upstash/ratelimit": "^2.2.1",
     "@upstash/redis": "^1.37.0",

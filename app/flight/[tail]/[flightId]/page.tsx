@@ -5,33 +5,21 @@
 
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import nextDynamic from "next/dynamic";
 import { getRegistry } from "@/lib/registry";
 import { fleetHex } from "@/lib/seed";
 import { getFlightById, parseFlightId } from "@/lib/flights";
 import { SS_TOKENS } from "@/lib/tokens";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { SaveFlightCardButton } from "@/components/SaveFlightCardButton";
+import FlightMapView from "@/components/FlightMapView";
 import { fmtDurationHuman, formatTs } from "@/lib/time";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 
 export const dynamic = "force-dynamic";
 
-const PlaneTrackMap = nextDynamic(() => import("@/components/PlaneTrackMap"), {
-  ssr: false,
-  loading: () => (
-    <div
-      style={{
-        height: 320,
-        background: SS_TOKENS.bg0,
-        borderRadius: 12,
-      }}
-    />
-  ),
-});
-
 type Props = {
   params: { tail: string; flightId: string };
+  searchParams?: { view?: string | string[] };
 };
 
 export async function generateMetadata({ params }: Props) {
@@ -51,7 +39,7 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-export default async function FlightSharePage({ params }: Props) {
+export default async function FlightSharePage({ params, searchParams }: Props) {
   const tail = params.tail.toUpperCase();
   const fleet = await getRegistry();
   const entry = fleet.find((f) => f.tail === tail);
@@ -67,6 +55,8 @@ export default async function FlightSharePage({ params }: Props) {
 
   const { session, points } = flight;
   const hour12 = isHour12(getTimeFormatPref());
+  const rawView = searchParams?.view;
+  const initialView = (Array.isArray(rawView) ? rawView[0] : rawView) === "3d" ? "3d" : "2d";
 
   return (
     <main
@@ -163,7 +153,12 @@ export default async function FlightSharePage({ params }: Props) {
         {fmtDurationHuman(session.duration_s)}
       </div>
 
-      <PlaneTrackMap tail={tail} points={points} inProgress={false} height={320} />
+      <FlightMapView
+        tail={tail}
+        points={points}
+        initialView={initialView}
+        hour12={hour12}
+      />
 
       <section
         style={{

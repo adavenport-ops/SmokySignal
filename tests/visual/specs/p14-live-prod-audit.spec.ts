@@ -2037,3 +2037,136 @@ test.describe("p14 live-prod audit", () => {
     });
   });
 });
+
+// 3D flight view needs a WebGL2 context. Headless Chromium only exposes one
+// (via SwiftShader) with these flags, and launchOptions can't be set per
+// describe, so on Chromium this test launches its own browser with the
+// project's device emulation. Other engines use the project browser as-is.
+const GL_ARGS = [
+  "--use-gl=angle",
+  "--use-angle=swiftshader",
+  "--enable-unsafe-swiftshader",
+  "--ignore-gpu-blocklist",
+];
+
+test.describe("p14 live-prod audit · 3D flight view", () => {
+  test("56. /flight/<tail>/<id>?view=3d renders a WebGL2 canvas with no console errors", async ({
+    page: projectPage,
+    request,
+    playwright,
+    browserName,
+    baseURL,
+    viewport,
+    userAgent,
+    deviceScaleFactor,
+    isMobile,
+    hasTouch,
+    extraHTTPHeaders,
+  }) => {
+    test.setTimeout(150_000);
+    // Find a recent flight: tails with tracks from /api/flight-paths, then
+    // the share link on that tail's /plane page.
+    let flightPath: string | null = null;
+    const fp = await request.get("/api/flight-paths");
+    const tails: string[] = [];
+    if (fp.ok()) {
+      const fc = (await fp.json()) as {
+        features?: { properties?: { tail?: string; date?: string } }[];
+      };
+      const byDate = [...(fc.features ?? [])].sort((a, b) =>
+        String(b.properties?.date ?? "").localeCompare(String(a.properties?.date ?? "")),
+      );
+      for (const f of byDate) {
+        const t = f.properties?.tail;
+        if (t && !tails.includes(t)) tails.push(t);
+      }
+    }
+    for (const t of tails.slice(0, 8)) {
+      const html = await (await request.get(`/plane/${t}`)).text();
+      const m = /\/flight\/[A-Z0-9]+\/\d{8}T\d{4}/.exec(html);
+      if (m) {
+        flightPath = m[0];
+        break;
+      }
+    }
+    if (!flightPath) {
+      record({
+        claim: "3D flight view renders on /flight/<tail>/<id>?view=3d",
+        category: "indeterminate",
+        pass: true,
+        evidence: `no recent flight link found (tails tried: ${tails.slice(0, 8).join(",") || "none"})`,
+      });
+      return;
+    }
+
+    let ownBrowser: Awaited<ReturnType<typeof playwright.chromium.launch>> | null = null;
+    let page = projectPage;
+    if (browserName === "chromium") {
+      ownBrowser = await playwright.chromium.launch({ args: GL_ARGS });
+      const ctx = await ownBrowser.newContext({
+        baseURL,
+        viewport,
+        userAgent,
+        deviceScaleFactor,
+        isMobile,
+        hasTouch,
+        extraHTTPHeaders,
+      });
+      page = await ctx.newPage();
+    }
+    try {
+      const errors: string[] = [];
+      page.on("console", (m) => {
+        if (m.type() === "error") errors.push(m.text().slice(0, 200));
+      });
+      page.on("pageerror", (e) => errors.push(`pageerror: ${e.message.slice(0, 200)}`));
+
+      await page.goto(`${flightPath}?view=3d`, { waitUntil: "domcontentloaded" });
+      const gl2 = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl2"));
+      if (!gl2) {
+        const note = await page.locator('[role="status"]').first().innerText().catch(() => "");
+        const screenshot = await shot(page, "56-flight-3d");
+        record({
+          claim: "3D flight view renders on /flight/<tail>/<id>?view=3d",
+          category: "indeterminate",
+          pass: /WebGL2/.test(note),
+          evidence: `browser has no WebGL2; fallback note="${note}"`,
+          screenshot,
+        });
+        return;
+      }
+      const ready = await page
+        .waitForSelector('[data-testid="flight-3d"][data-ready="1"]', { timeout: 45_000 })
+        .then(() => true)
+        .catch(() => false);
+      await page.waitForTimeout(3000);
+      const canvas = await page.evaluate(() => {
+        const c = document.querySelector<HTMLCanvasElement>('[data-testid="flight-3d"] canvas');
+        if (!c) return null;
+        // getContext with the type already in use returns the live context.
+        const isGl2 = !!c.getContext("webgl2");
+        return { w: c.clientWidth, h: c.clientHeight, isGl2 };
+      });
+      const urlKeepsView = new URL(page.url()).searchParams.get("view") === "3d";
+      const screenshot = await shot(page, "56-flight-3d");
+      const relevant = errors.filter((e) => !/_vercel\/insights/.test(e));
+      const pass =
+        ready &&
+        canvas != null &&
+        canvas.isGl2 &&
+        canvas.w > 100 &&
+        canvas.h > 100 &&
+        urlKeepsView &&
+        relevant.length === 0;
+      record({
+        claim: "3D flight view renders a WebGL2 canvas on /flight/<tail>/<id>?view=3d with no console errors",
+        category: pass ? "working_as_designed" : ready ? "confirmed_bug" : "unshipped",
+        pass,
+        evidence: `${flightPath}?view=3d ready=${ready} canvas=${JSON.stringify(canvas)} view=3d kept=${urlKeepsView} errors=${JSON.stringify(relevant.slice(0, 5))}`,
+        screenshot,
+      });
+    } finally {
+      await ownBrowser?.close();
+    }
+  });
+});
