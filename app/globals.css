@@ -694,6 +694,7 @@ body {
   border-radius: 22px;
   background-position: center;
   background-repeat: no-repeat;
+}
 
 /* Detail pages (/plane/[tail], /flight/[tail]/[id]): one column on a
    phone, two at >= 1024px. The map / 3D column sits left and large; the
