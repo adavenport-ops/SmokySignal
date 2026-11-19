@@ -1,5 +1,6 @@
 "use client";
 
+import { geoErrorKind, geoErrorMessage } from "@/lib/geo-error";
 import { missionLabel } from "@/lib/role-display";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import nextDynamic from "next/dynamic";
@@ -322,14 +323,21 @@ export function RadarShell({
       flashToast(setToast, "Location off · radar still works");
       return;
     }
+    let waitingToastShown = false;
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         setRider({ lat: pos.coords.latitude, lon: pos.coords.longitude });
       },
-      () => {
-        flashToast(setToast, "Location off · radar still works");
+      (err) => {
+        // A slow first fix is not "off"; only say so once per mount.
+        if (geoErrorKind(err?.code) === "waiting") {
+          if (waitingToastShown) return;
+          waitingToastShown = true;
+        }
+        const blocked = geoErrorKind(err?.code) === "blocked";
+        flashToast(setToast, geoErrorMessage(err?.code, navigator.userAgent), blocked ? 9000 : 4000);
       },
-      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
+      { enableHighAccuracy: true, maximumAge: 15000, timeout: 30000 },
     );
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
