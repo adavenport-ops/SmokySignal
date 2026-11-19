@@ -80,9 +80,17 @@ type Props = {
   /** Extra px above the tab bar — pass when the airborne carousel is on. */
   bottomBoost?: number;
   learning?: LearningState;
+  /** History mode (HistoryOverlay.tsx) is on: hide the 30-day heat and
+   *  its pill row without touching the rider's saved toggles. */
+  suppressed?: boolean;
 };
 
-export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
+export function HotZoneLayer({
+  map,
+  bottomBoost = 0,
+  learning,
+  suppressed = false,
+}: Props) {
   const [enabled, setEnabled] = useState<boolean>(true);
   const [flightPathsEnabled, setFlightPathsEnabled] = useState<boolean>(true);
   const [filter, setFilter] = useState<Filter>(DEFAULT_FILTER);
@@ -91,7 +99,7 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
   // Stable refs so the addLayerOnce closure (captured at attach time)
   // can read current state without re-running its effect.
   const enabledRef = useRef(enabled);
-  enabledRef.current = enabled;
+  enabledRef.current = enabled && !suppressed;
 
   console.log("[HZ] mount/render — map?", !!map, "zones?", zones?.length ?? null);
 
@@ -165,7 +173,7 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
           map.setLayoutProperty(
             LAYER_ID,
             "visibility",
-            next ? "visible" : "none",
+            next && !suppressed ? "visible" : "none",
           );
         }
       } catch {
@@ -374,12 +382,12 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
       map.setLayoutProperty(
         LAYER_ID,
         "visibility",
-        enabled ? "visible" : "none",
+        enabled && !suppressed ? "visible" : "none",
       );
     } catch {
       /* layer not yet attached */
     }
-  }, [map, enabled]);
+  }, [map, enabled, suppressed]);
 
   // Pixel offset before the install-prompt overlay is added. Kept as
   // a number for downstream arithmetic (`bottom + 56` etc.); the
@@ -406,7 +414,8 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
     filter.buckets.length === 0 &&
     filter.operatorSet.length === 0 &&
     filter.tailSet.length === 0;
-  const showEmptyState = enabled && zones !== null && zones.length === 0;
+  const showEmptyState =
+    enabled && !suppressed && zones !== null && zones.length === 0;
   const emptyVariant: "learning" | "region-empty" | "filter" =
     learning?.stillLearning
       ? "learning"
@@ -493,6 +502,7 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
           No hot zones in your filter. Try widening the operator or category.
         </div>
       )}
+      {!suppressed && (
       <div
         style={{
           position: "absolute",
@@ -553,8 +563,9 @@ export function HotZoneLayer({ map, bottomBoost = 0, learning }: Props) {
           </button>
         </Tooltip>
       </div>
+      )}
 
-      {panelOpen && (
+      {panelOpen && !suppressed && (
         <FilterPanel
           bottom={offsetCss(44)}
           filter={filter}

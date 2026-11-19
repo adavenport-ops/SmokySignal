@@ -123,9 +123,13 @@ function reorderTrailLayers(map: MaplibreMap): void {
 export function AircraftTrailLayer({
   map,
   airborne,
+  hidden = false,
 }: {
   map: MaplibreMap | null;
   airborne: Aircraft[];
+  /** History mode is on: hide the live trails so past and present
+   *  never share the map. Polling continues so they return instantly. */
+  hidden?: boolean;
 }) {
   const tailsKey = airborne
     .map((a) => a.tail)
@@ -356,6 +360,35 @@ export function AircraftTrailLayer({
       window.clearInterval(id);
     };
   }, [map, tailsKey]);
+
+  // Mirror `hidden` to every trail layer. While hidden, re-apply on
+  // styledata so a trail layer that attaches late comes up hidden.
+  useEffect(() => {
+    if (!map) return;
+    const apply = () => {
+      for (const id of [
+        HALO_LAYER_ID,
+        LAYER_ID,
+        START_DOT_LAYER_ID,
+        END_DOT_LAYER_ID,
+      ]) {
+        try {
+          const want = hidden ? "none" : "visible";
+          if (map.getLayer(id) && map.getLayoutProperty(id, "visibility") !== want) {
+            map.setLayoutProperty(id, "visibility", want);
+          }
+        } catch {
+          /* torn down */
+        }
+      }
+    };
+    apply();
+    if (!hidden) return;
+    map.on("styledata", apply);
+    return () => {
+      map.off("styledata", apply);
+    };
+  }, [map, hidden]);
 
   return null;
 }

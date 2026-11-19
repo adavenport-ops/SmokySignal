@@ -1976,4 +1976,64 @@ test.describe("p14 live-prod audit", () => {
       screenshot: path.join(AUDIT_DIR, "55-flight-card.png"),
     });
   });
+
+  test("56. /radar history mode: banner + history lines for the last 7 days", async ({ page }) => {
+    const ptDate = (offsetDays: number) =>
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Los_Angeles",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date(Date.now() - offsetDays * 86_400_000));
+    const from = ptDate(7);
+    const to = ptDate(0);
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    page.on("console", (m) => {
+      if (m.type() === "error" && /maplibre|layer|source|style/i.test(m.text())) errors.push(m.text());
+    });
+    await page.goto(`/radar?h=1&from=${from}&to=${to}`, { waitUntil: "domcontentloaded" });
+    const banner = page.locator('[data-testid="history-banner"]');
+    await banner.waitFor({ state: "visible", timeout: 20_000 }).catch(() => {});
+    const bannerText = (await banner.innerText().catch(() => "")).replace(/\s+/g, " ").trim();
+    // The history line source (components/HistoryOverlay.tsx) stamps the
+    // map container with the feature count it last pushed via setData.
+    await page
+      .waitForFunction(
+        () => {
+          const el = document.querySelector("[data-history-lines]");
+          const empty = document.querySelector('[data-testid="history-status"]')?.textContent ?? "";
+          return (el && Number(el.getAttribute("data-history-lines")) > 0) || /No flights/.test(empty);
+        },
+        undefined,
+        { timeout: 30_000 },
+      )
+      .catch(() => {});
+    const lines = await page
+      .locator("[data-history-lines]")
+      .first()
+      .getAttribute("data-history-lines")
+      .catch(() => null);
+    const summary = (await page.locator('[data-testid="history-summary"]').innerText().catch(() => "")).trim();
+    const status = (await page.locator('[data-testid="history-status"]').innerText().catch(() => "")).trim();
+    const screenshot = await shot(page, "56-radar-history");
+    const bannerOk = /^HISTORY · /.test(bannerText);
+    const linesOk = Number(lines ?? 0) > 0;
+    const empty = /No flights in this range/.test(status);
+    const pass = bannerOk && linesOk && errors.length === 0;
+    record({
+      claim:
+        "/radar?h=1&from=<7 days ago>&to=<today> shows the HISTORY banner and the history line source receives flight polylines (no MapLibre errors)",
+      category: pass
+        ? "working_as_designed"
+        : bannerOk && empty
+          ? "indeterminate"
+          : bannerText
+            ? "confirmed_bug"
+            : "unshipped",
+      pass,
+      evidence: `banner="${bannerText}" lines=${lines} summary="${summary}" status="${status}" errors=${errors.length}${errors.length ? `: ${errors.slice(0, 2).join(" | ")}` : ""}`,
+      screenshot,
+    });
+  });
 });
