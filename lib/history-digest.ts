@@ -8,7 +8,8 @@
 
 import { unstable_cache } from "next/cache";
 import { getRegistry } from "./registry";
-import { getRecentActivity } from "./activity";
+import { getActivityRange, getRecentActivity, type ActivityEntry } from "./activity";
+import { formatTs } from "./time";
 import { lastUtcDays, readTrackDays } from "./track-reader";
 import { CORRIDORS } from "./corridor";
 import {
@@ -64,6 +65,26 @@ export function emptyDigest(nowMs: number): HistoryDigest {
   };
 }
 
+/**
+ * Takeoffs and landings in the window: the permanent per-day archive,
+ * topped up with the rolling feed (covers days before the archive began).
+ */
+async function readActivity(sinceMs: number, nowMs: number): Promise<ActivityEntry[]> {
+  const [archived, recent] = await Promise.all([
+    getActivityRange(formatTs(sinceMs, "date"), formatTs(nowMs, "date")).catch(() => []),
+    getRecentActivity(500).catch(() => []),
+  ]);
+  const seen = new Set<string>();
+  const out: ActivityEntry[] = [];
+  for (const e of [...archived, ...recent]) {
+    const k = `${e.tail}|${e.kind}|${e.ts}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(e);
+  }
+  return out;
+}
+
 export async function buildHistoryDigest(nowMs: number): Promise<HistoryDigest> {
   const registry = await getRegistry();
   const sinceMs = nowMs - ROAD_WINDOW_DAYS * DAY_MS;
@@ -76,7 +97,7 @@ export async function buildHistoryDigest(nowMs: number): Promise<HistoryDigest> 
       registry.map((r) => r.tail),
       dates,
     ),
-    getRecentActivity(500).catch(() => []),
+    readActivity(sinceMs, nowMs),
   ]);
 
   const passes = new Map<string, RoadPass[]>(CORRIDORS.map((c) => [c.id, []]));
