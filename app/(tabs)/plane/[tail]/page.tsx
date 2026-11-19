@@ -15,6 +15,7 @@ import type { RecentFlightForTail } from "@/lib/flights";
 import type { TrackPoint } from "@/lib/tracks";
 import { BackLink } from "@/components/BackLink";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
+import { FlightIntel } from "@/components/FlightIntel";
 import { Tooltip } from "@/components/Tooltip";
 import { roleBadgeStyle, roleBadgeText, roleTooltip } from "@/lib/role-display";
 
@@ -460,6 +461,9 @@ function RecentTrackBlock({
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <PlaneTrackMap tail={tail} points={seedPoints} inProgress={inProgress} />
       {hasHistory && flight && <RecentTrackStats flight={flight} hour12={hour12} />}
+      {hasHistory && flight && (
+        <FlightIntel points={flight.points} inProgress={flight.inProgress} />
+      )}
     </div>
   );
 }
