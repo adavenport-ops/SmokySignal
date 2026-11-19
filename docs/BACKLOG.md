@@ -170,5 +170,5 @@ _Nothing picked yet._
 ## Shipped
 
 <!-- The weekly job prepends one line per shipped item: - YYYY-MM-DD · B0x · Title · #PR -->
-- 2026-11-19 · B19 · Desktop layout for plane and flight pages · fix/walk-b
+- 2026-11-19 · B19 · Desktop layout for plane and flight pages · #186
 - 2026-11-19 · B09 · Neighbourhood pages · #183
