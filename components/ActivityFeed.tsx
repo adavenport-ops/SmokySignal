@@ -1,10 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { ActivityEntry, ActivityKind } from "@/lib/activity";
-import { fmtAgoTs, formatTsBare } from "@/lib/time";
+import { fmtAgoTs, fmtRelativeDay, formatTs, formatTsBare } from "@/lib/time";
+import {
+  groupActivity,
+  groupByDay,
+  placeLabel,
+  rowTitle,
+  type ActivityRow,
+} from "@/lib/activity-group";
 
 const TABBAR_HEIGHT = 66;
 
@@ -97,27 +104,59 @@ function Empty() {
 }
 
 function List({ entries }: { entries: ActivityEntry[] }) {
+  const days = useMemo(() => groupByDay(groupActivity(entries)), [entries]);
   return (
-    <div
-      style={{
-        background: SS_TOKENS.bg1,
-        border: `.5px solid ${SS_TOKENS.hairline}`,
-        borderRadius: 14,
-        overflow: "hidden",
-      }}
-    >
-      {entries.map((e, i) => (
-        <Row key={`${e.tail}-${e.ts}-${i}`} entry={e} first={i === 0} />
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {days.map((d) => (
+        <section key={d.day} aria-label={d.day}>
+          <h2
+            className="ss-mono"
+            style={{
+              position: "sticky",
+              top: 0,
+              zIndex: 2,
+              margin: 0,
+              padding: "6px 2px",
+              fontSize: 10.5,
+              fontWeight: 600,
+              letterSpacing: ".1em",
+              textTransform: "uppercase",
+              color: SS_TOKENS.fg1,
+              background: SS_TOKENS.bg0,
+            }}
+          >
+            {fmtRelativeDay(d.rows[0]!.lastTs)} ·{" "}
+            {formatTs(d.rows[0]!.lastTs, "date-short")}
+          </h2>
+          <div
+            style={{
+              background: SS_TOKENS.bg1,
+              border: `.5px solid ${SS_TOKENS.hairline}`,
+              borderRadius: 14,
+              overflow: "hidden",
+            }}
+          >
+            {d.rows.map((r, i) => (
+              <Row key={r.key} row={r} first={i === 0} />
+            ))}
+          </div>
+        </section>
       ))}
     </div>
   );
 }
 
-function Row({ entry, first }: { entry: ActivityEntry; first: boolean }) {
-  const isEmergency = entry.kind === "squawk_emergency";
+function Row({ row, first }: { row: ActivityRow; first: boolean }) {
+  const entry = row.entry;
+  const isEmergency = row.kind === "squawk_emergency";
+  const place = placeLabel(entry);
+  const t0 = formatTsBare(row.firstTs, "hour-min");
+  const t1 = formatTsBare(row.lastTs, "hour-min");
+  const span =
+    row.count > 1 && t0 !== t1 ? `${t0}–${t1} PT` : `${t1} PT`;
   return (
     <Link
-      href={`/plane/${entry.tail}`}
+      href={`/plane/${row.tail}`}
       prefetch={false}
       style={{
         display: "flex",
@@ -132,7 +171,7 @@ function Row({ entry, first }: { entry: ActivityEntry; first: boolean }) {
         borderTop: first ? 0 : `.5px solid ${SS_TOKENS.hairline}`,
       }}
     >
-      <KindIcon kind={entry.kind} />
+      <KindIcon kind={row.kind} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
@@ -141,13 +180,21 @@ function Row({ entry, first }: { entry: ActivityEntry; first: boolean }) {
             lineHeight: 1.4,
           }}
         >
-          {entry.description}
+          {rowTitle(row)}
         </div>
+        {place && (
+          <div
+            className="ss-mono"
+            style={{ fontSize: 11, color: SS_TOKENS.fg1, marginTop: 2 }}
+          >
+            {place}
+          </div>
+        )}
         <div
           className="ss-mono"
           style={{ fontSize: 11, color: SS_TOKENS.fg2, marginTop: 2 }}
         >
-          {fmtAgoTs(entry.ts)} · {formatTsBare(entry.ts, "hour-min")} PT
+          {fmtAgoTs(row.lastTs)} · {span}
         </div>
       </div>
       <span
