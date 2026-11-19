@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
-import { updatePrefs, type AlertPrefs } from "@/lib/push/store";
+import { updatePrefs } from "@/lib/push/store";
+import { validatePrefsInput } from "@/lib/push/validate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// subscriptionId() in lib/push/store.ts: first 24 hex chars of a sha256.
+const SUB_ID_RE = /^[0-9a-f]{24}$/;
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -14,15 +18,19 @@ export async function POST(req: Request) {
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
   }
-  const b = body as { id?: unknown; prefs?: Partial<AlertPrefs> };
-  if (typeof b.id !== "string" || !b.id) {
+  const b = body as { id?: unknown; prefs?: unknown };
+  if (typeof b.id !== "string" || !SUB_ID_RE.test(b.id)) {
     return NextResponse.json({ error: "missing_id" }, { status: 400 });
   }
   if (!b.prefs || typeof b.prefs !== "object") {
     return NextResponse.json({ error: "missing_prefs" }, { status: 400 });
   }
+  const prefs = validatePrefsInput(b.prefs);
+  if (!prefs.ok) {
+    return NextResponse.json({ error: prefs.error }, { status: 400 });
+  }
   try {
-    const next = await updatePrefs(b.id, b.prefs);
+    const next = await updatePrefs(b.id, prefs.prefs);
     if (!next) {
       return NextResponse.json({ error: "not_found" }, { status: 404 });
     }

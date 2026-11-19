@@ -18,6 +18,15 @@ import {
   type StoredSubscription,
   type UserZoneSpec,
 } from "./types";
+import {
+  MAX_USER_ZONES,
+  MAX_ZONES,
+  isValidZoneId,
+  normalizeUserZone,
+  parsePushSubscription,
+  validateTz,
+  type StoredPushSubscription,
+} from "./validate";
 
 // Re-export so server-side callers can keep their existing import sites.
 export {
@@ -31,8 +40,17 @@ export {
 const SUB_PREFIX = "push:sub:";
 const SUBS_INDEX = "push:subs";
 const SUB_TTL_SECONDS = 90 * 24 * 60 * 60;
+/** Ceiling on push:subs. New signups above it get a 503. */
+export const MAX_SUBSCRIPTIONS = 5000;
 
-export function subscriptionId(sub: PushSubscriptionJSON): string {
+export class SubscriberCapError extends Error {
+  constructor() {
+    super("subscriber cap reached");
+    this.name = "SubscriberCapError";
+  }
+}
+
+export function subscriptionId(sub: { endpoint?: string | null }): string {
   if (!sub.endpoint) throw new Error("subscription endpoint missing");
   return createHash("sha256").update(sub.endpoint).digest("hex").slice(0, 24);
 }
@@ -41,39 +59,32 @@ function sanitizeUserZones(v: unknown): UserZoneSpec[] | undefined {
   if (!Array.isArray(v)) return undefined;
   const out: UserZoneSpec[] = [];
   for (const z of v) {
-    if (!z || typeof z !== "object") continue;
-    const r = z as Record<string, unknown>;
-    if (
-      typeof r.lat === "number" &&
-      Number.isFinite(r.lat) &&
-      typeof r.lon === "number" &&
-      Number.isFinite(r.lon) &&
-      typeof r.radiusNm === "number" &&
-      Number.isFinite(r.radiusNm) &&
-      r.radiusNm > 0 &&
-      typeof r.label === "string"
-    ) {
-      out.push({
-        lat: r.lat,
-        lon: r.lon,
-        radiusNm: r.radiusNm,
-        label: r.label.slice(0, 64),
-      });
-    }
+    // Validates ranges and rounds lat/lon to 2 decimals (~1 km).
+    const n = normalizeUserZone(z);
+    if (n) out.push(n);
   }
-  // Cap at 32 zones per subscriber — generous for any plausible rider use,
-  // bounded so a malformed client can't fan out an unbounded payload.
-  return out.slice(0, 32);
+  // Bounded so a malformed client can't fan out an unbounded payload.
+  return out.slice(0, MAX_USER_ZONES);
 }
 
+function sanitizeZoneIds(v: unknown): string[] | "any" {
+  if (!Array.isArray(v)) return "any";
+  return Array.from(new Set(v.filter(isValidZoneId))).slice(0, MAX_ZONES);
+}
+
+/**
+ * Lenient merge used on every write. Routes run validatePrefsInput() first
+ * and reject bad input with a 400; this second pass also cleans legacy
+ * rows stored before validation existed instead of failing the update.
+ */
 function mergePrefs(partial?: Partial<AlertPrefs>): AlertPrefs {
   if (!partial) return { ...DEFAULT_PREFS };
   const merged: AlertPrefs = {
     tier: partial.tier === "all" ? "all" : "alert_only",
-    zones: Array.isArray(partial.zones) ? partial.zones : "any",
+    zones: sanitizeZoneIds(partial.zones),
     quiet_start_h: clampHour(partial.quiet_start_h, DEFAULT_PREFS.quiet_start_h),
     quiet_end_h: clampHour(partial.quiet_end_h, DEFAULT_PREFS.quiet_end_h),
-    tz: typeof partial.tz === "string" && partial.tz ? partial.tz : DEFAULT_PREFS.tz,
+    tz: validateTz(partial.tz) ?? DEFAULT_PREFS.tz,
   };
   const userZones = sanitizeUserZones(partial.userZones);
   if (userZones !== undefined) merged.userZones = userZones;
@@ -104,17 +115,34 @@ function clampHour(v: unknown, fallback: number): number {
   return i;
 }
 
+/**
+ * `sub` must already be validated by parsePushSubscription(). It is rebuilt
+ * here anyway so only `{ endpoint, keys: { p256dh, auth } }` is ever
+ * written, whatever extra fields the caller's object carries.
+ */
 export async function saveSubscription(
-  sub: PushSubscriptionJSON,
+  sub: StoredPushSubscription,
   prefsPartial?: Partial<AlertPrefs>,
 ): Promise<string> {
   const redis = await getRedis();
   if (!redis) throw new Error("KV not configured");
   const id = subscriptionId(sub);
+  // Bound the fan-out set. Re-subscribing an existing endpoint is always
+  // allowed; only brand-new endpoints are refused once the set is full.
+  // Check-then-add isn't atomic, so the cap can overshoot by a few under
+  // concurrent signups; it is a ceiling against floods, not an exact quota.
+  const isMember = await redis.sismember(SUBS_INDEX, id);
+  if (!isMember) {
+    const count = await redis.scard(SUBS_INDEX);
+    if (count >= MAX_SUBSCRIPTIONS) throw new SubscriberCapError();
+  }
   const prefs = mergePrefs(prefsPartial);
   const stored: StoredSubscription = {
     id,
-    sub,
+    sub: {
+      endpoint: sub.endpoint,
+      keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth },
+    },
     prefs,
     savedAt: Date.now(),
   };
@@ -153,7 +181,15 @@ export async function updatePrefs(
   const existing = await getSubscription(id);
   if (!existing) return null;
   const prefs = mergePrefs({ ...existing.prefs, ...prefsPartial });
-  const next: StoredSubscription = { ...existing, prefs, savedAt: Date.now() };
+  const next: StoredSubscription = {
+    id: existing.id,
+    // Rows written before validation may carry extra fields; keep only
+    // the endpoint + keys. A row that fails validation is left as-is; the
+    // dispatcher refuses to send to it and it ages out with the TTL.
+    sub: parsePushSubscription(existing.sub) ?? existing.sub,
+    prefs,
+    savedAt: Date.now(),
+  };
   const redis = await getRedis();
   if (!redis) throw new Error("KV not configured");
   await redis.set(`${SUB_PREFIX}${id}`, JSON.stringify(next), {

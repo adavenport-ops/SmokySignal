@@ -9,14 +9,13 @@
 import webpush from "web-push";
 import { NextResponse } from "next/server";
 import { isAdminAuthed } from "@/lib/admin-auth";
-import {
-  getSubscription,
-  listSubscriptions,
-  removeSubscription,
-} from "@/lib/push/store";
+import { getSubscription, listSubscriptions } from "@/lib/push/store";
+import { sendToSubscriptions } from "@/lib/push/send";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Broadcast fan-out is capped at 25s (OVERALL_DEADLINE_MS in lib/push/send.ts).
+export const maxDuration = 30;
 
 const TEST_PAYLOAD = {
   title: "Smokey · test",
@@ -66,28 +65,12 @@ export async function POST(req: Request) {
 
   console.log(`[push/test] sending test to ${targets.length} subscription(s)`);
 
-  let sent = 0;
-  let removed = 0;
-  for (const t of targets) {
-    try {
-      await webpush.sendNotification(
-        t.sub as webpush.PushSubscription,
-        JSON.stringify(TEST_PAYLOAD),
-        { TTL: 60 },
-      );
-      sent++;
-    } catch (e: unknown) {
-      const status =
-        typeof e === "object" && e !== null && "statusCode" in e
-          ? Number((e as { statusCode: unknown }).statusCode)
-          : 0;
-      if (status === 404 || status === 410) {
-        await removeSubscription(t.id).catch(() => {});
-        removed++;
-      } else {
-        console.warn("[push/test] send failed:", e);
-      }
-    }
-  }
-  return NextResponse.json({ ok: true, sent, removed });
+  // Same path as the takeoff dispatcher: allow-list re-check, rolling pool,
+  // per-send + overall deadlines, dead-sub pruning.
+  const { sent, removed, skipped } = await sendToSubscriptions(
+    targets,
+    JSON.stringify(TEST_PAYLOAD),
+    { ttl: 60 },
+  );
+  return NextResponse.json({ ok: true, sent, removed, skipped });
 }

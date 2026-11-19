@@ -4,22 +4,32 @@
 // matching tier + zone + quiet-hours, and best-effort send via web-push.
 // Dead endpoints (HTTP 410/404) are pruned from KV. Failures never throw —
 // the snapshot pipeline must keep flowing.
+//
+// Hardening: sends go through lib/push/send.ts (rolling pool of 10, per-send
+// and overall deadlines, send-time allow-list check) so one slow or hostile
+// endpoint can't hold up every other rider's alert.
 
 import webpush from "web-push";
-import { getRedis } from "../cache";
 import { zoneIdForPoint } from "../hotzones";
+import { pushCooldownKey } from "../storage-keys";
 import {
-  listSubscriptions,
-  removeSubscription,
   type AlertPrefs,
   type StoredSubscription,
   type UserZoneSpec,
 } from "./store";
+import {
+  defaultPushDeps,
+  sendToSubscriptions,
+  type PushDeps,
+  type SendOptions,
+} from "./send";
 import type { FleetRole, RoleConfidence } from "../types";
 
-const DEDUPE_PREFIX = "push:dispatched:";
-const DEDUPE_TTL_SECONDS = 6 * 60 * 60;
+/** One alert per tail per 20 minutes, claimed atomically (SET NX EX). */
+export const COOLDOWN_TTL_SECONDS = 20 * 60;
 const MAX_BODY_CHARS = 140;
+/** Push TTL: an alert older than 10 minutes is stale, let the service drop it. */
+const PUSH_TTL_SECONDS = 600;
 
 const ALERT_ROLES: ReadonlySet<FleetRole> = new Set([
   "smokey",
@@ -52,7 +62,10 @@ export type DispatchTakeoffArgs = {
   lat: number | null;
   lon: number | null;
   alt_ft: number | null;
-  /** ISO timestamp of takeoff. Used to compute the dedupe key. */
+  /**
+   * ISO timestamp of takeoff. Informational; dedupe is a per-tail cooldown
+   * (pushCooldownKey) rather than a timestamp bucket.
+   */
   ts_iso: string;
 };
 
@@ -63,37 +76,62 @@ export type DispatchResult = {
   reason?: string;
 };
 
+export type DispatchOptions = Partial<Omit<SendOptions, "ttl">> & {
+  /** Test seam: skip the VAPID env check. */
+  skipVapidCheck?: boolean;
+};
+
 export async function dispatchTakeoff(
   args: DispatchTakeoffArgs,
+  deps: PushDeps = defaultPushDeps,
+  opts: DispatchOptions = {},
 ): Promise<DispatchResult> {
-  if (!ensureVapid()) {
+  if (!opts.skipVapidCheck && !ensureVapid()) {
     return { sent: 0, skipped: 0, removed: 0, reason: "vapid_not_configured" };
   }
 
-  const dedupeKey = buildDedupeKey(args.tail, args.ts_iso);
-  const redis = await getRedis();
-  if (redis) {
-    const already = await redis.get(`${DEDUPE_PREFIX}${dedupeKey}`);
-    if (already) return { sent: 0, skipped: 0, removed: 0, reason: "duplicate" };
-    await redis.set(`${DEDUPE_PREFIX}${dedupeKey}`, "1", {
-      ex: DEDUPE_TTL_SECONDS,
-    });
+  const cooldownKey = pushCooldownKey(args.tail);
+  let subs: StoredSubscription[];
+  let redis: Awaited<ReturnType<PushDeps["getRedis"]>> = null;
+  try {
+    redis = await deps.getRedis();
+    if (redis) {
+      // Atomic claim: concurrent snapshot regens race on the same key and
+      // exactly one wins. Upstash returns null when NX finds the key set.
+      const claimed = await redis.set(cooldownKey, "1", {
+        nx: true,
+        ex: COOLDOWN_TTL_SECONDS,
+      });
+      if (claimed === null) {
+        return { sent: 0, skipped: 0, removed: 0, reason: "duplicate" };
+      }
+    }
+    subs = await deps.listSubscriptions();
+  } catch (e) {
+    console.warn("[push] cooldown/list failed:", e);
+    // Nothing was sent, so release the claim; otherwise a KV blip would
+    // silence this tail for the full cooldown. Best-effort.
+    if (redis) {
+      try {
+        await redis.del(cooldownKey);
+      } catch {
+        /* best-effort */
+      }
+    }
+    return { sent: 0, skipped: 0, removed: 0, reason: "kv_error" };
   }
-
-  const subs = await listSubscriptions();
   if (subs.length === 0) {
     return { sent: 0, skipped: 0, removed: 0, reason: "no_subs" };
   }
 
-  const payload = composePayload(args);
+  const payload = JSON.stringify(composePayload(args));
   const aircraftZone =
     args.lat != null && args.lon != null
       ? zoneIdForPoint(args.lat, args.lon)
       : null;
 
-  let sent = 0;
   let skipped = 0;
-  let removed = 0;
+  const targets: StoredSubscription[] = [];
   for (const stored of subs) {
     const skip = shouldSkip(
       stored.prefs,
@@ -103,26 +141,24 @@ export async function dispatchTakeoff(
       args.lon,
       aircraftZone,
     );
-    if (skip) {
-      skipped++;
-      continue;
-    }
-    const result = await sendOne(stored, payload);
-    if (result === "sent") sent++;
-    else if (result === "removed") removed++;
-    else skipped++;
+    if (skip) skipped++;
+    else targets.push(stored);
   }
-  return { sent, skipped, removed };
-}
 
-function buildDedupeKey(tail: string, tsIso: string): string {
-  // Round to the nearest minute so a 10s poll cadence can't fire two
-  // distinct dedupe keys for the same takeoff event.
-  const ts = Date.parse(tsIso);
-  const minute = Number.isFinite(ts)
-    ? Math.floor(ts / 60_000) * 60_000
-    : Math.floor(Date.now() / 60_000) * 60_000;
-  return `${tail}:${minute}`;
+  // The cooldown stays claimed from here on. If the process dies mid-send
+  // the remaining riders miss this takeoff rather than getting a retry;
+  // takeoffs are one-shot diffs, so a retry path would need its own queue.
+  const summary = await sendToSubscriptions(
+    targets,
+    payload,
+    { ...opts, ttl: PUSH_TTL_SECONDS },
+    deps,
+  );
+  return {
+    sent: summary.sent,
+    removed: summary.removed,
+    skipped: skipped + summary.skipped,
+  };
 }
 
 // Per-degree shorthand for the user-zone bbox check. 1° latitude is
@@ -257,34 +293,4 @@ function composePayload(args: DispatchTakeoffArgs): PushPayload {
 function trimBody(s: string): string {
   if (s.length <= MAX_BODY_CHARS) return s;
   return s.slice(0, MAX_BODY_CHARS - 1) + "…";
-}
-
-type SendResult = "sent" | "removed" | "skipped";
-
-async function sendOne(
-  stored: StoredSubscription,
-  payload: PushPayload,
-): Promise<SendResult> {
-  try {
-    const sub = stored.sub as webpush.PushSubscription;
-    if (!sub.endpoint) return "skipped";
-    await webpush.sendNotification(sub, JSON.stringify(payload), { TTL: 600 });
-    return "sent";
-  } catch (e: unknown) {
-    const status =
-      typeof e === "object" && e !== null && "statusCode" in e
-        ? Number((e as { statusCode: unknown }).statusCode)
-        : 0;
-    if (status === 404 || status === 410) {
-      // Subscription is dead at the push service — prune.
-      try {
-        await removeSubscription(stored.id);
-      } catch {
-        /* best-effort */
-      }
-      return "removed";
-    }
-    console.warn(`[push] send failed for ${stored.id}:`, e);
-    return "skipped";
-  }
 }

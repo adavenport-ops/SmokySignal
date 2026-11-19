@@ -65,3 +65,17 @@ export function hotzonesPlaneKey(tail: string, region?: Region): string {
 export function flightsRecentCacheKey(region?: Region): string {
   return `${regionPrefix(region)}flights:recent_cache_v1`;
 }
+
+// ─── push:cooldown:{TAIL} ────────────────────────────────────────────
+// Per-tail takeoff-alert cooldown. Claimed atomically with SET NX EX by
+// lib/push/dispatcher.ts so concurrent snapshot regens can't double-send.
+export function pushCooldownKey(tail: string, region?: Region): string {
+  return `${regionPrefix(region)}push:cooldown:${tail.toUpperCase()}`;
+}
+
+// ─── push:fail:{subscriptionId} ──────────────────────────────────────
+// Rolling count of 400/401/403 responses for one subscription. The
+// dispatcher prunes the subscription once it crosses the threshold.
+export function pushFailCountKey(subscriptionId: string, region?: Region): string {
+  return `${regionPrefix(region)}push:fail:${subscriptionId}`;
+}
