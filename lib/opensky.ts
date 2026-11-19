@@ -101,12 +101,24 @@ async function clearOpenskyToken(): Promise<void> {
 
 type OpenSkyResp = { time: number; states: unknown[][] | null };
 
-function normalizeStates(states: unknown[][]): NormalizedAc[] {
+export function normalizeStates(
+  states: unknown[][],
+  responseTimeS?: number,
+): NormalizedAc[] {
   // states_vector schema (positional):
-  // [0]=icao24 [5]=lon [6]=lat [7]=baro_alt(m) [8]=on_ground [9]=velocity(m/s)
-  // [10]=true_track [14]=squawk
+  // [0]=icao24 [3]=time_position(s) [5]=lon [6]=lat [7]=baro_alt(m)
+  // [8]=on_ground [9]=velocity(m/s) [10]=true_track [14]=squawk
   return states.map((s) => ({
     hex: String(s[0] ?? "").toLowerCase(),
+    src: "os" as const,
+    ...(typeof s[3] === "number"
+      ? {
+          pos_ts: (s[3] as number) * 1000,
+          ...(typeof responseTimeS === "number"
+            ? { seen_pos: Math.max(0, responseTimeS - (s[3] as number)) }
+            : {}),
+        }
+      : {}),
     lon: typeof s[5] === "number" ? (s[5] as number) : undefined,
     lat: typeof s[6] === "number" ? (s[6] as number) : undefined,
     alt_baro:
@@ -126,7 +138,7 @@ function normalizeStates(states: unknown[][]): NormalizedAc[] {
 
 /**
  * Fetch OpenSky states for the given ICAO24 hex list, normalized to the same
- * shape adsb.fi gets normalized to. Throws on rate-limit or upstream error so
+ * shape the readsb feeds get normalized to (lib/feeds/readsb.ts). Throws on rate-limit or upstream error so
  * the caller can fall through (or surface stale data).
  */
 export async function fetchOpenSky(
@@ -169,7 +181,7 @@ export async function fetchOpenSky(
   if (remaining != null) await stashCredits(remaining);
 
   const j = (await r.json()) as OpenSkyResp;
-  return normalizeStates(j.states ?? []);
+  return normalizeStates(j.states ?? [], j.time);
 }
 
 async function stashCredits(raw: string): Promise<void> {

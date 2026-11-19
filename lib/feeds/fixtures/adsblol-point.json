@@ -1,0 +1,47 @@
+{
+  "ac": [
+    {
+      "hex": "71bc36",
+      "type": "adsb_icao",
+      "flight": "AIH241  ",
+      "r": "HL7436",
+      "t": "B744",
+      "alt_baro": 32000,
+      "gs": 472.3,
+      "track": 315.17,
+      "squawk": "6630",
+      "lat": 49.408173,
+      "lon": -126.254953,
+      "seen_pos": 0.072,
+      "seen": 0.1,
+      "mlat": [],
+      "tisb": [],
+      "messages": 26937,
+      "rssi": -23.5
+    },
+    {
+      "hex": "ad10e9",
+      "type": "adsb_icao",
+      "flight": "ASA267  ",
+      "r": "N941AK",
+      "t": "B39M",
+      "alt_baro": 35000,
+      "gs": 442.0,
+      "track": 75.05,
+      "squawk": "2647",
+      "lat": 46.445709,
+      "lon": -124.865447,
+      "seen_pos": 0.05,
+      "seen": 0.1,
+      "mlat": [],
+      "tisb": [],
+      "messages": 12731,
+      "rssi": -23.0
+    }
+  ],
+  "msg": "No error",
+  "now": 1795059346001,
+  "total": 2,
+  "ctime": 1795059346001,
+  "ptime": 0
+}

@@ -6,6 +6,7 @@ import type { Aircraft, FleetEntry, Snapshot } from "@/lib/types";
 import type { ActivityEntry } from "@/lib/activity";
 import type { LearningState } from "@/lib/learning";
 import { SS_TOKENS, TAP_MIN, TYPE } from "@/lib/tokens";
+import { describeSource } from "@/lib/feed-sources";
 import { fmtAgoTs, fmtAloft, formatTsBare } from "@/lib/time";
 import { useAircraft } from "@/lib/hooks/useAircraft";
 import { useGrantedRiderPos, type GrantedPos } from "@/lib/hooks/useGrantedRiderPos";
@@ -100,7 +101,7 @@ export function Glanceable({
     () => new Map<string, FleetEntry>(snap.aircraft.map((a) => [a.tail, a])),
     [snap.aircraft],
   );
-  // Degraded = both upstream feeds failed. The snapshot is then the last
+  // Degraded = every upstream feed failed. The snapshot is then the last
   // good read (original fetched_at) or, when none is on hand, an
   // all-grounded placeholder (source "none"). Either way the sky state is
   // unknown, so the hero must not claim "Smokey's down."
@@ -178,8 +179,8 @@ export function Glanceable({
             align="end"
             content={
               feedDown
-                ? "Both feeds are quiet. Showing the last good read; positions may be out of date."
-                : `Time since last successful data pull. ${snap.source === "adsbfi" ? "ADSBFI = adsb.fi (primary feed)." : snap.source === "opensky" ? "OPENSKY = OpenSky Network (fallback)." : "MOCK = synthetic data."}`
+                ? "Every feed is quiet. Showing the last good read; positions may be out of date."
+                : `Time since last successful data pull. ${describeSource(snap.source).detail}`
             }
           >
             <span
@@ -207,7 +208,7 @@ export function Glanceable({
               />
               {feedDown
                 ? `FEED QUIET · LAST ${lastGoodMs != null ? formatTsBare(lastGoodMs, "time", { hour12 }) : "—"}`
-                : `UPDATED ${updatedAgo}s · ${snap.source.toUpperCase()}`}
+                : `UPDATED ${updatedAgo}s · ${describeSource(snap.source).label}`}
             </span>
           </Tooltip>
           <HelpIcon variant="inline" />
@@ -280,6 +281,15 @@ function Footer() {
         adsb.fi
       </a>{" "}
       ·{" "}
+      <a
+        href="https://adsb.lol"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={FOOTER_LINK}
+      >
+        adsb.lol
+      </a>{" "}
+      (ODbL) ·{" "}
       <a
         href="https://opensky-network.org"
         target="_blank"

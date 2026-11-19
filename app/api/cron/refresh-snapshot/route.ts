@@ -1,5 +1,5 @@
-// Vercel cron — invalidates the snapshot cache and re-fetches so adsb.fi
-// is queried even when no human traffic is hitting /api/aircraft. This
+// Vercel cron — invalidates the snapshot cache and re-fetches so the ADS-B
+// feeds are queried even when no human traffic is hitting /api/aircraft. This
 // keeps the activity feed firing continuously (recordActivity runs as a
 // side-channel inside getSnapshot's regen path).
 //
@@ -36,8 +36,9 @@ export async function GET(req: Request) {
   const snap = await getSnapshot();
   const airborne = snap.aircraft.filter((a) => a.airborne).length;
 
-  // Degraded = both upstream feeds failed this tick; fetched_at is then the
-  // last good read (or the placeholder's), not this run.
+  // Degraded = every upstream feed failed this tick; fetched_at is then the
+  // last good read (or the placeholder's), not this run. `source` is the
+  // "fi+lol" style summary of the feeds that answered.
   const degraded = snap.degraded === true;
   return NextResponse.json({
     ok: !degraded,

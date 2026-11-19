@@ -170,7 +170,7 @@ export default async function ForecastPage({
           Hour-of-week probability of a takeoff in the classes picked below, drawn from{" "}
           <span className="ss-mono">{grid.total_events}</span> logged
           takeoff{grid.total_events === 1 ? "" : "s"}, seen in public ADS-B
-          data via adsb.fi {days <= 0 ? (
+          data via adsb.fi and adsb.lol {days <= 0 ? (
             "so far"
           ) : (
             <>

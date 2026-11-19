@@ -77,7 +77,7 @@ waiting for a live event.
 
 ## Architecture quick-reference
 
-- `lib/snapshot.ts` — fleet snapshot from adsb.fi (primary) + OpenSky (fallback)
+- `lib/snapshot.ts` — fleet snapshot; `lib/adsb.ts` merges adsb.fi + adsb.lol (+ airplanes.live when `SS_FEED_APL=1`) by ICAO hex via `lib/feed-select.ts` / `lib/feed-merge.ts`, OpenSky as fallback; adapters in `lib/feeds/`, rate budget in `lib/feed-budget.ts`, live check `npm run feeds:check`
 - `lib/tracks.ts` — per-tail position history, KV-backed, 35-day TTL
 - `lib/hotzones.ts` — 30-day grid aggregate; geo-fenced via `SS_REGION_*` env vars
 - `lib/push/*` — VAPID push pipeline (subscribe / dispatcher / dedupe / quiet hours)
