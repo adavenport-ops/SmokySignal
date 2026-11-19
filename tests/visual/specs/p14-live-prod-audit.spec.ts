@@ -1146,4 +1146,88 @@ test.describe("p14 live-prod audit", () => {
       screenshot,
     });
   });
+
+  test("33. region picker moves the camera, heat grid is statewide-plus (radar region zoom)", async ({
+    page,
+    request,
+  }) => {
+    // Part A: the region control is camera-only. Picking a view must
+    // change the map's live view, read from the data attributes RadarMap
+    // keeps on its container (data-view / data-center / data-zoom). No
+    // geolocation grant, so the rider auto-zoom never moves the camera.
+    await page.goto("/radar", { waitUntil: "domcontentloaded" });
+    const mapEl = page.locator('[aria-label^="Live aircraft map"]');
+    await page
+      .waitForFunction(
+        () =>
+          document
+            .querySelector('[aria-label^="Live aircraft map"]')
+            ?.hasAttribute("data-zoom") ?? false,
+        undefined,
+        { timeout: 30_000 },
+      )
+      .catch(() => {});
+    await page.waitForTimeout(2500);
+    const readView = async () => ({
+      view: await mapEl.getAttribute("data-view").catch(() => null),
+      center: await mapEl.getAttribute("data-center").catch(() => null),
+      zoom: Number(await mapEl.getAttribute("data-zoom").catch(() => null)),
+    });
+    const sel = page.locator('select[aria-label="Region"]');
+    const hasPicker = (await sel.count()) > 0;
+    const before = await readView();
+    if (hasPicker) await sel.selectOption("all_wa");
+    await page.waitForTimeout(2500);
+    const afterAllWa = await readView();
+    if (hasPicker) await sel.selectOption("puget_sound");
+    await page.waitForTimeout(2500);
+    const afterPs = await readView();
+    const screenshot = await shot(page, "33-radar-region-camera");
+    const cameraMoved =
+      hasPicker &&
+      afterAllWa.view === "all_wa" &&
+      afterPs.view === "puget_sound" &&
+      Number.isFinite(afterAllWa.zoom) &&
+      Number.isFinite(afterPs.zoom) &&
+      afterAllWa.zoom < afterPs.zoom - 0.5 &&
+      afterAllWa.center !== afterPs.center;
+
+    // Part B: /api/hotzones returns the full extent. region_id is still
+    // accepted but ignored for clipping, so cells outside the Puget Sound
+    // bbox come back even when region_id=puget_sound is sent.
+    const PS = { latMin: 47.0, latMax: 48.4, lonMin: -122.9, lonMax: -121.4 };
+    const r = await request.get("/api/hotzones?region_id=puget_sound");
+    const body = r.ok() ? await r.json() : null;
+    const zones: Array<{ lat: number; lon: number }> = Array.isArray(
+      body?.zones,
+    )
+      ? body.zones
+      : [];
+    const outside = zones.filter(
+      (z) =>
+        z.lat < PS.latMin ||
+        z.lat > PS.latMax ||
+        z.lon < PS.lonMin ||
+        z.lon > PS.lonMax,
+    ).length;
+    // Informational: cells past the WA state box (OR / ID border areas).
+    // Fills in after the first daily hot-zone refresh following deploy.
+    const outOfState = zones.filter(
+      (z) => z.lat < 45.54 || z.lon > -116.9,
+    ).length;
+    const pass = cameraMoved && r.ok() && outside > 0;
+    record({
+      claim:
+        "Region picker changes the /radar camera (All of Washington zooms out, Puget Sound zooms back in) and /api/hotzones returns cells outside the Puget Sound bbox",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence:
+        `before=${JSON.stringify(before)} all_wa=${JSON.stringify(afterAllWa)} ` +
+        `puget_sound=${JSON.stringify(afterPs)} · /api/hotzones?region_id=puget_sound ` +
+        `${r.status()} zones=${zones.length} outside_ps=${outside} ` +
+        `out_of_state=${outOfState} region_clipped=${String(body?.region_clipped)}`,
+      screenshot,
+    });
+    expect(pass).toBe(true);
+  });
 });

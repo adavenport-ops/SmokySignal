@@ -1,8 +1,8 @@
 "use client";
 
 // Card-style region picker for /settings/alerts. Wraps the same
-// RegionSelector dropdown that lives in /radar's top bar so the
-// underlying state model is identical — localStorage `ss_region_pref`
+// RegionSelector dropdown that sits in /radar's top corner (a camera
+// preset, not a data filter) so the underlying state model is identical — localStorage `ss_region_pref`
 // + REGION_CHANGE_EVENT broadcast. Riders can change region from
 // either surface; the other one updates live via the event listener.
 
@@ -55,8 +55,9 @@ export function RegionSetting() {
             marginBottom: 0,
           }}
         >
-          Default radar viewport. On first visit with location granted
-          we auto-pick the matching bbox; this control lets you override.
+          Where the radar map opens. Heat and routes cover the whole
+          map either way; this only sets the starting view. With location
+          on, the map opens on you.
         </p>
       </div>
 

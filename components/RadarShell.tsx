@@ -9,7 +9,7 @@ import { SS_TOKENS } from "@/lib/tokens";
 import { computeStatus } from "@/lib/status";
 import { StatusPill } from "./StatusPill";
 import { SpottedButton } from "./SpottedButton";
-import { HotZoneLayer } from "./HotZoneLayer";
+import { HotZoneLayer, RADAR_DATA_EXTENT_EVENT } from "./HotZoneLayer";
 import { FlightPathLayer } from "./FlightPathLayer";
 import { UserZoneLayer } from "./UserZoneLayer";
 import { AircraftTrailLayer } from "./AircraftTrailLayer";
@@ -25,13 +25,13 @@ import { HelpIcon } from "./HelpIcon";
 import { Tooltip } from "./Tooltip";
 import { FreshnessLabel } from "./FreshnessLabel";
 import { RegionSelector } from "./RegionSelector";
+import { REGION_CHANGE_EVENT, getRegion } from "@/lib/region-pref";
 import {
-  REGION_CHANGE_EVENT,
-  getRegion,
-  hasExplicitRegion,
-  setRegion,
-} from "@/lib/region-pref";
-import { DEFAULT_REGION, regionForPoint, type RegionId } from "@/lib/regions";
+  DEFAULT_RADAR_VIEW,
+  unionBounds,
+  type Bounds,
+  type RadarViewId,
+} from "@/lib/radar-view";
 import {
   DEFAULT_RADAR_FILTER,
   RADAR_FILTER_CHANGE_EVENT,
@@ -58,6 +58,8 @@ const RadarMap = nextDynamic(() => import("./RadarMap"), {
 });
 
 const TABBAR_HEIGHT = 66;
+/** Top of the region picker + freshness row, just under the header. */
+const PICKER_TOP = 60;
 
 type Props = {
   initial: Snapshot;
@@ -119,18 +121,50 @@ export function RadarShell({
   const [toast, setToast] = useState<string | null>(null);
   const [map, setMap] = useState<MaplibreMap | null>(null);
   const [showRings, setShowRings] = useState(false);
-  const [regionId, setRegionId] = useState<RegionId>(DEFAULT_REGION);
+  // Region = camera preset (lib/radar-view.ts), never a data filter.
+  // viewId is the last pick (persisted); viewCustom flips on once the
+  // camera moves off it; fitNonce makes a re-pick of the same view
+  // refit. The map waits for `viewHydrated` so it opens on the saved
+  // view instead of flying there from the default.
+  const [viewId, setViewId] = useState<RadarViewId>(DEFAULT_RADAR_VIEW);
+  const [viewCustom, setViewCustom] = useState(false);
+  const [fitNonce, setFitNonce] = useState(0);
+  const [viewHydrated, setViewHydrated] = useState(false);
+  const [dataExtent, setDataExtent] = useState<Bounds | null>(null);
   // Hydrate the rings pref + region from localStorage on mount.
   useEffect(() => {
     if (typeof window === "undefined") return;
     setShowRings(window.localStorage.getItem("ss_distance_rings_visible") === "1");
-    setRegionId(getRegion());
+    setViewId(getRegion());
+    setViewHydrated(true);
     const onChange = (e: Event) => {
-      const detail = (e as CustomEvent<{ id: RegionId }>).detail;
-      setRegionId(detail?.id ?? getRegion());
+      const detail = (e as CustomEvent<{ id: RadarViewId }>).detail;
+      setViewId(detail?.id ?? getRegion());
+      setViewCustom(false);
+      setFitNonce((n) => n + 1);
+    };
+    // Heat + route layers report their data extent; the union is what
+    // the "Everything" preset frames.
+    const extents: Record<string, Bounds | null> = {};
+    const onExtent = (e: Event) => {
+      const detail = (
+        e as CustomEvent<{ source: string; bounds: Bounds | null }>
+      ).detail;
+      if (!detail?.source) return;
+      extents[detail.source] = detail.bounds ?? null;
+      setDataExtent(
+        Object.values(extents).reduce<Bounds | null>(
+          (acc, b) => unionBounds(acc, b),
+          null,
+        ),
+      );
     };
     window.addEventListener(REGION_CHANGE_EVENT, onChange);
-    return () => window.removeEventListener(REGION_CHANGE_EVENT, onChange);
+    window.addEventListener(RADAR_DATA_EXTENT_EVENT, onExtent);
+    return () => {
+      window.removeEventListener(REGION_CHANGE_EVENT, onChange);
+      window.removeEventListener(RADAR_DATA_EXTENT_EVENT, onExtent);
+    };
   }, []);
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -178,26 +212,23 @@ export function RadarShell({
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  // First-resolve geolocation auto-pick: if the rider has never picked a
-  // region explicitly, auto-pick the bbox-containing region from their
-  // position. Returning riders with an explicit pick keep their choice
-  // even if a different bbox would otherwise match.
-  const didAutoPickRegionRef = useRef(false);
-  useEffect(() => {
-    if (didAutoPickRegionRef.current) return;
-    if (!rider) return;
-    if (hasExplicitRegion()) {
-      didAutoPickRegionRef.current = true;
-      return;
-    }
-    const picked = regionForPoint(rider.lat, rider.lon);
-    if (picked && picked !== regionId) {
-      didAutoPickRegionRef.current = true;
-      setRegion(picked);
-    } else {
-      didAutoPickRegionRef.current = true;
-    }
-  }, [rider, regionId]);
+  // No geolocation region auto-pick any more: the region is a camera
+  // preset, and RadarMap already opens on the rider at street zoom the
+  // first time their position resolves (the picker then reads Custom).
+
+  const bottomBoost = airborne.length > 0 ? 130 : 0;
+  // Overlay space the fit keeps the region box clear of: header on top;
+  // tab bar + pill row (+ carousel when planes are up) at the bottom.
+  const fitInsets = useMemo(
+    () => ({
+      // Header + the picker row under it.
+      top: PICKER_TOP + 44 + 12,
+      bottom: TABBAR_HEIGHT + 16 + 44 + 12 + bottomBoost,
+      left: 16,
+      right: 16,
+    }),
+    [bottomBoost],
+  );
 
   return (
     <main
@@ -207,13 +238,19 @@ export function RadarShell({
         paddingBottom: TABBAR_HEIGHT,
       }}
     >
-      <RadarMap
-        aircraft={airborne}
-        rider={rider}
-        showDistanceRings={showRings}
-        regionId={regionId}
-        onMapReady={setMap}
-      />
+      {viewHydrated && (
+        <RadarMap
+          aircraft={airborne}
+          rider={rider}
+          showDistanceRings={showRings}
+          viewId={viewId}
+          fitNonce={fitNonce}
+          dataExtent={dataExtent}
+          insets={fitInsets}
+          onLeaveView={() => setViewCustom(true)}
+          onMapReady={setMap}
+        />
+      )}
       <HotZoneLayer
         map={map}
         bottomBoost={airborne.length > 0 ? 130 : 0}
@@ -284,7 +321,6 @@ export function RadarShell({
           tooltip={pillTooltip}
         />
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <RegionSelector />
           <Tooltip
             side="bottom"
             align="end"
@@ -305,6 +341,24 @@ export function RadarShell({
           </Tooltip>
         </div>
       </header>
+
+      {/* Region picker: a camera control in the map's top-right
+          corner, under the header. Jumps the view; never filters the
+          heat or routes. */}
+      <div
+        style={{
+          position: "absolute",
+          top: PICKER_TOP,
+          right: 12,
+          zIndex: 10,
+        }}
+      >
+        <RegionSelector
+          value={viewId}
+          custom={viewCustom}
+          style={{ maxWidth: 190 }}
+        />
+      </div>
 
       <CompassN />
 
@@ -449,8 +503,9 @@ function CompassN() {
         aria-label="Map north indicator"
         style={{
           position: "absolute",
-          top: 60,
-          right: 12,
+          // Sits under the region picker (PICKER_TOP + 44 + 8).
+          top: PICKER_TOP + 52,
+          right: 20,
           width: 28,
           height: 28,
           borderRadius: "50%",

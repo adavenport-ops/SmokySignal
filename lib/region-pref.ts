@@ -1,10 +1,18 @@
 // Localstorage-backed rider region preference. No accounts, no
 // server state. Other client components react to changes via the
 // "ss-region-change" CustomEvent.
+//
+// The pref is the rider's default radar CAMERA (lib/radar-view.ts), not
+// a data filter. It can hold any RadarViewId, including "everything".
 
 "use client";
 
-import { DEFAULT_REGION, REGIONS, type RegionId } from "./regions";
+import {
+  DEFAULT_RADAR_VIEW,
+  isRadarViewId,
+  type RadarViewId,
+} from "./radar-view";
+import type { RegionId } from "./regions";
 
 const KEY = "ss_region_pref";
 export const REGION_CHANGE_EVENT = "ss-region-change";
@@ -19,16 +27,16 @@ const LEGACY_MAP: Record<string, RegionId> = {
   spokane: "east_wa",
 };
 
-export function getRegion(): RegionId {
-  if (typeof window === "undefined") return DEFAULT_REGION;
+export function getRegion(): RadarViewId {
+  if (typeof window === "undefined") return DEFAULT_RADAR_VIEW;
   try {
     const v = window.localStorage.getItem(KEY);
-    if (!v) return DEFAULT_REGION;
-    if (Object.prototype.hasOwnProperty.call(REGIONS, v)) return v as RegionId;
+    if (!v) return DEFAULT_RADAR_VIEW;
+    if (isRadarViewId(v)) return v;
     if (Object.prototype.hasOwnProperty.call(LEGACY_MAP, v)) return LEGACY_MAP[v]!;
-    return DEFAULT_REGION;
+    return DEFAULT_RADAR_VIEW;
   } catch {
-    return DEFAULT_REGION;
+    return DEFAULT_RADAR_VIEW;
   }
 }
 
@@ -49,7 +57,7 @@ export function hasExplicitRegion(): boolean {
   }
 }
 
-export function setRegion(id: RegionId): void {
+export function setRegion(id: RadarViewId): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(KEY, id);

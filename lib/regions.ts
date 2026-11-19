@@ -1,7 +1,8 @@
-// Canonical region definitions for the radar/heat-map view. Used by
-// the rider-side region selector to pivot the map without rewiring the
-// data pipeline. Per-region heat-map filtering happens server-side in
-// app/api/hotzones/route.ts via REGIONS[id].bbox.
+// Canonical region definitions. On /radar a region is a CAMERA preset
+// only (lib/radar-view.ts fits the map to REGIONS[id].bbox); the heat
+// grid and flight paths are statewide-plus and never clipped to it.
+// The bboxes still act as data filters on /board (lib/board.ts) and as
+// the label lookup for share cards (regionForPoint).
 //
 // Six geographic buckets + an All-WA overview. The prior county-level
 // presets (pierce/snohomish/spokane) retired in favor of these — Pierce
@@ -102,11 +103,52 @@ export const REGIONS: Record<RegionId, Region> = {
   },
 };
 
-// Default landed on All Washington post-PROMPT_16 statewide expansion —
-// the fleet now spans the state, so a first-time rider sees every WA
-// agency at z6 instead of being scoped to Puget Sound. Geolocation
-// auto-pick still wins when the rider is inside a more-specific bbox.
-export const DEFAULT_REGION: RegionId = "all_wa";
+// Default camera for a first-time rider. Puget Sound is where most of
+// the audience rides; the data behind it is statewide, so zooming out
+// from here reveals the rest of the heat and routes without a re-pick.
+export const DEFAULT_REGION: RegionId = "puget_sound";
+
+/** Washington state outline as a camera box (the "All of Washington"
+ *  preset). Distinct from all_wa's null bbox, which means "no data
+ *  filter" to /board. */
+export const WA_STATE_BBOX: NonNullable<RegionBbox> = {
+  latMin: 45.54,
+  latMax: 49.0,
+  lonMin: -124.85,
+  lonMax: -116.9,
+};
+
+/**
+ * Outer envelope for which track points are kept in the heat grid and
+ * flight paths. Washington plus the Oregon and Idaho border areas, so
+ * mutual-aid sorties outside the state still show. Anything beyond it
+ * is treated as data-quality noise (a recycled N-number, a Mode-S hex
+ * collision far from the Northwest).
+ */
+export const TRACKING_ENVELOPE: NonNullable<RegionBbox> = {
+  latMin: 41.5,
+  latMax: 49.5,
+  lonMin: -125.5,
+  lonMax: -110.5,
+};
+
+export function inBbox(
+  lat: number,
+  lon: number,
+  b: NonNullable<RegionBbox>,
+): boolean {
+  return (
+    lat >= b.latMin && lat <= b.latMax && lon >= b.lonMin && lon <= b.lonMax
+  );
+}
+
+export function inTrackingEnvelope(lat: number, lon: number): boolean {
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lon) &&
+    inBbox(lat, lon, TRACKING_ENVELOPE)
+  );
+}
 
 /**
  * Pick the region whose bbox contains (lat, lon). When multiple bboxes
@@ -115,7 +157,7 @@ export const DEFAULT_REGION: RegionId = "all_wa";
  * for inputs outside the WA state envelope by enough margin that no
  * region is a reasonable match — callers should use DEFAULT_REGION.
  *
- * Used by the radar's geolocation auto-pick on first /radar load.
+ * Used by the share card to name where a plane is (lib/share-card.ts).
  */
 export function regionForPoint(lat: number, lon: number): RegionId | null {
   let best: { id: RegionId; area: number } | null = null;

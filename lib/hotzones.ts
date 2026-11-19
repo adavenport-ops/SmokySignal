@@ -14,38 +14,27 @@ import { getRedis } from "./cache";
 import { getRegistry } from "./registry";
 import { listTrackKeys, getTracksForDay } from "./tracks";
 import { hotzonesCurrentKey, hotzonesLastRefreshKey } from "./storage-keys";
+import { inTrackingEnvelope } from "./regions";
 
 import { GRID_CELL_DEG } from "./zone-id";
 
 // Grid-cell scheme lives in lib/zone-id.ts (pure, client-safe).
 export { GRID_CELL_DEG, zoneIdForPoint, pointForZoneId } from "./zone-id";
 export const HOTZONE_DAYS_BACK = 30;
-// Aggregation envelope: a generous Washington-state bounding box. Anything
-// outside is data-quality noise — old ADS-B records under a recycled
-// N-number, hex collision from a different aircraft using the same Mode-S
-// code, etc. Per-region client-side slicing happens downstream in
-// app/api/hotzones/route.ts via REGIONS[id].bbox; this filter is the
-// outer envelope only.
+// Aggregation envelope: TRACKING_ENVELOPE in lib/regions.ts, which is
+// Washington plus the Oregon and Idaho border areas (lat 41.5-49.5,
+// lon -125.5 to -110.5) so mutual-aid sorties outside the state land in
+// the grid. Anything outside is data-quality noise (old ADS-B records
+// under a recycled N-number, a Mode-S hex collision, etc). The grid is
+// NOT clipped per region downstream: /api/hotzones returns every cell
+// and the /radar region picker only moves the camera.
 //
 // Intentionally NOT shared with the SS_REGION_* envvars used by the
-// upstream snapshot query in lib/adsb.ts — those gate which aircraft we
-// pull from adsb.fi (a 250 nm radius); this gates which historical track
-// points enter the heatmap aggregate. Different concepts.
-//
-// Widen this if we ever expand to OR / ID coverage.
-const WA_LAT_MIN = 45.4;
-const WA_LAT_MAX = 49.1;
-const WA_LON_MIN = -125.0;
-const WA_LON_MAX = -116.8;
-
-function inRegion(lat: number, lon: number): boolean {
-  return (
-    lat >= WA_LAT_MIN &&
-    lat <= WA_LAT_MAX &&
-    lon >= WA_LON_MIN &&
-    lon <= WA_LON_MAX
-  );
-}
+// upstream snapshot query in lib/adsb.ts. Those gate which aircraft we
+// pull from adsb.fi (a 250 nm circle around 47.4, -120.8, which reaches
+// roughly lat 43.2-51.6 and lon -126.9 to -114.7); this gates which
+// stored track points enter the heatmap aggregate. Points beyond the
+// adsb.fi circle can only arrive via the OpenSky fallback.
 
 const CURRENT_KEY = hotzonesCurrentKey();
 const LAST_REFRESH_KEY = hotzonesLastRefreshKey();
@@ -92,7 +81,7 @@ export async function aggregateHotZones(): Promise<HotZone[]> {
     for (const date of keep) {
       const points = await getTracksForDay(t.tail, date);
       for (const p of points) {
-        if (!inRegion(p.lat, p.lon)) continue;
+        if (!inTrackingEnvelope(p.lat, p.lon)) continue;
         const cellLat = Math.floor(p.lat / GRID_CELL_DEG) * GRID_CELL_DEG;
         const cellLon = Math.floor(p.lon / GRID_CELL_DEG) * GRID_CELL_DEG;
         const key = `${cellLat.toFixed(4)},${cellLon.toFixed(4)}`;
