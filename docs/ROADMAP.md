@@ -85,7 +85,14 @@ user value visible at first paint.
 - **Brand tension:** none — `warn` is reserved.
 - **Dependencies:** N1a (need 5–7 days of dry-run data to set the
   threshold). N1a SHIPPED 2026-05-02 — eligible to ship around 2026-05-09.
-- **Status:** ready to write a prompt once N1a data accumulates.
+- **Status:** built 2026-11-18 (`feat/speed-warning`). Rider opt-in on
+  `/settings` (default OFF), runs on `/flights` (Now) and `/glance` in
+  the foreground only. Limit source: rider-set "My limit" (default 60
+  mph) plus opt-in corridor defaults (`lib/corridor.ts`
+  `CORRIDOR_DEFAULT_LIMIT_MPH`). Hysteresis: 2 positive GPS fixes to
+  show, 10 s to clear, immediate clear when the bird leaves 5 nm. All
+  on-device; the N1a dry-run beacon is retired (POST
+  `/api/dryrun-warnings` answers 410). Admin flag stays as a kill switch.
 
 ### N2. adsb.fi historical backfill ✗ DEPRECATED (P15 #58)
 - **Investigation result:** adsb.fi is a real-time ADS-B aggregator and

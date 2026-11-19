@@ -1,31 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import { useAircraft } from "@/lib/hooks/useAircraft";
 import { useRiderPos } from "@/lib/hooks/useRiderPos";
 import { SS_TOKENS } from "@/lib/tokens";
 import { SMOKY_TAIL } from "@/lib/seed";
 import { countsAsSmokey } from "@/lib/mission";
-import { DEFAULT_SPEED_LIMIT_MPH, haversineNm } from "@/lib/geo";
-import { evaluateWarning } from "@/lib/speed-warning";
-import { bucketDistanceNm, bucketOverLimit } from "@/lib/dryrun-payload";
-import { zoneIdForPoint } from "@/lib/zone-id";
+import { haversineNm } from "@/lib/geo";
 import { fmtAloft } from "@/lib/time";
 import { roleBadgeStyle, roleBadgeText } from "@/lib/role-display";
-import type { HotZone } from "@/lib/hotzones";
 import { StatusPill } from "./StatusPill";
 import { Card } from "./Card";
 import { AlertsOptInCard } from "./AlertsOptInCard";
 import { ProximityFlash } from "./ProximityFlash";
 import { ShareStatusButton } from "./ShareStatusButton";
+import { SpeedWarning } from "./SpeedWarning";
 import type { Aircraft, Snapshot } from "@/lib/types";
 const NEAR_NM = 5;
 // Top-N airborne planes to surface in the watcher list. Three is enough
 // to convey crowdedness without dominating the screen.
 const NEAREST_LIST_LIMIT = 3;
-// N1a dry-run: at most one logged candidate per 15 s per session.
-const DRYRUN_MIN_INTERVAL_MS = 15_000;
 
 type Props = {
   initial: Snapshot;
@@ -35,6 +30,8 @@ type Props = {
   header: ReactNode;
   /** The Now/Recent segmented control, rendered under the heading row. */
   switcher?: ReactNode;
+  /** Server kill switch for the rider speed warning (lib/flags.ts). */
+  speedWarningAvailable?: boolean;
 };
 
 /**
@@ -42,7 +39,13 @@ type Props = {
  * the rider. The recent-events feed is the "Recent" tab
  * (components/ActivityFeed.tsx), so it is not repeated here.
  */
-export function DashShell({ initial, mockOn = false, header, switcher }: Props) {
+export function DashShell({
+  initial,
+  mockOn = false,
+  header,
+  switcher,
+  speedWarningAvailable = true,
+}: Props) {
   const snap = useAircraft(initial, mockOn);
   const { pos } = useRiderPos();
 
@@ -72,82 +75,6 @@ export function DashShell({ initial, mockOn = false, header, switcher }: Props) 
     return ranked.slice(0, NEAREST_LIST_LIMIT);
   }, [pos, airborne]);
   const nearest = nearestList[0] ?? null;
-
-  // N1a dry-run logging: fetch hot zones once on mount, then on each
-  // rider geolocation tick + airborne refresh, evaluate the warning
-  // condition and POST positives to /api/dryrun-warnings. No UI surface
-  // — that's N1b, gated on this data accumulating.
-  const [hotZones, setHotZones] = useState<HotZone[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/hotzones")
-      .then((r) => (r.ok ? r.json() : { zones: [] }))
-      .then((data) => {
-        if (cancelled) return;
-        const zones = Array.isArray(data?.zones) ? data.zones : [];
-        setHotZones(zones as HotZone[]);
-      })
-      .catch(() => {
-        // best-effort; absent zones just means evaluateWarning returns
-        // wouldFire=false (no zone match)
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  // m/s → mph
-  const MPS_TO_MPH = 2.236936;
-  const lastDryRunPostRef = useRef(0);
-  useEffect(() => {
-    if (!pos) return;
-    if (pos.speedMps == null || pos.speedMps < 0) return;
-    if (hotZones.length === 0 && airborne.length === 0) return;
-    const result = evaluateWarning({
-      riderLat: pos.lat,
-      riderLon: pos.lon,
-      riderSpeedMph: pos.speedMps * MPS_TO_MPH,
-      postedLimitMph: DEFAULT_SPEED_LIMIT_MPH,
-      hotZones,
-      airborneAircraft: airborne,
-    });
-    if (!result.wouldFire) return;
-    // Throttle: one record per DRYRUN_MIN_INTERVAL_MS. Geolocation ticks
-    // ~1/s while riding; the dry-run only needs a sample.
-    const now = Date.now();
-    if (now - lastDryRunPostRef.current < DRYRUN_MIN_INTERVAL_MS) return;
-    lastDryRunPostRef.current = now;
-    const nearestTail = nearestList[0]?.plane.tail ?? null;
-    // Privacy: rider speed and precise position never leave the device.
-    // Send only coarse buckets (lib/dryrun-payload.ts).
-    let nearestZone: HotZone | null = null;
-    let nearestZoneNm = Infinity;
-    for (const z of hotZones) {
-      const d = haversineNm(pos.lat, pos.lon, z.lat, z.lon);
-      if (d < nearestZoneNm) {
-        nearestZoneNm = d;
-        nearestZone = z;
-      }
-    }
-    void fetch("/api/dryrun-warnings", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        ts: now,
-        overLimitBy: bucketOverLimit(result.riderOverLimitBy),
-        nearestZoneId: nearestZone
-          ? zoneIdForPoint(nearestZone.lat, nearestZone.lon)
-          : null,
-        nearestTail,
-        nearestBirdNm:
-          result.nearestBirdMi == null
-            ? null
-            : bucketDistanceNm(result.nearestBirdMi),
-        reason: "speeding_in_zone_bird_nearby",
-      }),
-    }).catch(() => {
-      // best-effort; transient network errors don't matter for dry-run
-    });
-  }, [pos, hotZones, airborne, nearestList]);
 
   return (
     <main className="ss-page" style={{ gap: 14 }}>
@@ -197,6 +124,9 @@ export function DashShell({ initial, mockOn = false, header, switcher }: Props) 
           countsAsSmokey(nearest.plane)
         }
       />
+
+      {/* N1b: on-device only, opt-in from /settings. */}
+      <SpeedWarning aircraft={airborne} available={speedWarningAvailable} />
     </main>
   );
 }

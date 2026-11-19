@@ -2362,4 +2362,47 @@ test.describe("p14 live-prod audit · navigation", () => {
       await ctx.close();
     }
   });
+
+  test("62. /settings shows the Speed warning toggle, default off, with the on-device explainer (N1b)", async ({
+    browser,
+  }) => {
+    // Fresh context: no localStorage, so this is the first-visit default.
+    // Mock links are off in prod, so this checks the real settings page
+    // only; the overlay itself is covered by lib/speed-warning.test.ts.
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage();
+    try {
+      await page.goto("/settings", { waitUntil: "networkidle" });
+      const toggle = page.locator('[data-testid="speed-warning-toggle"]');
+      await toggle.waitFor({ state: "visible", timeout: 10_000 });
+      await toggle.scrollIntoViewIfNeeded();
+      const role = await toggle.getAttribute("role");
+      const checked = await toggle.getAttribute("aria-checked");
+      const label = (await toggle.textContent())?.trim() ?? "";
+      const card = (await page.locator('[data-testid="speed-warning-setting"]').innerText()) ?? "";
+      const explainer =
+        /GPS speed while this screen is open/i.test(card) &&
+        /Nothing is sent to us/i.test(card) &&
+        /Not a radar detector/i.test(card);
+      const limitValue = await page.locator('[data-testid="speed-limit-input"]').inputValue();
+      const screenshot = await shot(page, "62-settings-speed-warning");
+      const pass =
+        role === "switch" &&
+        checked === "false" &&
+        label === "OFF" &&
+        explainer &&
+        limitValue === "60" &&
+        !/!(\s|$)/.test(card);
+      record({
+        claim: "/settings renders a Speed warning switch, OFF by default, with the 'Nothing is sent to us' explainer and a 60 mph default limit",
+        category: pass ? "working_as_designed" : "unshipped",
+        pass,
+        evidence: `role=${role} aria-checked=${checked} label=${label} explainer=${explainer} limit=${limitValue}`,
+        screenshot,
+      });
+      expect(pass).toBe(true);
+    } finally {
+      await ctx.close();
+    }
+  });
 });

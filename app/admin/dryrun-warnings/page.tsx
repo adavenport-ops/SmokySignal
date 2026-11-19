@@ -2,6 +2,11 @@
 // dryrun-warnings:{YYYYMMDD} list for the current UTC day and renders
 // a compact table. Used to tune the trigger threshold before shipping
 // any rider-facing warning surface (N1b).
+//
+// N1b retired the client beacon: the warning is computed on the device
+// and nothing about speed or position is sent, so POST
+// /api/dryrun-warnings answers 410 and this view only shows rows still
+// inside their 7-day TTL.
 
 import { getRedis } from "@/lib/cache";
 import { isAdminAuthed, isAdminPasscodeConfigured } from "@/lib/admin-auth";

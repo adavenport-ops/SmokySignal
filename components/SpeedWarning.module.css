@@ -1,0 +1,140 @@
+/* Speed warning overlay (N1b). Full screen in the reserved warn orange
+   (#FF7A1A, design/BRAND.md section 4: orange means "Smokey is up" or
+   "ease off", nothing else). Near-black ink on orange for contrast in
+   sun. Sizes take the smaller of the width and height units so the same
+   markup reads on a portrait phone and a landscape handlebar mount.
+
+   Motion: the edge frame breathes once every 2 s (0.5 Hz, under the
+   1 Hz photosensitivity ceiling). With prefers-reduced-motion it is a
+   static frame: no animation at all. */
+
+.root {
+  --sw-bg: #ff7a1a;
+  --sw-ink: #0b0d10;
+
+  position: fixed;
+  inset: 0;
+  z-index: 1000; /* over the tab bar, the glance screen and the install prompt */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: min(3vh, 3vw);
+  padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+    max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  background: var(--sw-bg);
+  color: var(--sw-ink);
+  text-align: center;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.edge {
+  position: absolute;
+  inset: 0;
+  border: min(16px, 3vmin) solid var(--sw-ink);
+  pointer-events: none;
+  animation: sw-breathe 2s ease-in-out infinite;
+}
+
+@keyframes sw-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edge {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+.eyebrow {
+  position: relative;
+  font-size: clamp(14px, min(3.6vw, 4.4vh), 22px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.headline {
+  position: relative;
+  margin: 0;
+  /* "EASE OFF" at weight 900 runs ~4.6em wide: 18vw keeps it inside the
+     frame on a 390 px portrait phone. */
+  font-size: clamp(56px, min(18vw, 26vh), 220px);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+
+.detail {
+  position: relative;
+  margin: 0;
+  max-width: 18ch;
+  font-size: clamp(28px, min(9.2vw, 9.5vh), 76px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  position: relative;
+  margin: 0;
+  font-size: clamp(17px, min(4.6vw, 5vh), 30px);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.meta {
+  position: relative;
+  font-size: clamp(13px, min(3.4vw, 3.8vh), 18px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mute {
+  position: relative;
+  margin-top: min(2vh, 2vw);
+  min-height: 48px;
+  min-width: 48px;
+  padding: 0 20px;
+  border: 2px solid var(--sw-ink);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sw-ink);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.mute:focus-visible {
+  outline: 3px solid var(--sw-ink);
+  outline-offset: 3px;
+}
+
+/* Short landscape screens (a phone on its side on the bars): tighten
+   the gaps so EASE OFF, the numbers and the mute control all fit. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .root {
+    gap: 1.6vh;
+  }
+  .detail {
+    max-width: 26ch;
+  }
+}

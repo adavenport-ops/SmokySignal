@@ -40,6 +40,8 @@ Every preference lives on your device — browser localStorage or a non-tracking
 
 **Keep screen awake** — The moon icon in the Home header, or the switch on [Settings](/settings). Holds the screen on while SmokySignal is open.
 
+**Speed warning** — Off by default. The switch is on [Settings](/settings). Full-screen EASE OFF when you are over your limit in a hot zone with Smokey close. Runs on your phone only. See [Speed warning](#speed-warning).
+
 **Reset all** — At the bottom of the [Alerts](/settings/alerts) tab. Clears every device-side preference and returns to defaults. Push subscriptions stay armed unless you disarm them separately.
 
 ## Push notifications
@@ -128,6 +130,31 @@ The map shows the in-progress flight if the plane is currently up (with a pulsin
 Distance and bearing appear only when your browser has already been given location access for SmokySignal. Handlebar mode never asks. If the feed goes quiet it says NO READ with the time of the last good read; it never shows DOWN on an old read.
 
 **Mounting and safety.** Set it before you ride; don't interact while moving. Mount the phone, open /glance, check the read time, then ride. If something needs a tap, pull over.
+
+### Speed warning
+
+Off by default. Turn it on in [Settings](/settings). It runs on Flights (Now) and in Handlebar mode, only while that screen is open and in front. Turning it on is the one time it asks for location; the screens themselves never ask.
+
+**What it does.** When all three line up, the screen goes full orange and reads `EASE OFF — bird 1.2mi out, you're 9 over.`
+
+- You are more than 2 mph over your limit, by your phone's GPS speed.
+- You are inside a hot zone: within 0.5 nm of a busy cell on the radar heat map.
+- A Smokey is up within 5 nm of you. Search and rescue, medevac, wildfire and other missions don't count.
+
+It shows after two GPS readings in a row agree. It clears on its own about 10 seconds after you are back under, or as soon as the bird moves out past 5 nm. Nothing to tap while riding. **Mute 10 min** is there for when you are stopped. With voice readback on, it reads the line aloud once; phones that can buzz give one short pattern. The black edge breathes once every 2 seconds; with Reduce Motion on it holds still.
+
+**The limit.** We have no posted-limit feed. The warning uses **My limit** from Settings: 60 mph unless you change it. Turn on **Use corridor defaults** and, on I-5, I-405, SR-167 and the other named corridors, it uses that road's usual limit instead. Those defaults are approximate. Work zones, interchanges and city stretches run lower.
+
+**What it can't do.**
+
+- **Coverage.** It only knows about birds our receivers hear. A Smokey with its transponder off, or flying where reception is thin, won't trigger it. No warning never means nobody is watching.
+- **GPS lag.** Phone GPS speed runs a second or two behind and jitters by a couple of mph. That is why it waits for two readings and lets the first 2 mph go.
+- **Unknown limits.** Your number, or a corridor default, is a guess at the road you are on. It can be wrong.
+- **Foreground only.** Screen off, app in the background, another tab in front: it does not run.
+
+**It never replaces the posted limit.** The sign on the road is the limit. Ease off and ride within it. This is not a radar detector.
+
+**Your speed stays on your phone.** The check runs in the page. Nothing about where you are or how fast you are going is sent to us, logged or stored. The only thing it fetches is the public hot-zone grid, the same one the radar draws.
 
 ## Sharing flights
 
