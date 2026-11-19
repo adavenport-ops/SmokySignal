@@ -19,8 +19,8 @@ export type RiderState = {
 
 const WATCH_OPTS: PositionOptions = {
   enableHighAccuracy: true,
-  maximumAge: 5000,
-  timeout: 15000,
+  maximumAge: 15000,
+  timeout: 30000,
 };
 
 /**
@@ -48,7 +48,10 @@ export function useRiderPos(): RiderState {
         });
         setUnavailable(false);
       },
-      () => setUnavailable(true),
+      (err) => {
+        // Timeouts and no-fix-yet keep the watch alive; only a block is "unavailable".
+        if (err?.code === 1) setUnavailable(true);
+      },
       WATCH_OPTS,
     );
     watchIdRef.current = id;
