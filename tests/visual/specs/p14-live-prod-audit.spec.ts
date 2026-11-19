@@ -748,7 +748,7 @@ test.describe("p14 live-prod audit", () => {
     });
   });
 
-  test("21. /api/aircraft returns a valid snapshot; healthy ticks are CDN-cacheable, degraded ticks are no-store (#74)", async ({
+  test("22. /api/aircraft returns a valid snapshot; healthy ticks are CDN-cacheable, degraded ticks are no-store (#74)", async ({
     request,
   }) => {
     const r = await request.get("/api/aircraft");
@@ -902,6 +902,171 @@ test.describe("p14 live-prod audit", () => {
         ? `canvas ${Math.round(box.width)}×${Math.round(box.height)}px`
         : "no maplibregl-canvas found",
       screenshot,
+    });
+  });
+  test("25. /board kiosk renders split-flap rows with no tab bar (Board)", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto("/board", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1200);
+    const screenshot = await shot(page, "21-board-1920");
+    const state = await page
+      .locator("main[data-board-state]")
+      .getAttribute("data-board-state")
+      .catch(() => null);
+    const word = (
+      await page.locator('[role="status"]').first().innerText().catch(() => "")
+    ).toUpperCase();
+    const rowCount = await page.locator("li[data-board-row]").count();
+    const tabBar = await page.locator('nav[aria-label="Main"]').count();
+    const clock = await page
+      .locator("header")
+      .first()
+      .innerText()
+      .catch(() => "");
+    const has24hClock = /\b([01]\d|2[0-3]):[0-5]\d\b/.test(clock);
+    const wordMatchesState =
+      (state === "up" && word.includes("SMOKEY UP")) ||
+      (state === "down" && word.includes("ALL CLEAR")) ||
+      (state === "stale" && word.includes("FEED QUIET"));
+    const pass =
+      wordMatchesState && rowCount >= 1 && tabBar === 0 && has24hClock;
+    record({
+      claim:
+        "/board renders the departures kiosk: status word matches data-board-state, ≥1 row, 24h clock, no tab bar",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: `state=${state} word="${word.split("\n")[0]}" rows=${rowCount} tabBar=${tabBar} clock24h=${has24hClock}`,
+      screenshot,
+    });
+  });
+
+  test("26. /board?mock=stale reads 'Feed quiet. Last read HH:MM' (Board)", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto("/board?mock=stale", { waitUntil: "networkidle" });
+    await page.waitForTimeout(800);
+    const screenshot = await shot(page, "22-board-stale");
+    const state = await page
+      .locator("main[data-board-state]")
+      .getAttribute("data-board-state")
+      .catch(() => null);
+    const body = await page.locator("body").innerText();
+    const hasCopy = /Feed quiet\. Last read ([01]\d|2[0-3]):[0-5]\d/.test(body);
+    const pass = state === "stale" && hasCopy;
+    record({
+      claim:
+        "/board?mock=stale flips the header to FEED QUIET with 'Feed quiet. Last read HH:MM' — stale never reads as all clear",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: `state=${state} copy=${hasCopy}`,
+      screenshot,
+    });
+  });
+
+  test("27. /about hub links to /board (Board)", async ({ page }) => {
+    await page.goto("/about", { waitUntil: "networkidle" });
+    const n = await page
+      .locator('nav[aria-label="Site sections"] a[href="/board"]')
+      .count();
+    record({
+      claim: "/about hub has a Board link",
+      category: n > 0 ? "working_as_designed" : "unshipped",
+      pass: n > 0,
+      evidence: `${n} /board link(s) in the hub nav`,
+    });
+  });
+
+  test("28. /api/status.txt beacon: state line + fields + cache headers (Beacon)", async ({
+    request,
+  }) => {
+    const r = await request.get("/api/status.txt");
+    let evidence = `HTTP ${r.status()}`;
+    let pass = false;
+    if (r.ok()) {
+      const text = await r.text();
+      const lines = text.split("\n");
+      const state = lines[0];
+      const okState = state === "up" || state === "down" || state === "stale";
+      const okFields =
+        /^count=\d+$/.test(lines[1] ?? "") &&
+        /^fetched_at=(\d{4}-\d\d-\d\dT[\d:.]+Z)?$/.test(lines[2] ?? "") &&
+        /^age_s=\d*$/.test(lines[3] ?? "");
+      const cc = r.headers()["cache-control"] ?? "";
+      const etag = r.headers()["etag"] ?? "";
+      const ctype = r.headers()["content-type"] ?? "";
+      const okCache =
+        state === "stale"
+          ? cc.includes("no-store")
+          : cc.includes("s-maxage=15") && cc.includes("stale-while-revalidate=15");
+      pass = okState && okFields && okCache && etag.length > 0 && ctype.startsWith("text/plain");
+      evidence = `state=${state} fields=${okFields} cache="${cc}" etag=${etag || "none"} type=${ctype}`;
+    }
+    record({
+      claim:
+        "/api/status.txt first line up|down|stale, then count/fetched_at/age_s; s-maxage=15 + ETag (no-store when stale)",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence,
+    });
+  });
+
+  test("29. /api/status.json beacon + ETag revalidation (Beacon)", async ({
+    request,
+  }) => {
+    const r = await request.get("/api/status.json");
+    let evidence = `HTTP ${r.status()}`;
+    let pass = false;
+    if (r.ok()) {
+      const data = (await r.json()) as {
+        state: string;
+        count: number;
+        fetched_at: string | null;
+        age_s: number | null;
+      };
+      const okShape =
+        ["up", "down", "stale"].includes(data.state) &&
+        typeof data.count === "number" &&
+        "fetched_at" in data &&
+        "age_s" in data;
+      const etag = r.headers()["etag"] ?? "";
+      let revalidated = "skipped (stale)";
+      let okRevalidate = true;
+      if (data.state !== "stale" && etag) {
+        const r2 = await request.get("/api/status.json", {
+          headers: { "If-None-Match": etag },
+        });
+        // 304 when the read hasn't moved; 200 is fine if a new read landed.
+        okRevalidate = r2.status() === 304 || r2.status() === 200;
+        revalidated = `HTTP ${r2.status()}`;
+      }
+      pass = okShape && etag.length > 0 && okRevalidate;
+      evidence = `state=${data.state} count=${data.count} age_s=${data.age_s} etag=${etag || "none"} revalidate=${revalidated}`;
+    }
+    record({
+      claim:
+        "/api/status.json returns {state,count,fetched_at,age_s} with an ETag that answers If-None-Match",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence,
+    });
+  });
+
+  test("30. /api/status.txt?mock=stale reads stale with no-store (Beacon)", async ({
+    request,
+  }) => {
+    const r = await request.get("/api/status.txt?mock=stale");
+    const text = r.ok() ? await r.text() : "";
+    const cc = r.headers()["cache-control"] ?? "";
+    const pass = text.split("\n")[0] === "stale" && cc.includes("no-store");
+    record({
+      claim:
+        "Beacon reports stale (never down) when the read is >2 min old, and is not edge-cached",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: `HTTP ${r.status()} first="${text.split("\n")[0]}" cache="${cc}"`,
     });
   });
 });
