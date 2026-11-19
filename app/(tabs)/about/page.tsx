@@ -2,12 +2,12 @@ import Link from "next/link";
 import { SS_TOKENS, TYPE } from "@/lib/tokens";
 import { Tooltip } from "@/components/Tooltip";
 import { Logo } from "@/components/brand/Logo";
-import { currentWrapYear } from "@/lib/wrap";
 import { pageMeta } from "@/lib/seo/site";
 import { getRegistry } from "@/lib/registry";
 import { JsonLd } from "@/components/JsonLd";
 import { KeyFacts } from "@/components/KeyFacts";
 import { organizationJsonLd } from "@/lib/seo/jsonld";
+import { MoreSheet } from "@/components/MoreSheet";
 
 export const dynamic = "force-dynamic";
 
@@ -22,66 +22,10 @@ export const metadata = pageMeta({
   path: "/about",
 });
 
-type HubItem = {
-  href: string;
-  label: string;
-  blurb: string;
-  /** Plain <a>: a file or feed, not a page route. */
-  file?: boolean;
-};
-
-type HubGroup = { id: string; title: string; items: HubItem[] };
-
-function hubGroups(wrapYear: number): HubGroup[] {
-  return [
-    {
-      id: "live",
-      title: "Live",
-      items: [
-        { href: "/circling", label: "What’s circling", blurb: "Aircraft working a pattern right now" },
-        { href: "/seen", label: "Was that the plane I saw?", blurb: "Pick a time and place, see what flew by" },
-        { href: "/forecast", label: "Forecast", blurb: "When the bird usually flies" },
-        { href: "/glance", label: "Handlebar mode", blurb: "Huge-type status for a phone mount" },
-        { href: "/board", label: "Shop board", blurb: "Departures board for the shop TV" },
-      ],
-    },
-    {
-      id: "history",
-      title: "History",
-      items: [
-        { href: "/road", label: "Road history", blurb: "Passes over the roads you ride" },
-        { href: "/stats", label: "Stats", blurb: "How the bird flew, week by week" },
-        { href: `/wrap/${wrapYear}`, label: `Season wrap ${wrapYear}`, blurb: "The season in one card" },
-        { href: "/data", label: "Data and CSV", blurb: "Monthly flight hours, open data" },
-      ],
-    },
-    {
-      id: "share",
-      title: "Share & tools",
-      items: [
-        { href: "/relay", label: "Discord and webhooks", blurb: "Takeoffs to your server or endpoint" },
-        { href: "/embed/help", label: "Embed on your site", blurb: "Status widget for club sites and forums" },
-        { href: "/calendar.ics", label: "Calendar feed", blurb: "Busy windows in your calendar app", file: true },
-        { href: "/rss.xml", label: "RSS", blurb: "Takeoffs and landings as a feed", file: true },
-      ],
-    },
-    {
-      id: "about",
-      title: "About",
-      items: [
-        { href: "/program", label: "The program", blurb: "Who flies, in what, and how it works" },
-        { href: "/aircraft", label: "All aircraft", blurb: "Every tail we watch, with sources" },
-        { href: "/blog", label: "Blog", blurb: "What shipped, and when the bird flew each week" },
-        { href: "/help", label: "Help", blurb: "Questions riders ask" },
-        { href: "/legal", label: "Legal", blurb: "Privacy and terms" },
-        { href: "/settings", label: "Settings", blurb: "Alerts, zones, display" },
-      ],
-    },
-  ];
-}
-
+// The More tab. On phones this is the More sheet: search, the
+// recently-up tails, then every section of the app (the same map as the
+// desktop sidebar, from lib/nav.ts). Direct links land here on any screen.
 export default async function AboutPage() {
-  const groups = hubGroups(currentWrapYear(Date.now()));
   const fleet = await getRegistry();
   return (
     <main className="ss-page" style={{ gap: 22 }}>
@@ -102,20 +46,7 @@ export default async function AboutPage() {
         </h1>
       </header>
 
-      <nav aria-label="Site sections" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        {groups.map((g) => (
-          <section key={g.id} className="ss-hub-group" data-hub-group={g.id} aria-labelledby={`hub-${g.id}`}>
-            <h2 id={`hub-${g.id}`} className="ss-eyebrow" style={{ margin: 0 }}>
-              {g.title}
-            </h2>
-            <div className="ss-hub-grid">
-              {g.items.map((it) => (
-                <HubLink key={it.href} item={it} />
-              ))}
-            </div>
-          </section>
-        ))}
-      </nav>
+      <MoreSheet />
 
       <Section eyebrow="What this is">
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
@@ -234,34 +165,6 @@ const CALLOUT: React.CSSProperties = {
   borderRadius: 14,
   padding: "14px 16px",
 };
-
-// One row in a hub group: label, one-line blurb, chevron. 56px tall,
-// full-width on phones, two columns at >= 768px.
-function HubLink({ item }: { item: HubItem }) {
-  const inner = (
-    <>
-      <span style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-        <span style={{ fontSize: 15, fontWeight: 600, color: SS_TOKENS.fg0 }}>{item.label}</span>
-        <span style={{ fontSize: 13, color: SS_TOKENS.fg1, lineHeight: 1.4 }}>{item.blurb}</span>
-      </span>
-      <span aria-hidden style={{ color: SS_TOKENS.fg1, fontSize: 16, flexShrink: 0 }}>
-        ›
-      </span>
-    </>
-  );
-  if (item.file) {
-    return (
-      <a href={item.href} className="ss-hub-link" aria-label={`${item.label}: ${item.blurb}`}>
-        {inner}
-      </a>
-    );
-  }
-  return (
-    <Link href={item.href} className="ss-hub-link" aria-label={`${item.label}: ${item.blurb}`}>
-      {inner}
-    </Link>
-  );
-}
 
 function Section({
   eyebrow,

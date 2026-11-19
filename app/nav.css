@@ -1,0 +1,682 @@
+/* Navigation chrome: the desktop sidebar, the search palette, the More
+   sheet, <Related> rows and <Breadcrumbs>. Imported once from
+   app/layout.tsx after globals.css; tokens come from :root there.
+   Colour rules (lib/tokens.ts): orange only for "Smokey is up", so the
+   NEW badge, active rows and focus states are all neutral. */
+
+/* ---------------------------------------------------------------------
+   Desktop sidebar (>= 1024px, components/Sidebar.tsx). 240px open:
+   wordmark, live status, search, then the six sections. Collapsed: an
+   80px icon rail with the rail items only. Hidden below 1024px, where the
+   tab bar and the More sheet (/about) carry the same map.
+   --------------------------------------------------------------------- */
+.ss-sidebar {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .ss-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 50;
+    width: var(--ss-rail-w);
+    display: flex;
+    flex-direction: column;
+    background: var(--ss-bg0);
+    border-right: 0.5px solid var(--ss-hairline);
+  }
+}
+.ss-sb-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 4px;
+}
+.ss-sb-brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ss-fg0);
+  text-decoration: none;
+  border-radius: 8px;
+}
+.ss-sb-brand-full {
+  display: inline-flex;
+}
+.ss-sb-brand-mark {
+  display: none;
+}
+.ss-sb-top {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px 6px;
+}
+.ss-sb-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--ss-bg1);
+  border: 0.5px solid var(--ss-hairline);
+  color: var(--ss-fg0);
+  text-decoration: none;
+}
+.ss-sb-status:hover {
+  border-color: var(--ss-hairline-2);
+}
+.ss-sb-status[data-kind="alert"] {
+  color: var(--ss-alert);
+  background: var(--ss-alert-dim);
+  border-color: rgba(255, 122, 26, 0.35);
+}
+.ss-sb-status[data-kind="feed_down"],
+.ss-sb-status[data-kind="loading"] {
+  color: var(--ss-fg1);
+}
+.ss-sb-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: var(--ss-fg1);
+}
+.ss-sb-status[data-kind="clear"] .ss-sb-dot {
+  background: var(--ss-clear);
+}
+.ss-sb-status[data-kind="alert"] .ss-sb-dot {
+  background: var(--ss-alert);
+  animation: ss-blink 1.6s ease-in-out infinite;
+}
+.ss-sb-status-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ss-sb-status-head {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.ss-sb-status-sub {
+  font-size: var(--ss-type-floor);
+  line-height: 1.3;
+  color: var(--ss-fg1);
+}
+.ss-sb-status[data-kind="alert"] .ss-sb-status-sub {
+  color: var(--ss-alert);
+}
+.ss-sb-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 10px;
+  background: var(--ss-bg1);
+  border: 0.5px solid var(--ss-hairline-2);
+  color: var(--ss-fg1);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.ss-sb-search:hover {
+  color: var(--ss-fg0);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.ss-sb-search-label {
+  flex: 1 1 auto;
+}
+.ss-kbd {
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: var(--ss-type-floor);
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 5px;
+  border: 0.5px solid var(--ss-hairline-2);
+  color: var(--ss-fg1);
+  white-space: nowrap;
+}
+.ss-sb-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 12px 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ss-bg2) transparent;
+}
+.ss-sb-section {
+  display: flex;
+  flex-direction: column;
+  padding-top: 10px;
+}
+.ss-sb-section-title {
+  margin: 0;
+  padding: 0 10px 4px;
+}
+.ss-sb-sublabel {
+  display: block;
+  padding: 8px 10px 2px;
+  font-size: var(--ss-type-floor);
+  color: var(--ss-fg1);
+}
+.ss-sb-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: var(--ss-fg1);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  touch-action: manipulation;
+}
+.ss-sb-item:hover {
+  background: var(--ss-bg1);
+  color: var(--ss-fg0);
+}
+.ss-sb-item[aria-current="page"] {
+  background: var(--ss-bg2);
+  color: var(--ss-fg0);
+  font-weight: 600;
+}
+.ss-sb-item-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ss-sb-rail-label {
+  display: none;
+}
+/* NEW badge: neutral on purpose. Orange is only "Smokey is up". */
+.ss-new {
+  flex-shrink: 0;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: var(--ss-type-floor);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 4px;
+  color: var(--ss-fg0);
+  border: 0.5px solid var(--ss-hairline-2);
+  background: var(--ss-bg2);
+}
+.ss-sb-tail {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-height: 44px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  color: var(--ss-fg0);
+  text-decoration: none;
+}
+.ss-sb-tail:hover {
+  background: var(--ss-bg1);
+}
+.ss-sb-tail[aria-current="page"] {
+  background: var(--ss-bg2);
+}
+.ss-sb-tail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.ss-sb-tail-name {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ss-sb-tail-meta {
+  font-size: var(--ss-type-floor);
+  color: var(--ss-fg1);
+  white-space: nowrap;
+}
+.ss-sb-tail-meta[data-up="alert"] {
+  color: var(--ss-alert);
+}
+.ss-sb-tail-meta[data-up="up"] {
+  color: var(--ss-fg0);
+}
+/* Mission badge in nav lists: neutral unless a Smokey-class tail is up
+   right now. A grounded tail never paints orange. */
+.ss-mission {
+  flex-shrink: 0;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: var(--ss-type-floor);
+  letter-spacing: 0.06em;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 4px;
+  color: var(--ss-fg1);
+  border: 0.5px solid var(--ss-hairline-2);
+  white-space: nowrap;
+}
+.ss-mission[data-alert="true"] {
+  color: var(--ss-alert);
+  border-color: rgba(255, 122, 26, 0.4);
+}
+.ss-sb-empty {
+  padding: 6px 10px;
+  font-size: var(--ss-type-floor);
+  color: var(--ss-fg1);
+}
+.ss-sb-foot {
+  padding: 6px 12px 10px;
+  border-top: 0.5px solid var(--ss-hairline);
+}
+.ss-sb-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: 0;
+  color: var(--ss-fg1);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ss-sb-toggle:hover {
+  background: var(--ss-bg1);
+  color: var(--ss-fg0);
+}
+.ss-sb-toggle-close {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ss-sb-toggle-open {
+  display: none;
+}
+
+/* Collapsed: the icon rail. Rail items only, icon over a short label. */
+@media (min-width: 1024px) {
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-brand-full,
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-status-text,
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-search-label,
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-kbd,
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-section-title,
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-item-label,
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-new,
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-recent,
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-item[data-rail="false"],
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-section[data-rail="false"],
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-toggle-close {
+    display: none;
+  }
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-brand-mark,
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-toggle-open {
+    display: inline-flex;
+  }
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-head {
+    justify-content: center;
+    padding: 10px 8px 4px;
+  }
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-top,
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-scroll,
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-foot {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-status,
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-search,
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-toggle {
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    min-height: 44px;
+  }
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-dot {
+    margin-top: 0;
+    width: 10px;
+    height: 10px;
+  }
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-section {
+    padding-top: 6px;
+    margin-top: 6px;
+    border-top: 0.5px solid var(--ss-hairline);
+  }
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-section:first-child {
+    border-top: 0;
+    margin-top: 0;
+  }
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-item {
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    min-height: 54px;
+    padding: 4px 2px;
+  }
+  :root[data-ss-nav="collapsed"] .ss-sidebar .ss-sb-rail-label {
+    display: block;
+    font-size: var(--ss-type-floor);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Search palette (⌘K / Ctrl+K, components/CommandPalette.tsx) and the
+   inline search on the More sheet (components/SearchPanel.tsx).
+   --------------------------------------------------------------------- */
+.ss-palette-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12vh 16px 16px;
+  background: rgba(5, 6, 8, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.ss-palette {
+  width: min(640px, 100%);
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--ss-bg1);
+  border: 0.5px solid var(--ss-hairline-2);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+@media (max-width: 640px) {
+  .ss-palette-backdrop {
+    padding: 0;
+  }
+  .ss-palette {
+    max-height: none;
+    height: 100dvh;
+    border-radius: 0;
+    border: 0;
+    padding-top: env(safe-area-inset-top);
+  }
+}
+.ss-search {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+.ss-search-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 14px;
+  color: var(--ss-fg1);
+}
+.ss-palette .ss-search-field {
+  border-bottom: 0.5px solid var(--ss-hairline-2);
+}
+.ss-search[data-inline="true"] .ss-search-field {
+  min-height: 48px;
+  border-radius: 12px;
+  background: var(--ss-bg1);
+  border: 0.5px solid var(--ss-hairline-2);
+}
+.ss-search[data-inline="true"] .ss-search-field:focus-within {
+  border-color: var(--ss-sky);
+}
+.ss-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 44px;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: var(--ss-fg0);
+  font: inherit;
+  /* 16px keeps iOS Safari from zooming on focus. */
+  font-size: 16px;
+}
+.ss-search-input::placeholder {
+  color: var(--ss-fg1);
+}
+.ss-search-input::-webkit-search-cancel-button {
+  display: none;
+}
+.ss-search-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin-right: -8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ss-fg1);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ss-search-close:hover {
+  color: var(--ss-fg0);
+  background: var(--ss-bg2);
+}
+.ss-search-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.ss-search[data-inline="true"] .ss-search-list {
+  margin-top: 8px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--ss-bg1);
+  border: 0.5px solid var(--ss-hairline);
+}
+.ss-search-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 10px;
+  border-radius: 9px;
+  color: var(--ss-fg1);
+  cursor: pointer;
+}
+.ss-search-option[aria-selected="true"] {
+  background: var(--ss-bg2);
+  color: var(--ss-fg0);
+}
+.ss-search-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.ss-search-option-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ss-fg0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ss-search-option-sub {
+  font-size: 13px;
+  color: var(--ss-fg1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ss-search-kind {
+  flex-shrink: 0;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: var(--ss-type-floor);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ss-fg1);
+}
+.ss-search-empty {
+  padding: 14px 12px;
+  font-size: 13px;
+  color: var(--ss-fg1);
+}
+.ss-search-hint {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 8px 14px 10px;
+  border-top: 0.5px solid var(--ss-hairline);
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: var(--ss-type-floor);
+  color: var(--ss-fg1);
+}
+.ss-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------------------------------------------------------------------
+   More sheet (/about): search, recently up, then the same six sections
+   as the sidebar. Rows are >= 48px for gloved thumbs.
+   --------------------------------------------------------------------- */
+.ss-more-recent-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+@media (min-width: 768px) {
+  .ss-more-recent-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.ss-more-tail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--ss-bg1);
+  border: 0.5px solid var(--ss-hairline);
+  color: var(--ss-fg0);
+  text-decoration: none;
+}
+.ss-more-tail:hover {
+  border-color: var(--ss-hairline-2);
+}
+.ss-hub-icon {
+  display: inline-flex;
+  color: var(--ss-fg1);
+  flex-shrink: 0;
+}
+.ss-hub-link[aria-current="page"] {
+  border-color: var(--ss-hairline-2);
+  background: var(--ss-bg2);
+}
+
+/* ---------------------------------------------------------------------
+   <Related> rows at the foot of key pages, <Breadcrumbs> on deep ones.
+   --------------------------------------------------------------------- */
+.ss-related {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.ss-related-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+@media (min-width: 768px) {
+  .ss-related-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.ss-crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 2px;
+  list-style: none;
+  margin: 0 -8px -8px;
+  padding: 0;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--ss-fg1);
+}
+.ss-crumbs li {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.ss-crumbs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 8px;
+  border-radius: 8px;
+  color: var(--ss-fg1);
+  text-decoration: none;
+}
+.ss-crumbs a:hover {
+  color: var(--ss-fg0);
+  text-decoration: underline;
+}
+.ss-crumbs [aria-current="page"] {
+  padding: 0 8px;
+  color: var(--ss-fg0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ss-crumbs-sep {
+  color: var(--ss-fg1);
+}
+/* Anchors the search lands on (#contrast, #telegram, #logbook) clear
+   the top edge instead of sitting flush against it. */
+#contrast,
+#time-format,
+#region,
+#proximity,
+#voice,
+#quiet-hours,
+#tails,
+#telegram,
+#logbook,
+#flight-history {
+  scroll-margin-top: 16px;
+}

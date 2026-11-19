@@ -32,6 +32,7 @@ import {
 } from "@/lib/mock-state";
 import { BackLink } from "@/components/BackLink";
 import { pageMeta } from "@/lib/seo/site";
+import { Related } from "@/components/Related";
 
 export const dynamic = "force-dynamic";
 export const metadata = pageMeta({
@@ -229,6 +230,14 @@ export default async function ForecastPage({
           missions={missions}
         />
       )}
+
+      <Related
+        links={[
+          { href: "/stats", label: "Stats", blurb: "How the bird actually flew, week by week", icon: "stats" },
+          { href: "/calendar.ics", label: "Calendar feed", blurb: "Busy windows in your calendar app", icon: "calendar", file: true },
+          { href: "/settings/alerts", label: "Alerts", blurb: "A push the moment it goes up", icon: "bell" },
+        ]}
+      />
     </main>
   );
 }

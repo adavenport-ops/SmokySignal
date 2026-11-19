@@ -5,6 +5,7 @@ import { setContrastAction } from "@/app/(tabs)/settings/alerts/actions";
 export function ContrastSetting({ current }: { current: ContrastMode }) {
   return (
     <section
+      id="contrast"
       style={{
         background: SS_TOKENS.bg1,
         border: `.5px solid ${SS_TOKENS.hairline}`,

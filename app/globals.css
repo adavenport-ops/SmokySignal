@@ -34,15 +34,21 @@
   --ss-type-body: 14px;
   --ss-type-micro: 11px;
   --ss-type-floor: 12px;
-  /* Bottom tab bar height (excluding the safe-area inset). Zero once the
-     bar becomes a left rail at >= 1024px. */
+  /* Bottom tab bar height (excluding the safe-area inset). Zero at
+     >= 1024px, where the sidebar takes over. --ss-rail-w is the width the
+     sidebar reserves on the left: 240px open, 80px collapsed to the icon
+     rail (html[data-ss-nav="collapsed"], set before paint by the (tabs)
+     layout from localStorage). */
   --ss-tabbar-h: 66px;
   --ss-rail-w: 0px;
 }
 @media (min-width: 1024px) {
   :root {
     --ss-tabbar-h: 0px;
-    --ss-rail-w: 88px;
+    --ss-rail-w: 240px;
+  }
+  :root[data-ss-nav="collapsed"] {
+    --ss-rail-w: 80px;
   }
 }
 
@@ -234,9 +240,10 @@ body {
 }
 
 /* ---------------------------------------------------------------------
-   Tab chrome. Mobile: bottom bar. >= 1024px: left rail on every tabbed
-   route, /radar included (.ss-radar-page offsets the map, below).
-   Five tabs, no toggles.
+   Tab chrome. Phones and tablets: the five-tab bottom bar, no toggles.
+   >= 1024px: the bar hides and the sidebar (.ss-sidebar, below) takes
+   over on every tabbed route, /radar included (.ss-radar-page offsets
+   the map by --ss-rail-w).
    --------------------------------------------------------------------- */
 .ss-tabbar {
   position: fixed;
@@ -283,26 +290,10 @@ body {
   letter-spacing: 0.01em;
   line-height: 1;
 }
+/* >= 1024px the sidebar (below) replaces the bar. */
 @media (min-width: 1024px) {
   .ss-tabbar {
-    top: 0;
-    right: auto;
-    width: var(--ss-rail-w);
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: 4px;
-    padding: 16px 6px;
-    background: var(--ss-bg0);
-    border-top: 0;
-    border-right: 0.5px solid var(--ss-hairline);
-  }
-  .ss-tabbar .ss-tabbar-item {
-    flex: 0 0 auto;
-    min-height: 64px;
-    border-radius: 12px;
-  }
-  .ss-tabbar .ss-tabbar-item[aria-current="page"] {
-    background: var(--ss-bg1);
+    display: none;
   }
 }
 

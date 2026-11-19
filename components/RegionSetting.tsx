@@ -12,6 +12,7 @@ import { RegionSelector } from "./RegionSelector";
 export function RegionSetting() {
   return (
     <section
+      id="region"
       style={{
         background: SS_TOKENS.bg1,
         border: `.5px solid ${SS_TOKENS.hairline}`,

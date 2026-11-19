@@ -9,6 +9,7 @@ import { setTimeFormatAction } from "@/app/(tabs)/settings/alerts/actions";
 export function TimeFormatSetting({ current }: { current: TimeFormat }) {
   return (
     <section
+      id="time-format"
       style={{
         background: SS_TOKENS.bg1,
         border: `.5px solid ${SS_TOKENS.hairline}`,

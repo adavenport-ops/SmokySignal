@@ -965,7 +965,7 @@ test.describe("p14 live-prod audit", () => {
   // that on prod: header present, and zero violations on the routes that
   // load the most third-party surface.
   for (const route of ["/", "/radar", "/plane/N305DK", "/help", "/admin"]) {
-    test(`22. CSP enforced with zero violations on ${route}`, async ({
+    test(`83. CSP enforced with zero violations on ${route}`, async ({
       page,
     }) => {
       await page.addInitScript(() => {
@@ -997,7 +997,7 @@ test.describe("p14 live-prod audit", () => {
         consoleCsp.length === 0;
       const screenshot = await shot(
         page,
-        `22-csp-${route === "/" ? "home" : route.replace(/\//g, "-").replace(/^-/, "")}`,
+        `83-csp-${route === "/" ? "home" : route.replace(/\//g, "-").replace(/^-/, "")}`,
       );
       record({
         claim: `Security headers present and zero CSP violations on ${route}`,
@@ -2568,24 +2568,26 @@ test.describe("p14 live-prod audit · navigation", () => {
     expect(pass).toBe(true);
   });
 
-  test("63. the desktop rail is present on /radar at 1440 and the map clears it", async ({ browser }) => {
+  // The icon rail became the full sidebar (240px, collapsible to an 80px
+  // rail) in the full-nav pass; the map must still clear it.
+  test("63. the desktop sidebar is present on /radar at 1440 and the map clears it", async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await ctx.newPage();
     try {
       await page.goto("/radar", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(2500);
-      const screenshot = await shot(page, "60-radar-rail-1440");
-      const rail = await page.locator('nav[aria-label="Main"]').boundingBox();
+      const screenshot = await shot(page, "63-radar-sidebar-1440");
+      const rail = await page.locator('[data-testid="sidebar"]').boundingBox();
       const map = await page.locator(".ss-radar-page > main").boundingBox();
       const pass =
         rail != null &&
         map != null &&
         rail.x === 0 &&
         rail.height >= 800 &&
-        rail.width < 200 &&
+        rail.width <= 241 &&
         map.x >= rail.width - 1;
       record({
-        claim: "Desktop rail renders on /radar (left, full height) and the radar map starts right of it",
+        claim: "Desktop sidebar renders on /radar (left, full height) and the radar map starts right of it",
         category: pass ? "working_as_designed" : "unshipped",
         pass,
         evidence: `rail=${JSON.stringify(rail)} map=${JSON.stringify(map)}`,
@@ -2816,8 +2818,8 @@ test.describe("p14 live-prod audit · 3D radar", () => {
         return { gl2, ready, canvas, kept, errs, screenshot: await shot(page, name) };
       };
 
-      const hist = await probe(historyPath, "radar-history", "hview", "57-radar-history-3d");
-      const live = await probe("/radar?view=3d", "radar-live", "view", "57-radar-live-3d");
+      const hist = await probe(historyPath, "radar-history", "hview", "73-radar-history-3d");
+      const live = await probe("/radar?view=3d", "radar-live", "view", "73-radar-live-3d");
       if (!hist.gl2) {
         record({
           claim: "3D on /radar (history hview=3d, live view=3d)",
@@ -2955,5 +2957,164 @@ test.describe("p14 live-prod audit · SEO", () => {
       evidence: `duplicates=${JSON.stringify(dupes)} missingCanonical=${JSON.stringify(missingCanonical)}`,
     });
     expect(pass).toBe(true);
+  });
+});
+
+test.describe("p14 live-prod audit · full navigation", () => {
+  const SECTIONS = ["Now", "History", "Aircraft", "Alerts & sharing", "Modes", "About"];
+
+  test("79. at 1440 the sidebar shows all six section headings, status and search", async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const page = await ctx.newPage();
+    try {
+      await page.goto("/", { waitUntil: "networkidle" });
+      await page.waitForTimeout(1500);
+      const screenshot = await shot(page, "79-sidebar-1440");
+      const headings = await page
+        .locator('[data-testid="sidebar"] h2')
+        .evaluateAll((els) =>
+          els.filter((e) => e.getBoundingClientRect().height > 0).map((e) => (e.textContent ?? "").trim()),
+        );
+      const status = (await page.locator('[data-testid="sidebar-status"]').innerText().catch(() => "")).trim();
+      const search = await page.locator('[data-testid="sidebar-search"]').isVisible();
+      const tabbarHidden = !(await page.locator('nav[aria-label="Main"]').isVisible());
+      const pass =
+        JSON.stringify(headings.map((h) => h.toLowerCase())) ===
+          JSON.stringify(SECTIONS.map((s) => s.toLowerCase())) &&
+        /Smokey.s (up|down)|Feed quiet/.test(status) &&
+        search &&
+        tabbarHidden;
+      record({
+        claim: "1440: sidebar renders Now, History, Aircraft, Alerts & sharing, Modes, About, a live status block and the search field; the bottom bar is hidden",
+        category: pass ? "working_as_designed" : "unshipped",
+        pass,
+        evidence: `headings=${JSON.stringify(headings)} status=${JSON.stringify(status)} search=${search} tabbarHidden=${tabbarHidden}`,
+        screenshot,
+      });
+      expect(pass).toBe(true);
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test("80. ⌘K opens search; typing N305DK then Enter lands on /plane/N305DK", async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const page = await ctx.newPage();
+    try {
+      await page.goto("/", { waitUntil: "networkidle" });
+      await page.waitForTimeout(800);
+      await page.keyboard.press(process.platform === "darwin" ? "Meta+k" : "Control+k");
+      const input = page.locator('[role="dialog"] input[role="combobox"]');
+      const opened = await input
+        .waitFor({ state: "visible", timeout: 5000 })
+        .then(() => true)
+        .catch(() => false);
+      await page.keyboard.type("N305DK");
+      await page.keyboard.press("Enter");
+      await page.waitForURL(/\/plane\/N305DK/, { timeout: 10_000 }).catch(() => {});
+      const landed = new URL(page.url()).pathname;
+      const pass = opened && landed === "/plane/N305DK";
+      record({
+        claim: "⌘K / Ctrl+K opens the search palette and N305DK + Enter goes to /plane/N305DK",
+        category: pass ? "working_as_designed" : "unshipped",
+        pass,
+        evidence: `opened=${opened} landed=${landed}`,
+      });
+      expect(pass).toBe(true);
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test("81. at 390 the More sheet shows the six sections plus search", async ({ browser }) => {
+    const ctx = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 3,
+      isMobile: true,
+      hasTouch: true,
+    });
+    const page = await ctx.newPage();
+    try {
+      await page.goto("/about", { waitUntil: "networkidle" });
+      await page.waitForTimeout(1000);
+      const screenshot = await shot(page, "81-more-sheet-390");
+      const headings = await page.locator('nav[aria-label="Site sections"] h2').allInnerTexts();
+      const search = await page.locator('[data-testid="more-sheet"] input[role="combobox"]').isVisible();
+      await page.locator('[data-testid="more-sheet"] input[role="combobox"]').fill("telegram");
+      await page.waitForTimeout(300);
+      const first = await page
+        .locator('[data-testid="more-sheet"] [role="option"]')
+        .first()
+        .getAttribute("data-href")
+        .catch(() => null);
+      const pass =
+        JSON.stringify(headings.map((h) => h.trim().toLowerCase())) ===
+          JSON.stringify(SECTIONS.map((s) => s.toLowerCase())) &&
+        search &&
+        first === "/relay#telegram";
+      record({
+        claim: "390: /about (the More sheet) shows search on top and the same six sections as the sidebar; 'telegram' finds the bot card",
+        category: pass ? "working_as_designed" : "unshipped",
+        pass,
+        evidence: `headings=${JSON.stringify(headings)} search=${search} telegram=${first}`,
+        screenshot,
+      });
+      expect(pass).toBe(true);
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test("82. the sidebar and the More sheet render no text below 12px", async ({ browser }) => {
+    const results: Record<string, { min: number; text: string | null }> = {};
+    const desk = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const phone = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 3,
+      isMobile: true,
+      hasTouch: true,
+    });
+    try {
+      const d = await desk.newPage();
+      for (const path of ["/", "/radar", "/plane/N305DK"]) {
+        await d.goto(path, { waitUntil: "networkidle" });
+        await d.waitForTimeout(1000);
+        results[`1440 ${path}`] = await d.evaluate(() => {
+          let min = Infinity;
+          let text: string | null = null;
+          for (const el of document.querySelectorAll('[data-testid="sidebar"] *')) {
+            const hasText = [...el.childNodes].some(
+              (c) => c.nodeType === Node.TEXT_NODE && (c.textContent ?? "").trim(),
+            );
+            if (!hasText) continue;
+            const r = el.getBoundingClientRect();
+            if (r.width <= 1 || r.height <= 1) continue;
+            const cs = getComputedStyle(el);
+            if (cs.display === "none" || cs.visibility === "hidden") continue;
+            const fs = parseFloat(cs.fontSize);
+            if (fs < min) {
+              min = fs;
+              text = (el.textContent ?? "").trim().slice(0, 40);
+            }
+          }
+          return { min, text };
+        });
+      }
+      const p = await phone.newPage();
+      await p.goto("/about", { waitUntil: "networkidle" });
+      await p.waitForTimeout(1000);
+      results["390 /about"] = await minFontSize(p);
+      const pass = Object.values(results).every((r) => r.min >= 12);
+      record({
+        claim: "Sidebar (/, /radar, /plane at 1440) and the More sheet (390) keep the 12px type floor",
+        category: pass ? "working_as_designed" : "polish_needed",
+        pass,
+        evidence: JSON.stringify(results),
+      });
+      expect(pass).toBe(true);
+    } finally {
+      await desk.close();
+      await phone.close();
+    }
   });
 });

@@ -4,8 +4,10 @@ import { Analytics } from "@vercel/analytics/react";
 import { HOME_DESCRIPTION, HOME_TITLE, SITE_KEYWORDS, SITE_URL } from "@/lib/seo/site";
 import { SwRegistrar } from "@/components/SwRegistrar";
 import { TooltipProvider } from "@/components/Tooltip";
+import { SearchHost } from "@/components/SearchHost";
 import { getContrastPref } from "@/lib/user-prefs";
 import "./globals.css";
+import "./nav.css";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -98,7 +100,9 @@ export default function RootLayout({
 }) {
   const contrast = getContrastPref();
   return (
-    <html lang="en" className={`${inter.variable} ${mono.variable}`}>
+    // suppressHydrationWarning: the (tabs) layout sets data-ss-nav on
+    // <html> before hydration (the collapsed-sidebar choice).
+    <html lang="en" className={`${inter.variable} ${mono.variable}`} suppressHydrationWarning>
       <body
         className="ss-app bg-ss-bg0 text-ss-fg0"
         data-contrast={contrast}
@@ -106,6 +110,7 @@ export default function RootLayout({
         <TooltipProvider>
           {children}
           <SwRegistrar />
+          <SearchHost />
         </TooltipProvider>
         <Analytics />
       </body>

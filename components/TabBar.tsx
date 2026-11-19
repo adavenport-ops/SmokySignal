@@ -57,11 +57,11 @@ export const TABS: Tab[] = [
 export function TabBar() {
   const pathname = usePathname() ?? "/";
   const activeId = activeTab(pathname);
-  // Bottom bar on phones, left rail at >= 1024px on every tabbed route,
-  // /radar included (the radar page offsets its map by the rail width).
+  // Bottom bar on phones and tablets. At >= 1024px it hides and the
+  // sidebar (components/Sidebar.tsx) carries the full map instead.
   // Layout lives in app/globals.css (.ss-tabbar).
   return (
-    <nav aria-label="Main" className="ss-tabbar" data-rail="true">
+    <nav aria-label="Main" className="ss-tabbar">
       {TABS.map((t) => {
         const active = t.id === activeId;
         return (
