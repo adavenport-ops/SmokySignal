@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { checkRateLimit, clientIpFrom } from "@/lib/rate-limit";
+import { clientIpFrom, gateAttempt } from "@/lib/rate-limit";
 import {
   setAdminCookie,
   clearAdminCookie,
@@ -56,14 +56,17 @@ const VALID_NEXT_TARGETS: Record<string, string> = {
 export async function authenticateAction(formData: FormData) {
   const passcode = s(formData, "passcode");
   const nextRaw = s(formData, "next");
-  // Brute-force guard: 5 attempts per IP per 15 min (lib/rate-limit.ts).
-  // A throttled attempt gets the same generic "invalid" bounce as a wrong
-  // passcode, and the passcode is not checked at all while throttled.
-  const limit = await checkRateLimit(
+  // Brute-force guard: 5 failed attempts per IP per 15 min
+  // (lib/rate-limit.ts). A correct passcode does not consume a slot. A
+  // throttled attempt, or one made while the limiter is unavailable
+  // (admin-login fails closed), gets the same generic "invalid" bounce
+  // as a wrong passcode, and the passcode is not checked at all.
+  const allowed = await gateAttempt(
     "admin-login",
     clientIpFrom(headers()),
+    () => Boolean(passcode) && verifyPasscode(passcode),
   );
-  if (!limit.ok || !passcode || !verifyPasscode(passcode)) {
+  if (!allowed) {
     const errPath = VALID_NEXT_TARGETS[nextRaw] ?? "/admin";
     const params = new URLSearchParams({ error: "invalid" });
     if (nextRaw && VALID_NEXT_TARGETS[nextRaw]) {

@@ -24,8 +24,8 @@ export function getRegion(): RegionId {
   try {
     const v = window.localStorage.getItem(KEY);
     if (!v) return DEFAULT_REGION;
-    if (Object.hasOwn(REGIONS, v)) return v as RegionId;
-    if (Object.hasOwn(LEGACY_MAP, v)) return LEGACY_MAP[v]!;
+    if (Object.prototype.hasOwnProperty.call(REGIONS, v)) return v as RegionId;
+    if (Object.prototype.hasOwnProperty.call(LEGACY_MAP, v)) return LEGACY_MAP[v]!;
     return DEFAULT_REGION;
   } catch {
     return DEFAULT_REGION;

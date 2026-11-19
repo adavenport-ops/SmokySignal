@@ -113,6 +113,11 @@ export function SpottedButton({ airborne }: { airborne: Aircraft[] }) {
           airborne_tails: payloadTails,
         }),
       });
+      if (r.status === 429) {
+        // Server-side per-IP limit (lib/rate-limit.ts).
+        flash("Too many spots — wait a minute and try again");
+        return;
+      }
       if (!r.ok) {
         flash("Spot didn't save");
         return;
