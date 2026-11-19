@@ -188,59 +188,36 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
 
   return (
     <main
+      className="ss-page"
       style={{
         // No 100dvh min-height: the time-format, contrast and region
         // cards render after this <main>, and a full-viewport main left
         // a screen of dead space above them on short states.
         // Tab bar + safe-area clearance comes from .ss-tabs-shell in
         // the (tabs) layout; the install prompt no longer floats.
-        padding: "12px 18px 2px",
-        maxWidth: 460,
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: 18,
+        minHeight: 0,
+        paddingBottom: 2,
       }}
     >
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          marginTop: 4,
-        }}
-      >
-        <span className="ss-eyebrow">Alerts · Channel 19</span>
-        <Link
-          href="/"
-          className="ss-mono"
+      {/* Alerts is a tab root, so no back link. */}
+      <header style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+        <span className="ss-eyebrow">SmokySignal · Channel 19</span>
+        <h1
           style={{
-            fontSize: 13,
-            color: SS_TOKENS.fg1,
-            textDecoration: "none",
-            display: "inline-flex",
-            alignItems: "center",
-            minHeight: 44,
-            padding: "0 8px",
-            margin: "-12px -8px",
+            fontSize: TYPE.title,
+            fontWeight: 800,
+            letterSpacing: "-.03em",
+            lineHeight: 1.1,
+            color: SS_TOKENS.fg0,
+            margin: 0,
           }}
         >
-          ← Back
-        </Link>
+          Alerts
+        </h1>
+        <p style={{ fontSize: 14, color: SS_TOKENS.fg1, lineHeight: 1.5, margin: 0 }}>
+          Get a ping when the bird&rsquo;s up.
+        </p>
       </header>
-
-      <h1
-        style={{
-          fontSize: TYPE.title,
-          fontWeight: 800,
-          letterSpacing: "-.03em",
-          lineHeight: 1.1,
-          color: SS_TOKENS.fg0,
-          margin: 0,
-        }}
-      >
-        Get a ping when the bird&rsquo;s up.
-      </h1>
 
       {loadState === "loading" ? (
         <Card>

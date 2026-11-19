@@ -110,8 +110,8 @@ export function Speedometer({ mph, limit, hasSignal }: Props) {
         <div
           className="ss-mono"
           style={{
-            fontSize: 11,
-            color: SS_TOKENS.fg2,
+            fontSize: 12,
+            color: SS_TOKENS.fg1,
             letterSpacing: ".08em",
           }}
         >

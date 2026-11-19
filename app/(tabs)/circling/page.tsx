@@ -8,6 +8,7 @@ import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
 import { CirclingLive } from "@/components/CirclingLive";
 import { CoverageNote } from "@/components/CoverageNote";
 import styles from "@/components/pattern-pages.module.css";
+import { BackLink } from "@/components/BackLink";
 
 // Cookies (time-format pref) make the route dynamic; the live read behind
 // it is cached for 15 s, matching /api/circling.
@@ -42,19 +43,20 @@ export default async function CirclingPage() {
   ]);
 
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <span className="ss-eyebrow">SmokySignal · What&rsquo;s circling</span>
-        <Link href="/about" className={`ss-mono ${styles.backLink}`}>
-          ← About
-        </Link>
-      </header>
+    <main className="ss-page">
+      <BackLink />
+      <span className="ss-eyebrow">SmokySignal · What&rsquo;s circling</span>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <h1 className={styles.h1}>That plane circling you?</h1>
         <p className={styles.lede}>
           Every aircraft we track that is working a pattern right now: who
           flies it, what it is, which road it is over, and for how long.
+          Where they worked before is on{" "}
+          <Link href="/road" style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}>
+            Road history
+          </Link>
+          .
         </p>
         <CoverageNote area={digest.coverage.weakest?.name ?? null} />
         <Link
@@ -90,7 +92,7 @@ export default async function CirclingPage() {
               against a list of known agency tails. SmokySignal is not
               affiliated with WSP or any agency. See{" "}
               <Link href="/program" style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}>
-                what&rsquo;s flying
+                the program
               </Link>{" "}
               for the full list and sources.
             </p>
@@ -98,7 +100,7 @@ export default async function CirclingPage() {
 
           <section className={styles.card}>
             <h2 className={`ss-eyebrow ${styles.sectionTitle}`}>Road history</h2>
-            <p style={{ margin: "0 0 6px", fontSize: 13, lineHeight: 1.5, color: SS_TOKENS.fg2 }}>
+            <p style={{ margin: "0 0 6px", fontSize: 13, lineHeight: 1.5, color: SS_TOKENS.fg1 }}>
               Thirty days of tracked flights over each corridor.
             </p>
             <nav aria-label="Road pages" style={{ display: "flex", flexWrap: "wrap", gap: "0 16px" }}>
@@ -117,7 +119,7 @@ export default async function CirclingPage() {
                 className={`ss-mono ${styles.linkRow}`}
                 style={{ fontSize: 13, color: SS_TOKENS.fg1 }}
               >
-                All roads →
+                Road history →
               </Link>
             </nav>
           </section>

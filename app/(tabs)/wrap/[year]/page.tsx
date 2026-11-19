@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
+import { BackLink } from "@/components/BackLink";
 import { SS_TOKENS } from "@/lib/tokens";
 import { loadWrap } from "@/lib/rollup-read";
 import { LOG_START_DATE } from "@/lib/rollup-sessions";
@@ -48,19 +49,9 @@ export default async function WrapPage({ params }: Props) {
   }
 
   return (
-    <main
-      className="ss-page-narrow"
-      style={{
-        minHeight: "100dvh",
-        // 180 px bottom clears tab bar + iOS install prompt overlay.
-        padding: "12px 18px 180px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 22,
-        boxSizing: "border-box",
-      }}
-    >
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4, paddingRight: 48, gap: 12 }}>
+    <main className="ss-page" style={{ gap: 22 }}>
+      <BackLink />
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
         <span className="ss-eyebrow">SmokySignal · Wrap</span>
         <ShareLinkButton path={`/wrap/${year}`} label="Share wrap" size="sm" ariaLabel={`Share the ${year} season wrap`} />
       </header>
@@ -102,9 +93,9 @@ export default async function WrapPage({ params }: Props) {
 
       <p style={{ fontSize: 12, lineHeight: 1.55, color: SS_TOKENS.fg2, margin: 0 }}>
         Counts aircraft, not people. A sortie is a run of public ADS-B reports with no gap over 5 minutes. Corridor
-        time comes from orbit and racetrack patterns over named roads. Monthly numbers are on the{" "}
+        time comes from orbit and racetrack patterns over named roads. Monthly numbers are on{" "}
         <Link href="/data" style={{ color: SS_TOKENS.fg1, textDecoration: "underline" }}>
-          open ledger
+          Data and CSV
         </Link>
         ; the rolling view is on{" "}
         <Link href="/stats" style={{ color: SS_TOKENS.fg1, textDecoration: "underline" }}>

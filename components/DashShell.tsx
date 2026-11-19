@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useAircraft } from "@/lib/hooks/useAircraft";
 import { useRiderPos } from "@/lib/hooks/useRiderPos";
@@ -11,7 +11,8 @@ import { DEFAULT_SPEED_LIMIT_MPH, haversineNm } from "@/lib/geo";
 import { evaluateWarning } from "@/lib/speed-warning";
 import { bucketDistanceNm, bucketOverLimit } from "@/lib/dryrun-payload";
 import { zoneIdForPoint } from "@/lib/zone-id";
-import { fmtAgoTs } from "@/lib/time";
+import { fmtAloft } from "@/lib/time";
+import { roleBadgeStyle, roleBadgeText } from "@/lib/role-display";
 import type { HotZone } from "@/lib/hotzones";
 import { StatusPill } from "./StatusPill";
 import { Card } from "./Card";
@@ -19,9 +20,6 @@ import { AlertsOptInCard } from "./AlertsOptInCard";
 import { ProximityFlash } from "./ProximityFlash";
 import { ShareStatusButton } from "./ShareStatusButton";
 import type { Aircraft, Snapshot } from "@/lib/types";
-import type { ActivityEntry } from "@/lib/activity";
-
-const TABBAR_HEIGHT = 66;
 const NEAR_NM = 5;
 // Top-N airborne planes to surface in the watcher list. Three is enough
 // to convey crowdedness without dominating the screen.
@@ -31,14 +29,22 @@ const DRYRUN_MIN_INTERVAL_MS = 15_000;
 
 type Props = {
   initial: Snapshot;
-  initialActivity: ActivityEntry[];
   mockOn?: boolean;
+  /** Page heading + Now/Recent switch, rendered above the live cards.
+   *  The status pill sits on the heading row. */
+  header: ReactNode;
+  /** The Now/Recent segmented control, rendered under the heading row. */
+  switcher?: ReactNode;
 };
 
-export function DashShell({ initial, initialActivity, mockOn = false }: Props) {
+/**
+ * The "Now" tab of /flights: what is up, and the nearest watchers to
+ * the rider. The recent-events feed is the "Recent" tab
+ * (components/ActivityFeed.tsx), so it is not repeated here.
+ */
+export function DashShell({ initial, mockOn = false, header, switcher }: Props) {
   const snap = useAircraft(initial, mockOn);
   const { pos } = useRiderPos();
-  const [activity, setActivity] = useState<ActivityEntry[]>(initialActivity);
 
   const smoky = snap.aircraft.find((a) => a.tail === SMOKY_TAIL);
   const up = Boolean(smoky?.airborne);
@@ -143,62 +149,29 @@ export function DashShell({ initial, initialActivity, mockOn = false }: Props) {
     });
   }, [pos, hotZones, airborne, nearestList]);
 
-  // Poll /api/activity every 10s.
-  useEffect(() => {
-    let cancelled = false;
-    const fetchActivity = async () => {
-      if (document.visibilityState === "hidden") return;
-      try {
-        const r = await fetch("/api/activity?limit=10", { cache: "no-store" });
-        if (!r.ok) return;
-        const data = (await r.json()) as { entries: ActivityEntry[] };
-        if (!cancelled) setActivity(data.entries);
-      } catch {
-        // transient — try again next tick
-      }
-    };
-    const id = setInterval(fetchActivity, 10_000);
-    const onVis = () => {
-      if (document.visibilityState === "visible") void fetchActivity();
-    };
-    document.addEventListener("visibilitychange", onVis);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-      document.removeEventListener("visibilitychange", onVis);
-    };
-  }, []);
-
   return (
-    <main
-      style={{
-        minHeight: "100dvh",
-        // Bottom padding = tab bar (66) + iOS install prompt overlay
-        // (~80) + breathing room. Without this the last dash card
-        // hides behind the fixed-position prompt on iOS Safari.
-        padding: `12px 18px ${TABBAR_HEIGHT + 110}px`,
-        maxWidth: 460,
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: 14,
-      }}
-    >
+    <main className="ss-page" style={{ gap: 14 }}>
       <header
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          gap: 12,
+          minHeight: 44,
           marginTop: 4,
         }}
       >
-        <span className="ss-eyebrow">SmokySignal · Dash</span>
+        {header}
         <StatusPill
           kind={up ? "alert" : "clear"}
           label={up ? "BIRD UP" : "ALL CLEAR"}
           sub={`${airborne.length}/${snap.aircraft.length}`}
         />
       </header>
+
+      {switcher}
+
+      <UpNowCard airborne={airborne} />
 
       <NearestCard
         nearestList={nearestList}
@@ -214,8 +187,6 @@ export function DashShell({ initial, initialActivity, mockOn = false }: Props) {
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <ShareStatusButton snapshot={snap} />
       </div>
-
-      <ActivityFeed entries={activity} />
 
       <AlertsOptInCard />
 
@@ -293,8 +264,8 @@ function NearestRow({
           {entry.plane.nickname && (
             <span
               style={{
-                fontSize: 11.5,
-                color: SS_TOKENS.fg2,
+                fontSize: 12,
+                color: SS_TOKENS.fg1,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -304,7 +275,7 @@ function NearestRow({
             </span>
           )}
         </div>
-        <div style={{ fontSize: 11, color: SS_TOKENS.fg2, marginTop: 1 }}>
+        <div style={{ fontSize: 12, color: SS_TOKENS.fg1, marginTop: 1 }}>
           {entry.plane.operator} · {entry.plane.model}
         </div>
       </div>
@@ -404,60 +375,84 @@ function ContextLine({
   );
 }
 
-function ActivityFeed({ entries }: { entries: ActivityEntry[] }) {
+function UpNowCard({ airborne }: { airborne: Aircraft[] }) {
   return (
     <Card padded={false}>
-      <div style={{ padding: "12px 14px 8px" }}>
-        <span className="ss-eyebrow">Recent activity</span>
+      <div
+        style={{
+          padding: "12px 14px 8px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+        }}
+      >
+        <span className="ss-eyebrow">Tails up</span>
+        <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>
+          {airborne.length}
+        </span>
       </div>
-      {entries.length === 0 ? (
+      {airborne.length === 0 ? (
         <div
           style={{
-            padding: "16px 14px",
-            fontSize: 12.5,
-            color: SS_TOKENS.fg2,
+            padding: "12px 14px 16px",
             borderTop: `.5px solid ${SS_TOKENS.hairline}`,
+            fontSize: 13,
+            color: SS_TOKENS.fg1,
           }}
         >
-          Nothing notable — feed populates as planes take off, land, or change altitude.
+          Nothing up right now. The sky is quiet.
         </div>
       ) : (
-        entries.map((e, i) => <ActivityRow key={i} entry={e} />)
+        airborne.map((a) => (
+          <Link
+            key={a.tail}
+            href={`/plane/${a.tail}`}
+            prefetch={false}
+            data-testid="up-now-row"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              minHeight: 52,
+              padding: "8px 14px",
+              borderTop: `.5px solid ${SS_TOKENS.hairline}`,
+              textDecoration: "none",
+              color: "inherit",
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                <span
+                  className="ss-mono"
+                  style={{ fontSize: 15, fontWeight: 700, color: SS_TOKENS.fg0 }}
+                >
+                  {a.tail}
+                </span>
+                {a.nickname && (
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: SS_TOKENS.fg1,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {a.nickname}
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: 12, color: SS_TOKENS.fg1, marginTop: 2 }}>
+                {a.operator} · {fmtAloft(a.time_aloft_min)}
+              </div>
+            </div>
+            <span className="ss-mono" style={{ ...roleBadgeStyle(a.role), flexShrink: 0 }}>
+              {roleBadgeText(a.role)}
+            </span>
+          </Link>
+        ))
       )}
     </Card>
   );
 }
-
-function ActivityRow({ entry }: { entry: ActivityEntry }) {
-  return (
-    <Link
-      href={`/plane/${entry.tail}`}
-      prefetch={false}
-      style={{
-        display: "flex",
-        gap: 10,
-        padding: "10px 14px",
-        borderTop: `.5px solid ${SS_TOKENS.hairline}`,
-        alignItems: "flex-start",
-        textDecoration: "none",
-        color: "inherit",
-      }}
-    >
-      <span
-        className="ss-mono"
-        style={{
-          fontSize: 10,
-          color: SS_TOKENS.fg2,
-          minWidth: 56,
-          marginTop: 2,
-        }}
-      >
-        {fmtAgoTs(entry.ts)}
-      </span>
-      <span style={{ flex: 1, fontSize: 12.5, color: SS_TOKENS.fg1, lineHeight: 1.4 }}>
-        {entry.description}
-      </span>
-    </Link>
-  );
-}
-

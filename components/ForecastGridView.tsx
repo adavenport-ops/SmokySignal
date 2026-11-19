@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { ForecastGrid, ForecastCell } from "@/lib/predictor";
 import { pacificNow } from "@/lib/time";
+import { ScrollX } from "./ScrollX";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
@@ -40,13 +41,7 @@ export function ForecastGridView({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <div
-        style={{
-          overflowX: "auto",
-          paddingBottom: 4,
-          WebkitOverflowScrolling: "touch",
-        }}
-      >
+      <ScrollX label="Takeoff odds by weekday and hour" testId="forecast-grid-scroll">
         <div
           style={{
             display: "grid",
@@ -61,8 +56,8 @@ export function ForecastGridView({
               key={h}
               className="ss-mono"
               style={{
-                fontSize: 8.5,
-                color: SS_TOKENS.fg2,
+                fontSize: 12,
+                color: SS_TOKENS.fg1,
                 textAlign: "center",
                 padding: "0 1px 4px",
               }}
@@ -82,7 +77,7 @@ export function ForecastGridView({
             />
           ))}
         </div>
-      </div>
+      </ScrollX>
 
       <CellDetail cell={selected} hour12={hour12} />
     </div>
@@ -110,8 +105,8 @@ function DowRow({
         className="ss-mono"
         style={{
           ...STICKY,
-          fontSize: 10,
-          color: dow === now.dow ? SS_TOKENS.alert : SS_TOKENS.fg2,
+          fontSize: 12,
+          color: dow === now.dow ? SS_TOKENS.alert : SS_TOKENS.fg1,
           letterSpacing: ".06em",
           paddingRight: 6,
           alignSelf: "stretch",
@@ -220,7 +215,7 @@ function CellDetail({ cell, hour12 }: { cell: ForecastCell | null; hour12: boole
       </div>
       <div
         className="ss-mono"
-        style={{ fontSize: 10.5, color: SS_TOKENS.fg2, letterSpacing: ".04em" }}
+        style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".04em" }}
       >
         {cell.sample_count} historical takeoff
         {cell.sample_count === 1 ? "" : "s"} in this bucket
@@ -228,7 +223,7 @@ function CellDetail({ cell, hour12 }: { cell: ForecastCell | null; hour12: boole
       {cell.common_tails.length > 0 && (
         <div
           className="ss-mono"
-          style={{ fontSize: 11, color: SS_TOKENS.fg1, lineHeight: 1.6 }}
+          style={{ fontSize: 12, color: SS_TOKENS.fg1, lineHeight: 1.6 }}
         >
           {cell.common_tails
             .map((t) => `${t.nickname ?? t.tail} (${t.count})`)

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
+import { BackLink } from "@/components/BackLink";
 
 export const metadata = {
   title: "Legal",
@@ -10,44 +11,9 @@ const GITHUB_URL = "https://github.com/adavenport-ops/SmokySignal";
 
 export default function LegalPage() {
   return (
-    <main
-      style={{
-        minHeight: "100dvh",
-        // 180 px bottom clears tab bar + iOS install prompt overlay.
-        padding: "12px 18px 180px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 18,
-        maxWidth: 460,
-        margin: "0 auto",
-      }}
-    >
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginTop: 4,
-        }}
-      >
-        <span className="ss-eyebrow">SmokySignal · Legal</span>
-        <Link
-          href="/about"
-          className="ss-mono"
-          style={{
-            fontSize: 11,
-            color: SS_TOKENS.fg1,
-            textDecoration: "none",
-            display: "inline-flex",
-            alignItems: "center",
-            minHeight: 44,
-            padding: "0 8px",
-            margin: "-12px -8px",
-          }}
-        >
-          ← Back
-        </Link>
-      </header>
+    <main className="ss-page">
+      <BackLink />
+      <span className="ss-eyebrow">SmokySignal · Legal</span>
 
       <section
         style={{

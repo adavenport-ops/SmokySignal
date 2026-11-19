@@ -1,34 +1,30 @@
-"use client";
+import Link from "next/link";
 
-import { useRouter } from "next/navigation";
-import { SS_TOKENS } from "@/lib/tokens";
-
-export function BackLink() {
-  const router = useRouter();
+/**
+ * The one back link for secondary pages. Always the first child of the
+ * page column (`.ss-page`), left-aligned to it, with a fixed target per
+ * page instead of history.back(): a rider who landed from a shared link
+ * still gets somewhere sensible. 44px tall hit area.
+ *
+ * Targets, by convention:
+ *   pages listed under More      -> More (/about)
+ *   /road/[id]                   -> Road history (/road)
+ *   /relay/manage                -> Discord and webhooks (/relay)
+ *   /settings/zones              -> Alerts (/settings/alerts)
+ *   /plane/[tail]                -> Flights (/flights)
+ *   /flight/[tail]/[id]          -> Back to plane (/plane/[tail])
+ */
+export function BackLink({
+  href = "/about",
+  label = "More",
+}: {
+  href?: string;
+  label?: string;
+}) {
   return (
-    <button
-      type="button"
-      onClick={() => router.back()}
-      className="ss-mono"
-      style={{
-        background: "transparent",
-        border: 0,
-        // Vertical padding pushes hit area to ≥44 px (WCAG AA) without
-        // changing the visual layout — the link's text-only footprint
-        // sat at ~17 px tall before. Negative left margin pulls the
-        // text back to the original visual edge despite the padding.
-        padding: "13px 12px",
-        margin: "-13px -12px",
-        minHeight: 44,
-        color: SS_TOKENS.fg1,
-        fontSize: 13,
-        cursor: "pointer",
-        alignSelf: "flex-start",
-        touchAction: "manipulation",
-        WebkitTapHighlightColor: "transparent",
-      }}
-    >
-      ‹ Back
-    </button>
+    <Link href={href} className="ss-backlink" data-testid="back-link">
+      <span aria-hidden>←</span>
+      <span>{label}</span>
+    </Link>
   );
 }

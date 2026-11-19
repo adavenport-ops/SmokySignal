@@ -6,7 +6,7 @@ A short tour of what SmokySignal shows you, where the data comes from, what you 
 
 SmokySignal is a situational-awareness tool for motorcyclists in Washington state. It tells you, in one glance, whether a known traffic-enforcement aircraft is up and roughly where it's working. The point is to be informed, not to dodge — knowing the bird is up is the same as seeing a marked patrol car ahead. Ride within the limit and ride well.
 
-We track {{TAIL_COUNT}} fixed-wing planes and rotorcraft across WSP, KCSO, Pierce SO, Snohomish SO, Spokane SO, State of WA, CBP, and USCG. The full list is on the [About](/about) page.
+We track {{TAIL_COUNT}} fixed-wing planes and rotorcraft across WSP, KCSO, Pierce SO, Snohomish SO, Spokane SO, State of WA, CBP, and USCG. The full list is on [All aircraft](/aircraft).
 
 ## Status tiers
 
@@ -24,7 +24,7 @@ Roles are best-guess from public records. The admin tail editor lets us refine t
 
 ## What you can change
 
-Every preference lives on your device — browser localStorage or a non-tracking cookie. Nothing rides home to the server. The home for these toggles is [Settings → Alerts](/settings/alerts).
+Every preference lives on your device — browser localStorage or a non-tracking cookie. Nothing rides home to the server. The home for these toggles is the [Alerts](/settings/alerts) tab; [Settings](/settings) (under More) links to all of them.
 
 **Time format** — 24-hour (default, brand spec) or 12-hour. Cookie-backed so server and client render the same value with no hydration flicker.
 
@@ -36,9 +36,11 @@ Every preference lives on your device — browser localStorage or a non-tracking
 
 **Proximity ping** — Bell icon on the radar. When armed, plays a short ping any time an alert-tier tail comes within your chosen radius (default 8 nm). Browser-only; uses your device's geolocation.
 
-**Custom zones** — [Settings → Zones](/settings/zones) lets you draw geofences around your home, work, or favorite roads. When a Smokey enters a zone you've armed for alerts, it gets called out.
+**Custom zones** — [Your zones](/settings/zones) lets you draw geofences around your home, work, or favorite roads. When a Smokey enters a zone you've armed for alerts, it gets called out.
 
-**Reset all** — At the bottom of [Settings → Alerts](/settings/alerts). Clears every device-side preference and returns to defaults. Push subscriptions stay armed unless you disarm them separately.
+**Keep screen awake** — The moon icon in the Home header, or the switch on [Settings](/settings). Holds the screen on while SmokySignal is open.
+
+**Reset all** — At the bottom of the [Alerts](/settings/alerts) tab. Clears every device-side preference and returns to defaults. Push subscriptions stay armed unless you disarm them separately.
 
 ## Push notifications
 
@@ -65,6 +67,8 @@ The **also up** card lists every other watcher up right now. Tap any row to open
 
 The **next likely sweep** card is a probability prediction based on accumulated takeoff history. It only appears once we've gathered enough data; otherwise the home shows a "still learning" placeholder.
 
+Under the hero, four shortcuts: **What's circling**, **What flew over?** (the look-back at /seen), **Your road** and **Forecast**.
+
 In the top-right, the small **moon icon** toggles a screen wake lock — handy on the bike. Filled with a slash through it means "screen will stay on." Outline crescent means "screen sleeps normally."
 
 ### Radar
@@ -86,9 +90,9 @@ The **Spotted** button (binoculars icon, bottom-right) lets you log an in-person
 
 The pulsing **blue dot** is your current location.
 
-### Activity
+### Flights
 
-Each row is a state-change event for one of our tracked tails:
+The Flights tab has two views. **Now** lists the tails up right now and the nearest watchers to you. **Recent** is the event feed. Each row is a state-change event for one of our tracked tails:
 
 - **Takeoff** — was grounded, now up
 - **Landing** — was up, now grounded
@@ -96,6 +100,10 @@ Each row is a state-change event for one of our tracked tails:
 - **Emergency squawk** — transponder code 7500 / 7600 / 7700
 
 Tap a row to open the plane detail page. The feed polls every 30 seconds while the tab is visible.
+
+### More
+
+The More tab is the hub for everything else, in four groups: **Live** (What's circling, Was that the plane I saw?, Forecast, Handlebar mode, Shop board), **History** (Road history, Stats, Season wrap, Data and CSV), **Share & tools** (Discord and webhooks, Embed on your site, Calendar feed, RSS) and **About** (The program, All aircraft, Help, Legal, Settings).
 
 ### Plane detail
 
@@ -113,11 +121,11 @@ The map shows the in-progress flight if the plane is currently up (with a pulsin
 
 `/forecast` shows a 7×24 grid: probability of any fleet takeoff per hour-of-week. Brighter cells = more historical activity. The current Pacific (day, hour) is outlined in amber. Tap any cell to see which tails most commonly fly in that bucket.
 
-### Glance mode
+### Handlebar mode
 
-[/glance](/glance) is one screen of huge type for a phone on a handlebar mount: UP or DOWN, the nearest Smokey's distance and bearing, and a 24-hour Pacific clock. High contrast, read-only, the screen stays awake. The only control is a small EXIT.
+[/glance](/glance) is one screen of huge type for a phone on a handlebar mount: UP or DOWN, the nearest Smokey's distance and bearing, and a 24-hour Pacific clock. High contrast, read-only, the screen stays awake. The only control is a small "← SmokySignal" link back to the app.
 
-Distance and bearing appear only when your browser has already been given location access for SmokySignal. Glance never asks. If the feed goes quiet it says NO READ with the time of the last good read; it never shows DOWN on an old read.
+Distance and bearing appear only when your browser has already been given location access for SmokySignal. Handlebar mode never asks. If the feed goes quiet it says NO READ with the time of the last good read; it never shows DOWN on an old read.
 
 **Mounting and safety.** Set it before you ride; don't interact while moving. Mount the phone, open /glance, check the read time, then ride. If something needs a tap, pull over.
 

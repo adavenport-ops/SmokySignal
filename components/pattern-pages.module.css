@@ -1,55 +1,8 @@
-/* Layout for /circling and /road pages. Mobile first: one column that
-   fits 390 px with a 16 px gutter. At >= 1024 px the body splits into a
-   wide main column and a narrower aside. Colours come from the --ss-*
+/* Layout for /circling and /road pages. The page column itself is the
+   shared .ss-page (app/globals.css). Mobile first: one column; at
+   >= 1280 px the body splits into a wide main column and a narrower
+   aside. Colours come from the --ss-*
    variables in app/globals.css (high-contrast mode included). */
-
-.page {
-  width: 100%;
-  max-width: 460px;
-  margin: 0 auto;
-  /* 180 px bottom clears tab bar + iOS install prompt overlay. */
-  padding: 12px 16px 180px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  box-sizing: border-box;
-  min-height: 100dvh;
-}
-
-@media (min-width: 768px) {
-  .page {
-    max-width: 720px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .page {
-    max-width: 1120px;
-    padding-left: 32px;
-    padding-right: 32px;
-  }
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-top: 4px;
-  padding-right: 48px;
-}
-
-.backLink {
-  font-size: 12px;
-  color: var(--ss-fg1);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 8px;
-  margin: -12px -8px;
-  white-space: nowrap;
-}
 
 .cols {
   display: flex;
@@ -57,7 +10,7 @@
   gap: 18px;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .cols {
     display: grid;
     grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);

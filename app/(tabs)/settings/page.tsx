@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { SS_TOKENS, TYPE } from "@/lib/tokens";
+import { BackLink } from "@/components/BackLink";
+import { ScreenAwakeToggle } from "@/components/ScreenAwake";
 
 export const metadata = {
   title: "Settings",
@@ -25,17 +27,8 @@ const HUB_LINKS = [
 
 export default function SettingsHub() {
   return (
-    <main
-      style={{
-        minHeight: "100dvh",
-        padding: "12px 18px 24px",
-        maxWidth: 460,
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: 18,
-      }}
-    >
+    <main className="ss-page">
+      <BackLink />
       <header
         style={{
           display: "flex",
@@ -117,6 +110,11 @@ export default function SettingsHub() {
           </Link>
         ))}
       </nav>
+
+      <section aria-label="Display" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <span className="ss-eyebrow">Screen</span>
+        <ScreenAwakeToggle variant="row" />
+      </section>
     </main>
   );
 }

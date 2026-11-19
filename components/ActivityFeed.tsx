@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 import type { ActivityEntry, ActivityKind } from "@/lib/activity";
@@ -13,9 +13,20 @@ import {
   type ActivityRow,
 } from "@/lib/activity-group";
 
-const TABBAR_HEIGHT = 66;
-
-export function ActivityFeed({ initial }: { initial: ActivityEntry[] }) {
+/**
+ * The "Recent" tab of /flights: the activity feed, grouped by day.
+ * `header` is the page heading row and `switcher` the Now/Recent
+ * control, so both tabs share the same chrome.
+ */
+export function ActivityFeed({
+  initial,
+  header,
+  switcher,
+}: {
+  initial: ActivityEntry[];
+  header: ReactNode;
+  switcher?: ReactNode;
+}) {
   const [entries, setEntries] = useState<ActivityEntry[]>(initial);
 
   useEffect(() => {
@@ -44,33 +55,21 @@ export function ActivityFeed({ initial }: { initial: ActivityEntry[] }) {
   }, []);
 
   return (
-    <main
-      className="ss-page-narrow"
-      style={{
-        minHeight: "100dvh",
-        // Bottom padding = tab bar (66) + iOS install prompt overlay
-        // (~80) + breathing room. Without this the last activity row
-        // hides behind the fixed-position prompt on iOS Safari.
-        padding: `12px 18px ${TABBAR_HEIGHT + 110}px`,
-        display: "flex",
-        flexDirection: "column",
-        gap: 14,
-      }}
-    >
-      <header style={{ marginTop: 4 }}>
-        <span className="ss-eyebrow">Activity</span>
-        <h1
-          style={{
-            fontSize: 28,
-            fontWeight: 700,
-            letterSpacing: "-.02em",
-            color: SS_TOKENS.fg0,
-            margin: "4px 0 0",
-          }}
-        >
-          Recent events
-        </h1>
+    <main className="ss-page" style={{ gap: 14 }}>
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+          minHeight: 44,
+          marginTop: 4,
+        }}
+      >
+        {header}
       </header>
+
+      {switcher}
 
       {entries.length === 0 ? <Empty /> : <List entries={entries} />}
     </main>
@@ -117,7 +116,7 @@ function List({ entries }: { entries: ActivityEntry[] }) {
               zIndex: 2,
               margin: 0,
               padding: "6px 2px",
-              fontSize: 10.5,
+              fontSize: 12,
               fontWeight: 600,
               letterSpacing: ".1em",
               textTransform: "uppercase",
@@ -185,14 +184,14 @@ function Row({ row, first }: { row: ActivityRow; first: boolean }) {
         {place && (
           <div
             className="ss-mono"
-            style={{ fontSize: 11, color: SS_TOKENS.fg1, marginTop: 2 }}
+            style={{ fontSize: 12, color: SS_TOKENS.fg1, marginTop: 2 }}
           >
             {place}
           </div>
         )}
         <div
           className="ss-mono"
-          style={{ fontSize: 11, color: SS_TOKENS.fg2, marginTop: 2 }}
+          style={{ fontSize: 12, color: SS_TOKENS.fg1, marginTop: 2 }}
         >
           {fmtAgoTs(row.lastTs)} · {span}
         </div>

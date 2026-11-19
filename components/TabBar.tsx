@@ -2,32 +2,68 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ScreenAwake } from "./ScreenAwake";
 import type { ReactNode } from "react";
 
-const TABS: { id: string; label: string; href: string; icon: ReactNode }[] = [
+// Five tabs, no toggles. The screen-awake switch lives in the Home
+// header and on /settings; everything secondary hangs off More (/about).
+type Tab = {
+  id: string;
+  label: string;
+  href: string;
+  icon: ReactNode;
+  /** Extra path prefixes that light this tab up. */
+  also?: string[];
+};
+
+export const TABS: Tab[] = [
   { id: "home", label: "Home", href: "/", icon: <HomeIcon /> },
   { id: "radar", label: "Radar", href: "/radar", icon: <RadarIcon /> },
-  { id: "dash", label: "Dash", href: "/dash", icon: <DashIcon /> },
-  { id: "activity", label: "Activity", href: "/activity", icon: <ActivityIcon /> },
-  { id: "about", label: "About", href: "/about", icon: <InfoIcon /> },
+  {
+    id: "flights",
+    label: "Flights",
+    href: "/flights",
+    icon: <FlightsIcon />,
+    also: ["/plane"],
+  },
+  {
+    id: "alerts",
+    label: "Alerts",
+    href: "/settings/alerts",
+    icon: <BellIcon />,
+    also: ["/settings/zones"],
+  },
+  {
+    id: "more",
+    label: "More",
+    href: "/about",
+    icon: <MoreIcon />,
+    also: [
+      "/settings",
+      "/program",
+      "/aircraft",
+      "/circling",
+      "/seen",
+      "/forecast",
+      "/road",
+      "/stats",
+      "/data",
+      "/wrap",
+      "/relay",
+      "/legal",
+    ],
+  },
 ];
 
 export function TabBar() {
-  const pathname = usePathname();
-  // The radar map is position:fixed edge to edge and lays its controls
-  // out against the bottom bar, so /radar keeps the bottom bar on
-  // desktop too. Every other route gets the left rail at >= 1024px.
-  // Layout lives in app/globals.css (.ss-tabbar, .ss-tabbar[data-rail]).
-  const rail = pathname !== "/radar";
+  const pathname = usePathname() ?? "/";
+  const activeId = activeTab(pathname);
+  // Bottom bar on phones, left rail at >= 1024px on every tabbed route,
+  // /radar included (the radar page offsets its map by the rail width).
+  // Layout lives in app/globals.css (.ss-tabbar).
   return (
-    <nav
-      aria-label="Main"
-      className="ss-tabbar"
-      data-rail={rail ? "true" : "false"}
-    >
+    <nav aria-label="Main" className="ss-tabbar" data-rail="true">
       {TABS.map((t) => {
-        const active = isActive(pathname, t.href);
+        const active = t.id === activeId;
         return (
           <Link
             key={t.id}
@@ -41,15 +77,26 @@ export function TabBar() {
           </Link>
         );
       })}
-      <span className="ss-tabbar-spacer" aria-hidden />
-      <ScreenAwake />
     </nav>
   );
 }
 
-function isActive(pathname: string, href: string): boolean {
+function matches(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(href + "/");
+}
+
+/** Longest matching prefix wins, so /settings/alerts is Alerts, not More. */
+export function activeTab(pathname: string): string | null {
+  let best: { id: string; len: number } | null = null;
+  for (const t of TABS) {
+    for (const href of [t.href, ...(t.also ?? [])]) {
+      if (matches(pathname, href) && (!best || href.length > best.len)) {
+        best = { id: t.id, len: href.length };
+      }
+    }
+  }
+  return best?.id ?? null;
 }
 
 // Lucide-style "home" icon — house outline.
@@ -71,8 +118,8 @@ function HomeIcon() {
   );
 }
 
-// Lucide-style "activity" icon — stack of horizontal lines (changelog feel).
-function ActivityIcon() {
+// Lucide-style list icon: tails up now and the recent feed.
+function FlightsIcon() {
   return (
     <svg
       width="20"
@@ -94,8 +141,8 @@ function ActivityIcon() {
   );
 }
 
-// Lucide-style "info" icon — circle with i.
-function InfoIcon() {
+// Lucide-style "ellipsis" icon: the More hub.
+function MoreIcon() {
   return (
     <svg
       width="20"
@@ -107,15 +154,15 @@ function InfoIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 16v-4" />
-      <path d="M12 8h.01" />
+      <circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none" />
     </svg>
   );
 }
 
-// Lucide-style "gauge" icon — at-a-glance dashboard summary.
-function DashIcon() {
+// Lucide-style "bell" icon: alerts.
+function BellIcon() {
   return (
     <svg
       width="20"
@@ -127,8 +174,8 @@ function DashIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="m12 14 4-4" />
-      <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
     </svg>
   );
 }

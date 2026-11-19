@@ -1,9 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 import { getRegistry } from "@/lib/registry";
 import { HelpMarkdown, HelpScrollTopButton } from "./HelpView";
+import { BackLink } from "@/components/BackLink";
 
 export const metadata = {
   title: "Help",
@@ -63,28 +63,14 @@ export default async function HelpPage() {
             gap: 12,
           }}
         >
-          <Link
-            href="/"
-            className="ss-mono"
-            style={{
-              fontSize: 11,
-              color: SS_TOKENS.fg1,
-              textDecoration: "none",
-              justifySelf: "start",
-              display: "inline-flex",
-              alignItems: "center",
-              minHeight: 44,
-              padding: "0 8px",
-              margin: "0 -8px",
-            }}
-          >
-            ← Back
-          </Link>
+          <span style={{ justifySelf: "start", display: "flex" }}>
+            <BackLink />
+          </span>
           <span
             className="ss-mono"
             style={{
-              fontSize: 10.5,
-              color: SS_TOKENS.fg2,
+              fontSize: 12,
+              color: SS_TOKENS.fg1,
               letterSpacing: ".12em",
               textTransform: "uppercase",
               justifySelf: "center",

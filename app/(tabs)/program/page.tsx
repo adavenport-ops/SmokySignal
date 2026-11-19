@@ -4,8 +4,9 @@ import { SS_TOKENS } from "@/lib/tokens";
 import type { FleetEntry, Mission } from "@/lib/types";
 import { MISSIONS, isRotorcraftModel, normalizeMission } from "@/lib/mission";
 import { roleBadgeStyle, roleBadgeText } from "@/lib/role-display";
+import { BackLink } from "@/components/BackLink";
 
-// "What's flying." Plain-language explainer for curious locals (the Dana
+// "The program." Plain-language explainer for curious locals (the Dana
 // persona in the 2026-11 audit): who flies over Puget Sound, in what,
 // how aerial speed enforcement works here, and what this site is and
 // isn't. Agency + airframe lists render from the live registry, with
@@ -14,13 +15,13 @@ import { roleBadgeStyle, roleBadgeText } from "@/lib/role-display";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "What's flying",
+  title: "The program",
   description:
     "Who flies over Puget Sound, in what, how aerial speed enforcement works in Washington, and what SmokySignal is.",
   // Keep the static brand card here. The live status card is the home
   // route's image and would otherwise cascade into this segment.
   openGraph: {
-    title: "What's flying · SmokySignal",
+    title: "The program · SmokySignal",
     description:
       "Who flies over Puget Sound, in what, and how aerial speed enforcement works in Washington.",
     images: [
@@ -29,7 +30,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "What's flying · SmokySignal",
+    title: "The program · SmokySignal",
     images: ["/icons/og-image.png"],
   },
 };
@@ -220,43 +221,9 @@ export default async function ProgramPage() {
   const airframes = groupByModel(fleet);
 
   return (
-    <main
-      className="ss-page-narrow"
-      style={{
-        minHeight: "100dvh",
-        // 180 px bottom clears tab bar + iOS install prompt overlay.
-        padding: "12px 18px 180px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 26,
-      }}
-    >
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginTop: 4,
-        }}
-      >
-        <span className="ss-eyebrow">SmokySignal · Program</span>
-        <Link
-          href="/about"
-          className="ss-mono"
-          style={{
-            fontSize: 11,
-            color: SS_TOKENS.fg1,
-            textDecoration: "none",
-            display: "inline-flex",
-            alignItems: "center",
-            minHeight: 44,
-            padding: "0 8px",
-            margin: "-12px -8px",
-          }}
-        >
-          ← About
-        </Link>
-      </header>
+    <main className="ss-page" style={{ gap: 26 }}>
+      <BackLink />
+      <span className="ss-eyebrow">SmokySignal · The program</span>
 
       <section>
         <h1
@@ -269,7 +236,7 @@ export default async function ProgramPage() {
             margin: "0 0 12px",
           }}
         >
-          What&rsquo;s flying.
+          The program.
         </h1>
         <P>
           Saw something circling your street? This page explains who flies
@@ -309,7 +276,12 @@ export default async function ProgramPage() {
         </div>
         <Note>
           Tails marked <Tentative /> have a mission we inferred from public
-          records but haven&rsquo;t confirmed.
+          records but haven&rsquo;t confirmed. Every tail with its source is
+          on{" "}
+          <Link href="/aircraft" style={{ color: SS_TOKENS.fg1, textDecoration: "underline" }}>
+            All aircraft
+          </Link>
+          .
         </Note>
       </Section>
 
@@ -604,7 +576,7 @@ function Tentative() {
   return (
     <span
       className="ss-mono"
-      style={{ fontSize: 11, color: SS_TOKENS.fg2, fontStyle: "italic" }}
+      style={{ fontSize: 12, color: SS_TOKENS.fg1, fontStyle: "italic" }}
     >
       (tentative)
     </span>

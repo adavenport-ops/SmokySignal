@@ -7,6 +7,7 @@
 // Cool ramp on purpose: amber is reserved for "Smokey is up right now".
 
 import { useEffect, useRef, useState } from "react";
+import { ScrollX } from "./ScrollX";
 import { SS_TOKENS } from "@/lib/tokens";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
@@ -51,17 +52,10 @@ export function MonthGrid({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div
-        ref={scrollRef}
-        className="ss-month-grid-scroll"
-        tabIndex={0}
-        aria-label="Hour by weekday grid of minutes aloft. Scrolls sideways."
-        style={{
-          overflowX: "auto",
-          WebkitOverflowScrolling: "touch",
-          paddingBottom: 4,
-          maxWidth: "100%",
-        }}
+      <ScrollX
+        trackRef={scrollRef}
+        label="Hour by weekday grid of minutes aloft. Scrolls sideways."
+        testId="month-grid-scroll"
       >
         <div
           role="group"
@@ -80,7 +74,7 @@ export function MonthGrid({
               className="ss-mono"
               aria-hidden
               style={{
-                fontSize: 11, // chart tick: TYPE.micro is allowed here
+                fontSize: 12, // 12px floor, chart ticks included
                 color: SS_TOKENS.fg1,
                 textAlign: "center",
                 padding: "0 0 4px",
@@ -101,7 +95,7 @@ export function MonthGrid({
             />
           ))}
         </div>
-      </div>
+      </ScrollX>
       <div
         aria-live="polite"
         className="ss-mono"

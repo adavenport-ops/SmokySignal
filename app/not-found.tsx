@@ -34,8 +34,8 @@ export default function NotFound() {
         <span
           className="ss-mono"
           style={{
-            fontSize: 10.5,
-            color: SS_TOKENS.fg2,
+            fontSize: 12,
+            color: SS_TOKENS.fg1,
             letterSpacing: ".14em",
             textTransform: "uppercase",
           }}
@@ -76,7 +76,7 @@ export default function NotFound() {
       >
         <NavBtn href="/">Home</NavBtn>
         <NavBtn href="/radar">Radar</NavBtn>
-        <NavBtn href="/activity">Activity</NavBtn>
+        <NavBtn href="/flights?tab=recent">Flights</NavBtn>
       </nav>
     </main>
   );

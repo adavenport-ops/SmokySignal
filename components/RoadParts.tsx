@@ -59,7 +59,7 @@ export function HourHistogram({ hours }: { hours: number[] }) {
       <div
         className="ss-mono"
         aria-hidden
-        style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: SS_TOKENS.fg2, marginTop: 6 }}
+        style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: SS_TOKENS.fg1, marginTop: 6 }}
       >
         <span>00</span>
         <span>06</span>

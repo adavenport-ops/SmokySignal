@@ -234,8 +234,9 @@ body {
 }
 
 /* ---------------------------------------------------------------------
-   Tab chrome. Mobile: bottom bar. >= 1024px: left rail (every route
-   except /radar, whose map is position:fixed and keeps the bottom bar).
+   Tab chrome. Mobile: bottom bar. >= 1024px: left rail on every tabbed
+   route, /radar included (.ss-radar-page offsets the map, below).
+   Five tabs, no toggles.
    --------------------------------------------------------------------- */
 .ss-tabbar {
   position: fixed;
@@ -283,7 +284,7 @@ body {
   line-height: 1;
 }
 @media (min-width: 1024px) {
-  .ss-tabbar[data-rail="true"] {
+  .ss-tabbar {
     top: 0;
     right: auto;
     width: var(--ss-rail-w);
@@ -295,16 +296,25 @@ body {
     border-top: 0;
     border-right: 0.5px solid var(--ss-hairline);
   }
-  .ss-tabbar[data-rail="true"] .ss-tabbar-item {
+  .ss-tabbar .ss-tabbar-item {
     flex: 0 0 auto;
     min-height: 64px;
     border-radius: 12px;
   }
-  .ss-tabbar[data-rail="true"] .ss-tabbar-item[aria-current="page"] {
+  .ss-tabbar .ss-tabbar-item[aria-current="page"] {
     background: var(--ss-bg1);
   }
-  .ss-tabbar[data-rail="true"] .ss-tabbar-spacer {
-    flex: 1 1 auto;
+}
+
+/* /radar: RadarShell's <main> is position:fixed; inset:0. On desktop the
+   wrapper shifts it right of the rail. transform makes the main the
+   containing block for its own position:fixed overlays, so they move
+   with it instead of sliding under the rail. Wrapper-level only: the
+   shell's internals are untouched. */
+@media (min-width: 1024px) {
+  .ss-radar-page > main {
+    left: var(--ss-rail-w) !important;
+    transform: translateZ(0);
   }
 }
 
@@ -359,18 +369,6 @@ body {
   }
 }
 
-/* Type floor safety net for surfaces owned by other components (e.g.
-   LearningPanel) that still carry sub-12px inline sizes. Lifts them to
-   the floor without touching those files. Remove once they adopt TYPE. */
-.ss-type-floor [style*="font-size: 9px"],
-.ss-type-floor [style*="font-size: 9.5px"],
-.ss-type-floor [style*="font-size: 10px"],
-.ss-type-floor [style*="font-size: 10.5px"],
-.ss-type-floor [style*="font-size: 11px"],
-.ss-type-floor [style*="font-size: 11.5px"] {
-  font-size: var(--ss-type-floor) !important;
-}
-
 /* Radar freshness chip: short form on narrow phones so it never runs
    under the region picker (top-right). */
 .ss-fresh-short {
@@ -383,4 +381,197 @@ body {
   .ss-fresh-short {
     display: inline;
   }
+}
+
+/* Home shortcuts under the hero: 2x2 on phones, one row from 520px. */
+.ss-home-quick {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (min-width: 520px) {
+  .ss-home-quick {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Secondary pages. One content column for every page under More (and
+   the plane, road and wrap detail pages): full width on phones, 760px
+   on tablets, 960px on desktop, centred in the space right of the rail.
+   The back link sits at the column's left edge, never mid-screen.
+   --------------------------------------------------------------------- */
+.ss-page {
+  width: 100%;
+  max-width: 520px;
+  min-height: 100dvh;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 8px 18px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-sizing: border-box;
+}
+@media (min-width: 768px) {
+  .ss-page {
+    max-width: 760px;
+    padding: 16px 28px 64px;
+  }
+}
+@media (min-width: 1280px) {
+  .ss-page {
+    max-width: 960px;
+    padding: 24px 40px 80px;
+  }
+}
+
+/* <BackLink>: first child of the page column, left-aligned to it. */
+.ss-backlink {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 10px;
+  margin: 0 -10px -6px;
+  color: var(--ss-fg1);
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  border-radius: 8px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ss-backlink:hover {
+  color: var(--ss-fg0);
+}
+
+/* Segmented control (Flights: Now / Recent). Links, so ?tab= deep links
+   and the back button both work. */
+.ss-segmented {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--ss-bg1);
+  border: 0.5px solid var(--ss-hairline);
+}
+.ss-segmented a {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 9px;
+  color: var(--ss-fg1);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  touch-action: manipulation;
+}
+.ss-segmented a[aria-current="page"] {
+  background: var(--ss-bg2);
+  color: var(--ss-fg0);
+}
+
+/* <ScrollX>: wide tables and grids on phones. Right-edge fade plus a
+   "scroll →" hint while there is more to the right. */
+.ss-scrollx {
+  position: relative;
+}
+.ss-scrollx-track {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.ss-scrollx-fade {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 36px;
+  pointer-events: none;
+  background: linear-gradient(to right, rgba(11, 13, 16, 0), var(--ss-bg0));
+  transition: opacity 160ms ease;
+}
+.ss-scrollx-hint {
+  display: block;
+  margin-top: 6px;
+  text-align: right;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: var(--ss-type-floor);
+  letter-spacing: 0.08em;
+  color: var(--ss-fg1);
+}
+.ss-scrollx[data-overflow="false"] .ss-scrollx-fade,
+.ss-scrollx[data-end="true"] .ss-scrollx-fade {
+  opacity: 0;
+}
+.ss-scrollx[data-overflow="false"] .ss-scrollx-hint {
+  display: none;
+}
+.ss-scrollx[data-end="true"] .ss-scrollx-hint {
+  visibility: hidden;
+}
+
+/* More hub: headed groups of link rows. One column on phones, two at
+   >= 768px. */
+.ss-hub-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ss-hub-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+@media (min-width: 768px) {
+  .ss-hub-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.ss-hub-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--ss-bg1);
+  border: 0.5px solid var(--ss-hairline);
+  color: var(--ss-fg0);
+  text-decoration: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ss-hub-link:hover {
+  border-color: var(--ss-hairline-2);
+}
+
+/* Escape link on the chrome-less screens (/board, /glance). */
+.ss-escape {
+  position: fixed;
+  top: max(6px, env(safe-area-inset-top));
+  left: 6px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--ss-fg1);
+  background: rgba(11, 13, 16, 0.6);
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: var(--ss-type-floor);
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  opacity: 0.75;
+}
+.ss-escape:hover,
+.ss-escape:focus-visible {
+  opacity: 1;
+  color: var(--ss-fg0);
 }

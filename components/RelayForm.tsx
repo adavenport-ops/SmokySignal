@@ -266,7 +266,7 @@ export function RelayFields({
                 right: 8,
                 top: "50%",
                 transform: "translateY(-50%)",
-                fontSize: 10.5,
+                fontSize: 12,
                 letterSpacing: ".08em",
                 textTransform: "uppercase",
                 padding: "4px 8px",

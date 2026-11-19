@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 import { RelayCreate } from "@/components/RelayCreate";
 import { BotsCallout } from "@/components/BotsCallout";
 import { getBotsPublicInfo } from "@/lib/bots/public-info";
+import { BackLink } from "@/components/BackLink";
 
 // /relay: get Smokey takeoff alerts into the tools riders and clubs
 // already use. A Discord channel or any HTTPS webhook, plus zero-setup
@@ -10,17 +10,17 @@ import { getBotsPublicInfo } from "@/lib/bots/public-info";
 // its manage link.
 
 export const metadata = {
-  title: "Relay",
+  title: "Discord and webhooks",
   description:
     "Post Smokey takeoffs to a Discord channel or any HTTPS webhook. Feeds, Siri, and widget recipes. No accounts.",
   openGraph: {
-    title: "Relay · SmokySignal",
+    title: "Discord and webhooks · SmokySignal",
     description: "Smokey takeoffs, posted where your club already talks.",
     images: [{ url: "/icons/og-image.png", width: 1200, height: 630, alt: "SmokySignal" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Relay · SmokySignal",
+    title: "Discord and webhooks · SmokySignal",
     images: ["/icons/og-image.png"],
   },
 };
@@ -51,39 +51,13 @@ const SAMPLE = {
 export default async function RelayPage() {
   const bots = await getBotsPublicInfo();
   return (
-    <main
-      className="ss-page-narrow"
-      style={{
-        minHeight: "100dvh",
-        padding: "12px 18px 180px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 18,
-      }}
-    >
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
-        <span className="ss-eyebrow">SmokySignal · Relay</span>
-        <Link
-          href="/about"
-          className="ss-mono"
-          style={{
-            fontSize: 11,
-            color: SS_TOKENS.fg1,
-            textDecoration: "none",
-            display: "inline-flex",
-            alignItems: "center",
-            minHeight: 44,
-            padding: "0 8px",
-            margin: "-12px -8px",
-          }}
-        >
-          ← About
-        </Link>
-      </header>
+    <main className="ss-page">
+      <BackLink />
+      <span className="ss-eyebrow">SmokySignal · Discord and webhooks</span>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <h1 style={{ margin: 0, fontSize: 34, fontWeight: 800, letterSpacing: "-.04em", lineHeight: 1 }}>
-          Relay.
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, letterSpacing: "-.03em", lineHeight: 1.1 }}>
+          Discord and webhooks.
         </h1>
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5, color: SS_TOKENS.fg1 }}>
           Smokey&rsquo;s takeoffs, posted where your club already talks. A Discord channel
@@ -178,7 +152,7 @@ export default async function RelayPage() {
             background: SS_TOKENS.bg0,
             border: `.5px solid ${SS_TOKENS.hairline2}`,
             color: SS_TOKENS.fg1,
-            fontSize: 11.5,
+            fontSize: 12,
             lineHeight: 1.5,
             overflowX: "auto",
           }}

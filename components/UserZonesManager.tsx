@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { BackLink } from "./BackLink";
 import { SS_TOKENS, TAP_MIN, TAP_PREFERRED, TYPE } from "@/lib/tokens";
 import {
   addUserZone,
@@ -49,18 +49,10 @@ export function UserZonesManager() {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: 460,
-        // Tab bar + safe-area clearance comes from .ss-tabs-shell in the
-        // (tabs) layout; the install prompt no longer floats over pages.
-        margin: "16px auto 24px",
-        padding: "0 18px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 16,
-      }}
-    >
+    // Tab bar + safe-area clearance comes from .ss-tabs-shell in the
+    // (tabs) layout; the install prompt no longer floats over pages.
+    <main className="ss-page" style={{ gap: 16 }}>
+      <BackLink href="/settings/alerts" label="Alerts" />
       <header>
         <div className="ss-eyebrow" style={{ marginBottom: 6 }}>
           Settings · Zones
@@ -140,21 +132,7 @@ export function UserZonesManager() {
         />
       ))}
 
-      <Link
-        href="/settings/alerts"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          alignSelf: "flex-start",
-          minHeight: TAP_MIN,
-          color: SS_TOKENS.fg1,
-          fontSize: TYPE.body,
-          textDecoration: "none",
-        }}
-      >
-        ← Alerts settings
-      </Link>
-    </div>
+    </main>
   );
 }
 

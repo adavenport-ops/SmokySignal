@@ -13,6 +13,7 @@ import {
   type EmbedParams,
 } from "@/lib/embed";
 import { SS_TOKENS } from "@/lib/tokens";
+import { BackLink } from "@/components/BackLink";
 
 export const metadata = {
   title: "Embed the status widget",
@@ -47,28 +48,11 @@ export default function EmbedHelpPage() {
         minHeight: "100dvh",
         background: SS_TOKENS.bg0,
         color: SS_TOKENS.fg1,
-        padding: "16px 16px 80px",
       }}
     >
-      <div
-        style={{
-          maxWidth: 640,
-          margin: "0 auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: 20,
-        }}
-      >
-        <header style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-          <span className="ss-eyebrow">SmokySignal &middot; Embed</span>
-          <Link
-            href="/about"
-            className="ss-mono"
-            style={{ fontSize: 11, color: SS_TOKENS.fg1, textDecoration: "none" }}
-          >
-            &larr; About
-          </Link>
-        </header>
+      <div className="ss-page" style={{ gap: 20 }}>
+        <BackLink />
+        <span className="ss-eyebrow">SmokySignal &middot; Embed on your site</span>
 
         <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <h1
@@ -167,7 +151,7 @@ export default function EmbedHelpPage() {
                 <span className="ss-mono" style={{ fontSize: 12, color: SS_TOKENS.fg0 }}>
                   {r.id}
                 </span>
-                <span style={{ fontSize: 11.5, color: SS_TOKENS.fg2 }}>{r.label}</span>
+                <span style={{ fontSize: 12, color: SS_TOKENS.fg1 }}>{r.label}</span>
               </li>
             ))}
           </ul>
@@ -183,7 +167,7 @@ export default function EmbedHelpPage() {
             <Link href="/about" style={link}>
               SVG badge
             </Link>{" "}
-            on the About page works anywhere HTML does.
+            on the More page works anywhere HTML does.
           </p>
         </section>
       </div>
@@ -193,7 +177,7 @@ export default function EmbedHelpPage() {
 
 const h2: React.CSSProperties = {
   margin: 0,
-  fontSize: 11,
+  fontSize: 12,
   letterSpacing: ".12em",
   textTransform: "uppercase",
   fontFamily: "var(--font-mono)",
@@ -212,7 +196,7 @@ const pre: React.CSSProperties = {
   borderRadius: 8,
   padding: "10px 12px",
   margin: 0,
-  fontSize: 11,
+  fontSize: 12,
   lineHeight: 1.5,
   color: SS_TOKENS.fg0,
   overflowX: "auto",

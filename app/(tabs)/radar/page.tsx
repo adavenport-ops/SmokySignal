@@ -25,12 +25,16 @@ export default async function RadarPage({
   const mockState = parseMockState(searchParams.mock);
   const mockOn = mockState !== null;
   const initial = applyMockState(real, mockState);
+  // .ss-radar-page shifts the fixed map right of the desktop rail
+  // (app/globals.css). RadarShell itself stays as it is.
   return (
-    <RadarShell
-      initial={initial}
-      mockOn={mockOn}
-      learning={learning}
-      lastSampleMs={freshness.lastSampleMs}
-    />
+    <div className="ss-radar-page">
+      <RadarShell
+        initial={initial}
+        mockOn={mockOn}
+        learning={learning}
+        lastSampleMs={freshness.lastSampleMs}
+      />
+    </div>
   );
 }

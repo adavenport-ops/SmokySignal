@@ -6,6 +6,7 @@
 // minutes so a TV left on all day doesn't burn the layout in.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { computeStatus } from "@/lib/status";
 import { isFeedStale } from "@/lib/beacon";
 import {
@@ -266,7 +267,10 @@ export function BoardView({
         </ol>
 
         <footer className={styles.footer}>
-          <span>smokysignal.app/board</span>
+          {/* The one way out of the kiosk: small, dim, and still 44px tall. */}
+          <Link href="/" className={styles.escape} data-testid="escape-link">
+            ← SmokySignal
+          </Link>
           <span>
             {lastRead ? `Last read ${lastRead} PT` : "No read yet"} · Every 15s
           </span>

@@ -11,6 +11,7 @@ import { getFlightById, parseFlightId } from "@/lib/flights";
 import { SS_TOKENS } from "@/lib/tokens";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { SaveFlightCardButton } from "@/components/SaveFlightCardButton";
+import { BackLink } from "@/components/BackLink";
 import FlightMapView from "@/components/FlightMapView";
 import { fmtDurationHuman, formatTs } from "@/lib/time";
 import { getTimeFormatPref, isHour12 } from "@/lib/user-prefs";
@@ -71,6 +72,7 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
         color: SS_TOKENS.fg0,
       }}
     >
+      <BackLink href={`/plane/${entry.tail}`} label="Back to plane" />
       <header
         style={{
           display: "flex",
@@ -115,8 +117,8 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
           <div
             className="ss-mono"
             style={{
-              fontSize: 11,
-              color: SS_TOKENS.fg2,
+              fontSize: 12,
+              color: SS_TOKENS.fg1,
               marginTop: 4,
               letterSpacing: ".04em",
             }}
@@ -143,7 +145,7 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
           background: SS_TOKENS.alertDim,
           border: `.5px solid ${SS_TOKENS.alert}55`,
           color: SS_TOKENS.alert,
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: 600,
           letterSpacing: ".04em",
           alignSelf: "flex-start",
@@ -198,8 +200,8 @@ export default async function FlightSharePage({ params, searchParams }: Props) {
         className="ss-mono"
         style={{
           marginTop: 8,
-          fontSize: 11,
-          color: SS_TOKENS.fg2,
+          fontSize: 12,
+          color: SS_TOKENS.fg1,
           letterSpacing: ".04em",
           textAlign: "center",
           lineHeight: 1.6,
@@ -280,7 +282,7 @@ function KV({ label, value }: { label: string; value: string }) {
     >
       <div
         className="ss-mono"
-        style={{ fontSize: 9.5, color: SS_TOKENS.fg2, letterSpacing: ".1em" }}
+        style={{ fontSize: 12, color: SS_TOKENS.fg1, letterSpacing: ".1em" }}
       >
         {label}
       </div>

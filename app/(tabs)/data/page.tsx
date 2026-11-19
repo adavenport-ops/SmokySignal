@@ -5,12 +5,15 @@ import { loadLedgerRows } from "@/lib/rollup-read";
 import { LOG_START_DATE } from "@/lib/rollup-sessions";
 import { missionLabel } from "@/lib/role-display";
 import { formatTs } from "@/lib/time";
+import { BackLink } from "@/components/BackLink";
+import { ScrollX } from "@/components/ScrollX";
+import { SeasonWrapCard } from "@/components/SeasonWrapCard";
 
 // Cookies in the tabs layout make the route dynamic; the KV reads behind
 // it are cached for 10 minutes (lib/rollup-read.ts).
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "SmokySignal · Open ledger",
+  title: "SmokySignal · Data and CSV",
   description: "Monthly flight hours for every tracked tail, by tail and by mission, with a CSV download. ODbL 1.0.",
 };
 
@@ -31,52 +34,13 @@ export default async function DataPage() {
   const newestFirst = [...rows].sort((a, b) => b.month.localeCompare(a.month) || a.tail.localeCompare(b.tail));
 
   return (
-    <main
-      style={{
-        minHeight: "100dvh",
-        // 180 px bottom clears tab bar + iOS install prompt overlay.
-        padding: "12px 18px 180px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 22,
-        maxWidth: 820,
-        margin: "0 auto",
-        width: "100%",
-        boxSizing: "border-box",
-      }}
-    >
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginTop: 4,
-          paddingRight: 48,
-          gap: 12,
-        }}
-      >
-        <span className="ss-eyebrow">SmokySignal · Ledger</span>
-        <Link
-          href="/about"
-          className="ss-mono"
-          style={{
-            fontSize: 12,
-            color: SS_TOKENS.fg1,
-            textDecoration: "none",
-            display: "inline-flex",
-            alignItems: "center",
-            minHeight: 44,
-            padding: "0 8px",
-            margin: "-12px -8px",
-          }}
-        >
-          ← About
-        </Link>
-      </header>
+    <main className="ss-page" style={{ gap: 22 }}>
+      <BackLink />
+      <span className="ss-eyebrow">SmokySignal · Data and CSV</span>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-.02em", color: SS_TOKENS.fg0, margin: 0 }}>
-          The open ledger.
+          Data and CSV.
         </h1>
         <p style={{ fontSize: 13, color: SS_TOKENS.fg1, lineHeight: 1.5, margin: 0 }}>
           Monthly flight hours for every tail SmokySignal tracks, by tail and by mission. Take it,
@@ -95,9 +59,11 @@ export default async function DataPage() {
 
       <Download months={months} />
 
+      <SeasonWrapCard />
+
       {failed && (
         <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: 0 }}>
-          The ledger did not load. Try again in a minute.
+          The data did not load. Try again in a minute.
         </p>
       )}
 
@@ -297,22 +263,16 @@ function SectionHead({ title, note }: { title: string; note: string }) {
 }
 
 /** Tables scroll inside their own box so the page never scrolls sideways. */
+// Wide tables scroll sideways inside their card on phones; ScrollX adds
+// the edge fade and the "scroll →" hint.
 function Scroll({ children, minWidth }: { children: React.ReactNode; minWidth: number }) {
   return (
-    <div
-      tabIndex={0}
-      role="region"
-      aria-label="Scrollable table"
-      style={{
-        overflowX: "auto",
-        WebkitOverflowScrolling: "touch",
-        border: `.5px solid ${SS_TOKENS.hairline}`,
-        borderRadius: 12,
-        maxWidth: "100%",
-      }}
+    <ScrollX
+      label="Scrollable table"
+      frameStyle={{ border: `.5px solid ${SS_TOKENS.hairline}`, borderRadius: 12 }}
     >
       <div style={{ minWidth }}>{children}</div>
-    </div>
+    </ScrollX>
   );
 }
 

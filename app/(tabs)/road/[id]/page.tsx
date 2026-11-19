@@ -16,6 +16,7 @@ import {
   fmtMinutes,
 } from "@/components/RoadParts";
 import styles from "@/components/pattern-pages.module.css";
+import { BackLink } from "@/components/BackLink";
 
 // Cookies (time-format pref) make the route dynamic; the 30-day digest
 // behind it is cached for 5 minutes (lib/history-digest.ts).
@@ -44,13 +45,9 @@ export default async function RoadPage({ params }: Props) {
   const quiet = s.flights30d === 0;
 
   return (
-    <main className={styles.page} data-road={c.id}>
-      <header className={styles.header}>
-        <span className="ss-eyebrow">SmokySignal · Roads</span>
-        <Link href="/road" className={`ss-mono ${styles.backLink}`}>
-          ← All roads
-        </Link>
-      </header>
+    <main className="ss-page" data-road={c.id}>
+      <BackLink href="/road" label="Road history" />
+      <span className="ss-eyebrow">SmokySignal · Road history</span>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <h1 className={styles.h1} data-testid="road-title">

@@ -1,9 +1,10 @@
 /* The Board — split-flap kiosk. Sized off the viewport so a 1080p TV
  * across a shop floor reads it at 3 m: row tiles land around 56 px at
- * 1920x1080, the status word around 110 px. */
+ * 1920x1080, the status word around 110 px. Every size floors at 12px
+ * so the board still reads on a phone. */
 
 .board {
-  --row-fs: min(2.95vw, 7.2vh);
+  --row-fs: max(12px, min(2.95vw, 7.2vh));
   --tile-w: calc(var(--row-fs) * 0.78);
   --tile-gap: calc(var(--row-fs) * 0.06);
   --cell: calc(var(--tile-w) + var(--tile-gap));
@@ -42,7 +43,7 @@
 
 .eyebrow {
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
-  font-size: min(1.25vw, 2.6vh);
+  font-size: max(12px, min(1.25vw, 2.6vh));
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #a8aeb8;
@@ -51,7 +52,7 @@
 .region {
   margin-top: 0.8vh;
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
-  font-size: min(1.9vw, 4vh);
+  font-size: max(12px, min(1.9vw, 4vh));
   font-weight: 600;
   letter-spacing: 0.04em;
   color: #f2f4f7;
@@ -63,7 +64,7 @@
 
 .statusWord {
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
-  font-size: min(5.6vw, 11.5vh);
+  font-size: max(12px, min(5.6vw, 11.5vh));
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.02em;
@@ -74,7 +75,7 @@
   margin-top: 1.2vh;
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
   font-feature-settings: "zero", "tnum";
-  font-size: min(1.9vw, 4vh);
+  font-size: max(12px, min(1.9vw, 4vh));
   font-weight: 600;
   color: #a8aeb8;
 }
@@ -98,7 +99,7 @@
 
 .clockTime {
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
-  font-size: min(4.6vw, 9.5vh);
+  font-size: max(12px, min(4.6vw, 9.5vh));
   font-weight: 600;
   line-height: 1;
   font-feature-settings: "zero", "tnum";
@@ -108,7 +109,7 @@
   display: flex;
   text-transform: uppercase;
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
-  font-size: min(1.25vw, 2.6vh);
+  font-size: max(12px, min(1.25vw, 2.6vh));
   letter-spacing: 0.14em;
   color: #a8aeb8;
 }
@@ -189,9 +190,25 @@
   padding-top: 1.6vh;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
-  font-size: min(1.5vw, 3.2vh);
+  font-size: max(12px, min(1.5vw, 3.2vh));
   letter-spacing: 0.06em;
   color: #a8aeb8;
+}
+
+/* Escape link back to the app, in the footer's left slot. Dim like
+ * the rest of the footer; 44px tall so a thumb can find it on a phone. */
+.escape {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: -14px 0;
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.escape:hover,
+.escape:focus-visible {
+  color: #f2f4f7;
 }
 
 .srOnly {

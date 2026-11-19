@@ -12,6 +12,7 @@ import {
 } from "@/lib/seen-view";
 import { SeenLookup } from "@/components/SeenLookup";
 import styles from "@/components/pattern-pages.module.css";
+import { BackLink } from "@/components/BackLink";
 
 // Cookies (time-format pref) and the query make this dynamic. The page
 // itself reads no tracks: the client calls /api/seen, which the CDN
@@ -65,19 +66,20 @@ export default function SeenPage({ searchParams }: Props) {
   const hour12 = isHour12(getTimeFormatPref());
 
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <span className="ss-eyebrow">SmokySignal · Look back</span>
-        <Link href="/circling" className={`ss-mono ${styles.backLink}`}>
-          Circling now →
-        </Link>
-      </header>
+    <main className="ss-page">
+      <BackLink />
+      <span className="ss-eyebrow">SmokySignal · Look back</span>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <h1 className={styles.h1}>Was that the plane I saw?</h1>
         <p className={styles.lede}>
           Pick when and where. We list every aircraft we track that passed
-          within range, how close it came, and what it was doing then.
+          within range, how close it came, and what it was doing then. For
+          what is up right now, see{" "}
+          <Link href="/circling" style={{ color: "var(--ss-fg0)", textDecoration: "underline" }}>
+            What&rsquo;s circling
+          </Link>
+          .
         </p>
       </section>
 
