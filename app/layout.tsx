@@ -31,6 +31,13 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   applicationName: "SmokySignal",
   manifest: "/manifest.json",
+  // Takeoff feeds (app/feed.xml, app/rss.xml) for readers and RSS bots.
+  alternates: {
+    types: {
+      "application/atom+xml": [{ url: "/feed.xml", title: "SmokySignal takeoffs (Atom)" }],
+      "application/rss+xml": [{ url: "/rss.xml", title: "SmokySignal takeoffs (RSS)" }],
+    },
+  },
   // iOS PWA standalone-mode flags. Without these the home-screen install
   // launches in a degraded "kinda-Safari" shell — wrong status bar, no
   // app-icon label fallback, brand voice broken on first paint.

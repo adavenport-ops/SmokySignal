@@ -180,14 +180,21 @@ export async function recordActivity(curr: Snapshot): Promise<void> {
     // the snapshot pipeline. Fire all in parallel since the dispatcher
     // already de-duplicates per (tail, minute).
     const takeoffs = events.filter((e) => e.kind === "takeoff");
-    if (takeoffs.length > 0) {
+    // Club relays (Discord / webhooks) take takeoffs and landings.
+    const relayEvents = events.filter(
+      (e) => e.kind === "takeoff" || e.kind === "landing",
+    );
+    if (takeoffs.length > 0 || relayEvents.length > 0) {
       try {
         const { dispatchTakeoff } = await import("./push/dispatcher");
         // Don't block the snapshot request on push fan-out. waitUntil keeps
         // the Vercel function alive until sends settle (no-op off Vercel).
         const { waitUntil } = await import("@vercel/functions");
-        waitUntil(Promise.all(
-          takeoffs.map((e) =>
+        waitUntil(Promise.all([
+          // Relays run as their own never-rejecting promise, so a slow
+          // or broken club webhook can't touch the push sends.
+          relayFanout(curr, relayEvents),
+          ...takeoffs.map((e) =>
             dispatchTakeoff({
               tail: e.tail,
               role: normalizeMission(e.role),
@@ -205,11 +212,45 @@ export async function recordActivity(curr: Snapshot): Promise<void> {
               return null;
             }),
           ),
-        ));
+        ]));
       } catch (e) {
         console.warn("[activity] push dispatch import/init failed:", e);
       }
     }
+  }
+}
+
+/** Relay fan-out for one tick's takeoffs + landings. Never rejects. */
+async function relayFanout(
+  curr: Snapshot,
+  events: ActivityEntry[],
+): Promise<unknown> {
+  if (events.length === 0) return null;
+  try {
+    const { dispatchRelays } = await import("./relay/dispatch");
+    return await Promise.all(
+      events.map((e) => {
+        const a = curr.aircraft.find((x) => x.tail === e.tail);
+        return dispatchRelays({
+          type: e.kind === "landing" ? "landing" : "takeoff",
+          tail: e.tail,
+          nickname: a?.nickname ?? null,
+          role: normalizeMission(e.role),
+          policeUnit: a?.policeUnit ?? null,
+          scope: a?.scope ?? null,
+          lat: e.lat ?? null,
+          lon: e.lon ?? null,
+          alt_ft: e.alt_ft ?? null,
+          ts: e.ts,
+        }).catch((err) => {
+          console.warn("[activity] dispatchRelays failed:", err);
+          return null;
+        });
+      }),
+    );
+  } catch (err) {
+    console.warn("[activity] relay dispatch import failed:", err);
+    return null;
   }
 }
 

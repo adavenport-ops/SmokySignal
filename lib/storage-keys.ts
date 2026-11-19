@@ -122,3 +122,28 @@ export function rollupDailyKey(date: string, region?: Region): string {
 export function rollupIndexKey(region?: Region): string {
   return `${regionPrefix(region)}rollup:index`;
 }
+
+// ─── relay:* ─────────────────────────────────────────────────────────
+// Club relays (Discord / generic webhooks). Not region-scoped: a relay
+// carries its own region filter. See lib/relay/store.ts.
+// relay:{id}                       → JSON StoredRelay (no TTL)
+// relay:index                      → SET of relay ids (capped, MAX_RELAYS)
+// relay:cooldown:{id}:{TAIL}:{evt} → SET NX EX claim, one send per window
+// relay:fail:{id}                  → 404/401 strike counter
+// relay:status:{id}                → JSON { at, status } of the last delivery
+export const RELAY_PREFIX = "relay:";
+export function relayKey(id: string): string {
+  return `${RELAY_PREFIX}${id}`;
+}
+export function relayIndexKey(): string {
+  return `${RELAY_PREFIX}index`;
+}
+export function relayCooldownKey(id: string, tail: string, event: string): string {
+  return `${RELAY_PREFIX}cooldown:${id}:${tail.toUpperCase()}:${event}`;
+}
+export function relayFailCountKey(id: string): string {
+  return `${RELAY_PREFIX}fail:${id}`;
+}
+export function relayStatusKey(id: string): string {
+  return `${RELAY_PREFIX}status:${id}`;
+}
