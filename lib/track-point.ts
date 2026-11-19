@@ -134,6 +134,21 @@ export function captureFields(ac: NormalizedAc): TrackCapture {
 // ─── reading stored points ───────────────────────────────────────────
 
 /**
+ * Barometric altitudes outside this band are transponder or feed glitches
+ * (an archive point once read 74,900 ft for a county Cessna). Nothing in
+ * the tracked fleet flies above FL450 or below the Dead Sea.
+ */
+export const MAX_PLAUSIBLE_ALT_FT = 50_000;
+export const MIN_PLAUSIBLE_ALT_FT = -2_000;
+
+/** A finite altitude inside the plausible band, else undefined. */
+export function plausibleAlt(v: unknown): number | undefined {
+  const n = num(v);
+  if (n === undefined || n > MAX_PLAUSIBLE_ALT_FT || n < MIN_PLAUSIBLE_ALT_FT) return undefined;
+  return n;
+}
+
+/**
  * Parse one stored list element. Upstash may hand back the JSON string or
  * an already-deserialized object. Returns null when lat/lon/ts are not
  * finite numbers. Extra keys pass through untouched.
@@ -154,7 +169,7 @@ export function parseTrackPoint(raw: unknown): TrackPoint | null {
   }
   return {
     ...(p as TrackPoint),
-    alt: num(p.alt) ?? null,
+    alt: plausibleAlt(p.alt) ?? null,
     spd: num(p.spd) ?? null,
     trk: num(p.trk) ?? null,
   };

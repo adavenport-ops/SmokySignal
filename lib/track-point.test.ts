@@ -11,6 +11,7 @@ import {
   captureFields,
   isMlatPosition,
   parseTrackPoint,
+  plausibleAlt,
   type TrackPoint,
 } from "./track-point";
 import { normalizeReadsbRow } from "./feeds/readsb";
@@ -198,4 +199,12 @@ test("merge: the freshest fix wins as a unit, extras fill from the other feed", 
   assert.equal(c.src, "fi");
   assert.equal(c.ag, 17400);
   assert.equal(c.nic, 8);
+});
+
+test("parseTrackPoint drops implausible altitudes", () => {
+  assert.equal(parseTrackPoint({ lat: 47, lon: -122, ts: 1, alt: 74_900 })?.alt, null);
+  assert.equal(parseTrackPoint({ lat: 47, lon: -122, ts: 1, alt: -5_000 })?.alt, null);
+  assert.equal(parseTrackPoint({ lat: 47, lon: -122, ts: 1, alt: 4_800 })?.alt, 4_800);
+  assert.equal(plausibleAlt(50_000), 50_000);
+  assert.equal(plausibleAlt(50_001), undefined);
 });

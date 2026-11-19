@@ -23,6 +23,7 @@
     "marketing:assets": "tsx scripts/marketing-assets.ts",
     "marketing:poster": "tsx scripts/marketing-poster.ts",
     "marketing:social": "tsx scripts/social-pack.ts",
+    "backfill:adsblol": "tsx scripts/backfill-adsblol.ts",
     "seo:indexnow": "tsx scripts/indexnow.ts",
     "towns:check": "tsx scripts/towns-check.ts"
   },

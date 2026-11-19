@@ -149,6 +149,14 @@ and claim 62 asserts the gate itself.
   `OPENSKY_*` env vars). adsb.fi has no historical equivalent, so the
   track tank fills forward via the live feeds only. Stored points tagged
   `src: "os"` stay readable (`StoredFeedSrc` in `lib/types.ts`).
+- History backfill: adsb.lol publishes a full daily archive
+  (github.com/adsblol/globe_history_<year>, ODbL, ~3.5 GB/day, a few hours
+  after the UTC day ends). `npm run backfill:adsblol -- --from D --to D
+  [--write] [--merge]` rebuilds `tracks:*` for registry tails at the live
+  30 s cadence; default writes only empty keys, `--merge` prepends points
+  older than a key's first point. Used to restore 2026-10-14..11-18 after
+  the 2026-11-19 KV overwrite (the store had no backups; push
+  subscriptions re-register via `/api/push/resync`).
 - Data sources: adsb.fi + adsb.lol merged by ICAO hex (#153),
   airplanes.live behind `SS_FEED_APL=1`. Track history is permanent:
   `tracks:*` daily keys have no TTL since 2026-11-18 (#149; the legacy
