@@ -15,10 +15,10 @@ import { getRegistry } from "./registry";
 import { listTrackKeys, getTracksForDay } from "./tracks";
 import { hotzonesCurrentKey, hotzonesLastRefreshKey } from "./storage-keys";
 
-// ~0.5 nm per cell at 47°N — roughly the granularity at which patrol
-// orbit patterns become visible without disappearing into the noise of
-// individual position pings.
-export const GRID_CELL_DEG = 0.0083;
+import { GRID_CELL_DEG } from "./zone-id";
+
+// Grid-cell scheme lives in lib/zone-id.ts (pure, client-safe).
+export { GRID_CELL_DEG, zoneIdForPoint, pointForZoneId } from "./zone-id";
 export const HOTZONE_DAYS_BACK = 30;
 // Aggregation envelope: a generous Washington-state bounding box. Anything
 // outside is data-quality noise — old ADS-B records under a recycled
@@ -50,26 +50,6 @@ function inRegion(lat: number, lon: number): boolean {
 const CURRENT_KEY = hotzonesCurrentKey();
 const LAST_REFRESH_KEY = hotzonesLastRefreshKey();
 const TTL_SECONDS = 25 * 60 * 60;
-
-/**
- * Stable string ID for the hot-zone cell containing (lat, lon). Same scheme
- * used by aggregateHotZones() to bucket pings, so a rider opting into zone
- * "${cellLat},${cellLon}" matches every airborne event whose coords fall
- * inside the same cell. Used by the push dispatcher to filter zone-scoped
- * subscriptions (lib/push/dispatcher.ts).
- */
-export function zoneIdForPoint(lat: number, lon: number): string {
-  const cellLat = Math.floor(lat / GRID_CELL_DEG) * GRID_CELL_DEG;
-  const cellLon = Math.floor(lon / GRID_CELL_DEG) * GRID_CELL_DEG;
-  return `${cellLat.toFixed(4)},${cellLon.toFixed(4)}`;
-}
-
-/** Inverse of zoneIdForPoint — returns the cell origin from an ID string. */
-export function pointForZoneId(id: string): { lat: number; lon: number } | null {
-  const m = /^(-?\d+\.\d+),(-?\d+\.\d+)$/.exec(id);
-  if (!m) return null;
-  return { lat: Number(m[1]), lon: Number(m[2]) };
-}
 
 export type HotZone = {
   /** Cell centroid latitude. */

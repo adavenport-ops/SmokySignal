@@ -765,4 +765,103 @@ test.describe("p14 live-prod audit", () => {
     });
     expect(r.ok()).toBe(true);
   });
+
+  // ─── Security headers / CSP (fix/input-privacy-headers) ─────────────
+  // The CSP is enforced, so a missing host in next.config.mjs breaks a
+  // page silently (blocked tile, worker, or script). These claims catch
+  // that on prod: header present, and zero violations on the routes that
+  // load the most third-party surface.
+  for (const route of ["/", "/radar", "/plane/N305DK", "/help", "/admin"]) {
+    test(`22. CSP enforced with zero violations on ${route}`, async ({
+      page,
+    }) => {
+      await page.addInitScript(() => {
+        (window as any).__ssCspViolations = [];
+        document.addEventListener("securitypolicyviolation", (e) => {
+          (window as any).__ssCspViolations.push(
+            `${e.violatedDirective} ${e.blockedURI}`,
+          );
+        });
+      });
+      const consoleCsp: string[] = [];
+      page.on("console", (m) => {
+        if (m.type() === "error" && /Content Security Policy/i.test(m.text())) {
+          consoleCsp.push(m.text().slice(0, 200));
+        }
+      });
+      const resp = await page.goto(route, { waitUntil: "networkidle" });
+      await page.waitForTimeout(route === "/radar" || route.startsWith("/plane") ? 4000 : 1500);
+      const headers = resp?.headers() ?? {};
+      const csp = headers["content-security-policy"] ?? "";
+      const events = (await page.evaluate(
+        () => (window as any).__ssCspViolations ?? [],
+      )) as string[];
+      const pass =
+        csp.includes("frame-ancestors 'none'") &&
+        headers["x-frame-options"] === "DENY" &&
+        headers["x-content-type-options"] === "nosniff" &&
+        events.length === 0 &&
+        consoleCsp.length === 0;
+      const screenshot = await shot(
+        page,
+        `22-csp-${route === "/" ? "home" : route.replace(/\//g, "-").replace(/^-/, "")}`,
+      );
+      record({
+        claim: `Security headers present and zero CSP violations on ${route}`,
+        category: pass ? "working_as_designed" : csp ? "confirmed_bug" : "unshipped",
+        pass,
+        evidence: !csp
+          ? "no Content-Security-Policy header"
+          : `csp=${csp.length}ch xfo=${headers["x-frame-options"]} nosniff=${headers["x-content-type-options"]} violations=${events.length} console=${consoleCsp.length}${
+              events.length ? ` first="${events[0]}"` : consoleCsp.length ? ` first="${consoleCsp[0]}"` : ""
+            }`,
+        screenshot,
+      });
+    });
+  }
+
+  test("23. service worker registers under CSP", async ({ page }) => {
+    await page.goto("/", { waitUntil: "networkidle" });
+    const result = await page.evaluate(async () => {
+      if (!("serviceWorker" in navigator)) return { supported: false, scope: null };
+      const reg = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<null>((r) => setTimeout(() => r(null), 8000)),
+      ]);
+      return { supported: true, scope: reg ? reg.scope : null };
+    });
+    const pass = !result.supported || result.scope != null;
+    record({
+      claim: "Service worker (/sw.js) registers with the CSP in place",
+      category: !result.supported
+        ? "indeterminate"
+        : pass
+          ? "working_as_designed"
+          : "confirmed_bug",
+      pass,
+      evidence: !result.supported
+        ? "serviceWorker API absent in this browser context"
+        : result.scope
+          ? `registered, scope=${result.scope}`
+          : "no active registration within 8s",
+    });
+  });
+
+  test("24. radar map canvas renders under CSP", async ({ page }) => {
+    await page.goto("/radar", { waitUntil: "networkidle" });
+    await page.waitForTimeout(4000);
+    const canvas = page.locator("canvas.maplibregl-canvas").first();
+    const box = await canvas.boundingBox().catch(() => null);
+    const screenshot = await shot(page, "24-radar-canvas-csp");
+    const pass = box != null && box.width > 100 && box.height > 100;
+    record({
+      claim: "MapLibre canvas renders on /radar (tiles + blob worker allowed by CSP)",
+      category: pass ? "working_as_designed" : "confirmed_bug",
+      pass,
+      evidence: box
+        ? `canvas ${Math.round(box.width)}×${Math.round(box.height)}px`
+        : "no maplibregl-canvas found",
+      screenshot,
+    });
+  });
 });

@@ -6,6 +6,7 @@
 // real-time. Auth: Bearer CRON_SECRET.
 
 import { NextResponse } from "next/server";
+import { checkCronAuth } from "@/lib/cron-auth";
 import { refreshPrediction } from "@/lib/predictor";
 
 export const runtime = "nodejs";
@@ -17,10 +18,11 @@ function unauthorized() {
 }
 
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return NextResponse.json({ error: "not_configured" }, { status: 500 });
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${secret}`) return unauthorized();
+  const auth = checkCronAuth(req);
+  if (auth === "not_configured") {
+    return NextResponse.json({ error: "not_configured" }, { status: 500 });
+  }
+  if (auth !== "ok") return unauthorized();
 
   try {
     const out = await refreshPrediction();

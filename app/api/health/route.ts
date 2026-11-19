@@ -54,9 +54,13 @@ async function pingKv(): Promise<"ok" | "err" | "memory"> {
   }
 }
 
+// Short, fixed error codes only. The raw upstream error text (which can
+// include auth-server URLs or response bodies) is logged server-side,
+// never returned from this public endpoint.
+type OpenskyErrorCode = "timeout" | "no_token" | "auth_failed";
 type OpenskyPing =
   | { status: "ok" | "anonymous"; error?: undefined }
-  | { status: "err"; error: string };
+  | { status: "err"; error: OpenskyErrorCode };
 
 async function pingOpensky(): Promise<OpenskyPing> {
   if (!process.env.OPENSKY_CLIENT_ID || !process.env.OPENSKY_CLIENT_SECRET) {
@@ -76,10 +80,14 @@ async function pingOpensky(): Promise<OpenskyPing> {
         setTimeout(() => rej(new Error("opensky auth timeout")), PING_TIMEOUT_MS),
       ),
     ]);
-    return token ? { status: "ok" } : { status: "err", error: "no token returned" };
+    return token ? { status: "ok" } : { status: "err", error: "no_token" };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    return { status: "err", error: msg.slice(0, 240) };
+    console.warn("[health] opensky auth failed:", msg.slice(0, 240));
+    return {
+      status: "err",
+      error: msg === "opensky auth timeout" ? "timeout" : "auth_failed",
+    };
   }
 }
 
@@ -147,7 +155,9 @@ export async function GET() {
     last_heartbeat_iso,
     last_heartbeat_age_s,
     opensky: openskyResult.status,
-    ...(openskyResult.error ? { opensky_error: openskyResult.error } : {}),
+    ...(openskyResult.error
+      ? { opensky_error_code: openskyResult.error }
+      : {}),
     opensky_credits_remaining,
     tails: FLEET.length,
     source_last: getLastSource(),

@@ -100,7 +100,7 @@ export function LoginForm({
               marginTop: 4,
             }}
           >
-            Invalid passcode.
+            Sign-in failed. Check the passcode or wait a few minutes.
           </div>
         )}
       </form>

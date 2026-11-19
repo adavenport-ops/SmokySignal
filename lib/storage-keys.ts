@@ -93,3 +93,11 @@ export function activityDedupeKey(
 ): string {
   return `${regionPrefix(region)}activity:dedupe:${tail.toUpperCase()}:${kind}`;
 }
+
+// ─── dryrun-warnings:{YYYYMMDD} ──────────────────────────────────────
+// N1a dry-run log (app/api/dryrun-warnings). Not region-scoped: the
+// shape is byte-for-byte the literal the route used before this helper.
+export const DRYRUN_WARNINGS_PREFIX = "dryrun-warnings:";
+export function dryrunWarningsKey(date: string): string {
+  return `${DRYRUN_WARNINGS_PREFIX}${date}`;
+}

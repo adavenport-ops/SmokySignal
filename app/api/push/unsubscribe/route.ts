@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { removeSubscription, subscriptionId } from "@/lib/push/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const limited = await enforceRateLimit(req, "push-unsubscribe");
+  if (limited) return limited;
   let body: unknown;
   try {
     body = await req.json();
