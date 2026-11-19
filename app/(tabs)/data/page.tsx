@@ -11,7 +11,7 @@ import { formatTs } from "@/lib/time";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "SmokySignal · Open ledger",
-  description: "Monthly flight hours for every tracked tail, by tail and by mission, with a CSV download. CC BY 4.0.",
+  description: "Monthly flight hours for every tracked tail, by tail and by mission, with a CSV download. ODbL 1.0.",
 };
 
 const CSV_PATH = "/data/flight-hours.csv";
@@ -275,10 +275,11 @@ function Methods() {
       </p>
       <p className="ss-mono" data-testid="data-license" style={{ ...p, fontSize: 12, color: SS_TOKENS.fg0 }}>
         License:{" "}
-        <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" style={linkStyle}>
-          CC BY 4.0
+        <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+          ODbL 1.0
         </a>
-        , attribute SmokySignal.
+        . Attribute SmokySignal, adsb.fi and adsb.lol. Contains information from adsb.lol, made available under
+        the Open Database License. Share-alike: databases built from this one stay under ODbL.
       </p>
     </section>
   );
