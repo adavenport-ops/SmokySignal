@@ -80,6 +80,16 @@ export function pushFailCountKey(subscriptionId: string, region?: Region): strin
   return `${regionPrefix(region)}push:fail:${subscriptionId}`;
 }
 
+// One-off admin announcement. `push:announce:{id}` holds the send record
+// (SET NX, no TTL, so an id can never be sent twice); the `:sent` set holds
+// the subscription ids already delivered so a resumed send skips them.
+export function pushAnnounceKey(announcementId: string, region?: Region): string {
+  return `${regionPrefix(region)}push:announce:${announcementId}`;
+}
+export function pushAnnounceSentKey(announcementId: string, region?: Region): string {
+  return `${pushAnnounceKey(announcementId, region)}:sent`;
+}
+
 // ─── activity:* ──────────────────────────────────────────────────────
 /**
  * Write-time dedupe marker for one activity event kind on one tail. Set
