@@ -3509,4 +3509,18 @@ test.describe("p14 live-prod audit · towns + IndexNow", () => {
     });
     expect(pass).toBe(true);
   });
+
+  test("93. /relay links the live Telegram bot", async ({ request }) => {
+    const r = await request.get("/relay");
+    const html = await r.text();
+    const link = html.match(/t\.me\/[A-Za-z0-9_]+/)?.[0] ?? "";
+    const pass = r.status() === 200 && /Bot$/i.test(link);
+    record({
+      claim: "/relay links the live Telegram bot (t.me/<name>Bot)",
+      category: pass ? "working_as_designed" : "unshipped",
+      pass,
+      evidence: `HTTP ${r.status()} · ${link || "no t.me link"}`,
+    });
+    expect(pass).toBe(true);
+  });
 });
