@@ -7,7 +7,7 @@ named that are not built yet. Rank is rider value over cost; re-rank freely.
 ## How the weekly job uses this file
 
 1. On its run, the job picks the highest-ranked item marked
-   **One weekly run: yes** that is not blocked, and moves it under
+   **One weekly run: yes** that is not blocked (no **Blocked:** line), and moves it under
    `## This week` (keep the whole item, fields and all).
 2. It builds that item on a branch and opens a PR.
 3. `npm run blog:weekly -- --week-ending YYYY-MM-DD` prints the first item
@@ -29,7 +29,215 @@ exclamation marks, none of the voice-gate words).
 
 _Nothing picked yet._
 
+## Roadmap to mid-2027
+
+Set 2026-11-19 from rider feedback on the Facebook launch post (iPhone
+location, a full-screen speed warning, "can I hear it in my coms") and the
+multi-state research in `docs/research/us-police-aircraft-2026-11.md`.
+The weekly job follows the ranked order below; this is the intent behind it.
+
+- **Late 2026 (Nov 25 to Dec 16): feedback fixes.** B20 range setting, B21
+  alerts-reset nudge, B22 iPhone setup page, B23 earcon, B24 lock-screen copy.
+  Dec 23 and 30: light weeks (data items only).
+- **January 2027: hear it on the bike, and complete data.** B25 ride mode,
+  B26 spoken updates, B28 nightly archive reconcile, B29 flight split audit,
+  B27 Telegram as soon as the token exists.
+- **February: groundwork for more states.** B30 tracking spike, B31 registry
+  pipeline, B32 confirm the next states, B33 infra check, B34a home state.
+- **March: two states before riding season.** B34b, B34c, then B35 Oregon
+  and Idaho, B37 their landing pages.
+- **April to June (riding season): one state a month, alerts that fit the road.**
+  B36 Colorado, Ohio, Missouri, Minnesota (order from B32), B38 proximity
+  tiers, B01 corridor alerts, plus older items between launches.
+
+Notifications, in short: the web app cannot speak with the phone locked.
+The plan covers both cases. With the phone unlocked and on the bars, ride
+mode, earcons and spoken callouts (B23, B25, B26) do the work. With the
+phone locked, it is clearer push copy (B24) and a messaging app the phone
+reads aloud (B27). A native app or a CarPlay or Android Auto surface stays
+out of scope until the web paths are measured.
+
 ## Ranked
+
+### B20 · Speed warning range setting
+- **Why:** Rider feedback (2026-11-19): the warning fired with the plane "still miles away". Let riders pick how close counts.
+- **Route:** `/settings`
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** `lib/speed-warning.ts`, `lib/speed-warning-prefs.ts`, `components/SpeedWarning.tsx`, `components/SpeedWarningSettings.tsx`
+- **Acceptance:** Settings › Speed warning offers 2, 3 or 5 nm (default 5, shown in miles too); evaluateWarning uses the pick; node:test covers each radius and the stored-value guard.
+- **Blog line:** The speed warning now lets you choose how close the bird has to be before it speaks up.
+
+### B21 · Alerts-reset nudge
+- **Why:** The 2026-11-19 store overwrite dropped every push subscription. /api/push/resync brings back browsers that still hold one; riders whose browser dropped it too see nothing and never know alerts stopped.
+- **Route:** `/`
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** `components/SwRegistrar.tsx`, `components/AlertsStateChip.tsx`, a new `components/AlertsResetBanner.tsx`
+- **Acceptance:** when Notification.permission is "granted" but the browser has no push subscription, home shows one dismissible line, "Alerts were switched off by an update. Turn them back on", and one tap re-subscribes; never shown when permission is default or denied; dismissal remembered 30 days.
+- **Blog line:** If an update switched your alerts off, the app now says so and puts them back in one tap.
+
+### B22 · iPhone setup page
+- **Why:** Rider feedback: location failed in Safari until they added the app to the home screen. iPhone needs three settings right (home screen, location, notifications) and nothing explains them in one place.
+- **Route:** `/help/iphone`
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** a new `app/(tabs)/help/iphone/page.tsx`, `lib/nav.ts`, `components/IOSInstallPrompt.tsx`, `lib/seo/*`
+- **Acceptance:** one page with the steps (Add to Home Screen, Location Services › Safari Websites › While Using, allow notifications, Voice readback); linked from the iOS install prompt, the location-blocked toast and /about; in the sitemap; screenshots optional.
+- **Blog line:** A one-page iPhone setup guide: home screen, location and alerts, in that order.
+
+### B23 · Alert earcon before voice
+- **Why:** Helmet coms (Cardo, Sena) duck or clip the first half second of phone audio, so spoken alerts lose their first word. A short tone wakes the channel, and different tones tell up, near and clear apart without words.
+- **Route:** `/settings/alerts`
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** `lib/voice-mode.ts`, `lib/proximity-alert.ts`, `components/AlertsSettings.tsx`, `public/sounds/*`
+- **Acceptance:** with voice readback on, each spoken alert is preceded by a short tone (Web Audio, generated, no assets over 20 KB); three distinct tones for bird up, bird near, all clear; a toggle to turn tones off; works after the first user gesture on iOS.
+- **Blog line:** Spoken alerts now start with a short tone, so your coms are awake before the words arrive.
+
+### B24 · Lock-screen alert copy
+- **Why:** Push is what reaches a locked phone and, on some setups, the helmet. The text should read well on a lock screen and when Siri announces it: who, how far, which road.
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** `lib/push/dispatcher.ts`, `lib/push/types.ts`, `public/sw.js`, `lib/push/*.test.ts`
+- **Acceptance:** titles lead with the nickname and distance band ("Smokey 4 up · 6 mi from your zone"); bodies name the nearest corridor when known; updates for the same flight replace the previous notification (same tag, renotify) instead of stacking; tests pin the copy and the tag rules; voice gate passes.
+- **Blog line:** Alerts on a locked phone now say who, how far and which road, and update in place instead of piling up.
+
+### B25 · Ride mode
+- **Why:** Rider question: "Does it have an audible notification you can hear in your coms?" Voice readback only speaks while the page is open. Ride mode makes that the default state for a ride: screen awake, voice on, glance view.
+- **Route:** `/glance`
+- **Size:** M
+- **One weekly run:** yes
+- **Files:** `app/glance/*`, `components/ScreenAwake.tsx`, `lib/voice-mode.ts`, `lib/nav.ts`, `components/Sidebar.tsx`
+- **Acceptance:** a Ride mode button on home and /glance turns on wake lock, voice readback and the glance layout in one tap (one user gesture primes audio on iOS); a visible "Riding" state with an exit; it says plainly that the phone must stay unlocked; p14 claim added.
+- **Blog line:** Ride mode: one tap keeps the screen on and reads alerts into your helmet.
+
+### B26 · Spoken updates while riding
+- **Why:** In ride mode the rider wants the plane's movement without looking: "Smokey 4, 3 miles north, closing".
+- **Size:** M
+- **One weekly run:** yes
+- **Files:** `lib/voice-mode.ts`, a new `lib/ride-callouts.ts`, `app/glance/*`
+- **Acceptance:** in ride mode, a nearby police-mission aircraft gets a spoken callout on entry, every N minutes (rider picks 2, 5 or off) and on leaving ("Smokey 4 clear"); bearing in clock or compass words; pure callout planner tested; never speaks more than once a minute.
+- **Blog line:** In ride mode the app calls the bird out by distance and direction, and tells you when it is clear.
+
+### B27 · Telegram go-live and locked-phone audio guide
+- **Why:** The only path that speaks with the phone locked is a messaging app the phone reads aloud (iPhone Announce Notifications, CarPlay, Android Auto). The Telegram bot is built and waits for a token.
+- **Size:** S
+- **One weekly run:** yes
+- **Blocked:** needs `TELEGRAM_BOT_TOKEN` in Vercel (Alex, via @BotFather)
+- **Files:** `lib/bots/telegram*`, `docs/bots.md`, a new section on `/help/iphone`
+- **Acceptance:** webhook registered, /start and /stop work on prod, a test alert arrives; help text explains turning on Announce Notifications for Telegram on iPhone and Android Auto; p14 claim for the bot status endpoint.
+- **Blog line:** Want alerts read into your helmet with the phone locked: the Telegram bot does that now.
+
+### B28 · Nightly archive reconcile
+- **Why:** Live feeds drop points (receiver gaps, timeouts), which split flights and leave holes. adsb.lol publishes a complete daily archive; merging it nightly makes history complete. It also rebuilt the record after the 2026-11-19 wipe.
+- **Size:** M
+- **One weekly run:** yes
+- **Files:** `scripts/backfill-adsblol.ts`, a new `lib/archive-reconcile.ts`, `scripts/helm-pinger/*` or a helm launchd job, `docs/`
+- **Acceptance:** a helm job runs daily after the archive appears, fills gaps inside existing days (not only empty keys) without duplicating points, then triggers the rollup; logs per-day counts; a dry-run flag; tests cover the merge (dedupe within 15 s, ordering).
+- **Blog line:** Every night the log now cross-checks against a full public archive, so flights no longer have holes where a receiver blinked.
+
+### B29 · Flight split audit
+- **Why:** After the backfill, one tail showed 6 flights for a week where the live log had 30. Gaps were splitting flights. Measure and tune the session rules on complete data.
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** `lib/flights.ts`, `lib/history-core.ts`, `lib/rollup-core.ts`, tests
+- **Acceptance:** a script compares session counts from archive-complete days against the live-only period; gap and ground thresholds tuned so a fuel stop is two flights and a receiver gap is one; before and after counts in the PR.
+- **Blog line:** Flight counts are more honest now: a receiver gap no longer turns one flight into three.
+
+### B30 · Multi-state spike: track by tail, not by circle
+- **Why:** Feeds are queried as one circle around Washington. Adding states by adding circles multiplies requests. Most feeds can be asked for a list of transponder codes instead, which scales with the registry, not the map.
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** a new `docs/adr/ADR-multi-state-tracking.md`, `scripts/feeds-check.ts`
+- **Acceptance:** for adsb.fi, adsb.lol and airplanes.live, record whether a multi-hex query exists, its batch size and rate limits (tested live, read-only); measure a tick for 60 and 300 hexes; ADR picks hex lists, circles or a mix (circle for discovery near the home region, hex list nationally) with the request budget per tick.
+- **Blog line:** Behind the scenes: the groundwork for tracking state patrol aircraft beyond Washington.
+
+### B31 · State registry pipeline
+- **Why:** The Washington list (`data/wa-gov-aircraft.json`) was built by hand from the FAA registry. New states need the same, repeatably: every aircraft registered to a state patrol, sheriff or city police, with sources.
+- **Size:** M
+- **One weekly run:** yes
+- **Files:** a new `scripts/registry-state.ts`, `data/gov-aircraft/<st>.json`, `lib/seed.ts` (load per state), `lib/icao.ts`
+- **Acceptance:** `npm run registry:state -- --state OR` pulls FAA registry rows by owner name patterns, maps N-number to hex, classifies mission (police vs other) with a source per row, and writes the JSON; WA output matches today's list; docs on reviewing a new state.
+- **Blog line:** A repeatable way to list every patrol aircraft in a state, with a source on every row.
+
+### B32 · Research check: confirm the next states
+- **Why:** The 2026-11 research (`docs/research/us-police-aircraft-2026-11.md`) is mostly secondary sources. Confirm before building: who flies, how often, and whether they broadcast.
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** `docs/research/`
+- **Acceptance:** run the B31 pipeline for OR, ID, CO, OH, MO, MN, FL; sample the live feeds by hex for 7 days; a table of tails found, hours airborne and share hidden (LADD or PIA); a recommended launch order.
+- **Blog line:** We checked which states' patrol aircraft actually fly and broadcast, before promising any.
+
+### B33 · Infra check before more states
+- **Why:** More states means more KV, more requests per tick and more push fan-out on a Vercel Hobby plan and one helm pinger.
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** `docs/ops/`, `lib/feed-budget.ts`
+- **Acceptance:** projected KV size, requests per day per feed, function invocations and push volume for 1, 3 and 8 states; the point at which Vercel Pro or a second pinger is needed; Upstash daily backup confirmed on.
+- **Blog line:** Behind the scenes: sizing the plumbing before the map gets bigger.
+
+### B34 · Region model: states as first-class
+- **Why:** Everything assumes one region. States need their own home view, hot zones, history, forecast and alerts, without breaking Washington URLs.
+- **Size:** L (split into B34a to B34c)
+- **One weekly run:** no
+- **Files:** `lib/storage-keys.ts` (regionPrefix exists), `lib/feeds/region.ts`, `lib/hotzones.ts`, `lib/history*.ts`, `lib/forecast*.ts`, `lib/push/*`
+- **Acceptance:** see B34a to B34c.
+- **Blog line:** SmokySignal can hold more than one state now.
+
+### B34a · Home state picker
+- **Size:** S
+- **One weekly run:** yes
+- **Acceptance:** a home-state choice (cookie, like the time-format pref) with Washington as default and the only populated option; region config table (code, name, centre, bounds, feeds) in one file; no behaviour change for existing riders; tests.
+- **Blog line:** You can tell the app your home state now. Washington is the only one lit, for now.
+
+### B34b · Feeds per region
+- **Size:** M
+- **One weekly run:** yes
+- **Acceptance:** each snapshot tick covers every enabled region within the B30 budget; the snapshot carries a region per aircraft; KV keys for non-WA regions go through regionPrefix; WA keys unchanged byte for byte; health reports per-region freshness.
+- **Blog line:** Behind the scenes: the feeds can now watch more than one state at a time.
+
+### B34c · Region-scoped history, hot zones, forecast and alerts
+- **Size:** M
+- **One weekly run:** yes
+- **Acceptance:** /, /radar, /forecast, /stats and push alerts read the rider's home state; a state switcher; WA unchanged; p14 claims for one non-WA region on a preview deploy.
+- **Blog line:** Each state gets its own sky: hot zones, history, forecast and alerts.
+
+### B35 · Oregon and Idaho launch
+- **Why:** Riders cross the Columbia and the Idaho line all season, and those fleets already show up as mutual aid.
+- **Route:** `/state/or`
+- **Size:** M
+- **One weekly run:** yes
+- **Blocked:** needs B31, B34a to B34c and the B32 check
+- **Acceptance:** OR and ID registries reviewed and loaded; both selectable; state landing pages with sourced facts; SEO and llms.txt updated; blog post.
+- **Blog line:** Oregon and Idaho are on the map now, with their own skies and alerts.
+
+### B36 · Next state launches (one per run)
+- **Why:** Ranked by the 2026-11 research: Colorado, Ohio, Missouri, Minnesota, Florida, then Pennsylvania, South Dakota and Nebraska. All run active aerial speed programs; the order is set by B32's numbers.
+- **Route:** `/state/<st>`
+- **Size:** M each
+- **One weekly run:** yes (one state per run)
+- **Blocked:** needs B35 shipped
+- **Acceptance:** per state: registry reviewed, region config, landing page, sitemap, llms.txt facts, IndexNow, blog paragraph; nothing launches with fewer than 3 confirmed police aircraft broadcasting.
+- **Blog line:** [State] is live: its patrol aircraft, hot roads and alerts.
+
+### B37 · State landing pages and SEO
+- **Why:** Riders search "aircraft speed enforcement [state]". Each state should have a page that answers it with sourced facts.
+- **Route:** `/state/<st>`
+- **Size:** S each
+- **One weekly run:** yes
+- **Blocked:** needs B34a
+- **Files:** a new `app/(tabs)/state/[st]/page.tsx`, `lib/seo/*`, `app/sitemap.ts`
+- **Acceptance:** per state: status of aerial enforcement with sources, fleet table, where signs are posted when known, link to the live view; JSON-LD; in the sitemap; SEO audit with 0 P0.
+- **Blog line:** Every state we cover gets a plain page on how its patrol uses aircraft, with sources.
+
+### B38 · Proximity tiers
+- **Why:** One threshold is either too chatty or too late. Two tiers (heads-up farther out, close nearer in) match how riders react.
+- **Size:** M
+- **One weekly run:** yes
+- **Files:** `lib/proximity-alert.ts`, `lib/push/dispatcher.ts`, `components/AlertsSettings.tsx`
+- **Acceptance:** riders set a heads-up and a close distance; different push copy, voice phrasing and earcon per tier; each tier fires once per pass; tests.
+- **Blog line:** Alerts come in two steps now: a heads-up when the bird is in the area, and a closer call when it is near.
 
 ### B01 · Corridor push alerts
 - **Why:** Riders care about their road, not the whole state. "Smokey up over SR-512" beats "Smokey up somewhere in WA".
