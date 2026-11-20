@@ -602,6 +602,16 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                 </span>
               )}
             </div>
+            <p
+              data-testid="voice-telegram-pointer"
+              style={{ margin: "8px 0 0", fontSize: 13, lineHeight: 1.5, color: SS_TOKENS.fg1 }}
+            >
+              Voice only works with this page open. Phone locked? Get alerts in{" "}
+              <Link href="/relay#telegram" style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}>
+                Telegram
+              </Link>
+              ; your phone can read them aloud into your helmet.
+            </p>
           </Section>
 
           {/* Quiet hours */}
