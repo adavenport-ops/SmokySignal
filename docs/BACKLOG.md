@@ -31,11 +31,10 @@ _Nothing picked yet._
 
 ## Roadmap
 
-The plan and its reasoning are in `docs/PLAN-2027.md` (personas, the national
-database, activity rule, drones, rollout and marketing to June 2027). The
-ranked order below follows it: feedback fixes and the activity rule first,
-then tail-based national tracking and the registry pipeline, then dossiers,
-agency and state pages, then the May 2027 national launch.
+`docs/PLAN-2027.md` holds the themes, personas and every planned feature
+(P01 to P72) through June 2027, month by month. When fewer than six
+unblocked one-run items remain below, a run expands the next P-items for the
+current month into full items here and ranks them.
 
 ## Ranked
 
@@ -82,6 +81,33 @@ agency and state pages, then the May 2027 national launch.
 - **Files:** `lib/push/dispatcher.ts`, `lib/push/types.ts`, `public/sw.js`, `lib/push/*.test.ts`
 - **Acceptance:** titles lead with the nickname and distance band ("Smokey 4 up · 6 mi from your zone"); bodies name the nearest corridor when known; updates for the same flight replace the previous notification (same tag, renotify) instead of stacking; tests pin the copy and the tag rules; voice gate passes.
 - **Blog line:** Alerts on a locked phone now say who, how far and which road, and update in place instead of piling up.
+
+### B45 · "Hey Siri, is Smokey up" Shortcut
+- **Why:** Riders asked for alerts in their coms. Siri works with the phone locked and speaks through the helmet. A Shortcut that fetches our one-line status and speaks it needs no app.
+- **Route:** `/help/siri`
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** `app/api/status.txt/*` (exists), a new `app/(tabs)/help/siri/page.tsx`, `public/shortcuts/*`, `lib/nav.ts`
+- **Acceptance:** the status text reads well aloud (tested strings: up, down, multiple, stale); a help page with step-by-step setup for "Get contents of URL" plus "Speak text", and an optional region parameter; a downloadable .shortcut file or iCloud link if Alex publishes one; Android Assistant routine steps on the same page; linked from /help/iphone and ride mode.
+- **Blog line:** Ask Siri if Smokey is up, phone in your pocket, answer in your helmet.
+
+### B46 · Flight narratives (template)
+- **Why:** A flight page is a map and numbers; people search in sentences. A short written account of each flight is readable, shareable and indexable.
+- **Route:** `/flight/[id]`
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** a new `lib/flight-narrative.ts`, `app/(tabs)/flight/[id]/page.tsx`, `lib/seo/*`
+- **Acceptance:** pure `narrateFlight()` from the session: takeoff airport and time, where it worked (nearest corridor and towns), how long, how many loops, landing; Pacific 24-hour times; no speculation about purpose beyond the mission label; shown on the flight page and in its meta description; node:test on five real fixtures.
+- **Blog line:** Every flight now has a short written account: where it went, what it worked, how long.
+
+### B47 · MCP server, slice 1
+- **Why:** People ask AI assistants questions like "is the patrol plane up on I-5". A public read-only MCP endpoint lets Claude and other clients answer from our live data, with links back.
+- **Route:** `/mcp`
+- **Size:** M
+- **One weekly run:** yes
+- **Files:** a new `app/mcp/route.ts`, a new `lib/mcp/*`, `docs/mcp.md`, `app/llms.txt`
+- **Acceptance:** Streamable HTTP MCP endpoint (use current MCP TypeScript SDK docs) with read-only tools `status`, `aircraft`, `what_flew_over`; each result carries the canonical page URL; rate limited per IP; no auth, no writes, no rider data; tested with the MCP Inspector; documented with a copy-paste config for Claude.
+- **Blog line:** SmokySignal now speaks MCP: ask your AI assistant if Smokey is up and it answers from live data.
 
 ### B39 · Activity status: show only active aircraft
 - **Why:** As the registry grows nationally, most tails will be idle on any given day. Lists, alerts and the speed warning should only carry aircraft that are actually flying this season.
