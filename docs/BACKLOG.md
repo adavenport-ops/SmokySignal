@@ -29,33 +29,13 @@ exclamation marks, none of the voice-gate words).
 
 _Nothing picked yet._
 
-## Roadmap to mid-2027
+## Roadmap
 
-Set 2026-11-19 from rider feedback on the Facebook launch post (iPhone
-location, a full-screen speed warning, "can I hear it in my coms") and the
-multi-state research in `docs/research/us-police-aircraft-2026-11.md`.
-The weekly job follows the ranked order below; this is the intent behind it.
-
-- **Late 2026 (Nov 25 to Dec 16): feedback fixes.** B20 range setting, B21
-  alerts-reset nudge, B22 iPhone setup page, B23 earcon, B24 lock-screen copy.
-  Dec 23 and 30: light weeks (data items only).
-- **January 2027: hear it on the bike, and complete data.** B25 ride mode,
-  B26 spoken updates, B28 nightly archive reconcile, B29 flight split audit,
-  B27 Telegram as soon as the token exists.
-- **February: groundwork for more states.** B30 tracking spike, B31 registry
-  pipeline, B32 confirm the next states, B33 infra check, B34a home state.
-- **March: two states before riding season.** B34b, B34c, then B35 Oregon
-  and Idaho, B37 their landing pages.
-- **April to June (riding season): one state a month, alerts that fit the road.**
-  B36 Colorado, Ohio, Missouri, Minnesota (order from B32), B38 proximity
-  tiers, B01 corridor alerts, plus older items between launches.
-
-Notifications, in short: the web app cannot speak with the phone locked.
-The plan covers both cases. With the phone unlocked and on the bars, ride
-mode, earcons and spoken callouts (B23, B25, B26) do the work. With the
-phone locked, it is clearer push copy (B24) and a messaging app the phone
-reads aloud (B27). A native app or a CarPlay or Android Auto surface stays
-out of scope until the web paths are measured.
+The plan and its reasoning are in `docs/PLAN-2027.md` (personas, the national
+database, activity rule, drones, rollout and marketing to June 2027). The
+ranked order below follows it: feedback fixes and the activity rule first,
+then tail-based national tracking and the registry pipeline, then dossiers,
+agency and state pages, then the May 2027 national launch.
 
 ## Ranked
 
@@ -103,6 +83,23 @@ out of scope until the web paths are measured.
 - **Acceptance:** titles lead with the nickname and distance band ("Smokey 4 up · 6 mi from your zone"); bodies name the nearest corridor when known; updates for the same flight replace the previous notification (same tag, renotify) instead of stacking; tests pin the copy and the tag rules; voice gate passes.
 - **Blog line:** Alerts on a locked phone now say who, how far and which road, and update in place instead of piling up.
 
+### B39 · Activity status: show only active aircraft
+- **Why:** As the registry grows nationally, most tails will be idle on any given day. Lists, alerts and the speed warning should only carry aircraft that are actually flying this season.
+- **Route:** `/aircraft`
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** a new `lib/activity-status.ts`, `lib/registry.ts`, `app/(tabs)/aircraft/page.tsx`, `lib/push/dispatcher.ts`, `lib/speed-warning.ts`, `lib/history-digest.ts`
+- **Acceptance:** rule, pure and tested: on first discovery an aircraft is active only if it flew in the last 30 days; any flight makes it active at once; 60 days without a flight hides it from lists, alerts and the warning; its page stays, marked "last flew YYYY-MM-DD"; last-flight time comes from stored tracks (cached daily by the rollup cron); /aircraft has a "show inactive" toggle.
+- **Blog line:** The aircraft list now shows who is actually flying; tails idle for two months step back until they fly again.
+
+### B31 · State registry pipeline
+- **Why:** The Washington list (`data/wa-gov-aircraft.json`) was built by hand from the FAA registry. New states need the same, repeatably: every aircraft registered to a state patrol, sheriff or city police, with sources.
+- **Size:** M
+- **One weekly run:** yes
+- **Files:** a new `scripts/registry-state.ts`, `data/gov-aircraft/<st>.json`, `lib/seed.ts` (load per state), `lib/icao.ts`
+- **Acceptance:** `npm run registry:state -- --state OR` pulls FAA registry rows by owner name patterns, maps N-number to hex, classifies mission (police vs other) with a source per row, and writes the JSON; WA output matches today's list; docs on reviewing a new state.
+- **Blog line:** A repeatable way to list every patrol aircraft in a state, with a source on every row.
+
 ### B25 · Ride mode
 - **Why:** Rider question: "Does it have an audible notification you can hear in your coms?" Voice readback only speaks while the page is open. Ride mode makes that the default state for a ride: screen awake, voice on, glance view.
 - **Route:** `/glance`
@@ -129,6 +126,14 @@ out of scope until the web paths are measured.
 - **Acceptance:** webhook registered, /start and /stop work on prod, a test alert arrives; help text explains turning on Announce Notifications for Telegram on iPhone and Android Auto; p14 claim for the bot status endpoint.
 - **Blog line:** Want alerts read into your helmet with the phone locked: the Telegram bot does that now.
 
+### B30 · Multi-state spike: track by tail, not by circle
+- **Why:** Feeds are queried as one circle around Washington. Adding states by adding circles multiplies requests. Most feeds can be asked for a list of transponder codes instead, which scales with the registry, not the map.
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** a new `docs/adr/ADR-multi-state-tracking.md`, `scripts/feeds-check.ts`
+- **Acceptance:** for adsb.fi, adsb.lol and airplanes.live, record whether a multi-hex query exists, its batch size and rate limits (tested live, read-only); measure a tick for 60 and 300 hexes; ADR picks hex lists, circles or a mix (circle for discovery near the home region, hex list nationally) with the request budget per tick.
+- **Blog line:** Behind the scenes: the groundwork for tracking state patrol aircraft beyond Washington.
+
 ### B28 · Nightly archive reconcile
 - **Why:** Live feeds drop points (receiver gaps, timeouts), which split flights and leave holes. adsb.lol publishes a complete daily archive; merging it nightly makes history complete. It also rebuilt the record after the 2026-11-19 wipe.
 - **Size:** M
@@ -145,21 +150,62 @@ out of scope until the web paths are measured.
 - **Acceptance:** a script compares session counts from archive-complete days against the live-only period; gap and ground thresholds tuned so a fuel stop is two flights and a receiver gap is one; before and after counts in the PR.
 - **Blog line:** Flight counts are more honest now: a receiver gap no longer turns one flight into three.
 
-### B30 · Multi-state spike: track by tail, not by circle
-- **Why:** Feeds are queried as one circle around Washington. Adding states by adding circles multiplies requests. Most feeds can be asked for a list of transponder codes instead, which scales with the registry, not the map.
-- **Size:** S
+### B40 · Aircraft dossiers
+- **Why:** Every aircraft page should answer what people search: whose plane, based where, what type, how often it flies, with sources. It is the core of SEO and AI answers, and nobody else publishes it.
+- **Route:** `/plane/[tail]`
+- **Size:** M (pipeline), then S per batch
 - **One weekly run:** yes
-- **Files:** a new `docs/adr/ADR-multi-state-tracking.md`, `scripts/feeds-check.ts`
-- **Acceptance:** for adsb.fi, adsb.lol and airplanes.live, record whether a multi-hex query exists, its batch size and rate limits (tested live, read-only); measure a tick for 60 and 300 hexes; ADR picks hex lists, circles or a mix (circle for discovery near the home region, hex list nationally) with the request budget per tick.
-- **Blog line:** Behind the scenes: the groundwork for tracking state patrol aircraft beyond Washington.
+- **Blocked:** needs B31
+- **Files:** a new `data/dossiers/<tail>.json`, a new `scripts/dossier.ts`, `app/(tabs)/plane/[tail]/page.tsx`, `lib/seo/*`
+- **Acceptance:** per active aircraft: agency and unit, base airport derived from its own takeoffs, type and year, FAA registration date, flights and hours per month, usual roads and hours, two to five public facts each with a source URL; agency and aircraft facts only, never individual crew; JSON-LD on the page; a review checklist in `docs/`.
+- **Blog line:** Every aircraft page now tells its story: who flies it, from where, how often, with sources.
 
-### B31 · State registry pipeline
-- **Why:** The Washington list (`data/wa-gov-aircraft.json`) was built by hand from the FAA registry. New states need the same, repeatably: every aircraft registered to a state patrol, sheriff or city police, with sources.
+### B42 · Agency pages
+- **Why:** "Does [county] sheriff have a plane" and "does [state] patrol use aircraft for speeding" are real searches. One page per agency answers both.
+- **Route:** `/agency/[slug]`
 - **Size:** M
 - **One weekly run:** yes
-- **Files:** a new `scripts/registry-state.ts`, `data/gov-aircraft/<st>.json`, `lib/seed.ts` (load per state), `lib/icao.ts`
-- **Acceptance:** `npm run registry:state -- --state OR` pulls FAA registry rows by owner name patterns, maps N-number to hex, classifies mission (police vs other) with a source per row, and writes the JSON; WA output matches today's list; docs on reviewing a new state.
-- **Blog line:** A repeatable way to list every patrol aircraft in a state, with a source on every row.
+- **Blocked:** needs B31
+- **Files:** a new `app/(tabs)/agency/[slug]/page.tsx`, `lib/agencies.ts`, `lib/seo/*`, `app/sitemap.ts`
+- **Acceptance:** fleet (active first), activity per month, where it flies (from tracks), aerial speed enforcement status with source, drone program (B41); JSON-LD GovernmentOrganization; in the sitemap; linked from aircraft and state pages.
+- **Blog line:** Every agency we track has its own page: fleet, activity and sources.
+
+### B41 · Police drone programs by agency
+- **Why:** Agencies are adding drones fast, and riders and locals ask about them. Police drones rarely broadcast ADS-B and Remote ID is local radio, so there is no live feed, but which agencies run drone programs is public.
+- **Size:** M
+- **One weekly run:** yes
+- **Blocked:** needs B42 (where it shows)
+- **Files:** a new `data/drone-programs.json`, a new `scripts/drone-programs.ts`, agency pages (B42)
+- **Acceptance:** import EFF's Atlas of Surveillance drone entries (CC BY, attributed), add FAA waiver or authorization records and council or news sources where found; per agency: program yes/no, since when, drone-as-first-responder yes/no, source; shown on agency and state pages; no live drone positions claimed.
+- **Blog line:** Agency pages now say which departments fly drones, since when, and where that comes from.
+
+### B34a · Home state picker
+- **Size:** S
+- **One weekly run:** yes
+- **Acceptance:** a home-state choice (cookie, like the time-format pref) with Washington as default and the only populated option; region config table (code, name, centre, bounds, feeds) in one file; no behaviour change for existing riders; tests.
+- **Blog line:** You can tell the app your home state now. Washington is the only one lit, for now.
+
+### B34b · Feeds per region
+- **Size:** M
+- **One weekly run:** yes
+- **Acceptance:** each snapshot tick covers every enabled region within the B30 budget; the snapshot carries a region per aircraft; KV keys for non-WA regions go through regionPrefix; WA keys unchanged byte for byte; health reports per-region freshness.
+- **Blog line:** Behind the scenes: the feeds can now watch more than one state at a time.
+
+### B34c · Region-scoped history, hot zones, forecast and alerts
+- **Size:** M
+- **One weekly run:** yes
+- **Acceptance:** /, /radar, /forecast, /stats and push alerts read the rider's home state; a state switcher; WA unchanged; p14 claims for one non-WA region on a preview deploy.
+- **Blog line:** Each state gets its own sky: hot zones, history, forecast and alerts.
+
+### B43 · National map and every-state pages
+- **Why:** The goal is every state. Once tracking is by tail (B30) and registries are pulled (B31), each state can show its active aircraft without a hand-built region.
+- **Route:** `/states`
+- **Size:** M
+- **One weekly run:** yes
+- **Blocked:** needs B30, B31, B39
+- **Files:** a new `app/(tabs)/states/page.tsx`, `app/(tabs)/state/[st]/page.tsx`, `lib/seo/*`
+- **Acceptance:** a national map of active police aircraft; one page per state (active fleet, agencies, aerial enforcement status with sources, drone programs); a state with none says so plainly; sitemap and llms.txt updated.
+- **Blog line:** All 50 states are on the map now, each with its own page.
 
 ### B32 · Research check: confirm the next states
 - **Why:** The 2026-11 research (`docs/research/us-police-aircraft-2026-11.md`) is mostly secondary sources. Confirm before building: who flies, how often, and whether they broadcast.
@@ -185,24 +231,6 @@ out of scope until the web paths are measured.
 - **Acceptance:** see B34a to B34c.
 - **Blog line:** SmokySignal can hold more than one state now.
 
-### B34a · Home state picker
-- **Size:** S
-- **One weekly run:** yes
-- **Acceptance:** a home-state choice (cookie, like the time-format pref) with Washington as default and the only populated option; region config table (code, name, centre, bounds, feeds) in one file; no behaviour change for existing riders; tests.
-- **Blog line:** You can tell the app your home state now. Washington is the only one lit, for now.
-
-### B34b · Feeds per region
-- **Size:** M
-- **One weekly run:** yes
-- **Acceptance:** each snapshot tick covers every enabled region within the B30 budget; the snapshot carries a region per aircraft; KV keys for non-WA regions go through regionPrefix; WA keys unchanged byte for byte; health reports per-region freshness.
-- **Blog line:** Behind the scenes: the feeds can now watch more than one state at a time.
-
-### B34c · Region-scoped history, hot zones, forecast and alerts
-- **Size:** M
-- **One weekly run:** yes
-- **Acceptance:** /, /radar, /forecast, /stats and push alerts read the rider's home state; a state switcher; WA unchanged; p14 claims for one non-WA region on a preview deploy.
-- **Blog line:** Each state gets its own sky: hot zones, history, forecast and alerts.
-
 ### B35 · Oregon and Idaho launch
 - **Why:** Riders cross the Columbia and the Idaho line all season, and those fleets already show up as mutual aid.
 - **Route:** `/state/or`
@@ -211,15 +239,6 @@ out of scope until the web paths are measured.
 - **Blocked:** needs B31, B34a to B34c and the B32 check
 - **Acceptance:** OR and ID registries reviewed and loaded; both selectable; state landing pages with sourced facts; SEO and llms.txt updated; blog post.
 - **Blog line:** Oregon and Idaho are on the map now, with their own skies and alerts.
-
-### B36 · Next state launches (one per run)
-- **Why:** Ranked by the 2026-11 research: Colorado, Ohio, Missouri, Minnesota, Florida, then Pennsylvania, South Dakota and Nebraska. All run active aerial speed programs; the order is set by B32's numbers.
-- **Route:** `/state/<st>`
-- **Size:** M each
-- **One weekly run:** yes (one state per run)
-- **Blocked:** needs B35 shipped
-- **Acceptance:** per state: registry reviewed, region config, landing page, sitemap, llms.txt facts, IndexNow, blog paragraph; nothing launches with fewer than 3 confirmed police aircraft broadcasting.
-- **Blog line:** [State] is live: its patrol aircraft, hot roads and alerts.
 
 ### B37 · State landing pages and SEO
 - **Why:** Riders search "aircraft speed enforcement [state]". Each state should have a page that answers it with sourced facts.
@@ -230,6 +249,25 @@ out of scope until the web paths are measured.
 - **Files:** a new `app/(tabs)/state/[st]/page.tsx`, `lib/seo/*`, `app/sitemap.ts`
 - **Acceptance:** per state: status of aerial enforcement with sources, fleet table, where signs are posted when known, link to the live view; JSON-LD; in the sitemap; SEO audit with 0 P0.
 - **Blog line:** Every state we cover gets a plain page on how its patrol uses aircraft, with sources.
+
+### B44 · Monthly data report
+- **Why:** Journalists and aviation fans want numbers; a monthly post with sourced counts earns links and repeat visits.
+- **Route:** `/blog`
+- **Size:** S
+- **One weekly run:** yes
+- **Blocked:** needs B39
+- **Files:** a new `scripts/blog-monthly.ts`, `lib/blog-monthly.ts`
+- **Acceptance:** `npm run blog:monthly -- --month YYYY-MM` drafts a post: active aircraft by state, busiest aircraft and agencies, hours flown, new and newly idle tails, method note; draft only, a person edits before publishing.
+- **Blog line:** A monthly report: who flew, how much, and where, across every state we track.
+
+### B36 · Next state launches (one per run)
+- **Why:** Ranked by the 2026-11 research: Colorado, Ohio, Missouri, Minnesota, Florida, then Pennsylvania, South Dakota and Nebraska. All run active aerial speed programs; the order is set by B32's numbers.
+- **Route:** `/state/<st>`
+- **Size:** M each
+- **One weekly run:** yes (one state per run)
+- **Blocked:** needs B35 shipped
+- **Acceptance:** per state: registry reviewed, region config, landing page, sitemap, llms.txt facts, IndexNow, blog paragraph; nothing launches with fewer than 3 confirmed police aircraft broadcasting.
+- **Blog line:** [State] is live: its patrol aircraft, hot roads and alerts.
 
 ### B38 · Proximity tiers
 - **Why:** One threshold is either too chatty or too late. Two tiers (heads-up farther out, close nearer in) match how riders react.
