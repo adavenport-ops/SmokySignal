@@ -11,7 +11,7 @@ import { isAdminAuthed } from "@/lib/admin-auth";
 import { telegramConfig } from "@/lib/bots/env";
 import { tgCall } from "@/lib/bots/telegram-api";
 import { TELEGRAM_COMMAND_MENU } from "@/lib/bots/telegram-commands";
-import { TELEGRAM_DESCRIPTION, TELEGRAM_SHORT_DESCRIPTION } from "@/lib/bots/telegram-profile";
+import { TELEGRAM_DESCRIPTION, TELEGRAM_NAME, TELEGRAM_SHORT_DESCRIPTION } from "@/lib/bots/telegram-profile";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,7 +48,8 @@ export async function POST(req: Request) {
   const shortDescription = await tgCall(cfg.token, "setMyShortDescription", {
     short_description: TELEGRAM_SHORT_DESCRIPTION,
   });
-  const ok = hook.ok && commands.ok && description.ok && shortDescription.ok;
+  const name = await tgCall(cfg.token, "setMyName", { name: TELEGRAM_NAME });
+  const ok = hook.ok && commands.ok && description.ok && shortDescription.ok && name.ok;
   return NextResponse.json(
     {
       ok,
@@ -61,6 +62,7 @@ export async function POST(req: Request) {
       },
       set_my_description: { ok: description.ok, status: description.status },
       set_my_short_description: { ok: shortDescription.ok, status: shortDescription.status },
+      set_my_name: { ok: name.ok, status: name.status, description: name.description ?? null },
     },
     { status: ok ? 200 : 502 },
   );
