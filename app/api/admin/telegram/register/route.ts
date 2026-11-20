@@ -1,7 +1,8 @@
 // POST /api/admin/telegram/register: point the Telegram bot at this
 // deployment's webhook (setWebhook with the derived secret and
 // allowed_updates=["message"]) and publish the command menu
-// (setMyCommands). Admin cookie required (log in at /admin first).
+// (setMyCommands), and set the profile text (setMyDescription,
+// setMyShortDescription). Admin cookie required (log in at /admin first).
 // The webhook URL is this request's origin + /api/telegram/webhook, so
 // run it on the production host. See docs/bots.md.
 
@@ -10,6 +11,7 @@ import { isAdminAuthed } from "@/lib/admin-auth";
 import { telegramConfig } from "@/lib/bots/env";
 import { tgCall } from "@/lib/bots/telegram-api";
 import { TELEGRAM_COMMAND_MENU } from "@/lib/bots/telegram-commands";
+import { TELEGRAM_DESCRIPTION, TELEGRAM_SHORT_DESCRIPTION } from "@/lib/bots/telegram-profile";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,7 +40,15 @@ export async function POST(req: Request) {
   const commands = await tgCall(cfg.token, "setMyCommands", {
     commands: TELEGRAM_COMMAND_MENU,
   });
-  const ok = hook.ok && commands.ok;
+  // Profile text (BotFather's /setdescription and /setabouttext), kept in
+  // code so a token rotation or a fresh bot gets the same copy.
+  const description = await tgCall(cfg.token, "setMyDescription", {
+    description: TELEGRAM_DESCRIPTION,
+  });
+  const shortDescription = await tgCall(cfg.token, "setMyShortDescription", {
+    short_description: TELEGRAM_SHORT_DESCRIPTION,
+  });
+  const ok = hook.ok && commands.ok && description.ok && shortDescription.ok;
   return NextResponse.json(
     {
       ok,
@@ -49,6 +59,8 @@ export async function POST(req: Request) {
         status: commands.status,
         description: commands.description ?? null,
       },
+      set_my_description: { ok: description.ok, status: description.status },
+      set_my_short_description: { ok: shortDescription.ok, status: shortDescription.status },
     },
     { status: ok ? 200 : 502 },
   );
