@@ -13,7 +13,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { SS_TOKENS, TAP_PREFERRED } from "@/lib/tokens";
-import { isPushSupported, getPushPermission } from "@/lib/push/client";
+import { isPushSupported, getPushPermission, hasPushSubscription } from "@/lib/push/client";
+import { wasDisarmedByRider } from "@/lib/alerts-reset";
 import {
   currentBlockedAlertsHelp,
   hasTappedArm,
@@ -62,6 +63,25 @@ export function ArmAlertsCallout() {
       return;
     }
     let cancelled = false;
+
+    // Notifications allowed but maybe no subscription: AlertsResetBanner
+    // (B21) owns that rider, including its 30-day "Not now", so this card
+    // stays out of the way rather than asking twice. Waits for the
+    // subscription answer via getRegistration, which does not hang like
+    // ready. A rider who switched alerts off themselves gets this card.
+    const resetCandidate = getPushPermission() === "granted" && !wasDisarmedByRider();
+    if (resetCandidate) {
+      hasPushSubscription()
+        .then((has) => {
+          if (!cancelled) setState(has ? { kind: "armed" } : { kind: "hidden" });
+        })
+        .catch(() => {
+          if (!cancelled) setState({ kind: "available", recentlyDismissed: readDismissedRecently() });
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
 
     // Render the dismiss-aware "available" state IMMEDIATELY. Waiting on
     // navigator.serviceWorker.ready first left first-visit riders with

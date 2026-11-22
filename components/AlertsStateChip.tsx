@@ -11,6 +11,7 @@ import Link from "next/link";
 import { SS_TOKENS } from "@/lib/tokens";
 import { isPushSupported } from "@/lib/push/client";
 import { hasTappedArm } from "@/lib/alerts-ux";
+import { PUSH_CHANGED_EVENT } from "@/lib/alerts-reset";
 
 type State = "loading" | "unsupported" | "denied" | "available" | "armed";
 
@@ -29,16 +30,22 @@ export function AlertsStateChip() {
       return;
     }
     let cancelled = false;
-    navigator.serviceWorker.ready
-      .then((reg) => reg.pushManager.getSubscription())
-      .then((sub) => {
-        if (!cancelled) setState(sub ? "armed" : "available");
-      })
-      .catch(() => {
-        if (!cancelled) setState("available");
-      });
+    const check = () => {
+      navigator.serviceWorker.ready
+        .then((reg) => reg.pushManager.getSubscription())
+        .then((sub) => {
+          if (!cancelled) setState(sub ? "armed" : "available");
+        })
+        .catch(() => {
+          if (!cancelled) setState("available");
+        });
+    };
+    check();
+    // Re-read when this tab arms or disarms (e.g. the alerts-reset banner).
+    window.addEventListener(PUSH_CHANGED_EVENT, check);
     return () => {
       cancelled = true;
+      window.removeEventListener(PUSH_CHANGED_EVENT, check);
     };
   }, []);
 

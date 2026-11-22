@@ -3,6 +3,11 @@
 // from this file — keep the SW + Push API surface client-only.
 
 import type { AlertPrefs } from "./types";
+import {
+  announcePushChanged,
+  clearDisarmedByRider,
+  markDisarmedByRider,
+} from "../alerts-reset";
 
 export type SubscribeResult =
   | { ok: true; id: string; sub: PushSubscription }
@@ -107,6 +112,8 @@ export async function subscribePush(
       return { ok: false, reason: "error", error: await safeText(r) };
     }
     const { id } = (await r.json()) as { id: string };
+    clearDisarmedByRider();
+    announcePushChanged();
     return { ok: true, id, sub };
   } catch (error) {
     return { ok: false, reason: "error", error };
@@ -115,6 +122,9 @@ export async function subscribePush(
 
 export async function unsubscribePush(): Promise<void> {
   if (!isPushSupported()) return;
+  // The rider chose this: the alerts-reset nudge (B21) must not call it an
+  // update later.
+  markDisarmedByRider();
   try {
     const reg = await navigator.serviceWorker.getRegistration();
     if (!reg) return;
@@ -131,9 +141,20 @@ export async function unsubscribePush(): Promise<void> {
     }).catch(() => {
       /* best-effort */
     });
+    announcePushChanged();
   } catch {
     /* silent — UI will reflect from getSubscription() polling */
   }
+}
+
+/** Whether this browser holds a push subscription for the site. Uses
+ *  getRegistration, never serviceWorker.ready, which can hang on a first
+ *  visit (PR #39). Throws only if the browser APIs do. */
+export async function hasPushSubscription(): Promise<boolean> {
+  if (!isPushSupported()) return false;
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (!reg?.pushManager) return false;
+  return (await reg.pushManager.getSubscription()) != null;
 }
 
 export async function getCurrentSubscriptionId(): Promise<string | null> {
