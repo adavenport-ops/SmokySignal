@@ -27,7 +27,15 @@ exclamation marks, none of the voice-gate words).
 
 ## This week
 
-_Nothing picked yet._
+### B20 · Speed warning range setting
+- **Why:** Rider feedback (2026-11-19): the warning fired with the plane "still miles away". Let riders pick how close counts.
+- **Route:** `/settings`
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** `lib/speed-warning.ts`, `lib/speed-warning-prefs.ts`, `components/SpeedWarning.tsx`, `components/SpeedWarningSettings.tsx`
+- **Acceptance:** Settings › Speed warning offers 2, 3 or 5 nm (default 5, shown in miles too); evaluateWarning uses the pick; node:test covers each radius and the stored-value guard.
+- **Blog line:** The speed warning now lets you choose how close the bird has to be before it speaks up.
+- **Picked:** 2026-11-21 (Saturday run)
 
 ## Roadmap
 
@@ -37,15 +45,6 @@ unblocked one-run items remain below, a run expands the next P-items for the
 current month into full items here and ranks them.
 
 ## Ranked
-
-### B20 · Speed warning range setting
-- **Why:** Rider feedback (2026-11-19): the warning fired with the plane "still miles away". Let riders pick how close counts.
-- **Route:** `/settings`
-- **Size:** S
-- **One weekly run:** yes
-- **Files:** `lib/speed-warning.ts`, `lib/speed-warning-prefs.ts`, `components/SpeedWarning.tsx`, `components/SpeedWarningSettings.tsx`
-- **Acceptance:** Settings › Speed warning offers 2, 3 or 5 nm (default 5, shown in miles too); evaluateWarning uses the pick; node:test covers each radius and the stored-value guard.
-- **Blog line:** The speed warning now lets you choose how close the bird has to be before it speaks up.
 
 ### B21 · Alerts-reset nudge
 - **Why:** The 2026-11-19 store overwrite dropped every push subscription. /api/push/resync brings back browsers that still hold one; riders whose browser dropped it too see nothing and never know alerts stopped.

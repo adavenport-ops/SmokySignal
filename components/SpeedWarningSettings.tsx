@@ -9,8 +9,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { SS_TOKENS, TAP_MIN } from "@/lib/tokens";
 import {
+  BIRD_RADIUS_CHOICES_NM,
   MAX_RIDER_LIMIT_MPH,
   MIN_RIDER_LIMIT_MPH,
+  birdRadiusLabel,
   clampRiderLimitMph,
   muteMinutesLeft,
 } from "@/lib/speed-warning";
@@ -18,6 +20,7 @@ import {
   setSpeedLimitMph,
   setSpeedWarningEnabled,
   setSpeedWarningMuteUntil,
+  setSpeedWarningRadiusNm,
   setUseCorridorDefaults,
 } from "@/lib/speed-warning-prefs";
 import { useSpeedWarningPrefs } from "./SpeedWarning";
@@ -140,8 +143,8 @@ export function SpeedWarningSettings() {
       </div>
 
       <p style={sub}>
-        Full screen EASE OFF when you are over your limit, inside a hot zone, with Smokey up
-        within 5 nm. Runs on Flights (Now) and Handlebar mode. Clears on its own.{" "}
+        EASE OFF when you are over your limit, inside a hot zone, with Smokey up within{" "}
+        {prefs.birdRadiusNm} nm. Runs on Flights (Now) and Handlebar mode. Clears on its own.{" "}
         <Link href="/help#speed-warning" style={{ color: SS_TOKENS.fg0 }}>
           How it works
         </Link>
@@ -241,6 +244,70 @@ export function SpeedWarningSettings() {
           </span>
         </span>
       </label>
+
+      <div
+        role="group"
+        aria-labelledby="ss-speed-radius-label"
+        data-testid="speed-warning-radius"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          borderTop: `.5px solid ${SS_TOKENS.hairline2}`,
+          paddingTop: 12,
+        }}
+      >
+        <div>
+          <div
+            id="ss-speed-radius-label"
+            style={{ fontSize: 14, fontWeight: 600, color: SS_TOKENS.fg0 }}
+          >
+            How close the bird must be
+          </div>
+          <div style={sub}>
+            Smokey has to be this close before the warning speaks up. Default 5 nm.
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {BIRD_RADIUS_CHOICES_NM.map((nm) => {
+            const picked = prefs.birdRadiusNm === nm;
+            const label = birdRadiusLabel(nm);
+            return (
+              <button
+                key={nm}
+                type="button"
+                aria-pressed={picked}
+                aria-label={`${label.nm}, ${label.mi}`}
+                data-testid={`speed-warning-radius-${nm}`}
+                onClick={() => setSpeedWarningRadiusNm(nm)}
+                className="ss-mono"
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  minHeight: TAP_MIN,
+                  padding: "6px 8px",
+                  borderRadius: 10,
+                  border: `.5px solid ${picked ? SS_TOKENS.cta : SS_TOKENS.hairline2}`,
+                  background: picked ? SS_TOKENS.cta : "transparent",
+                  color: picked ? SS_TOKENS.ctaInk : SS_TOKENS.fg0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 2,
+                  cursor: "pointer",
+                  touchAction: "manipulation",
+                }}
+              >
+                <span style={{ fontSize: 14, fontWeight: 700 }}>{label.nm}</span>
+                <span style={{ fontSize: 12, color: picked ? SS_TOKENS.ctaInk : SS_TOKENS.fg1 }}>
+                  {label.mi}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {minsLeft > 0 && (
         <div

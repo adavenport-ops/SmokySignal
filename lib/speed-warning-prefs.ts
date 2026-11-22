@@ -6,18 +6,27 @@
 //   ss_speed_limit_mph          rider's limit, whole mph (default 60)
 //   ss_speed_limit_corridor     "1" = use corridor defaults (default off)
 //   ss_speed_warning_mute_until epoch ms; "Mute 10 min"
+//   ss_speed_warning_radius_nm  how close the bird must be: 2, 3 or 5 nm
+//                               (default 5)
 //
 // Every write dispatches SPEED_WARNING_PREFS_EVENT so a mounted
 // <SpeedWarning/> picks the change up without a reload.
 
 "use client";
 
-import { DEFAULT_RIDER_LIMIT_MPH, clampRiderLimitMph } from "./speed-warning";
+import {
+  BIRD_RADIUS_NM,
+  DEFAULT_RIDER_LIMIT_MPH,
+  clampBirdRadiusNm,
+  clampRiderLimitMph,
+  type BirdRadiusNm,
+} from "./speed-warning";
 
 export const SPEED_WARNING_ENABLED_KEY = "ss_speed_warning";
 export const SPEED_LIMIT_KEY = "ss_speed_limit_mph";
 export const SPEED_LIMIT_CORRIDOR_KEY = "ss_speed_limit_corridor";
 export const SPEED_WARNING_MUTE_KEY = "ss_speed_warning_mute_until";
+export const SPEED_WARNING_RADIUS_KEY = "ss_speed_warning_radius_nm";
 export const SPEED_WARNING_PREFS_EVENT = "ss:speed-warning-prefs";
 
 export type SpeedWarningPrefs = {
@@ -25,6 +34,7 @@ export type SpeedWarningPrefs = {
   limitMph: number;
   useCorridorDefaults: boolean;
   muteUntil: number | null;
+  birdRadiusNm: BirdRadiusNm;
 };
 
 export const DEFAULT_SPEED_WARNING_PREFS: SpeedWarningPrefs = {
@@ -32,6 +42,7 @@ export const DEFAULT_SPEED_WARNING_PREFS: SpeedWarningPrefs = {
   limitMph: DEFAULT_RIDER_LIMIT_MPH,
   useCorridorDefaults: false,
   muteUntil: null,
+  birdRadiusNm: BIRD_RADIUS_NM,
 };
 
 function read(key: string): string | null {
@@ -65,6 +76,7 @@ export function readSpeedWarningPrefs(): SpeedWarningPrefs {
     limitMph: rawLimit == null ? DEFAULT_RIDER_LIMIT_MPH : clampRiderLimitMph(rawLimit),
     useCorridorDefaults: read(SPEED_LIMIT_CORRIDOR_KEY) === "1",
     muteUntil: Number.isFinite(rawMute) && rawMute > 0 ? rawMute : null,
+    birdRadiusNm: clampBirdRadiusNm(read(SPEED_WARNING_RADIUS_KEY)),
   };
 }
 
@@ -82,4 +94,8 @@ export function setUseCorridorDefaults(on: boolean): void {
 
 export function setSpeedWarningMuteUntil(until: number | null): void {
   write(SPEED_WARNING_MUTE_KEY, until == null ? null : String(Math.round(until)));
+}
+
+export function setSpeedWarningRadiusNm(nm: number): void {
+  write(SPEED_WARNING_RADIUS_KEY, String(clampBirdRadiusNm(nm)));
 }

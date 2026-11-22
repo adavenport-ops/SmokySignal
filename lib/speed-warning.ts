@@ -10,7 +10,8 @@
 //   1. Rider speed > limit by more than SPEED_TOLERANCE_MPH (GPS jitter)
 //   2. Rider is inside a hot zone (cell center within riderZoneRadiusNm)
 //   3. A police-mission aircraft (countsAsSmokey) is airborne within
-//      `birdThresholdNm` nautical miles of the rider
+//      `birdThresholdNm` nautical miles of the rider (the rider's pick
+//      in /settings: 2, 3 or 5 nm, default 5)
 //
 // All three are required because any one alone is too noisy:
 //   - Speeding alone fires constantly on freeways
@@ -30,8 +31,22 @@ import { corridorDefaultLimit } from "./corridor";
 
 // GPS speed jitters by ~2 mph at highway speeds. Don't fire on +1.
 export const SPEED_TOLERANCE_MPH = 2;
-/** "Bird nearby" radius, nm. */
+/** "Bird nearby" radius, nm. The default; riders can pick a closer one. */
 export const BIRD_RADIUS_NM = 5;
+/** Radius picks offered in /settings, nm (B20). */
+export const BIRD_RADIUS_CHOICES_NM = [2, 3, 5] as const;
+export type BirdRadiusNm = (typeof BIRD_RADIUS_CHOICES_NM)[number];
+
+/** A stored or tapped radius to one of the offered picks; anything else
+ *  (missing, garbage, an old or hand-edited value) reads as the default. */
+export function clampBirdRadiusNm(v: unknown): BirdRadiusNm {
+  if (typeof v !== "number" && typeof v !== "string") return BIRD_RADIUS_NM;
+  if (typeof v === "string" && v.trim() === "") return BIRD_RADIUS_NM;
+  const n = Number(v);
+  return (BIRD_RADIUS_CHOICES_NM as readonly number[]).includes(n)
+    ? (n as BirdRadiusNm)
+    : BIRD_RADIUS_NM;
+}
 /** "In a hot zone" radius around a cell center, nm. */
 export const ZONE_RADIUS_NM = 0.5;
 
@@ -195,13 +210,13 @@ export const INITIAL_WARN_STATE: WarnState = {
 };
 
 export type WarnEvent =
-  | { kind: "fix"; now: number; result: SpeedWarningResult }
-  | { kind: "fleet"; now: number; result: SpeedWarningResult }
+  | { kind: "fix"; now: number; result: SpeedWarningResult; birdRadiusNm?: number }
+  | { kind: "fleet"; now: number; result: SpeedWarningResult; birdRadiusNm?: number }
   | { kind: "clock"; now: number }
   | { kind: "reset" };
 
-function birdInRange(r: SpeedWarningResult): boolean {
-  return r.nearestBirdMi != null && r.nearestBirdMi <= BIRD_RADIUS_NM;
+function birdInRange(r: SpeedWarningResult, radiusNm: number): boolean {
+  return r.nearestBirdMi != null && r.nearestBirdMi <= radiusNm;
 }
 
 function detailOf(r: SpeedWarningResult): WarnDetail {
@@ -228,10 +243,12 @@ export function stepWarning(s: WarnState, ev: WarnEvent): WarnState {
     return s;
   }
 
+  const radiusNm = ev.birdRadiusNm ?? BIRD_RADIUS_NM;
+
   if (ev.kind === "fleet") {
     if (s.phase === "idle") return s;
     // The bird left the radius (or landed): clear at once.
-    if (!birdInRange(ev.result)) return idleFrom(s.lastFixAt);
+    if (!birdInRange(ev.result, radiusNm)) return idleFrom(s.lastFixAt);
     if (s.phase === "showing" && ev.result.wouldFire) {
       return { ...s, detail: detailOf(ev.result) };
     }
@@ -253,7 +270,7 @@ export function stepWarning(s: WarnState, ev: WarnEvent): WarnState {
   }
   // Not positive. Arming resets; showing clears at once if the bird is
   // out of range, otherwise waits out CLEAR_AFTER_MS.
-  if (s.phase !== "showing" || !birdInRange(r)) return idleFrom(ev.now);
+  if (s.phase !== "showing" || !birdInRange(r, radiusNm)) return idleFrom(ev.now);
   const belowSince = s.belowSince ?? ev.now;
   if (ev.now - belowSince >= CLEAR_AFTER_MS) return idleFrom(ev.now);
   return { ...s, streak: 0, belowSince, lastFixAt: ev.now };
@@ -263,16 +280,19 @@ export function stepWarning(s: WarnState, ev: WarnEvent): WarnState {
  * One evaluated tick: evaluateWarning() then stepWarning(). `input` null
  * means "no usable fix" (the device reported no speed). It counts as a
  * non-positive fix, so a showing warning starts its clear timer rather
- * than vanishing on one dropped reading.
+ * than vanishing on one dropped reading. `birdRadiusNm` is the rider's
+ * pick (default 5 nm); it overrides `input.birdThresholdNm` so the trigger
+ * and the clear rule always use the same radius.
  */
 export function runWarningTick(
   s: WarnState,
   kind: "fix" | "fleet",
   input: SpeedWarningInput | null,
   now: number,
+  birdRadiusNm: number = input?.birdThresholdNm ?? BIRD_RADIUS_NM,
 ): WarnState {
   const result: SpeedWarningResult = input
-    ? evaluateWarning(input)
+    ? evaluateWarning({ ...input, birdThresholdNm: birdRadiusNm })
     : {
         wouldFire: false,
         reason: "no speed",
@@ -280,7 +300,7 @@ export function runWarningTick(
         nearestZoneMi: null,
         nearestBirdMi: s.detail?.birdNm ?? null,
       };
-  return stepWarning(s, { kind, now, result });
+  return stepWarning(s, { kind, now, result, birdRadiusNm });
 }
 
 // ---------------------------------------------------------------------
@@ -310,6 +330,11 @@ export function muteMinutesLeft(muteUntil: number | null | undefined, now: numbe
 // ---------------------------------------------------------------------
 
 export const NM_TO_MI = 1.150779;
+
+/** Settings label for a radius pick: "3 nm · 3.5 mi". */
+export function birdRadiusLabel(nm: number): { nm: string; mi: string } {
+  return { nm: `${nm} nm`, mi: `${(Math.round(nm * NM_TO_MI * 10) / 10).toFixed(1)} mi` };
+}
 export type WarnUnits = "mi" | "nm";
 
 export type WarningCopy = {

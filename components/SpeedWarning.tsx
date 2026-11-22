@@ -2,7 +2,8 @@
 
 // Speed warning (N1b). Full-screen "EASE OFF" when the rider is over
 // their limit, inside a hot zone, with a police-mission bird airborne
-// within 5 nm. Mounted on /flights (Now) and /glance only.
+// within the rider's radius (2, 3 or 5 nm, default 5). Mounted on
+// /flights (Now) and /glance only.
 //
 // Runs only when ALL of these hold:
 //   - the server kill switch is on (lib/flags.ts, /admin)
@@ -98,13 +99,13 @@ export function SpeedWarning({ aircraft, available = true, variant = "banner" }:
 }
 
 type Action =
-  | { type: "fix"; input: SpeedWarningInput | null; now: number }
-  | { type: "fleet"; input: SpeedWarningInput | null; now: number }
+  | { type: "fix"; input: SpeedWarningInput | null; now: number; radiusNm: number }
+  | { type: "fleet"; input: SpeedWarningInput | null; now: number; radiusNm: number }
   | { type: "clock"; now: number };
 
 function reducer(state: WarnState, a: Action): WarnState {
   if (a.type === "clock") return stepWarning(state, { kind: "clock", now: a.now });
-  return runWarningTick(state, a.type, a.input, a.now);
+  return runWarningTick(state, a.type, a.input, a.now, a.radiusNm);
 }
 
 function buildInput(
@@ -129,6 +130,7 @@ function buildInput(
       postedLimitMph: limit.limitMph,
       hotZones: zones,
       airborneAircraft: aircraft,
+      birdThresholdNm: prefs.birdRadiusNm,
     },
     limit,
   };
@@ -236,7 +238,7 @@ function SpeedWarningActive({
       ctx.current.prefs,
     );
     setLimit(l);
-    dispatch({ type: "fix", input, now: Date.now() });
+    dispatch({ type: "fix", input, now: Date.now(), radiusNm: ctx.current.prefs.birdRadiusNm });
   });
 
   // Fleet or zone refresh: re-check against the last fix. Can clear the
@@ -245,7 +247,7 @@ function SpeedWarningActive({
     const fix = lastFix.current;
     if (!fix) return;
     const { input } = buildInput(fix, aircraft, zones, prefs);
-    dispatch({ type: "fleet", input, now: Date.now() });
+    dispatch({ type: "fleet", input, now: Date.now(), radiusNm: prefs.birdRadiusNm });
   }, [aircraft, zones, prefs]);
 
   useEffect(() => {

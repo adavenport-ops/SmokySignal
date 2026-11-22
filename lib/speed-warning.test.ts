@@ -9,6 +9,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  BIRD_RADIUS_CHOICES_NM,
   BIRD_RADIUS_NM,
   CLEAR_AFTER_MS,
   DEFAULT_RIDER_LIMIT_MPH,
@@ -17,6 +18,8 @@ import {
   MIN_RIDER_LIMIT_MPH,
   MUTE_MS,
   SHOW_AFTER_POSITIVE_TICKS,
+  birdRadiusLabel,
+  clampBirdRadiusNm,
   clampRiderLimitMph,
   evaluateWarning,
   formatWarning,
@@ -405,4 +408,92 @@ test("the warning path takes no fetch: no network API named in its source", () =
     assert.equal(typeof fn, "function");
     assert.ok(!/\bfetch\b/.test(String(fn)), fn.name);
   }
+});
+
+// --- rider radius (B20) -------------------------------------------------
+
+test("radius picks are 2, 3 and 5 nm; the default is 5", () => {
+  assert.deepEqual([...BIRD_RADIUS_CHOICES_NM], [2, 3, 5]);
+  assert.equal(BIRD_RADIUS_NM, 5);
+});
+
+for (const nm of BIRD_RADIUS_CHOICES_NM) {
+  test(`radius ${nm} nm: fires just inside, not just outside`, () => {
+    const inside = evaluateWarning(input({ airborneAircraft: [birdAt(nm - 0.2)], birdThresholdNm: nm }));
+    const outside = evaluateWarning(input({ airborneAircraft: [birdAt(nm + 0.2)], birdThresholdNm: nm }));
+    assert.equal(inside.wouldFire, true);
+    assert.equal(outside.wouldFire, false);
+    assert.match(outside.reason, /no bird nearby/);
+  });
+
+  test(`radius ${nm} nm: the tick never shows for a bird past it, shows for one inside`, () => {
+    const far = input({ airborneAircraft: [birdAt(nm + 0.5)] });
+    let s = INITIAL_WARN_STATE;
+    for (let i = 0; i < 5; i++) s = runWarningTick(s, "fix", far, T0 + i * 1000, nm);
+    assert.equal(s.phase, "idle");
+    const near = input({ airborneAircraft: [birdAt(nm - 0.5)] });
+    s = INITIAL_WARN_STATE;
+    for (let i = 0; i < SHOW_AFTER_POSITIVE_TICKS; i++) s = runWarningTick(s, "fix", near, T0 + i * 1000, nm);
+    assert.equal(s.phase, "showing");
+  });
+}
+
+test("a 3 nm pick ignores a bird at 4 nm that the 5 nm default would warn on", () => {
+  const at4 = input({ airborneAircraft: [birdAt(4)] });
+  let def = INITIAL_WARN_STATE;
+  let three = INITIAL_WARN_STATE;
+  for (let i = 0; i < 3; i++) {
+    def = runWarningTick(def, "fix", at4, T0 + i * 1000);
+    three = runWarningTick(three, "fix", at4, T0 + i * 1000, 3);
+  }
+  assert.equal(def.phase, "showing");
+  assert.equal(three.phase, "idle");
+});
+
+test("the radius pick overrides a stale birdThresholdNm on the input", () => {
+  const at4 = input({ airborneAircraft: [birdAt(4)], birdThresholdNm: 5 });
+  let s = INITIAL_WARN_STATE;
+  for (let i = 0; i < 3; i++) s = runWarningTick(s, "fix", at4, T0 + i * 1000, 2);
+  assert.equal(s.phase, "idle");
+});
+
+test("a showing warning clears at once when the bird leaves the rider's radius", () => {
+  const near = input({ airborneAircraft: [birdAt(1.5)] });
+  let s = INITIAL_WARN_STATE;
+  for (let i = 0; i < SHOW_AFTER_POSITIVE_TICKS; i++) s = runWarningTick(s, "fix", near, T0 + i * 1000, 2);
+  assert.equal(s.phase, "showing");
+  // 2.5 nm: inside the 5 nm default, outside the 2 nm pick.
+  const out = input({ airborneAircraft: [birdAt(2.5)] });
+  assert.equal(runWarningTick(s, "fleet", out, T0 + 3000, 2).phase, "idle");
+  assert.equal(runWarningTick(s, "fix", out, T0 + 3000, 2).phase, "idle");
+  // The same move under the 5 nm default keeps it up (fleet) or starts
+  // the 10 s grace (fix, bird still in range).
+  assert.equal(runWarningTick(s, "fleet", out, T0 + 3000).phase, "showing");
+});
+
+test("a dropped speed reading keeps the rider's radius for the clear rule", () => {
+  const near = input({ airborneAircraft: [birdAt(1.5)] });
+  let s = INITIAL_WARN_STATE;
+  for (let i = 0; i < SHOW_AFTER_POSITIVE_TICKS; i++) s = runWarningTick(s, "fix", near, T0 + i * 1000, 2);
+  // No speed: last known bird distance (1.5 nm) is inside 2 nm, so wait.
+  const held = runWarningTick(s, "fix", null, T0 + 3000, 2);
+  assert.equal(held.phase, "showing");
+  assert.ok(held.belowSince != null);
+});
+
+test("stored radius guard: only 2, 3 or 5 survive; anything else reads 5", () => {
+  assert.equal(clampBirdRadiusNm(2), 2);
+  assert.equal(clampBirdRadiusNm(3), 3);
+  assert.equal(clampBirdRadiusNm(5), 5);
+  assert.equal(clampBirdRadiusNm("2"), 2);
+  assert.equal(clampBirdRadiusNm("3"), 3);
+  for (const bad of [null, undefined, "", " ", "abc", "4", 4, 0, -2, 1, 10, 2.5, NaN, Infinity, {}, [], true]) {
+    assert.equal(clampBirdRadiusNm(bad), 5, `guard on ${JSON.stringify(bad)}`);
+  }
+});
+
+test("radius labels read nm with statute miles beside", () => {
+  assert.deepEqual(birdRadiusLabel(2), { nm: "2 nm", mi: "2.3 mi" });
+  assert.deepEqual(birdRadiusLabel(3), { nm: "3 nm", mi: "3.5 mi" });
+  assert.deepEqual(birdRadiusLabel(5), { nm: "5 nm", mi: "5.8 mi" });
 });
