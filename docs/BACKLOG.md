@@ -27,15 +27,7 @@ exclamation marks, none of the voice-gate words).
 
 ## This week
 
-### B21 · Alerts-reset nudge
-- **Why:** The 2026-11-19 store overwrite dropped every push subscription. /api/push/resync brings back browsers that still hold one; riders whose browser dropped it too see nothing and never know alerts stopped.
-- **Route:** `/`
-- **Size:** S
-- **One weekly run:** yes
-- **Files:** `components/SwRegistrar.tsx`, `components/AlertsStateChip.tsx`, a new `components/AlertsResetBanner.tsx`
-- **Acceptance:** when Notification.permission is "granted" but the browser has no push subscription, home shows one dismissible line, "Alerts were switched off by an update. Turn them back on", and one tap re-subscribes; never shown when permission is default or denied; dismissal remembered 30 days.
-- **Blog line:** If an update switched your alerts off, the app now says so and puts them back in one tap.
-- **Picked:** 2026-11-21 (Saturday run)
+_Nothing picked yet._
 
 ## Roadmap
 
@@ -432,6 +424,7 @@ current month into full items here and ranks them.
 ## Shipped
 
 <!-- The weekly job prepends one line per shipped item: - YYYY-MM-DD · B0x · Title · #PR -->
+- 2026-11-21 · B21 · Alerts-reset nudge · #200
 - 2026-11-21 · B20 · Speed warning range setting · #199
 - 2026-11-19 · B19 · Desktop layout for plane and flight pages · #186
 - 2026-11-19 · B09 · Neighbourhood pages · #183
