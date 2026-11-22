@@ -21,6 +21,7 @@ import { Tooltip } from "./Tooltip";
 import { Logo } from "./brand/Logo";
 import { FreshnessLabel } from "./FreshnessLabel";
 import { ArmAlertsCallout } from "./ArmAlertsCallout";
+import { AlertsResetBanner } from "./AlertsResetBanner";
 import { AlertsStateChip } from "./AlertsStateChip";
 import { IOSInstallPrompt } from "./IOSInstallPrompt";
 import { HomeMiniMap } from "./HomeMiniMap";
@@ -245,6 +246,7 @@ export function Glanceable({
           {latestActivity && <ActivityStrip latest={latestActivity} />}
 
           <IOSInstallPrompt />
+          <AlertsResetBanner />
           <ArmAlertsCallout />
 
           {others.length > 0 && <Others others={others} rider={rider} />}

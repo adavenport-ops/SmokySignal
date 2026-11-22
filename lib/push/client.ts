@@ -3,6 +3,12 @@
 // from this file — keep the SW + Push API surface client-only.
 
 import type { AlertPrefs } from "./types";
+import {
+  announcePushChanged,
+  clearDisarmedByRider,
+  markArmFailed,
+  markDisarmedByRider,
+} from "../alerts-reset";
 
 export type SubscribeResult =
   | { ok: true; id: string; sub: PushSubscription }
@@ -75,10 +81,16 @@ export async function subscribePush(
   const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   if (!vapid) return { ok: false, reason: "vapid_missing" };
 
+  // Once permission is granted, a failure below leaves "granted with no
+  // subscription". Record it so the alerts-reset nudge (B21) does not later
+  // blame an update for the rider's own failed Arm.
+  let granted = false;
+  let accepted = false; // the server stored the subscription
   try {
     const reg = await ensureRegistration();
     const perm = await Notification.requestPermission();
     if (perm !== "granted") return { ok: false, reason: "denied" };
+    granted = true;
 
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
@@ -104,17 +116,25 @@ export async function subscribePush(
       } catch {
         /* best-effort */
       }
+      markArmFailed();
       return { ok: false, reason: "error", error: await safeText(r) };
     }
+    accepted = true;
+    clearDisarmedByRider();
+    announcePushChanged();
     const { id } = (await r.json()) as { id: string };
     return { ok: true, id, sub };
   } catch (error) {
+    if (granted && !accepted) markArmFailed();
     return { ok: false, reason: "error", error };
   }
 }
 
 export async function unsubscribePush(): Promise<void> {
   if (!isPushSupported()) return;
+  // The rider chose this: the alerts-reset nudge (B21) must not call it an
+  // update later.
+  markDisarmedByRider();
   try {
     const reg = await navigator.serviceWorker.getRegistration();
     if (!reg) return;
@@ -131,9 +151,20 @@ export async function unsubscribePush(): Promise<void> {
     }).catch(() => {
       /* best-effort */
     });
+    announcePushChanged();
   } catch {
     /* silent — UI will reflect from getSubscription() polling */
   }
+}
+
+/** Whether this browser holds a push subscription for the site. Uses
+ *  getRegistration, never serviceWorker.ready, which can hang on a first
+ *  visit (PR #39). Throws only if the browser APIs do. */
+export async function hasPushSubscription(): Promise<boolean> {
+  if (!isPushSupported()) return false;
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (!reg?.pushManager) return false;
+  return (await reg.pushManager.getSubscription()) != null;
 }
 
 export async function getCurrentSubscriptionId(): Promise<string | null> {

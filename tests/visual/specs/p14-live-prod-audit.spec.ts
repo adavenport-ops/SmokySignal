@@ -3537,4 +3537,92 @@ test.describe("p14 live-prod audit · towns + IndexNow", () => {
     });
     expect(pass).toBe(true);
   });
+
+  test("94. Home: alerts-reset line only when notifications are allowed without a subscription (B21)", async ({
+    browser,
+  }) => {
+    // Never taps "Turn them back on": on prod that would write a push
+    // subscription. Checks presence, absence and the 30-day "Not now".
+    const plain = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const granted = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    try {
+      await granted.grantPermissions(["notifications"]);
+      const p1 = await plain.newPage();
+      await p1.goto("/", { waitUntil: "networkidle" });
+      await p1.waitForTimeout(1500);
+      const absentByDefault = (await p1.locator('[data-testid="alerts-reset-banner"]').count()) === 0;
+
+      const p2 = await granted.newPage();
+      await p2.goto("/", { waitUntil: "networkidle" });
+      // chrome-headless-shell reports "denied" whatever is granted; full
+      // Chromium honours grantPermissions. No grant, no claim.
+      const perm = await p2.evaluate(() =>
+        typeof Notification === "undefined" ? "none" : Notification.permission,
+      );
+      if (perm !== "granted") {
+        record({
+          claim: "Home alerts-reset line (B21)",
+          category: "indeterminate",
+          pass: true,
+          evidence: `indeterminate (this browser cannot grant notifications: ${perm}) · absentByDefault=${absentByDefault}`,
+        });
+        expect(absentByDefault).toBe(true);
+        return;
+      }
+      const banner = p2.locator('[data-testid="alerts-reset-banner"]');
+      // iPhone outside the home-screen app cannot hold push at all, so the
+      // line must stay away there (IOSInstallPrompt owns that rider).
+      const iosBrowser = await p2.evaluate(
+        () =>
+          /iPhone|iPad|iPod/.test(navigator.userAgent) &&
+          !window.matchMedia("(display-mode: standalone)").matches,
+      );
+      if (iosBrowser) {
+        await p2.waitForTimeout(2500);
+        const absentOnIos = (await banner.count()) === 0;
+        const pass = absentByDefault && absentOnIos;
+        record({
+          claim: "Home alerts-reset line (B21) stays away on iPhone outside the home-screen app",
+          category: pass ? "working_as_designed" : "polish_needed",
+          pass,
+          evidence: `absentByDefault=${absentByDefault} absentOnIosBrowser=${absentOnIos}`,
+        });
+        expect(pass).toBe(true);
+        return;
+      }
+      const shown = await banner
+        .waitFor({ state: "visible", timeout: 10_000 })
+        .then(() => true)
+        .catch(() => false);
+      const text = shown ? await banner.innerText() : "";
+      const btn = shown ? await p2.locator('[data-testid="alerts-reset-turn-on"]').boundingBox() : null;
+      const screenshot = await shot(p2, "94-home-alerts-reset");
+      let dismissHolds = false;
+      if (shown) {
+        await p2.locator('[data-testid="alerts-reset-dismiss"]').click();
+        await p2.reload({ waitUntil: "load" });
+        await p2.waitForTimeout(2500);
+        dismissHolds = (await p2.locator('[data-testid="alerts-reset-banner"]').count()) === 0;
+      }
+      const pass =
+        absentByDefault &&
+        shown &&
+        /Alerts were switched off by an update\./.test(text) &&
+        /Turn them back on/.test(text) &&
+        !!btn && btn.height >= 44 &&
+        dismissHolds &&
+        !/!(\s|$)/.test(text);
+      record({
+        claim: "Home shows 'Alerts were switched off by an update. Turn them back on' only when notifications are granted with no subscription, and Not now holds across a reload",
+        category: pass ? "working_as_designed" : "unshipped",
+        pass,
+        evidence: `absentByDefault=${absentByDefault} shown=${shown} btnH=${btn?.height ?? "-"} dismissHolds=${dismissHolds} text=${JSON.stringify(text.slice(0, 120))}`,
+        screenshot,
+      });
+      expect(pass).toBe(true);
+    } finally {
+      await plain.close();
+      await granted.close();
+    }
+  });
 });
