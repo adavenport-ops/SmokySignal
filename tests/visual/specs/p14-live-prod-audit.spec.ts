@@ -2649,6 +2649,19 @@ test.describe("p14 live-prod audit · navigation", () => {
         /Nothing is sent to us/i.test(card) &&
         /Not a radar detector/i.test(card);
       const limitValue = await page.locator('[data-testid="speed-limit-input"]').inputValue();
+      // B20: radius pick, 2 / 3 / 5 nm with miles beside, 5 pressed by default.
+      const radiusPressed: Record<string, string | null> = {};
+      for (const nm of [2, 3, 5]) {
+        radiusPressed[nm] = await page
+          .locator(`[data-testid="speed-warning-radius-${nm}"]`)
+          .getAttribute("aria-pressed");
+      }
+      const radiusOk =
+        radiusPressed[2] === "false" &&
+        radiusPressed[3] === "false" &&
+        radiusPressed[5] === "true" &&
+        /2\.3 mi/.test(card) &&
+        /5\.8 mi/.test(card);
       const screenshot = await shot(page, "62-settings-speed-warning");
       const pass =
         role === "switch" &&
@@ -2656,12 +2669,13 @@ test.describe("p14 live-prod audit · navigation", () => {
         label === "OFF" &&
         explainer &&
         limitValue === "60" &&
+        radiusOk &&
         !/!(\s|$)/.test(card);
       record({
-        claim: "/settings renders a Speed warning switch, OFF by default, with the 'Nothing is sent to us' explainer and a 60 mph default limit",
+        claim: "/settings renders a Speed warning switch, OFF by default, with the 'Nothing is sent to us' explainer, a 60 mph default limit and a 2/3/5 nm radius pick defaulting to 5",
         category: pass ? "working_as_designed" : "unshipped",
         pass,
-        evidence: `role=${role} aria-checked=${checked} label=${label} explainer=${explainer} limit=${limitValue}`,
+        evidence: `role=${role} aria-checked=${checked} label=${label} explainer=${explainer} limit=${limitValue} radius=${JSON.stringify(radiusPressed)}`,
         screenshot,
       });
       expect(pass).toBe(true);
