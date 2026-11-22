@@ -9,6 +9,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  ALERTS_ARM_FAILED_KEY,
   ALERTS_DISARMED_KEY,
   ALERTS_RESET_ACTION,
   ALERTS_RESET_DISMISS_KEY,
@@ -19,6 +20,7 @@ import {
   announcePushChanged,
   clearDisarmedByRider,
   dismissAlertsReset,
+  markArmFailed,
   markDisarmedByRider,
   parseStoredMs,
   readResetDismissedAt,
@@ -173,4 +175,28 @@ test("the push client marks a rider disarm and clears it on a fresh subscribe", 
   assert.match(unsub.slice(0, 400), /markDisarmedByRider\(\)/);
   const sub = src.slice(src.indexOf("export async function subscribePush"), src.indexOf("export async function unsubscribePush"));
   assert.match(sub, /clearDisarmedByRider\(\);\s*announcePushChanged\(\);\s*return \{ ok: true/);
+});
+
+test("a rider's own failed Arm is not an update: no nudge, and a later subscribe clears it", () => {
+  markArmFailed(NOW);
+  assert.equal(store.get(ALERTS_ARM_FAILED_KEY), String(NOW));
+  assert.equal(wasDisarmedByRider(), true);
+  assert.equal(alertsResetVisible(base({ disarmedByRider: wasDisarmedByRider() })), false);
+  markDisarmedByRider(NOW);
+  clearDisarmedByRider();
+  assert.equal(store.has(ALERTS_ARM_FAILED_KEY), false);
+  assert.equal(store.has(ALERTS_DISARMED_KEY), false);
+  assert.equal(wasDisarmedByRider(), false);
+});
+
+test("the push client marks a failed Arm on the rollback path and on a throw after granted", () => {
+  const src = readFileSync(join(__dirname, "push", "client.ts"), "utf8");
+  const sub = src.slice(src.indexOf("export async function subscribePush"), src.indexOf("export async function unsubscribePush"));
+  // Granted is only set after the permission check passes.
+  assert.ok(sub.indexOf("granted = true") > sub.indexOf('if (perm !== "granted")'));
+  assert.match(sub, /await sub\.unsubscribe\(\);[\s\S]*?markArmFailed\(\);\s*return \{ ok: false, reason: "error"/);
+  assert.match(sub, /catch \(error\) \{\s*if \(granted\) markArmFailed\(\);/);
+  // Denied and vapid_missing never mark it.
+  const beforeGranted = sub.slice(0, sub.indexOf("granted = true"));
+  assert.ok(!beforeGranted.includes("markArmFailed()"));
 });

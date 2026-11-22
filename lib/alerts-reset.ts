@@ -11,9 +11,13 @@
 //   ss_alerts_reset_dismissed_at  epoch ms; "Not now" hides it 30 days
 //   ss_alerts_disarmed_at         epoch ms; the rider turned alerts off
 //                                 themselves, so never call that a reset
+//   ss_alerts_arm_failed_at       epoch ms; the rider's own Arm got as far
+//                                 as "granted" and then failed. Also not an
+//                                 update: they get the normal Arm card back
 
 export const ALERTS_RESET_DISMISS_KEY = "ss_alerts_reset_dismissed_at";
 export const ALERTS_DISARMED_KEY = "ss_alerts_disarmed_at";
+export const ALERTS_ARM_FAILED_KEY = "ss_alerts_arm_failed_at";
 export const ALERTS_RESET_DISMISS_DAYS = 30;
 export const ALERTS_RESET_DISMISS_MS = ALERTS_RESET_DISMISS_DAYS * 24 * 60 * 60 * 1000;
 
@@ -33,7 +37,8 @@ export type AlertsResetInput = {
   hasSubscription: boolean;
   /** When the rider last tapped "Not now", or null. */
   dismissedAt: number | null;
-  /** The rider turned alerts off in /settings/alerts. */
+  /** The rider turned alerts off in /settings/alerts, or their own Arm
+   *  failed after permission was granted. Either way no update did it. */
   disarmedByRider: boolean;
   now: number;
 };
@@ -95,8 +100,18 @@ export function dismissAlertsReset(now: number = Date.now()): void {
   write(ALERTS_RESET_DISMISS_KEY, String(Math.round(now)));
 }
 
+/** True when the missing subscription is the rider's own doing: they
+ *  switched alerts off, or their own Arm failed after "granted". */
 export function wasDisarmedByRider(): boolean {
-  return parseStoredMs(read(ALERTS_DISARMED_KEY)) != null;
+  return (
+    parseStoredMs(read(ALERTS_DISARMED_KEY)) != null ||
+    parseStoredMs(read(ALERTS_ARM_FAILED_KEY)) != null
+  );
+}
+
+/** The rider's Arm got permission, then the subscribe failed. */
+export function markArmFailed(now: number = Date.now()): void {
+  write(ALERTS_ARM_FAILED_KEY, String(Math.round(now)));
 }
 
 /** The rider switched alerts off on purpose. */
@@ -104,9 +119,10 @@ export function markDisarmedByRider(now: number = Date.now()): void {
   write(ALERTS_DISARMED_KEY, String(Math.round(now)));
 }
 
-/** Alerts are on again: forget the disarm. */
+/** Alerts are on again: forget the disarm and any failed Arm. */
 export function clearDisarmedByRider(): void {
   write(ALERTS_DISARMED_KEY, null);
+  write(ALERTS_ARM_FAILED_KEY, null);
 }
 
 export function announcePushChanged(): void {

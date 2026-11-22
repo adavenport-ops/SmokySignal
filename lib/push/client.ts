@@ -6,6 +6,7 @@ import type { AlertPrefs } from "./types";
 import {
   announcePushChanged,
   clearDisarmedByRider,
+  markArmFailed,
   markDisarmedByRider,
 } from "../alerts-reset";
 
@@ -80,10 +81,15 @@ export async function subscribePush(
   const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   if (!vapid) return { ok: false, reason: "vapid_missing" };
 
+  // Once permission is granted, a failure below leaves "granted with no
+  // subscription". Record it so the alerts-reset nudge (B21) does not later
+  // blame an update for the rider's own failed Arm.
+  let granted = false;
   try {
     const reg = await ensureRegistration();
     const perm = await Notification.requestPermission();
     if (perm !== "granted") return { ok: false, reason: "denied" };
+    granted = true;
 
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
@@ -109,6 +115,7 @@ export async function subscribePush(
       } catch {
         /* best-effort */
       }
+      markArmFailed();
       return { ok: false, reason: "error", error: await safeText(r) };
     }
     const { id } = (await r.json()) as { id: string };
@@ -116,6 +123,7 @@ export async function subscribePush(
     announcePushChanged();
     return { ok: true, id, sub };
   } catch (error) {
+    if (granted) markArmFailed();
     return { ok: false, reason: "error", error };
   }
 }

@@ -98,9 +98,32 @@ export function AlertsResetBanner() {
 
   if (phase === "checking" || phase === "hidden") return null;
 
+  const notNow = (
+    <button
+      type="button"
+      data-testid="alerts-reset-dismiss"
+      onClick={onDismiss}
+      aria-label="Not now. Hide for 30 days"
+      style={{
+        background: "none",
+        border: "none",
+        color: SS_TOKENS.fg1,
+        fontSize: 13,
+        cursor: "pointer",
+        minHeight: TAP_PREFERRED,
+        minWidth: TAP_PREFERRED,
+        padding: "0 10px",
+        touchAction: "manipulation",
+      }}
+    >
+      Not now
+    </button>
+  );
+
   return (
     <section
       aria-label="Alerts were switched off"
+      aria-live="polite"
       data-testid="alerts-reset-banner"
       style={{
         background: SS_TOKENS.bg1,
@@ -115,19 +138,22 @@ export function AlertsResetBanner() {
       }}
     >
       {phase === "done" ? (
-        <p role="status" style={{ margin: 0, fontSize: 14, color: SS_TOKENS.fg0, lineHeight: 1.4 }}>
+        <p style={{ margin: 0, fontSize: 14, color: SS_TOKENS.fg0, lineHeight: 1.4 }}>
           10-4. Alerts are back on.
         </p>
       ) : phase === "error" ? (
-        <p role="status" style={{ margin: 0, fontSize: 13, color: SS_TOKENS.fg0, lineHeight: 1.45, flex: "1 1 200px" }}>
-          {error}{" "}
-          <Link
-            href="/settings/alerts"
-            style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
-          >
-            Alert settings
-          </Link>
-        </p>
+        <>
+          <p style={{ margin: 0, fontSize: 13, color: SS_TOKENS.fg0, lineHeight: 1.45, flex: "1 1 200px" }}>
+            {error}{" "}
+            <Link
+              href="/settings/alerts"
+              style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}
+            >
+              Alert settings
+            </Link>
+          </p>
+          {notNow}
+        </>
       ) : (
         <>
           <p
@@ -166,25 +192,7 @@ export function AlertsResetBanner() {
             >
               {phase === "busy" ? "Turning on" : ALERTS_RESET_ACTION}
             </button>
-            <button
-              type="button"
-              data-testid="alerts-reset-dismiss"
-              onClick={onDismiss}
-              aria-label="Not now. Hide for 30 days"
-              style={{
-                background: "none",
-                border: "none",
-                color: SS_TOKENS.fg1,
-                fontSize: 13,
-                cursor: "pointer",
-                minHeight: TAP_PREFERRED,
-                minWidth: TAP_PREFERRED,
-                padding: "0 10px",
-                touchAction: "manipulation",
-              }}
-            >
-              Not now
-            </button>
+            {notNow}
           </div>
         </>
       )}
