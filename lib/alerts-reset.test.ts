@@ -174,7 +174,8 @@ test("the push client marks a rider disarm and clears it on a fresh subscribe", 
   const unsub = src.slice(src.indexOf("export async function unsubscribePush"));
   assert.match(unsub.slice(0, 400), /markDisarmedByRider\(\)/);
   const sub = src.slice(src.indexOf("export async function subscribePush"), src.indexOf("export async function unsubscribePush"));
-  assert.match(sub, /clearDisarmedByRider\(\);\s*announcePushChanged\(\);\s*return \{ ok: true/);
+  assert.match(sub, /accepted = true;\s*clearDisarmedByRider\(\);\s*announcePushChanged\(\);/);
+  assert.ok(sub.indexOf("accepted = true") > sub.indexOf("if (!r.ok)"));
 });
 
 test("a rider's own failed Arm is not an update: no nudge, and a later subscribe clears it", () => {
@@ -195,7 +196,7 @@ test("the push client marks a failed Arm on the rollback path and on a throw aft
   // Granted is only set after the permission check passes.
   assert.ok(sub.indexOf("granted = true") > sub.indexOf('if (perm !== "granted")'));
   assert.match(sub, /await sub\.unsubscribe\(\);[\s\S]*?markArmFailed\(\);\s*return \{ ok: false, reason: "error"/);
-  assert.match(sub, /catch \(error\) \{\s*if \(granted\) markArmFailed\(\);/);
+  assert.match(sub, /catch \(error\) \{\s*if \(granted && !accepted\) markArmFailed\(\);/);
   // Denied and vapid_missing never mark it.
   const beforeGranted = sub.slice(0, sub.indexOf("granted = true"));
   assert.ok(!beforeGranted.includes("markArmFailed()"));

@@ -85,6 +85,7 @@ export async function subscribePush(
   // subscription". Record it so the alerts-reset nudge (B21) does not later
   // blame an update for the rider's own failed Arm.
   let granted = false;
+  let accepted = false; // the server stored the subscription
   try {
     const reg = await ensureRegistration();
     const perm = await Notification.requestPermission();
@@ -118,12 +119,13 @@ export async function subscribePush(
       markArmFailed();
       return { ok: false, reason: "error", error: await safeText(r) };
     }
-    const { id } = (await r.json()) as { id: string };
+    accepted = true;
     clearDisarmedByRider();
     announcePushChanged();
+    const { id } = (await r.json()) as { id: string };
     return { ok: true, id, sub };
   } catch (error) {
-    if (granted) markArmFailed();
+    if (granted && !accepted) markArmFailed();
     return { ok: false, reason: "error", error };
   }
 }
