@@ -27,16 +27,7 @@ exclamation marks, none of the voice-gate words).
 
 ## This week
 
-### B22 · iPhone setup page
-- **Picked:** 2026-11-23 (Monday run)
-- **Why:** Rider feedback: location failed in Safari until they added the app to the home screen. iPhone needs three settings right (home screen, location, notifications) and nothing explains them in one place.
-- **Route:** `/help/iphone`
-- **Size:** S
-- **One weekly run:** yes
-- **Files:** a new `app/(tabs)/help/iphone/page.tsx`, `lib/nav.ts`, `components/IOSInstallPrompt.tsx`, `lib/seo/*`
-- **Acceptance:** one page with the steps (Add to Home Screen, Location Services › Safari Websites › While Using, allow notifications, Voice readback); linked from the iOS install prompt, the location-blocked toast and /about; in the sitemap; screenshots optional.
-- **Blog line:** A one-page iPhone setup guide: home screen, location and alerts, in that order.
-
+_Nothing picked yet._
 
 ## Roadmap
 
@@ -100,14 +91,6 @@ current month into full items here and ranks them.
 - **Acceptance:** rule, pure and tested: on first discovery an aircraft is active only if it flew in the last 30 days; any flight makes it active at once; 60 days without a flight hides it from lists, alerts and the warning; its page stays, marked "last flew YYYY-MM-DD"; last-flight time comes from stored tracks (cached daily by the rollup cron); /aircraft has a "show inactive" toggle.
 - **Blog line:** The aircraft list now shows who is actually flying; tails idle for two months step back until they fly again.
 
-### B31 · State registry pipeline
-- **Why:** The Washington list (`data/wa-gov-aircraft.json`) was built by hand from the FAA registry. New states need the same, repeatably: every aircraft registered to a state patrol, sheriff or city police, with sources.
-- **Size:** M
-- **One weekly run:** yes
-- **Files:** a new `scripts/registry-state.ts`, `data/gov-aircraft/<st>.json`, `lib/seed.ts` (load per state), `lib/icao.ts`
-- **Acceptance:** `npm run registry:state -- --state OR` pulls FAA registry rows by owner name patterns, maps N-number to hex, classifies mission (police vs other) with a source per row, and writes the JSON; WA output matches today's list; docs on reviewing a new state.
-- **Blog line:** A repeatable way to list every patrol aircraft in a state, with a source on every row.
-
 ### B25 · Ride mode
 - **Why:** Rider question: "Does it have an audible notification you can hear in your coms?" Voice readback only speaks while the page is open. Ride mode makes that the default state for a ride: screen awake, voice on, glance view.
 - **Route:** `/glance`
@@ -163,7 +146,6 @@ current month into full items here and ranks them.
 - **Route:** `/plane/[tail]`
 - **Size:** M (pipeline), then S per batch
 - **One weekly run:** yes
-- **Blocked:** needs B31
 - **Files:** a new `data/dossiers/<tail>.json`, a new `scripts/dossier.ts`, `app/(tabs)/plane/[tail]/page.tsx`, `lib/seo/*`
 - **Acceptance:** per active aircraft: agency and unit, base airport derived from its own takeoffs, type and year, FAA registration date, flights and hours per month, usual roads and hours, two to five public facts each with a source URL; agency and aircraft facts only, never individual crew; JSON-LD on the page; a review checklist in `docs/`.
 - **Blog line:** Every aircraft page now tells its story: who flies it, from where, how often, with sources.
@@ -173,7 +155,6 @@ current month into full items here and ranks them.
 - **Route:** `/agency/[slug]`
 - **Size:** M
 - **One weekly run:** yes
-- **Blocked:** needs B31
 - **Files:** a new `app/(tabs)/agency/[slug]/page.tsx`, `lib/agencies.ts`, `lib/seo/*`, `app/sitemap.ts`
 - **Acceptance:** fleet (active first), activity per month, where it flies (from tracks), aerial speed enforcement status with source, drone program (B41); JSON-LD GovernmentOrganization; in the sitemap; linked from aircraft and state pages.
 - **Blog line:** Every agency we track has its own page: fleet, activity and sources.
@@ -210,7 +191,7 @@ current month into full items here and ranks them.
 - **Route:** `/states`
 - **Size:** M
 - **One weekly run:** yes
-- **Blocked:** needs B30, B31, B39
+- **Blocked:** needs B30, B39
 - **Files:** a new `app/(tabs)/states/page.tsx`, `app/(tabs)/state/[st]/page.tsx`, `lib/seo/*`
 - **Acceptance:** a national map of active police aircraft; one page per state (active fleet, agencies, aerial enforcement status with sources, drone programs); a state with none says so plainly; sitemap and llms.txt updated.
 - **Blog line:** All 50 states are on the map now, each with its own page.
@@ -222,6 +203,7 @@ current month into full items here and ranks them.
 - **Files:** `docs/research/`
 - **Acceptance:** run the B31 pipeline for OR, ID, CO, OH, MO, MN, FL; sample the live feeds by hex for 7 days; a table of tails found, hours airborne and share hidden (LADD or PIA); a recommended launch order.
 - **Blog line:** We checked which states' patrol aircraft actually fly and broadcast, before promising any.
+- **Note (2026-11-23, #203 review):** the 22 ID USDA Forest Service "FIRE & AVIATION" rows classify as `natural_resources`, which `lib/seed.ts` maps to mission `unknown`; map them to wildfire before any state loader is wired in.
 
 ### B33 · Infra check before more states
 - **Why:** More states means more KV, more requests per tick and more push fan-out on a Vercel Hobby plan and one helm pinger.
@@ -244,7 +226,7 @@ current month into full items here and ranks them.
 - **Route:** `/state/or`
 - **Size:** M
 - **One weekly run:** yes
-- **Blocked:** needs B31, B34a to B34c and the B32 check
+- **Blocked:** needs B34a to B34c and the B32 check
 - **Acceptance:** OR and ID registries reviewed and loaded; both selectable; state landing pages with sourced facts; SEO and llms.txt updated; blog post.
 - **Blog line:** Oregon and Idaho are on the map now, with their own skies and alerts.
 
@@ -424,6 +406,8 @@ current month into full items here and ranks them.
 ## Shipped
 
 <!-- The weekly job prepends one line per shipped item: - YYYY-MM-DD · B0x · Title · #PR -->
+- 2026-11-23 · B31 · State registry pipeline (WA, OR, ID pulled; `npm run registry:state`) · #203
+- 2026-11-23 · B22 · iPhone setup page · #202
 - 2026-11-21 · B21 · Alerts-reset nudge · #200
 - 2026-11-21 · B20 · Speed warning range setting · #199
 - 2026-11-19 · B19 · Desktop layout for plane and flight pages · #186
