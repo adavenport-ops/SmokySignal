@@ -37,6 +37,7 @@ export const KEY_PAGES: readonly Link[] = [
   { path: "/stats", title: "Stats", note: "Daily flight hours for every tracked tail." },
   { path: "/data", title: "Data and CSV", note: "Open monthly flight-hours dataset, ODbL 1.0." },
   { path: "/help", title: "Help", note: "How to read each screen, alerts, and where the data comes from." },
+  { path: "/help/iphone", title: "iPhone setup", note: "Three steps for iPhone, in order: add to the home screen, turn on location for Safari websites, allow notifications; plus voice readback." },
   { path: "/blog", title: "Blog", note: "What shipped on SmokySignal, and a weekly log of when the bird flew." },
   { path: "/legal", title: "Legal", note: "Privacy, disclaimers and data attribution." },
   { path: "/about", title: "About", note: "What SmokySignal is, key facts about the tracked aircraft, and every tool past the main tabs." },

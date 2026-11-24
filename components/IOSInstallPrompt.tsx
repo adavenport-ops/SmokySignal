@@ -11,7 +11,9 @@
 // (push is supported there), so this card only handles the pre-install
 // step.
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
+import { IPHONE_HELP_PATH } from "@/lib/iphone-help";
 import { SS_TOKENS } from "@/lib/tokens";
 
 const STORAGE_KEY = "ss_install_dismissed";
@@ -96,6 +98,23 @@ export function IOSInstallPrompt() {
           <strong style={{ fontWeight: 700 }}>Add to Home Screen</strong>.
           Open the icon and arm alerts.
         </div>
+        <Link
+          href={IPHONE_HELP_PATH}
+          data-testid="ios-install-setup-link"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            minHeight: 44,
+            fontSize: 13,
+            fontWeight: 600,
+            color: SS_TOKENS.fg0,
+            textDecoration: "underline",
+            textUnderlineOffset: 3,
+            touchAction: "manipulation",
+          }}
+        >
+          Full iPhone setup, location too
+        </Link>
       </div>
       <button
         type="button"

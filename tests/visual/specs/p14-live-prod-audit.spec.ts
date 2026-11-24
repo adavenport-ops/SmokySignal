@@ -3625,4 +3625,71 @@ test.describe("p14 live-prod audit · towns + IndexNow", () => {
       await granted.close();
     }
   });
+
+  test("95. /help/iphone: three setup steps in order, linked from /about, the iPhone install card and the sitemap (B22)", async ({
+    browser,
+    request,
+  }) => {
+    const IPHONE_UA =
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, userAgent: IPHONE_UA, hasTouch: true });
+    try {
+      const page = await ctx.newPage();
+      const r = await page.goto("/help/iphone", { waitUntil: "load" });
+      const h1 = (await page.locator("h1").first().innerText().catch(() => "")).trim();
+      const h2s = await page.locator("article h2").allInnerTexts();
+      const ids = await page.locator("article h2").evaluateAll((els) => els.map((e) => e.id));
+      const want = ["Add it to the home screen", "Turn on location", "Allow notifications", "Voice readback"];
+      const order = want.map((w) => h2s.findIndex((h) => h.includes(w)));
+      const inOrder = order.every((i, k) => i >= 0 && (k === 0 || i > order[k - 1]!));
+      const anchorOk = ids.includes("2-turn-on-location");
+      const layout = await page.evaluate(() => {
+        let minFont = 99;
+        for (const el of Array.from(document.querySelectorAll("article *"))) {
+          if (!(el as HTMLElement).innerText?.trim()) continue;
+          minFont = Math.min(minFont, parseFloat(getComputedStyle(el).fontSize));
+        }
+        return { overflow: document.documentElement.scrollWidth > window.innerWidth + 1, minFont };
+      });
+      const body = await page.locator("article").innerText();
+      const screenshot = await shot(page, "95-help-iphone");
+
+      await page.goto("/about", { waitUntil: "load" });
+      const aboutLinks = (await page.locator('a[href="/help/iphone"]').count()) > 0;
+
+      await page.goto("/", { waitUntil: "load" });
+      const cardLink = await page
+        .locator('[data-testid="ios-install-setup-link"]')
+        .waitFor({ state: "visible", timeout: 8000 })
+        .then(() => page.locator('[data-testid="ios-install-setup-link"]').getAttribute("href"))
+        .catch(() => null);
+      const cardBox = cardLink ? await page.locator('[data-testid="ios-install-setup-link"]').boundingBox() : null;
+
+      const sm = await request.get("/sitemap.xml");
+      const inSitemap = /\/help\/iphone</.test(await sm.text());
+
+      const pass =
+        r?.status() === 200 &&
+        /iPhone setup/.test(h1) &&
+        inOrder &&
+        anchorOk &&
+        !layout.overflow &&
+        layout.minFont >= 12 &&
+        aboutLinks &&
+        cardLink === "/help/iphone" &&
+        !!cardBox && cardBox.height >= 44 &&
+        inSitemap &&
+        !/[A-Za-z]!(\s|$)/.test(body);
+      record({
+        claim: "/help/iphone shows home screen, location, notifications and voice steps in order at 390px; /about, the iPhone install card and the sitemap link it",
+        category: pass ? "working_as_designed" : "unshipped",
+        pass,
+        evidence: `HTTP ${r?.status()} · h1=${JSON.stringify(h1)} order=${order.join(",")} anchor=${anchorOk} overflow=${layout.overflow} minFont=${layout.minFont} about=${aboutLinks} card=${cardLink} cardH=${cardBox?.height ?? "-"} sitemap=${inSitemap}`,
+        screenshot,
+      });
+      expect(pass).toBe(true);
+    } finally {
+      await ctx.close();
+    }
+  });
 });

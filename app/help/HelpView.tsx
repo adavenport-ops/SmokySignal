@@ -81,6 +81,7 @@ export function HelpMarkdown({ source }: { source: string }) {
               className="ss-tap-list"
               style={{
                 paddingLeft: 20,
+                listStyle: "disc",
                 margin: "0 0 18px",
                 display: "flex",
                 flexDirection: "column",
@@ -97,6 +98,7 @@ export function HelpMarkdown({ source }: { source: string }) {
               className="ss-tap-list"
               style={{
                 paddingLeft: 22,
+                listStyle: "decimal",
                 margin: "0 0 18px",
                 display: "flex",
                 flexDirection: "column",

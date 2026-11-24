@@ -27,7 +27,16 @@ exclamation marks, none of the voice-gate words).
 
 ## This week
 
-_Nothing picked yet._
+### B22 · iPhone setup page
+- **Picked:** 2026-11-23 (Monday run)
+- **Why:** Rider feedback: location failed in Safari until they added the app to the home screen. iPhone needs three settings right (home screen, location, notifications) and nothing explains them in one place.
+- **Route:** `/help/iphone`
+- **Size:** S
+- **One weekly run:** yes
+- **Files:** a new `app/(tabs)/help/iphone/page.tsx`, `lib/nav.ts`, `components/IOSInstallPrompt.tsx`, `lib/seo/*`
+- **Acceptance:** one page with the steps (Add to Home Screen, Location Services › Safari Websites › While Using, allow notifications, Voice readback); linked from the iOS install prompt, the location-blocked toast and /about; in the sitemap; screenshots optional.
+- **Blog line:** A one-page iPhone setup guide: home screen, location and alerts, in that order.
+
 
 ## Roadmap
 
@@ -37,15 +46,6 @@ unblocked one-run items remain below, a run expands the next P-items for the
 current month into full items here and ranks them.
 
 ## Ranked
-
-### B22 · iPhone setup page
-- **Why:** Rider feedback: location failed in Safari until they added the app to the home screen. iPhone needs three settings right (home screen, location, notifications) and nothing explains them in one place.
-- **Route:** `/help/iphone`
-- **Size:** S
-- **One weekly run:** yes
-- **Files:** a new `app/(tabs)/help/iphone/page.tsx`, `lib/nav.ts`, `components/IOSInstallPrompt.tsx`, `lib/seo/*`
-- **Acceptance:** one page with the steps (Add to Home Screen, Location Services › Safari Websites › While Using, allow notifications, Voice readback); linked from the iOS install prompt, the location-blocked toast and /about; in the sitemap; screenshots optional.
-- **Blog line:** A one-page iPhone setup guide: home screen, location and alerts, in that order.
 
 ### B23 · Alert earcon before voice
 - **Why:** Helmet coms (Cardo, Sena) duck or clip the first half second of phone audio, so spoken alerts lose their first word. A short tone wakes the channel, and different tones tell up, near and clear apart without words.

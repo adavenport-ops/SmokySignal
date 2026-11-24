@@ -121,7 +121,8 @@ function excluded(path: string): boolean {
  * Changed repo files → page paths worth resubmitting. Blog posts map to
  * their post and the index; a page file maps to its route, with dynamic
  * segments expanded from `dynamic` (a pattern with no values is
- * skipped); content/help.md maps to /help. Everything else (libraries,
+ * skipped); content/help.md maps to /help and content/help-iphone.md to
+ * /help/iphone. Everything else (libraries,
  * components, styles) is ignored: it changes too many pages to say
  * which, and the weekly `--all` run covers it.
  */
@@ -137,6 +138,10 @@ export function urlsForChangedFiles(files: ReadonlyArray<string>, dynamic: Dynam
     }
     if (f === "content/help.md") {
       paths.push("/help");
+      continue;
+    }
+    if (f === "content/help-iphone.md") {
+      paths.push("/help/iphone");
       continue;
     }
     const route = routeForPageFile(f);
