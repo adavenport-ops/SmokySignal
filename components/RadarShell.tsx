@@ -835,6 +835,7 @@ function Toast({
           <Link
             href={link.href}
             data-testid="radar-toast-link"
+            aria-label={`${link.label}: how to fix it`}
             style={{
               display: "inline-flex",
               alignItems: "center",

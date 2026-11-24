@@ -3,7 +3,6 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import GithubSlugger from "github-slugger";
 import {
   IPHONE_HELP_ANCHORS,
   IPHONE_HELP_DESCRIPTION,
@@ -21,12 +20,21 @@ const MD = fs.readFileSync(path.join(process.cwd(), "content", "help-iphone.md")
 const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148";
 const CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36";
 
+// rehype-slug's rule (github-slugger) for plain headings: lower case,
+// drop punctuation, spaces to hyphens. Headings here are unique, so no
+// "-1" suffixes.
 function headingSlugs(md: string): string[] {
-  const slugger = new GithubSlugger();
   return md
     .split("\n")
     .filter((l) => /^#{1,6} /.test(l))
-    .map((l) => slugger.slug(l.replace(/^#+\s+/, "").replace(/\*\*/g, "")));
+    .map((l) =>
+      l
+        .replace(/^#+\s+/, "")
+        .replace(/\*\*/g, "")
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s_-]/gu, "")
+        .replace(/ /g, "-"),
+    );
 }
 
 test("every anchor the app links to is a heading on the page", () => {
