@@ -1,6 +1,6 @@
 "use client";
 
-import { geoErrorKind, geoErrorMessage } from "@/lib/geo-error";
+import { geoErrorKind, geoErrorMessage, geoHelpHref } from "@/lib/geo-error";
 import { missionLabel } from "@/lib/role-display";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import nextDynamic from "next/dynamic";
@@ -165,6 +165,9 @@ export function RadarShell({
 
   const [rider, setRider] = useState<RiderPos | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  // A help link riding on one toast message (the iPhone location block
+  // points at /help/iphone). Shown only while that exact message is up.
+  const [toastLink, setToastLink] = useState<{ message: string; href: string } | null>(null);
   // + opens the add-zone sheet; a save leaves an undo toast.
   const [addZoneOpen, setAddZoneOpen] = useState(false);
   const [zoneUndo, dispatchZoneUndo] = useReducer(
@@ -335,7 +338,10 @@ export function RadarShell({
           waitingToastShown = true;
         }
         const blocked = geoErrorKind(err?.code) === "blocked";
-        flashToast(setToast, geoErrorMessage(err?.code, navigator.userAgent), blocked ? 9000 : 4000);
+        const message = geoErrorMessage(err?.code, navigator.userAgent);
+        const href = geoHelpHref(err?.code, navigator.userAgent);
+        setToastLink(href ? { message, href } : null);
+        flashToast(setToast, message, blocked ? 9000 : 4000);
       },
       { enableHighAccuracy: true, maximumAge: 15000, timeout: 30000 },
     );
@@ -680,7 +686,13 @@ export function RadarShell({
           }
         />
       ) : (
-        toast && <Toast message={toast} top={TOAST_TOP_CSS(topShift)} />
+        toast && (
+          <Toast
+            message={toast}
+            top={TOAST_TOP_CSS(topShift)}
+            link={toastLink?.message === toast ? { label: "Steps", href: toastLink.href } : undefined}
+          />
+        )
       )}
     </main>
   );
@@ -754,13 +766,17 @@ function Toast({
   message,
   top,
   action,
+  link,
   testId,
 }: {
   message: string;
   top: string;
   action?: { label: string; onClick: () => void };
+  /** A page link instead of a button (same look, real navigation). */
+  link?: { label: string; href: string };
   testId?: string;
 }) {
+  const hasControl = Boolean(action || link);
   return (
     <div
       role="status"
@@ -783,8 +799,8 @@ function Toast({
           alignItems: "center",
           gap: 4,
           maxWidth: 420,
-          padding: action ? "0 0 0 12px" : "10px 12px",
-          minHeight: action ? 44 : undefined,
+          padding: hasControl ? "0 0 0 12px" : "10px 12px",
+          minHeight: hasControl ? 44 : undefined,
           borderRadius: 10,
           background: "rgba(21,24,29,0.96)",
           border: `.5px solid ${SS_TOKENS.hairline2}`,
@@ -814,6 +830,27 @@ function Toast({
           >
             {action.label}
           </button>
+        )}
+        {link && !action && (
+          <Link
+            href={link.href}
+            data-testid="radar-toast-link"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              flexShrink: 0,
+              minHeight: 44,
+              minWidth: 44,
+              padding: "0 12px",
+              color: SS_TOKENS.sky,
+              fontSize: 13,
+              fontWeight: 700,
+              textDecoration: "none",
+              touchAction: "manipulation",
+            }}
+          >
+            {link.label}
+          </Link>
         )}
       </div>
     </div>

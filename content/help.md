@@ -224,7 +224,7 @@ We don't use enforcement-tier feeds, FlightAware Pro, ADS-B Exchange premium, or
 - **The map shows "MapTiler key missing."** The deployment is missing its `NEXT_PUBLIC_MAPTILER_KEY` environment variable. The app still works, but maps won't render.
 - **"Couldn't get a fix" when tapping Spotted.** Your browser's location permission is denied or your GPS is having a moment. Allow location access for `smokysignal.app` in browser settings.
 - **The activity feed is empty.** Either no fleet member has had a state change recently, or, if it's been many hours, the cron job that refreshes the snapshot may be on its daily schedule. Activity events fire once per snapshot refresh.
-- **Push permission prompt never appears on iPhone.** Web Push on iOS only works inside an installed home-screen PWA. Tap the share icon in Safari, choose "Add to Home Screen," then open SmokySignal from the home-screen icon.
+- **Push permission prompt never appears on iPhone.** Web Push on iOS only works inside an installed home-screen PWA. Tap the share icon in Safari, choose "Add to Home Screen," then open SmokySignal from the home-screen icon. The full walk-through, location included, is on [iPhone setup](/help/iphone).
 - **A push fired and the alert is no longer airborne when I tap.** Pushes deliver based on what was true at takeoff. Birds land. The radar always reflects current truth — trust the screen, not the notification timestamp.
 - **The role badge says "(tentative)".** We're still confirming which mission profile that tail flies. Treat the airframe info as the ground truth, not the role.
 - **A tail seems wrong or missing.** Email **feedback@smokysignal.app** with the tail number and what you're seeing. We update the registry from public records and rider reports.

@@ -9,6 +9,8 @@
 // system switch (Settings > Privacy & Security > Location Services >
 // Safari Websites) is still Never; that is the usual cause of a block.
 
+import { IPHONE_LOCATION_HREF } from "./iphone-help";
+
 export type GeoErrorKind = "blocked" | "waiting";
 
 export function geoErrorKind(code: number | undefined): GeoErrorKind {
@@ -24,4 +26,9 @@ export function geoErrorMessage(code: number | undefined, ua: string): string {
   return isIOS(ua)
     ? "Location blocked · Settings › Privacy › Location Services › Safari Websites"
     : "Location blocked in browser settings · radar still works";
+}
+
+/** Where a blocked rider can read the fix, or null. iPhone only for now. */
+export function geoHelpHref(code: number | undefined, ua: string): string | null {
+  return geoErrorKind(code) === "blocked" && isIOS(ua) ? IPHONE_LOCATION_HREF : null;
 }

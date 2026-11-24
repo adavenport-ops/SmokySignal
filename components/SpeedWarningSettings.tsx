@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { SS_TOKENS, TAP_MIN } from "@/lib/tokens";
+import { IPHONE_LOCATION_HREF } from "@/lib/iphone-help";
 import {
   BIRD_RADIUS_CHOICES_NM,
   MAX_RIDER_LIMIT_MPH,
@@ -158,7 +159,11 @@ export function SpeedWarningSettings() {
       {ask === "blocked" && (
         <p style={{ ...sub, color: SS_TOKENS.fg0 }} role="status">
           Location is blocked for SmokySignal. Allow it in your browser settings, then turn this on
-          again.
+          again. On iPhone:{" "}
+          <Link href={IPHONE_LOCATION_HREF} style={{ color: SS_TOKENS.fg0, textDecoration: "underline" }}>
+            the steps
+          </Link>
+          .
         </p>
       )}
       {ask === "no-geo" && (

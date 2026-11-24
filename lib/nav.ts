@@ -325,6 +325,14 @@ export function navSections(nowMs: number = Date.now()): NavSection[] {
           keywords: ["faq", "questions", "how to", "glossary", "support"],
         },
         {
+          id: "iphone",
+          label: "iPhone setup",
+          blurb: "Home screen, location and alerts, in order",
+          href: "/help/iphone",
+          icon: "help",
+          keywords: ["iphone", "ios", "safari", "home screen", "install", "location", "gps", "notifications", "permission", "blocked"],
+        },
+        {
           id: "legal",
           label: "Legal",
           blurb: "Privacy and terms",
@@ -410,6 +418,7 @@ const DAY_MS = 86_400_000;
  * purpose: add a row when a feature ships, and it ages out on its own.
  */
 export const SHIPPED: ReadonlyArray<{ id: string; date: string; pr: number }> = [
+  { id: "iphone", date: "2026-11-23", pr: 0 },
   { id: "towns", date: "2026-11-19", pr: 183 },
   { id: "blog", date: "2026-11-18", pr: 170 },
   { id: "flights", date: "2026-11-18", pr: 165 },
