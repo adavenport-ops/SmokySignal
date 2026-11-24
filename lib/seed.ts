@@ -1,4 +1,5 @@
-import type { FleetEntry } from "./types";
+import type { FleetEntry, Mission, PoliceUnit } from "./types";
+import type { GovAircraftFile, GovAircraftRow } from "./registry-state-core";
 import { nNumberToIcao } from "./icao";
 
 // FAA-verified registry. Every hex is the FAA Mode S code from
@@ -1125,4 +1126,69 @@ export function fleetHex(entry: FleetEntry): string {
   const seeded = entry.hex?.toLowerCase();
   if (seeded) return seeded;
   return (nNumberToIcao(entry.tail) ?? "").toLowerCase();
+}
+
+// ---------------------------------------------------------------- per state
+//
+// Generated state files (data/gov-aircraft/<st>.json, written by
+// `npm run registry:state`, B31) map onto FleetEntry here. Nothing at
+// runtime calls this yet: FLEET above stays the only registry, and the
+// file read lives in lib/gov-aircraft-load.ts (node:fs, server only) so
+// this module stays safe for client bundles.
+
+const UNIT_BY_CATEGORY: Readonly<Record<string, PoliceUnit>> = {
+  sheriff: "sheriff",
+  air_support: "sheriff",
+  county_police: "sheriff",
+  city_police: "city",
+  tribal_police: "tribal",
+  state_police: "state",
+};
+
+const MISSION_BY_CATEGORY: Readonly<Record<string, Mission>> = {
+  federal_le: "federal_le",
+  fire: "wildfire",
+  transportation: "transport",
+  fish_wildlife: "survey",
+};
+
+/**
+ * One generated state-file row → FleetEntry. Registry-only, so every
+ * entry is `tentative` with no nickname or base; hand research fills
+ * those in before a tail moves into FLEET. Police outside WA is
+ * `mutual_aid` (counts as Smokey only in WA airspace).
+ */
+export function govAircraftToFleetEntry(row: GovAircraftRow, state: string): FleetEntry {
+  const st = state.toUpperCase();
+  const police = row.mission === "police_enforcement";
+  const c = row.classification;
+  // Police matched on an OTHER NAMES line ("STATE OF WASHINGTON" /
+  // "WASHINGTON STATE PATROL") names the agency better than the owner.
+  const operator = police && c.field !== "NAME" ? c.matched : row.faa_owner;
+  let policeUnit: PoliceUnit | undefined;
+  if (police) {
+    if (row.category === "state_police") policeUnit = st === "WA" ? "wsp" : "state";
+    else if (row.category === "public_safety") policeUnit = /\bCOUNTY\b/.test(operator) ? "sheriff" : "state";
+    else policeUnit = UNIT_BY_CATEGORY[row.category] ?? "state";
+  }
+  return {
+    tail: row.tail,
+    hex: row.icao_hex,
+    operator,
+    model: row.faa_model ?? "Unknown",
+    nickname: null,
+    roleDescription: police ? "Police (FAA registry only)" : "Government (FAA registry only)",
+    base: "",
+    role: police ? "police" : (MISSION_BY_CATEGORY[row.category] ?? "unknown"),
+    ...(policeUnit ? { policeUnit } : {}),
+    ...(police ? { scope: st === "WA" ? ("wa" as const) : ("mutual_aid" as const) } : {}),
+    roleConfidence: "tentative",
+    roleNote: c.reason.slice(0, 120),
+    sources: row.sources,
+  };
+}
+
+/** A whole generated state file → FleetEntry[] (same order as the file). */
+export function stateFleet(file: GovAircraftFile): FleetEntry[] {
+  return file.aircraft.map((row) => govAircraftToFleetEntry(row, file.state));
 }

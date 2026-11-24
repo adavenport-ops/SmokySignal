@@ -1,0 +1,4150 @@
+{
+  "state": "ID",
+  "source": {
+    "url": "https://registry.faa.gov/database/ReleasableAircraft.zip",
+    "faa_file_date": "2026-11-20",
+    "pulled": "2026-11-23"
+  },
+  "method": "FAA releasable aircraft database, MASTER rows with owner state ID: every government registrant (type 5) plus any other registrant whose name reads as a police agency. Mission from owner-name patterns (classification.rule records which). Every row is tentative until an agency source confirms it. Colleges, schools, museums and military units are listed under excluded, not aircraft.",
+  "counts": {
+    "total": 127,
+    "police_enforcement": 3,
+    "other": 124,
+    "needs_review": 2,
+    "by_category": {
+      "air_support": 1,
+      "sheriff": 2,
+      "county_gov": 1,
+      "energy_utility": 3,
+      "federal": 78,
+      "fish_wildlife": 1,
+      "natural_resources": 27,
+      "transportation": 3,
+      "vector_control": 11
+    },
+    "excluded": 12
+  },
+  "aircraft": [
+    {
+      "tail": "N67176",
+      "icao_hex": "A8E2DB",
+      "hex_check": "match",
+      "faa_model": "BELL 206B",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 1994,
+      "serial": "5119",
+      "faa_owner": "KOOTENAI COUNTY REGIONAL AIR SUPPORT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "HAYDEN ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "12/31/2029",
+      "mission": "police_enforcement",
+      "category": "air_support",
+      "classification": {
+        "rule": "air_support",
+        "field": "NAME",
+        "matched": "KOOTENAI COUNTY REGIONAL AIR SUPPORT",
+        "pattern": "\\bAIR SUPPORT\\b",
+        "reason": "owner name is an air support unit"
+      },
+      "confidence": "tentative",
+      "needs_review": true,
+      "review_notes": [
+        "air support unit; confirm the parent agency"
+      ],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N67176"
+      ]
+    },
+    {
+      "tail": "N549WG",
+      "icao_hex": "A6FB56",
+      "hex_check": "match",
+      "faa_model": "DRAGANFLY INNOVATIONS INC DRAGANFLYER X6",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "OX199E44108E35A39/35A39D",
+      "faa_owner": "CANYON COUNTY SHERIFF'S OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "CALDWELL ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2028",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "CANYON COUNTY SHERIFF'S OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N549WG"
+      ]
+    },
+    {
+      "tail": "N862GC",
+      "icao_hex": "ABD6DE",
+      "hex_check": "match",
+      "faa_model": "DJI MATRICE 200",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "FG311556450028",
+      "faa_owner": "CANYON COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "CALDWELL ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2029",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "CANYON COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N862GC"
+      ]
+    },
+    {
+      "tail": "N367BB",
+      "icao_hex": "A42668",
+      "hex_check": "match",
+      "faa_model": "HYLIO INC AG 230",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "17906100237",
+      "faa_owner": "BANNOCK COUNTY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "POCATELLO ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/29/2032",
+      "mission": "other",
+      "category": "county_gov",
+      "classification": {
+        "rule": "county_gov",
+        "field": "NAME",
+        "matched": "BANNOCK COUNTY",
+        "pattern": "\\bCOUNTY\\b",
+        "reason": "owner name is a county government"
+      },
+      "confidence": "tentative",
+      "needs_review": true,
+      "review_notes": [
+        "county owner with no department named; check whether the sheriff flies it"
+      ],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N367BB"
+      ]
+    },
+    {
+      "tail": "N620RE",
+      "icao_hex": "A817B9",
+      "hex_check": "match",
+      "faa_model": "ARCTURUS UAV LLC T-20",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "T20-1111-131",
+      "faa_owner": "IDAHO NATIONAL LABORATORY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "IDAHO FALLS ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "06/30/2028",
+      "mission": "other",
+      "category": "energy_utility",
+      "classification": {
+        "rule": "energy_utility",
+        "field": "NAME",
+        "matched": "IDAHO NATIONAL LABORATORY",
+        "pattern": "\\b(POWER ADMINISTRATION|DEPARTMENT OF ENERGY|UTILITY|UTILITIES|PUD|ELECTRIC|NATIONAL LABORA?TORY|NATIONAL LABORTORY)\\b",
+        "reason": "owner name is a power, energy or utility agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N620RE"
+      ]
+    },
+    {
+      "tail": "N9122A",
+      "icao_hex": "ACA0B8",
+      "hex_check": "match",
+      "faa_model": "ARCTURUS UAV INC T-20",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "T20-1111-129",
+      "faa_owner": "IDAHO NATIONAL LABORATORY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "IDAHO FALLS ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2028",
+      "mission": "other",
+      "category": "energy_utility",
+      "classification": {
+        "rule": "energy_utility",
+        "field": "NAME",
+        "matched": "IDAHO NATIONAL LABORATORY",
+        "pattern": "\\b(POWER ADMINISTRATION|DEPARTMENT OF ENERGY|UTILITY|UTILITIES|PUD|ELECTRIC|NATIONAL LABORA?TORY|NATIONAL LABORTORY)\\b",
+        "reason": "owner name is a power, energy or utility agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N9122A"
+      ]
+    },
+    {
+      "tail": "N621RE",
+      "icao_hex": "A81B70",
+      "hex_check": "match",
+      "faa_model": "ARCTURUS UAV LLC T-20",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "T20-1111-132",
+      "faa_owner": "IDAHO NATIONAL LABORTORY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "IDAHO FALLS ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "06/30/2028",
+      "mission": "other",
+      "category": "energy_utility",
+      "classification": {
+        "rule": "energy_utility",
+        "field": "NAME",
+        "matched": "IDAHO NATIONAL LABORTORY",
+        "pattern": "\\b(POWER ADMINISTRATION|DEPARTMENT OF ENERGY|UTILITY|UTILITIES|PUD|ELECTRIC|NATIONAL LABORA?TORY|NATIONAL LABORTORY)\\b",
+        "reason": "owner name is a power, energy or utility agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N621RE"
+      ]
+    },
+    {
+      "tail": "N22PP",
+      "icao_hex": "A1DFFB",
+      "hex_check": "match",
+      "faa_model": "BELL 412EP",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 1998,
+      "serial": "36219",
+      "faa_owner": "DEPARTMENT OF INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2027",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N22PP"
+      ]
+    },
+    {
+      "tail": "N104PS",
+      "icao_hex": "A014E6",
+      "hex_check": "match",
+      "faa_model": "TEXTRON AVIATION INC T206H",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2019,
+      "serial": "T20609566",
+      "faa_owner": "DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N104PS"
+      ]
+    },
+    {
+      "tail": "N32PS",
+      "icao_hex": "A36D4D",
+      "hex_check": "match",
+      "faa_model": "TEXTRON AVIATION INC T206H",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2021,
+      "serial": "T20609651",
+      "faa_owner": "DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N32PS"
+      ]
+    },
+    {
+      "tail": "N375F",
+      "icao_hex": "A446DB",
+      "hex_check": "match",
+      "faa_model": "CESSNA U206G",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1980,
+      "serial": "U20605750",
+      "faa_owner": "DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "06/30/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N375F"
+      ]
+    },
+    {
+      "tail": "N721",
+      "icao_hex": "A9A742",
+      "hex_check": "match",
+      "faa_model": "CESSNA TU206G",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1981,
+      "serial": "U20606256",
+      "faa_owner": "DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N721"
+      ]
+    },
+    {
+      "tail": "N378H",
+      "icao_hex": "A45232",
+      "hex_check": "match",
+      "faa_model": "CESSNA T206H",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "T20608242",
+      "faa_owner": "DEPT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2030",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "DEPT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N378H"
+      ]
+    },
+    {
+      "tail": "N51096",
+      "icao_hex": "A66521",
+      "hex_check": "match",
+      "faa_model": "CESSNA T206H",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "T20608389",
+      "faa_owner": "DEPT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2030",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "DEPT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N51096"
+      ]
+    },
+    {
+      "tail": "N206WB",
+      "icao_hex": "A1AA43",
+      "hex_check": "match",
+      "faa_model": "CESSNA U206F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1973,
+      "serial": "U20602058",
+      "faa_owner": "OFFICE OF AVIATION SERVICES",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2031",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "OFFICE OF AVIATION SERVICES",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N206WB"
+      ]
+    },
+    {
+      "tail": "N222GR",
+      "icao_hex": "A1E915",
+      "hex_check": "match",
+      "faa_model": "HYLIO INC AG 230",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "17906100361",
+      "faa_owner": "OFFICE OF AVIATION SERVICES",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2032",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "OFFICE OF AVIATION SERVICES",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N222GR"
+      ]
+    },
+    {
+      "tail": "N514FW",
+      "icao_hex": "A670DD",
+      "hex_check": "match",
+      "faa_model": "AIRBUS HELICOPTERS INC AS350B3",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 2023,
+      "serial": "9339",
+      "faa_owner": "OFFICE OF AVIATION SERVICES",
+      "faa_other_names": [
+        "US DEPARTMENT OF INTERIOR"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2030",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "OFFICE OF AVIATION SERVICES",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N514FW"
+      ]
+    },
+    {
+      "tail": "N61473",
+      "icao_hex": "A80103",
+      "hex_check": "match",
+      "faa_model": "CESSNA A185F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1981,
+      "serial": "18504204",
+      "faa_owner": "U S DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2027",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N61473"
+      ]
+    },
+    {
+      "tail": "N618CC",
+      "icao_hex": "A80CAB",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2013,
+      "serial": "CC18-0062",
+      "faa_owner": "U S DEPARTMENT OF INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N618CC"
+      ]
+    },
+    {
+      "tail": "N132PS",
+      "icao_hex": "A083F5",
+      "hex_check": "match",
+      "faa_model": "CESSNA 206H",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "20608278",
+      "faa_owner": "U S DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N132PS"
+      ]
+    },
+    {
+      "tail": "N192CC",
+      "icao_hex": "A16FCE",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2012,
+      "serial": "CC18-0056",
+      "faa_owner": "U S DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N192CC"
+      ]
+    },
+    {
+      "tail": "N232PS",
+      "icao_hex": "A21144",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2015,
+      "serial": "CC18-0076",
+      "faa_owner": "U S DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N232PS"
+      ]
+    },
+    {
+      "tail": "N356M",
+      "icao_hex": "A3FC2A",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2014,
+      "serial": "CC18-0072",
+      "faa_owner": "U S DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2027",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N356M"
+      ]
+    },
+    {
+      "tail": "N437CC",
+      "icao_hex": "A53D54",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2012,
+      "serial": "CC18-0059",
+      "faa_owner": "U S DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N437CC"
+      ]
+    },
+    {
+      "tail": "N473YC",
+      "icao_hex": "A5CE68",
+      "hex_check": "match",
+      "faa_model": "CESSNA 206H",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2012,
+      "serial": "20608348",
+      "faa_owner": "U S DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N473YC"
+      ]
+    },
+    {
+      "tail": "N523M",
+      "icao_hex": "A69526",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2014,
+      "serial": "CC18-0070",
+      "faa_owner": "U S DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2027",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N523M"
+      ]
+    },
+    {
+      "tail": "N708",
+      "icao_hex": "A97245",
+      "hex_check": "match",
+      "faa_model": "QUEST AIRCRAFT COMPANY LLC KODIAK 100",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2008,
+      "serial": "100-0007",
+      "faa_owner": "U S DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N708"
+      ]
+    },
+    {
+      "tail": "N753",
+      "icao_hex": "AA252D",
+      "hex_check": "match",
+      "faa_model": "FOUND ACFT CANADA INC FBA-2C1",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2003,
+      "serial": "44",
+      "faa_owner": "U S DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N753"
+      ]
+    },
+    {
+      "tail": "N77554",
+      "icao_hex": "AA7EBE",
+      "hex_check": "match",
+      "faa_model": "CESSNA U206F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1976,
+      "serial": "U20603408",
+      "faa_owner": "U S DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2030",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N77554"
+      ]
+    },
+    {
+      "tail": "N794",
+      "icao_hex": "AAC6E0",
+      "hex_check": "match",
+      "faa_model": "FOUND ACFT CANADA INC FBA-2C1",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2004,
+      "serial": "51",
+      "faa_owner": "U S DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2030",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N794"
+      ]
+    },
+    {
+      "tail": "N8360Q",
+      "icao_hex": "AB710B",
+      "hex_check": "match",
+      "faa_model": "CESSNA A185F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1978,
+      "serial": "18503666",
+      "faa_owner": "U S DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N8360Q"
+      ]
+    },
+    {
+      "tail": "N261UA",
+      "icao_hex": "A28477",
+      "hex_check": "match",
+      "faa_model": "E-FLITE APPRENTICE S 15E",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "045477",
+      "faa_owner": "U S DEPT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N261UA"
+      ]
+    },
+    {
+      "tail": "N706M",
+      "icao_hex": "A96BEB",
+      "hex_check": "match",
+      "faa_model": "FOUND ACFT CANADA INC FBA-2C1",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2005,
+      "serial": "52",
+      "faa_owner": "U S DEPT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "12/31/2027",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N706M"
+      ]
+    },
+    {
+      "tail": "N720",
+      "icao_hex": "A9A38B",
+      "hex_check": "match",
+      "faa_model": "DEHAVILLAND BEAVER DHC-2 MK.1",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1951,
+      "serial": "247",
+      "faa_owner": "U S DEPT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "12/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U S DEPT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N720"
+      ]
+    },
+    {
+      "tail": "N534L",
+      "icao_hex": "A6C043",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2015,
+      "serial": "CC18-0075",
+      "faa_owner": "U.S. DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "U.S. DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N534L"
+      ]
+    },
+    {
+      "tail": "N109RS",
+      "icao_hex": "A027AB",
+      "hex_check": "match",
+      "faa_model": "CESSNA TU206G",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "U20606002",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "11/30/2027",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N109RS"
+      ]
+    },
+    {
+      "tail": "N1217F",
+      "icao_hex": "A05ABC",
+      "hex_check": "match",
+      "faa_model": "CESSNA A185F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1975,
+      "serial": "18502779",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "12/31/2027",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N1217F"
+      ]
+    },
+    {
+      "tail": "N162GC",
+      "icao_hex": "A0F9B5",
+      "hex_check": "match",
+      "faa_model": "BEECH B200",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1985,
+      "serial": "BB-1238",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2027",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N162GC"
+      ]
+    },
+    {
+      "tail": "N206RW",
+      "icao_hex": "A1A9D9",
+      "hex_check": "match",
+      "faa_model": "BELL 206B-III",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 1995,
+      "serial": "4372",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/29/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N206RW"
+      ]
+    },
+    {
+      "tail": "N242WB",
+      "icao_hex": "A23963",
+      "hex_check": "match",
+      "faa_model": "CESSNA T206H",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2011,
+      "serial": "T20609037",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "06/30/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N242WB"
+      ]
+    },
+    {
+      "tail": "N33PP",
+      "icao_hex": "A394C9",
+      "hex_check": "match",
+      "faa_model": "BELL 206L-3",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 1983,
+      "serial": "51051",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N33PP"
+      ]
+    },
+    {
+      "tail": "N49SJ",
+      "icao_hex": "A60F58",
+      "hex_check": "match",
+      "faa_model": "DEHAVILLAND DHC-6-300",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1974,
+      "serial": "423",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N49SJ"
+      ]
+    },
+    {
+      "tail": "N56581",
+      "icao_hex": "A73D07",
+      "hex_check": "match",
+      "faa_model": "CESSNA A185F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1975,
+      "serial": "18502907",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N56581"
+      ]
+    },
+    {
+      "tail": "N618",
+      "icao_hex": "A80C75",
+      "hex_check": "match",
+      "faa_model": "BEECH B200",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1990,
+      "serial": "BB-1378",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "12/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N618"
+      ]
+    },
+    {
+      "tail": "N626",
+      "icao_hex": "A82C86",
+      "hex_check": "match",
+      "faa_model": "BELL 206L-3",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 1985,
+      "serial": "51139",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "12/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N626"
+      ]
+    },
+    {
+      "tail": "N701",
+      "icao_hex": "A95844",
+      "hex_check": "match",
+      "faa_model": "PARTENAVIA SPA P.68 OBSERVER 2",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1990,
+      "serial": "390-03-0B2",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N701"
+      ]
+    },
+    {
+      "tail": "N714",
+      "icao_hex": "A98AE8",
+      "hex_check": "match",
+      "faa_model": "CESSNA A185F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1975,
+      "serial": "18502711",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N714"
+      ]
+    },
+    {
+      "tail": "N727",
+      "icao_hex": "A9BD8C",
+      "hex_check": "match",
+      "faa_model": "CESSNA A185F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1982,
+      "serial": "18504371",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N727"
+      ]
+    },
+    {
+      "tail": "N728",
+      "icao_hex": "A9C143",
+      "hex_check": "match",
+      "faa_model": "CESSNA U206G",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1985,
+      "serial": "U20606877",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/29/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N728"
+      ]
+    },
+    {
+      "tail": "N740",
+      "icao_hex": "A9F289",
+      "hex_check": "match",
+      "faa_model": "CESSNA U206G",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1980,
+      "serial": "U20605724",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2030",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N740"
+      ]
+    },
+    {
+      "tail": "N749",
+      "icao_hex": "AA13F8",
+      "hex_check": "match",
+      "faa_model": "CESSNA A185F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1982,
+      "serial": "18504354",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N749"
+      ]
+    },
+    {
+      "tail": "N757",
+      "icao_hex": "AA3409",
+      "hex_check": "match",
+      "faa_model": "CESSNA A185F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1981,
+      "serial": "18504306",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N757"
+      ]
+    },
+    {
+      "tail": "N763",
+      "icao_hex": "AA4CAC",
+      "hex_check": "match",
+      "faa_model": "CESSNA U206G",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1986,
+      "serial": "U20606943",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2030",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N763"
+      ]
+    },
+    {
+      "tail": "N7875D",
+      "icao_hex": "AAAD92",
+      "hex_check": "match",
+      "faa_model": "PIPER PA-18-150",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1957,
+      "serial": "18-6030",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2030",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N7875D"
+      ]
+    },
+    {
+      "tail": "N9395N",
+      "icao_hex": "AD0A2C",
+      "hex_check": "match",
+      "faa_model": "CESSNA A185F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1981,
+      "serial": "18504347",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "12/31/2027",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N9395N"
+      ]
+    },
+    {
+      "tail": "N9623R",
+      "icao_hex": "AD6665",
+      "hex_check": "match",
+      "faa_model": "CESSNA U206G",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1985,
+      "serial": "U20606906",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N9623R"
+      ]
+    },
+    {
+      "tail": "N9987N",
+      "icao_hex": "ADF3B5",
+      "hex_check": "match",
+      "faa_model": "CESSNA A185F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1982,
+      "serial": "18504379",
+      "faa_owner": "UNITED STATES DEPARTMENT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2027",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N9987N"
+      ]
+    },
+    {
+      "tail": "N2PS",
+      "icao_hex": "A18EA7",
+      "hex_check": "match",
+      "faa_model": "TEXTRON AVIATION INC T206H",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "T20609243",
+      "faa_owner": "UNITED STATES DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N2PS"
+      ]
+    },
+    {
+      "tail": "N545PS",
+      "icao_hex": "A6EBD5",
+      "hex_check": "match",
+      "faa_model": "CESSNA TU206G",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1983,
+      "serial": "U20606702",
+      "faa_owner": "UNITED STATES DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "12/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N545PS"
+      ]
+    },
+    {
+      "tail": "N732K",
+      "icao_hex": "A9D35A",
+      "hex_check": "match",
+      "faa_model": "CESSNA A185F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1980,
+      "serial": "18504103",
+      "faa_owner": "UNITED STATES DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N732K"
+      ]
+    },
+    {
+      "tail": "N758",
+      "icao_hex": "AA37C0",
+      "hex_check": "match",
+      "faa_model": "QUEST AIRCRAFT COMPANY LLC KODIAK 100",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2010,
+      "serial": "100-0033",
+      "faa_owner": "UNITED STATES DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N758"
+      ]
+    },
+    {
+      "tail": "N769",
+      "icao_hex": "AA62F6",
+      "hex_check": "match",
+      "faa_model": "QUEST AIRCRAFT COMPANY LLC KODIAK 100",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2009,
+      "serial": "100-0023",
+      "faa_owner": "UNITED STATES DEPT OF INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPT OF INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N769"
+      ]
+    },
+    {
+      "tail": "N700FW",
+      "icao_hex": "A95520",
+      "hex_check": "match",
+      "faa_model": "QUEST AIRCRAFT COMPANY LLC KODIAK 100",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2009,
+      "serial": "100-0029",
+      "faa_owner": "UNITED STATES DEPT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N700FW"
+      ]
+    },
+    {
+      "tail": "N702",
+      "icao_hex": "A95BFB",
+      "hex_check": "match",
+      "faa_model": "QUEST AIRCRAFT COMPANY LLC KODIAK 100",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2010,
+      "serial": "100-0035",
+      "faa_owner": "UNITED STATES DEPT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N702"
+      ]
+    },
+    {
+      "tail": "N710",
+      "icao_hex": "A97C0C",
+      "hex_check": "match",
+      "faa_model": "QUEST AIRCRAFT COMPANY LLC KODIAK 100",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2009,
+      "serial": "100-0021",
+      "faa_owner": "UNITED STATES DEPT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N710"
+      ]
+    },
+    {
+      "tail": "N723",
+      "icao_hex": "A9AEB0",
+      "hex_check": "match",
+      "faa_model": "QUEST AIRCRAFT COMPANY LLC KODIAK 100",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2010,
+      "serial": "100-0036",
+      "faa_owner": "UNITED STATES DEPT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N723"
+      ]
+    },
+    {
+      "tail": "N736",
+      "icao_hex": "A9E154",
+      "hex_check": "match",
+      "faa_model": "QUEST AIRCRAFT COMPANY LLC KODIAK 100",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2009,
+      "serial": "100-0019",
+      "faa_owner": "UNITED STATES DEPT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "UNITED STATES DEPT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N736"
+      ]
+    },
+    {
+      "tail": "N135L",
+      "icao_hex": "A08EBE",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2016,
+      "serial": "CC18-0079",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N135L"
+      ]
+    },
+    {
+      "tail": "N186L",
+      "icao_hex": "A157F0",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2017,
+      "serial": "CC18-0086",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N186L"
+      ]
+    },
+    {
+      "tail": "N190PE",
+      "icao_hex": "A16975",
+      "hex_check": "match",
+      "faa_model": "PILATUS FLUGZEUGWERKE AG PC-12/45",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1997,
+      "serial": "190",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N190PE"
+      ]
+    },
+    {
+      "tail": "N232L",
+      "icao_hex": "A210E8",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2014,
+      "serial": "CC18-0069",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2027",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N232L"
+      ]
+    },
+    {
+      "tail": "N260UA",
+      "icao_hex": "A280C0",
+      "hex_check": "match",
+      "faa_model": "FREEFLY SYSTEMS ALTA X",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "AX946642",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2033",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N260UA"
+      ]
+    },
+    {
+      "tail": "N278CC",
+      "icao_hex": "A2C469",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2012,
+      "serial": "CC18-0057",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N278CC"
+      ]
+    },
+    {
+      "tail": "N287L",
+      "icao_hex": "A2E8F6",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2014,
+      "serial": "CC18-0071",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2027",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N287L"
+      ]
+    },
+    {
+      "tail": "N5143G",
+      "icao_hex": "A67313",
+      "hex_check": "match",
+      "faa_model": "DEHAVILLAND DHC-2 MK 1",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1951,
+      "serial": "466",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N5143G"
+      ]
+    },
+    {
+      "tail": "N527CC",
+      "icao_hex": "A6A324",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2012,
+      "serial": "CC18-0063",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N527CC"
+      ]
+    },
+    {
+      "tail": "N567L",
+      "icao_hex": "A741E5",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2016,
+      "serial": "CC18-0080",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N567L"
+      ]
+    },
+    {
+      "tail": "N709M",
+      "icao_hex": "A97710",
+      "hex_check": "match",
+      "faa_model": "FOUND ACFT CANADA INC FBA-2C2",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2006,
+      "serial": "100",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N709M"
+      ]
+    },
+    {
+      "tail": "N716M",
+      "icao_hex": "A9936A",
+      "hex_check": "match",
+      "faa_model": "FOUND ACFT CANADA INC FBA-2C2",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2007,
+      "serial": "104",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N716M"
+      ]
+    },
+    {
+      "tail": "N721NR",
+      "icao_hex": "A9A87F",
+      "hex_check": "match",
+      "faa_model": "CESSNA U206G",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1985,
+      "serial": "U20606902",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2030",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N721NR"
+      ]
+    },
+    {
+      "tail": "N774JC",
+      "icao_hex": "AA78AE",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2014,
+      "serial": "CC18-0066",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2027",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N774JC"
+      ]
+    },
+    {
+      "tail": "N796",
+      "icao_hex": "AACE4E",
+      "hex_check": "match",
+      "faa_model": "FOUND ACFT CANADA INC FBA-2C1",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2004,
+      "serial": "50",
+      "faa_owner": "US DEPARTMENT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2030",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N796"
+      ]
+    },
+    {
+      "tail": "N11PP",
+      "icao_hex": "A02B2D",
+      "hex_check": "match",
+      "faa_model": "BELL 412EP",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 2003,
+      "serial": "36316",
+      "faa_owner": "US DEPT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N11PP"
+      ]
+    },
+    {
+      "tail": "N216K",
+      "icao_hex": "A1D0AD",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2019,
+      "serial": "CC18-0095",
+      "faa_owner": "US DEPT OF THE INTERIOR",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2028",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N216K"
+      ]
+    },
+    {
+      "tail": "N328CC",
+      "icao_hex": "A38C3D",
+      "hex_check": "match",
+      "faa_model": "CUB CRAFTERS INC CC18-180",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2012,
+      "serial": "CC18-0058",
+      "faa_owner": "US DEPT OF THE INTERIOR",
+      "faa_other_names": [
+        "OFFICE OF AVIATION SERVICES"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2029",
+      "mission": "other",
+      "category": "federal",
+      "classification": {
+        "rule": "federal",
+        "field": "NAME",
+        "matched": "US DEPT OF THE INTERIOR",
+        "pattern": "^(US|U S|U\\.S\\.|USA|UNITED STATES)\\b|\\b(USDA|INTERIOR|OFFICE OF AVIATION SERVICES|NASA|FEDERAL AVIATION|NOAA|NATIONAL OCEANIC|GEOLOGICAL SURVEY)\\b",
+        "reason": "owner name is a federal agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N328CC"
+      ]
+    },
+    {
+      "tail": "N3311F",
+      "icao_hex": "A39C07",
+      "hex_check": "match",
+      "faa_model": "LEADING EDGE AERIAL TECH INC PV40X",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "11469",
+      "faa_owner": "IDAHO DEPARTMENT OF FISH AND GAME",
+      "faa_other_names": [],
+      "faa_owner_city_state": "NAMPA ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2031",
+      "mission": "other",
+      "category": "fish_wildlife",
+      "classification": {
+        "rule": "fish_wildlife",
+        "field": "NAME",
+        "matched": "IDAHO DEPARTMENT OF FISH AND GAME",
+        "pattern": "\\b(FISH|WILDLIFE|GAME)\\b",
+        "reason": "owner name is a fish and wildlife agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N3311F"
+      ]
+    },
+    {
+      "tail": "N53083",
+      "icao_hex": "A6B3F9",
+      "hex_check": "match",
+      "faa_model": "CESSNA A185F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1974,
+      "serial": "18502367",
+      "faa_owner": "CLEARWATER POTLATCH TIMBER PROTECT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "OROFINO ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "CLEARWATER POTLATCH TIMBER PROTECT",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N53083"
+      ]
+    },
+    {
+      "tail": "N106FS",
+      "icao_hex": "A01B8C",
+      "hex_check": "match",
+      "faa_model": "DEHAVILLAND DHC-2 MK. I(L20A)",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1952,
+      "serial": "477",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "FIRE & AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2030",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N106FS"
+      ]
+    },
+    {
+      "tail": "N110Z",
+      "icao_hex": "A02E72",
+      "hex_check": "match",
+      "faa_model": "SHORT BROS SD3-60 SHERPA",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1984,
+      "serial": "SH3409",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "FIRE & AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "11/30/2028",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N110Z"
+      ]
+    },
+    {
+      "tail": "N111Z",
+      "icao_hex": "A03229",
+      "hex_check": "match",
+      "faa_model": "CESSNA TU206F",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "U20602919",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2028",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N111Z"
+      ]
+    },
+    {
+      "tail": "N115Z",
+      "icao_hex": "A04105",
+      "hex_check": "match",
+      "faa_model": "TEXTRON AVIATION INC B200GT",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 2021,
+      "serial": "BY-396",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "C/O FIRE AND AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2030",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N115Z"
+      ]
+    },
+    {
+      "tail": "N125Z",
+      "icao_hex": "A06884",
+      "hex_check": "match",
+      "faa_model": "QUEST AIRCRAFT COMPANY LLC KODIAK 100",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2017,
+      "serial": "100-0226",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "FIRE AND AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2028",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N125Z"
+      ]
+    },
+    {
+      "tail": "N141Z",
+      "icao_hex": "A0A8A6",
+      "hex_check": "match",
+      "faa_model": "DEHAVILLAND DHC-6-300",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1984,
+      "serial": "803",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "FIRE & AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2030",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N141Z"
+      ]
+    },
+    {
+      "tail": "N142Z",
+      "icao_hex": "A0AC5D",
+      "hex_check": "match",
+      "faa_model": "SHORT BROS SD3-60 SHERPA",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1985,
+      "serial": "SH3421",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "FIRE & AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "11/30/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N142Z"
+      ]
+    },
+    {
+      "tail": "N147Z",
+      "icao_hex": "A0BEF0",
+      "hex_check": "match",
+      "faa_model": "TEXTRON AVIATION INC B200GT",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 2018,
+      "serial": "BY-323",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2029",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N147Z"
+      ]
+    },
+    {
+      "tail": "N148Z",
+      "icao_hex": "A0C2A7",
+      "hex_check": "match",
+      "faa_model": "SHORT BROS SD3-60 SHERPA",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1998,
+      "serial": "SH3428",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "FIRE AND AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "11/30/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N148Z"
+      ]
+    },
+    {
+      "tail": "N151Z",
+      "icao_hex": "A0D025",
+      "hex_check": "match",
+      "faa_model": "SHORT BROS SD3-60",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": null,
+      "serial": "SH3407",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "FIRE & AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "11/30/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N151Z"
+      ]
+    },
+    {
+      "tail": "N160Z",
+      "icao_hex": "A0F3ED",
+      "hex_check": "match",
+      "faa_model": "QUEST AIRCRAFT COMPANY LLC KODIAK 100",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2017,
+      "serial": "100-0227",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "FIRE AND AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2028",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N160Z"
+      ]
+    },
+    {
+      "tail": "N161Z",
+      "icao_hex": "A0F7A4",
+      "hex_check": "match",
+      "faa_model": "SHORT BROS SD3-60 SHERPA",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1997,
+      "serial": "SH3412",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "FIRE & AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N161Z"
+      ]
+    },
+    {
+      "tail": "N170Z",
+      "icao_hex": "A11B6C",
+      "hex_check": "match",
+      "faa_model": "TEXTRON AVIATION INC B200GT",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": null,
+      "serial": "BY-491",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2032",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N170Z"
+      ]
+    },
+    {
+      "tail": "N174Z",
+      "icao_hex": "A12A48",
+      "hex_check": "match",
+      "faa_model": "SHORT BROS SD3-60 SHERPA",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1984,
+      "serial": "SH3410",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "FIRE & AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "06/30/2028",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N174Z"
+      ]
+    },
+    {
+      "tail": "N176Z",
+      "icao_hex": "A131B6",
+      "hex_check": "match",
+      "faa_model": "SHORT BROS SD3-60 SHERPA",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1997,
+      "serial": "SH3411",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "FIRE & AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "06/30/2028",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N176Z"
+      ]
+    },
+    {
+      "tail": "N181Z",
+      "icao_hex": "A146A2",
+      "hex_check": "match",
+      "faa_model": "TEXTRON AVIATION INC B200GT",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 2021,
+      "serial": "BY-394",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "C/O FIRE AND AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2030",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N181Z"
+      ]
+    },
+    {
+      "tail": "N191Z",
+      "icao_hex": "A16E21",
+      "hex_check": "match",
+      "faa_model": "DEHAVILLAND BEAVER DHC-2",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1956,
+      "serial": "1006",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2029",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N191Z"
+      ]
+    },
+    {
+      "tail": "N192Z",
+      "icao_hex": "A171D8",
+      "hex_check": "match",
+      "faa_model": "DEHAVILLAND BEAVER DHC-2 MK.1",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1959,
+      "serial": "1347",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "FIRE & AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2030",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N192Z"
+      ]
+    },
+    {
+      "tail": "N193Z",
+      "icao_hex": "A1758F",
+      "hex_check": "match",
+      "faa_model": "DEHAVILLAND BEAVER DHC-2 MK.1",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1957,
+      "serial": "1162",
+      "faa_owner": "USDA FOREST SERVICE",
+      "faa_other_names": [
+        "FIRE & AVIATION"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2030",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N193Z"
+      ]
+    },
+    {
+      "tail": "N114Z",
+      "icao_hex": "A03D4E",
+      "hex_check": "match",
+      "faa_model": "SHORT BROS SD3-60 SHERPA",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1997,
+      "serial": "SH3408",
+      "faa_owner": "USDA FOREST SERVICE FIRE & AVIATION",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FIRE & AVIATION",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N114Z"
+      ]
+    },
+    {
+      "tail": "N143Z",
+      "icao_hex": "A0B014",
+      "hex_check": "match",
+      "faa_model": "DEHAVILLAND DHC-6-300",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1974,
+      "serial": "437",
+      "faa_owner": "USDA FOREST SERVICE FIRE & AVIATION",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2028",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FIRE & AVIATION",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N143Z"
+      ]
+    },
+    {
+      "tail": "N145Z",
+      "icao_hex": "A0B782",
+      "hex_check": "match",
+      "faa_model": "SHORT BROS SD3-60 SHERPA",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1998,
+      "serial": "SH3425",
+      "faa_owner": "USDA FOREST SERVICE FIRE & AVIATION",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FIRE & AVIATION",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N145Z"
+      ]
+    },
+    {
+      "tail": "N162Z",
+      "icao_hex": "A0FB5B",
+      "hex_check": "match",
+      "faa_model": "SHORT BROS SD3-60 SHERPA",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1998,
+      "serial": "SH3401",
+      "faa_owner": "USDA FOREST SERVICE FIRE & AVIATION",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FIRE & AVIATION",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N162Z"
+      ]
+    },
+    {
+      "tail": "N163Z",
+      "icao_hex": "A0FF12",
+      "hex_check": "match",
+      "faa_model": "SHORT BROS SD3-60 SHERPA",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1997,
+      "serial": "SH3414",
+      "faa_owner": "USDA FOREST SERVICE FIRE & AVIATION",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FIRE & AVIATION",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N163Z"
+      ]
+    },
+    {
+      "tail": "N166Z",
+      "icao_hex": "A10A37",
+      "hex_check": "match",
+      "faa_model": "CESSNA TU206G",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1986,
+      "serial": "U20606923",
+      "faa_owner": "USDA FOREST SERVICE FIRE & AVIATION",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2028",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FIRE & AVIATION",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N166Z"
+      ]
+    },
+    {
+      "tail": "N167Z",
+      "icao_hex": "A10DEE",
+      "hex_check": "match",
+      "faa_model": "KODIAK AIRCRAFT CO INC KODIAK 100",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2025,
+      "serial": "100-0361",
+      "faa_owner": "USDA FOREST SERVICE FIRE AND AVIATION",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2033",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FIRE AND AVIATION",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N167Z"
+      ]
+    },
+    {
+      "tail": "N20MB",
+      "icao_hex": "A190BF",
+      "hex_check": "match",
+      "faa_model": "TEXTRON AVIATION INC B200GT",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 2018,
+      "serial": "BY-338",
+      "faa_owner": "IDAHO TRANSPORTATION DEPARTMENT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2033",
+      "mission": "other",
+      "category": "transportation",
+      "classification": {
+        "rule": "transportation",
+        "field": "NAME",
+        "matched": "IDAHO TRANSPORTATION DEPARTMENT",
+        "pattern": "\\b(TRANSP|TRANSPORTATION|AERONAUTICS|AVIATION DIVISION|AIRPORTS?)\\b",
+        "reason": "owner name is a transportation or aeronautics agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N20MB"
+      ]
+    },
+    {
+      "tail": "N239KQ",
+      "icao_hex": "A22ADF",
+      "hex_check": "match",
+      "faa_model": "QUEST AIRCRAFT COMPANY LLC KODIAK 100",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "100-0239",
+      "faa_owner": "IDAHO TRANSPORTATION DEPARTMENT",
+      "faa_other_names": [
+        "DIVISION OF AERONAUTICS"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2029",
+      "mission": "other",
+      "category": "transportation",
+      "classification": {
+        "rule": "transportation",
+        "field": "NAME",
+        "matched": "IDAHO TRANSPORTATION DEPARTMENT",
+        "pattern": "\\b(TRANSP|TRANSPORTATION|AERONAUTICS|AVIATION DIVISION|AIRPORTS?)\\b",
+        "reason": "owner name is a transportation or aeronautics agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N239KQ"
+      ]
+    },
+    {
+      "tail": "N9438M",
+      "icao_hex": "AD1BC9",
+      "hex_check": "match",
+      "faa_model": "CESSNA TU206G",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1978,
+      "serial": "U20604546",
+      "faa_owner": "IDAHO TRANSPORTATION DEPARTMENT",
+      "faa_other_names": [
+        "DIV OF AERONAUTICS & PUBLIC TRANSP"
+      ],
+      "faa_owner_city_state": "BOISE ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2028",
+      "mission": "other",
+      "category": "transportation",
+      "classification": {
+        "rule": "transportation",
+        "field": "NAME",
+        "matched": "IDAHO TRANSPORTATION DEPARTMENT",
+        "pattern": "\\b(TRANSP|TRANSPORTATION|AERONAUTICS|AVIATION DIVISION|AIRPORTS?)\\b",
+        "reason": "owner name is a transportation or aeronautics agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N9438M"
+      ]
+    },
+    {
+      "tail": "N1064A",
+      "icao_hex": "A01DE3",
+      "hex_check": "match",
+      "faa_model": "LEADING EDGE AERIAL TECH INC PV35X",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "11269",
+      "faa_owner": "ADA COUNTY MOSQUITO ABATEMENT DISTRICT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "MERIDIAN ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "06/30/2030",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "ADA COUNTY MOSQUITO ABATEMENT DISTRICT",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N1064A"
+      ]
+    },
+    {
+      "tail": "N430NA",
+      "icao_hex": "A5244B",
+      "hex_check": "match",
+      "faa_model": "LEADING EDGE AERIAL TECH INC PV100X",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "MFR1937510034",
+      "faa_owner": "ADA COUNTY MOSQUITO ABATEMENT DISTRICT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "MERIDIAN ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2033",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "ADA COUNTY MOSQUITO ABATEMENT DISTRICT",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N430NA"
+      ]
+    },
+    {
+      "tail": "N465BC",
+      "icao_hex": "A5AC4A",
+      "hex_check": "match",
+      "faa_model": "LEADING EDGE AERIAL TECH INC PV100X",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "MFR1937510033",
+      "faa_owner": "ADA COUNTY MOSQUITO ABATEMENT DISTRICT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "MERIDIAN ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2033",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "ADA COUNTY MOSQUITO ABATEMENT DISTRICT",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N465BC"
+      ]
+    },
+    {
+      "tail": "N363UB",
+      "icao_hex": "A41935",
+      "hex_check": "match",
+      "faa_model": "DJI AGRAS T10",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "3TJBJ47001006W",
+      "faa_owner": "BONNEVILLE COUNTY WEED CONTROL",
+      "faa_other_names": [],
+      "faa_owner_city_state": "IDAHO FALLS ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "12/31/2031",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "BONNEVILLE COUNTY WEED CONTROL",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N363UB"
+      ]
+    },
+    {
+      "tail": "N363VB",
+      "icao_hex": "A4194E",
+      "hex_check": "match",
+      "faa_model": "DJI AGRAS T20P",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "64UBL6K00200E3",
+      "faa_owner": "BONNEVILLE COUNTY WEED CONTROL",
+      "faa_other_names": [],
+      "faa_owner_city_state": "IDAHO FALLS ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "12/31/2031",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "BONNEVILLE COUNTY WEED CONTROL",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N363VB"
+      ]
+    },
+    {
+      "tail": "N9868E",
+      "icao_hex": "ADC4E3",
+      "hex_check": "match",
+      "faa_model": "LEADING EDGE AERIAL TECH INC PV35X",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "11177",
+      "faa_owner": "EDWARDS MOSQUITO ABATEMENT DISTRICT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "DONNELLY ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2030",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "EDWARDS MOSQUITO ABATEMENT DISTRICT",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N9868E"
+      ]
+    },
+    {
+      "tail": "N257WF",
+      "icao_hex": "A27379",
+      "hex_check": "match",
+      "faa_model": "DJI AGRAS T40",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "1581F574B237A00101H7",
+      "faa_owner": "MADISON COUNTY",
+      "faa_other_names": [
+        "WEED AND MOSQUITO CONTROL"
+      ],
+      "faa_owner_city_state": "REXBURG ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2031",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "OTHER NAMES(1)",
+        "matched": "WEED AND MOSQUITO CONTROL",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N257WF"
+      ]
+    },
+    {
+      "tail": "N329UC",
+      "icao_hex": "A39184",
+      "hex_check": "match",
+      "faa_model": "HYLIO INC AG-216",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "17906090226",
+      "faa_owner": "ONEIDA COUNTY NOXIOUS WEED DEPT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "MALAD CITY ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2031",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "ONEIDA COUNTY NOXIOUS WEED DEPT",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N329UC"
+      ]
+    },
+    {
+      "tail": "N8925Z",
+      "icao_hex": "AC4FE1",
+      "hex_check": "match",
+      "faa_model": "DJI AGRAS T40",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "64TBL4E00Z00PG",
+      "faa_owner": "TWIN FALLS COUNTY PEST ABATEMENT DISTRICT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "TWIN FALLS ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2032",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "TWIN FALLS COUNTY PEST ABATEMENT DISTRICT",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N8925Z"
+      ]
+    },
+    {
+      "tail": "N892SD",
+      "icao_hex": "AC4E56",
+      "hex_check": "match",
+      "faa_model": "LEADING EDGE AERIAL TECH INC PRECISION VISION 35",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "6119",
+      "faa_owner": "TWIN FALLS COUNTY PEST ABATEMENT DISTRICT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "TWIN FALLS ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2027",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "TWIN FALLS COUNTY PEST ABATEMENT DISTRICT",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N892SD"
+      ]
+    },
+    {
+      "tail": "N41125",
+      "icao_hex": "A4DA93",
+      "hex_check": "match",
+      "faa_model": "DJI AGRAS T30",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "3U4DJKT0011EP7",
+      "faa_owner": "TWIN FALLS COUNTY WEED CONTROL",
+      "faa_other_names": [],
+      "faa_owner_city_state": "TWIN FALLS ID",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2030",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "TWIN FALLS COUNTY WEED CONTROL",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N41125"
+      ]
+    }
+  ],
+  "excluded": [
+    {
+      "tail": "N159Z",
+      "faa_owner": "IDAHO STATE UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N4415L",
+      "faa_owner": "IDAHO STATE UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N468QH",
+      "faa_owner": "UNIVERSITY OF IDAHO",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N154UX",
+      "faa_owner": "STATE OF IDAHO MILITARY DIVISION",
+      "category": "military",
+      "reason": "owner name is a military unit"
+    },
+    {
+      "tail": "N128MW",
+      "faa_owner": "LEGACY FLIGHT MUSEUM",
+      "category": "museum",
+      "reason": "owner name is a museum"
+    },
+    {
+      "tail": "N164UC",
+      "faa_owner": "LEGACY FLIGHT MUSEUM",
+      "category": "museum",
+      "reason": "owner name is a museum"
+    },
+    {
+      "tail": "N305CM",
+      "faa_owner": "LEGACY FLIGHT MUSEUM",
+      "category": "museum",
+      "reason": "owner name is a museum"
+    },
+    {
+      "tail": "N676JD",
+      "faa_owner": "LEGACY FLIGHT MUSEUM",
+      "category": "museum",
+      "reason": "owner name is a museum"
+    },
+    {
+      "tail": "N80924",
+      "faa_owner": "LEGACY FLIGHT MUSEUM",
+      "category": "museum",
+      "reason": "owner name is a museum"
+    },
+    {
+      "tail": "N8115M",
+      "faa_owner": "LEGACY FLIGHT MUSEUM",
+      "category": "museum",
+      "reason": "owner name is a museum"
+    },
+    {
+      "tail": "N90265",
+      "faa_owner": "LEGACY FLIGHT MUSEUM",
+      "category": "museum",
+      "reason": "owner name is a museum"
+    },
+    {
+      "tail": "N43YF",
+      "faa_owner": "LEGACY FLIGHT MUSEUM CITY OF REXBURG",
+      "category": "museum",
+      "reason": "owner name is a museum"
+    }
+  ]
+}

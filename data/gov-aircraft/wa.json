@@ -1,0 +1,2424 @@
+{
+  "state": "WA",
+  "source": {
+    "url": "https://registry.faa.gov/database/ReleasableAircraft.zip",
+    "faa_file_date": "2026-11-20",
+    "pulled": "2026-11-23"
+  },
+  "method": "FAA releasable aircraft database, MASTER rows with owner state WA: every government registrant (type 5) plus any other registrant whose name reads as a police agency. Mission from owner-name patterns (classification.rule records which). Every row is tentative until an agency source confirms it. Colleges, schools, museums and military units are listed under excluded, not aircraft.",
+  "counts": {
+    "total": 54,
+    "police_enforcement": 26,
+    "other": 28,
+    "needs_review": 2,
+    "by_category": {
+      "public_safety": 1,
+      "sheriff": 18,
+      "state_police": 7,
+      "energy_utility": 4,
+      "fire": 2,
+      "fish_wildlife": 2,
+      "natural_resources": 12,
+      "parks": 1,
+      "special_district": 1,
+      "transportation": 1,
+      "tribal": 1,
+      "vector_control": 4
+    },
+    "excluded": 112
+  },
+  "aircraft": [
+    {
+      "tail": "N71KP",
+      "icao_hex": "A97AA3",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1H",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "70-16314",
+      "faa_owner": "KING COUNTY DEPARTMENT OF PUBLIC SAFETY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SEATTLE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2029",
+      "mission": "police_enforcement",
+      "category": "public_safety",
+      "classification": {
+        "rule": "public_safety",
+        "field": "NAME",
+        "matched": "KING COUNTY DEPARTMENT OF PUBLIC SAFETY",
+        "pattern": "\\bPUBLIC SAFETY\\b",
+        "reason": "owner name is a department of public safety"
+      },
+      "confidence": "tentative",
+      "needs_review": true,
+      "review_notes": [
+        "public safety can mean fire or EMS; confirm a police unit flies it"
+      ],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N71KP"
+      ]
+    },
+    {
+      "tail": "N911YC",
+      "icao_hex": "AC9C8B",
+      "hex_check": "match",
+      "faa_model": "BELL OH-58A",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "72-21067",
+      "faa_owner": "CHELAN COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "WENATCHEE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2027",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "CHELAN COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N911YC"
+      ]
+    },
+    {
+      "tail": "N912YC",
+      "icao_hex": "ACA042",
+      "hex_check": "match",
+      "faa_model": "BELL OH-58A",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "71-20383",
+      "faa_owner": "CHELAN COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "WENATCHEE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2027",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "CHELAN COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N912YC"
+      ]
+    },
+    {
+      "tail": "N67817",
+      "icao_hex": "A8FC0B",
+      "hex_check": "match",
+      "faa_model": "BELL 206B",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 1995,
+      "serial": "5210",
+      "faa_owner": "KING COUNTY SHERIFF'S OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SEATTLE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "11/30/2028",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "KING COUNTY SHERIFF'S OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N67817"
+      ]
+    },
+    {
+      "tail": "N407KS",
+      "icao_hex": "A4C794",
+      "hex_check": "match",
+      "faa_model": "BELL HELICOPTER TEXTRON CANADA 407",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 2008,
+      "serial": "53812",
+      "faa_owner": "KING COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SEATTLE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2028",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "KING COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N407KS"
+      ]
+    },
+    {
+      "tail": "N422CT",
+      "icao_hex": "A50351",
+      "hex_check": "match",
+      "faa_model": "BELL TEXTRON CANADA LTD 407",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 2024,
+      "serial": "56392",
+      "faa_owner": "KING COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SEATTLE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2031",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "KING COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N422CT"
+      ]
+    },
+    {
+      "tail": "N67880",
+      "icao_hex": "A8FCF9",
+      "hex_check": "match",
+      "faa_model": "BELL 206B",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 1995,
+      "serial": "5221",
+      "faa_owner": "KING COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SEATTLE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2028",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "KING COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N67880"
+      ]
+    },
+    {
+      "tail": "N78906",
+      "icao_hex": "AAB46C",
+      "hex_check": "match",
+      "faa_model": "BELL 206B",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 2001,
+      "serial": "5277",
+      "faa_owner": "KING COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SEATTLE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "06/30/2028",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "KING COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N78906"
+      ]
+    },
+    {
+      "tail": "N790RJ",
+      "icao_hex": "AAB985",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1H",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "70-16371",
+      "faa_owner": "KING COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SEATTLE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2028",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "KING COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N790RJ"
+      ]
+    },
+    {
+      "tail": "N7561N",
+      "icao_hex": "AA32DB",
+      "hex_check": "match",
+      "faa_model": "CESSNA TU206G",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1977,
+      "serial": "U20603673",
+      "faa_owner": "PIERCE COUNTY SHERIFFS DEPARTMENT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SOUTH HILL WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2030",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "PIERCE COUNTY SHERIFFS DEPARTMENT",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N7561N"
+      ]
+    },
+    {
+      "tail": "N9446P",
+      "icao_hex": "AD1F3C",
+      "hex_check": "match",
+      "faa_model": "CESSNA T206H",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2012,
+      "serial": "T20609070",
+      "faa_owner": "PIERCE COUNTY SHERIFFS DEPARTMENT",
+      "faa_other_names": [
+        "AIR SUPPORT UNIT"
+      ],
+      "faa_owner_city_state": "PUYALLUP WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2029",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "PIERCE COUNTY SHERIFFS DEPARTMENT",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N9446P"
+      ]
+    },
+    {
+      "tail": "N500EV",
+      "icao_hex": "A63A68",
+      "hex_check": "match",
+      "faa_model": "MCDONNELL DOUGLAS HELICOPTER 369E",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 1989,
+      "serial": "0340E",
+      "faa_owner": "SNOHOMISH COUNTY SHERIFF",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SNOHOMISH WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2030",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "SNOHOMISH COUNTY SHERIFF",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N500EV"
+      ]
+    },
+    {
+      "tail": "N13SD",
+      "icao_hex": "A07A6C",
+      "hex_check": "match",
+      "faa_model": "HUGHES 369A",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "380376",
+      "faa_owner": "SNOHOMISH COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SNOHOMISH WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2030",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "SNOHOMISH COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N13SD"
+      ]
+    },
+    {
+      "tail": "N608SD",
+      "icao_hex": "A7E68B",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1H",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "64-13562",
+      "faa_owner": "SNOHOMISH COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SNOHOMISH WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2030",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "SNOHOMISH COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N608SD"
+      ]
+    },
+    {
+      "tail": "N815SC",
+      "icao_hex": "AB1D82",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1H",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "70-15757",
+      "faa_owner": "SNOHOMISH COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SNOHOMISH WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/29/2028",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "SNOHOMISH COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N815SC"
+      ]
+    },
+    {
+      "tail": "N215SC",
+      "icao_hex": "A1CDA8",
+      "hex_check": "match",
+      "faa_model": "BELL OH-58",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "70-15148",
+      "faa_owner": "SPOKANE COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SPOKANE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2029",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "SPOKANE COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N215SC"
+      ]
+    },
+    {
+      "tail": "N509DV",
+      "icao_hex": "A65BBE",
+      "hex_check": "match",
+      "faa_model": "BELL TEXTRON CANADA LTD 505",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 2025,
+      "serial": "65615",
+      "faa_owner": "SPOKANE COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SPOKANE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "06/30/2032",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "SPOKANE COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N509DV"
+      ]
+    },
+    {
+      "tail": "N509JS",
+      "icao_hex": "A65C38",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1H",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "73-21824",
+      "faa_owner": "SPOKANE COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SPOKANE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2029",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "SPOKANE COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N509JS"
+      ]
+    },
+    {
+      "tail": "N509SC",
+      "icao_hex": "A65CF2",
+      "hex_check": "match",
+      "faa_model": "BELL OH-58A",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "72-21371",
+      "faa_owner": "SPOKANE COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SPOKANE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "11/30/2027",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "SPOKANE COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N509SC"
+      ]
+    },
+    {
+      "tail": "N207HB",
+      "icao_hex": "A1ACB5",
+      "hex_check": "match",
+      "faa_model": "BEECH B200",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1995,
+      "serial": "BB-1516",
+      "faa_owner": "STATE OF WASHINGTON",
+      "faa_other_names": [
+        "WASHINGTON STATE PATROL"
+      ],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2028",
+      "mission": "police_enforcement",
+      "category": "state_police",
+      "classification": {
+        "rule": "state_police",
+        "field": "OTHER NAMES(1)",
+        "matched": "WASHINGTON STATE PATROL",
+        "pattern": "\\b(STATE|HIGHWAY) (PATROL|POLICE)\\b",
+        "reason": "owner name is a state patrol or state police"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N207HB"
+      ]
+    },
+    {
+      "tail": "N102LP",
+      "icao_hex": "A00D2A",
+      "hex_check": "match",
+      "faa_model": "CESSNA 182T",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2002,
+      "serial": "18281121",
+      "faa_owner": "WASHINGTON STATE PATROL",
+      "faa_other_names": [],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2029",
+      "mission": "police_enforcement",
+      "category": "state_police",
+      "classification": {
+        "rule": "state_police",
+        "field": "NAME",
+        "matched": "WASHINGTON STATE PATROL",
+        "pattern": "\\b(STATE|HIGHWAY) (PATROL|POLICE)\\b",
+        "reason": "owner name is a state patrol or state police"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N102LP"
+      ]
+    },
+    {
+      "tail": "N2446X",
+      "icao_hex": "A2421B",
+      "hex_check": "match",
+      "faa_model": "CESSNA 206H",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2000,
+      "serial": "20608097",
+      "faa_owner": "WASHINGTON STATE PATROL",
+      "faa_other_names": [],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2028",
+      "mission": "police_enforcement",
+      "category": "state_police",
+      "classification": {
+        "rule": "state_police",
+        "field": "NAME",
+        "matched": "WASHINGTON STATE PATROL",
+        "pattern": "\\b(STATE|HIGHWAY) (PATROL|POLICE)\\b",
+        "reason": "owner name is a state patrol or state police"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N2446X"
+      ]
+    },
+    {
+      "tail": "N305DK",
+      "icao_hex": "A3323A",
+      "hex_check": "match",
+      "faa_model": "CESSNA 206H",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1999,
+      "serial": "20608080",
+      "faa_owner": "WASHINGTON STATE PATROL",
+      "faa_other_names": [],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2029",
+      "mission": "police_enforcement",
+      "category": "state_police",
+      "classification": {
+        "rule": "state_police",
+        "field": "NAME",
+        "matched": "WASHINGTON STATE PATROL",
+        "pattern": "\\b(STATE|HIGHWAY) (PATROL|POLICE)\\b",
+        "reason": "owner name is a state patrol or state police"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N305DK"
+      ]
+    },
+    {
+      "tail": "N305RC",
+      "icao_hex": "A3335F",
+      "hex_check": "match",
+      "faa_model": "CESSNA 182T",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2001,
+      "serial": "18281001",
+      "faa_owner": "WASHINGTON STATE PATROL",
+      "faa_other_names": [
+        "AVIATION SECTION"
+      ],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2028",
+      "mission": "police_enforcement",
+      "category": "state_police",
+      "classification": {
+        "rule": "state_police",
+        "field": "NAME",
+        "matched": "WASHINGTON STATE PATROL",
+        "pattern": "\\b(STATE|HIGHWAY) (PATROL|POLICE)\\b",
+        "reason": "owner name is a state patrol or state police"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N305RC"
+      ]
+    },
+    {
+      "tail": "N646JS",
+      "icao_hex": "A87C5E",
+      "hex_check": "match",
+      "faa_model": "TEXTRON AVIATION INC T206H",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2026,
+      "serial": "T20609832",
+      "faa_owner": "WASHINGTON STATE PATROL",
+      "faa_other_names": [],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2033",
+      "mission": "police_enforcement",
+      "category": "state_police",
+      "classification": {
+        "rule": "state_police",
+        "field": "NAME",
+        "matched": "WASHINGTON STATE PATROL",
+        "pattern": "\\b(STATE|HIGHWAY) (PATROL|POLICE)\\b",
+        "reason": "owner name is a state patrol or state police"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N646JS"
+      ]
+    },
+    {
+      "tail": "N823EG",
+      "icao_hex": "AB3C6B",
+      "hex_check": "match",
+      "faa_model": "TEXTRON AVIATION INC T206H",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2025,
+      "serial": "T20609807",
+      "faa_owner": "WASHINGTON STATE PATROL",
+      "faa_other_names": [],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2032",
+      "mission": "police_enforcement",
+      "category": "state_police",
+      "classification": {
+        "rule": "state_police",
+        "field": "NAME",
+        "matched": "WASHINGTON STATE PATROL",
+        "pattern": "\\b(STATE|HIGHWAY) (PATROL|POLICE)\\b",
+        "reason": "owner name is a state patrol or state police"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N823EG"
+      ]
+    },
+    {
+      "tail": "N798BP",
+      "icao_hex": "AAD5E4",
+      "hex_check": "match",
+      "faa_model": "BELL TEXTRON CANADA LTD 407",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "56336",
+      "faa_owner": "BONNEVILLE POWER ADMINISTRATION",
+      "faa_other_names": [],
+      "faa_owner_city_state": "VANCOUVER WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2030",
+      "mission": "other",
+      "category": "energy_utility",
+      "classification": {
+        "rule": "energy_utility",
+        "field": "NAME",
+        "matched": "BONNEVILLE POWER ADMINISTRATION",
+        "pattern": "\\b(POWER ADMINISTRATION|DEPARTMENT OF ENERGY|UTILITY|UTILITIES|PUD|ELECTRIC|NATIONAL LABORA?TORY|NATIONAL LABORTORY)\\b",
+        "reason": "owner name is a power, energy or utility agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N798BP"
+      ]
+    },
+    {
+      "tail": "N168PC",
+      "icao_hex": "A110AE",
+      "hex_check": "match",
+      "faa_model": "NAVMAR APPLIED SCIENCES CORP TIGERSHARK BLKIII A2",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "168",
+      "faa_owner": "US DEPARTMENT OF ENERGY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "RICHLAND WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2030",
+      "mission": "other",
+      "category": "energy_utility",
+      "classification": {
+        "rule": "energy_utility",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF ENERGY",
+        "pattern": "\\b(POWER ADMINISTRATION|DEPARTMENT OF ENERGY|UTILITY|UTILITIES|PUD|ELECTRIC|NATIONAL LABORA?TORY|NATIONAL LABORTORY)\\b",
+        "reason": "owner name is a power, energy or utility agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N168PC"
+      ]
+    },
+    {
+      "tail": "N177DE",
+      "icao_hex": "A1337E",
+      "hex_check": "match",
+      "faa_model": "NAVMAR APPLIED SCIENCES CORP TIGER SHARK XP",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "177",
+      "faa_owner": "US DEPARTMENT OF ENERGY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "RICHLAND WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2029",
+      "mission": "other",
+      "category": "energy_utility",
+      "classification": {
+        "rule": "energy_utility",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF ENERGY",
+        "pattern": "\\b(POWER ADMINISTRATION|DEPARTMENT OF ENERGY|UTILITY|UTILITIES|PUD|ELECTRIC|NATIONAL LABORA?TORY|NATIONAL LABORTORY)\\b",
+        "reason": "owner name is a power, energy or utility agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N177DE"
+      ]
+    },
+    {
+      "tail": "N850RJ",
+      "icao_hex": "ABA8D8",
+      "hex_check": "match",
+      "faa_model": "CANADAIR CL-600-2B19",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1996,
+      "serial": "7152",
+      "faa_owner": "US DEPARTMENT OF ENERGY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "RICHLAND WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2029",
+      "mission": "other",
+      "category": "energy_utility",
+      "classification": {
+        "rule": "energy_utility",
+        "field": "NAME",
+        "matched": "US DEPARTMENT OF ENERGY",
+        "pattern": "\\b(POWER ADMINISTRATION|DEPARTMENT OF ENERGY|UTILITY|UTILITIES|PUD|ELECTRIC|NATIONAL LABORA?TORY|NATIONAL LABORTORY)\\b",
+        "reason": "owner name is a power, energy or utility agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N850RJ"
+      ]
+    },
+    {
+      "tail": "N911MR",
+      "icao_hex": "AC9B85",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1H",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "65-09710",
+      "faa_owner": "CHELAN COUNTY FIRE DISTRICT NO 1",
+      "faa_other_names": [],
+      "faa_owner_city_state": "WENATCHEE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2029",
+      "mission": "other",
+      "category": "fire",
+      "classification": {
+        "rule": "fire",
+        "field": "NAME",
+        "matched": "CHELAN COUNTY FIRE DISTRICT NO 1",
+        "pattern": "\\bFIRE\\b",
+        "reason": "owner name is a fire district or department"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N911MR"
+      ]
+    },
+    {
+      "tail": "N911PR",
+      "icao_hex": "AC9BB7",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1H",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "65-09877",
+      "faa_owner": "CHELAN COUNTY FIRE DISTRICT NO 1",
+      "faa_other_names": [],
+      "faa_owner_city_state": "WENATCHEE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2029",
+      "mission": "other",
+      "category": "fire",
+      "classification": {
+        "rule": "fire",
+        "field": "NAME",
+        "matched": "CHELAN COUNTY FIRE DISTRICT NO 1",
+        "pattern": "\\bFIRE\\b",
+        "reason": "owner name is a fire district or department"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N911PR"
+      ]
+    },
+    {
+      "tail": "N3393W",
+      "icao_hex": "A3BA14",
+      "hex_check": "match",
+      "faa_model": "DJI AGRAS T40",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "1581F574B227400102F5",
+      "faa_owner": "STATE OF WASHINGTON DEPT OF FISH AND WILDLIFE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2031",
+      "mission": "other",
+      "category": "fish_wildlife",
+      "classification": {
+        "rule": "fish_wildlife",
+        "field": "NAME",
+        "matched": "STATE OF WASHINGTON DEPT OF FISH AND WILDLIFE",
+        "pattern": "\\b(FISH|WILDLIFE|GAME)\\b",
+        "reason": "owner name is a fish and wildlife agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N3393W"
+      ]
+    },
+    {
+      "tail": "N357PN",
+      "icao_hex": "A40020",
+      "hex_check": "match",
+      "faa_model": "PARTENAVIA S.P.A P 68 C/TC",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1985,
+      "serial": "357-38/TC",
+      "faa_owner": "WASHINGTON STATE DEPT OF FISH AND WILDLIFE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2030",
+      "mission": "other",
+      "category": "fish_wildlife",
+      "classification": {
+        "rule": "fish_wildlife",
+        "field": "NAME",
+        "matched": "WASHINGTON STATE DEPT OF FISH AND WILDLIFE",
+        "pattern": "\\b(FISH|WILDLIFE|GAME)\\b",
+        "reason": "owner name is a fish and wildlife agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N357PN"
+      ]
+    },
+    {
+      "tail": "N216KQ",
+      "icao_hex": "A1D0BC",
+      "hex_check": "match",
+      "faa_model": "QUEST AIRCRAFT COMPANY LLC KODIAK 100",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2017,
+      "serial": "100-0216",
+      "faa_owner": "STATE OF WASHINGTON",
+      "faa_other_names": [
+        "DEPARTMENT OF NATURAL RESOURCES"
+      ],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "12/31/2029",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "OTHER NAMES(1)",
+        "matched": "DEPARTMENT OF NATURAL RESOURCES",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N216KQ"
+      ]
+    },
+    {
+      "tail": "N346BF",
+      "icao_hex": "A3D3B7",
+      "hex_check": "match",
+      "faa_model": "BELL HELICOPTER TEXTRON CANADA 206L-4",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 2007,
+      "serial": "52346",
+      "faa_owner": "STATE OF WASHINGTON",
+      "faa_other_names": [
+        "DEPARTMENT OF NATURAL RESOURCES"
+      ],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid (first renewal notice sent)",
+      "faa_status_code": "25",
+      "faa_expiration": "04/30/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "OTHER NAMES(1)",
+        "matched": "DEPARTMENT OF NATURAL RESOURCES",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N346BF"
+      ]
+    },
+    {
+      "tail": "N565E",
+      "icao_hex": "A739E1",
+      "hex_check": "match",
+      "faa_model": "QUEST AIRCRAFT CO INC KODIAK 100",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2019,
+      "serial": "100-0272",
+      "faa_owner": "STATE OF WASHINGTON",
+      "faa_other_names": [
+        "DEPARTMENT OF NATURAL RESOURCES"
+      ],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2030",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "OTHER NAMES(1)",
+        "matched": "DEPARTMENT OF NATURAL RESOURCES",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N565E"
+      ]
+    },
+    {
+      "tail": "N338WN",
+      "icao_hex": "A3B588",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1H",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "63-08846",
+      "faa_owner": "USDA FOREST SERVICE FEPP",
+      "faa_other_names": [
+        "STATE OF WASHINGTON",
+        "DEPARTMENT OF NATURAL RESOURCES"
+      ],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FEPP",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N338WN"
+      ]
+    },
+    {
+      "tail": "N339WN",
+      "icao_hex": "A3B93F",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1H",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "63-12979",
+      "faa_owner": "USDA FOREST SERVICE FEPP",
+      "faa_other_names": [
+        "STATE OF WASHINGTON",
+        "DEPARTMENT OF NATURAL RESOURCES"
+      ],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FEPP",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N339WN"
+      ]
+    },
+    {
+      "tail": "N340WN",
+      "icao_hex": "A3BF4F",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1H",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "65-10081",
+      "faa_owner": "USDA FOREST SERVICE FEPP",
+      "faa_other_names": [
+        "STATE OF WASHINGTON",
+        "DEPARTMENT OF NATURAL RESOURCES"
+      ],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2029",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FEPP",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N340WN"
+      ]
+    },
+    {
+      "tail": "N341WN",
+      "icao_hex": "A3C306",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1H",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "65-10130",
+      "faa_owner": "USDA FOREST SERVICE FEPP",
+      "faa_other_names": [
+        "STATE OF WASHINGTON",
+        "DEPARTMENT OF NATURAL RESOURCES"
+      ],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2029",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FEPP",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N341WN"
+      ]
+    },
+    {
+      "tail": "N343WN",
+      "icao_hex": "A3CA74",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "73-21764",
+      "faa_owner": "USDA FOREST SERVICE FEPP",
+      "faa_other_names": [
+        "STATE OF WASHINGTON",
+        "DEPARTMENT OF NATURAL RESOURCES"
+      ],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FEPP",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N343WN"
+      ]
+    },
+    {
+      "tail": "N344WN",
+      "icao_hex": "A3CE2B",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1H",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "71-20329",
+      "faa_owner": "USDA FOREST SERVICE FEPP",
+      "faa_other_names": [
+        "STATE OF WASHINGTON",
+        "DEPARTMENT OF NATURAL RESOURCES"
+      ],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "06/30/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FEPP",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N344WN"
+      ]
+    },
+    {
+      "tail": "N345WN",
+      "icao_hex": "A3D1E2",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1H",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "72-21629",
+      "faa_owner": "USDA FOREST SERVICE FEPP",
+      "faa_other_names": [
+        "STATE OF WASHINGTON",
+        "DEPARTMENT OF NATURAL RESOURCES"
+      ],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "06/30/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FEPP",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N345WN"
+      ]
+    },
+    {
+      "tail": "N346WN",
+      "icao_hex": "A3D599",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1H",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "70-15708",
+      "faa_owner": "USDA FOREST SERVICE FEPP",
+      "faa_other_names": [
+        "STATE OF WASHINGTON",
+        "DEPARTMENT OF NATURAL RESOURCES"
+      ],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "06/30/2027",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FEPP",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N346WN"
+      ]
+    },
+    {
+      "tail": "N342WN",
+      "icao_hex": "A3C6BD",
+      "hex_check": "match",
+      "faa_model": "BELL UH-1V",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "70-16373",
+      "faa_owner": "USDA FOREST SERVICE FEPP / STATE OF WASHINGTON",
+      "faa_other_names": [],
+      "faa_owner_city_state": "OLYMPIA WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2029",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "USDA FOREST SERVICE FEPP / STATE OF WASHINGTON",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N342WN"
+      ]
+    },
+    {
+      "tail": "N670PM",
+      "icao_hex": "A8DD09",
+      "hex_check": "match",
+      "faa_model": "DJI PHANTOM 3 PROFESSION",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "P76DCE11010598",
+      "faa_owner": "METRO PARKS TACOMA",
+      "faa_other_names": [
+        "NORTHWEST TREK WILDLIFE PARK"
+      ],
+      "faa_owner_city_state": "EATONVILLE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2029",
+      "mission": "other",
+      "category": "parks",
+      "classification": {
+        "rule": "parks",
+        "field": "NAME",
+        "matched": "METRO PARKS TACOMA",
+        "pattern": "\\bPARKS?\\b",
+        "reason": "owner name is a parks agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N670PM"
+      ]
+    },
+    {
+      "tail": "N446FB",
+      "icao_hex": "A56166",
+      "hex_check": "match",
+      "faa_model": "DJI AGRAS T25",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "1581F6BUB2446001ZXF6",
+      "faa_owner": "CONSOLIDATED DIKING IMPROVEMENT DISTRICT NO 1",
+      "faa_other_names": [],
+      "faa_owner_city_state": "LONGVIEW WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "06/30/2033",
+      "mission": "other",
+      "category": "special_district",
+      "classification": {
+        "rule": "special_district",
+        "field": "NAME",
+        "matched": "CONSOLIDATED DIKING IMPROVEMENT DISTRICT NO 1",
+        "pattern": "\\bDISTRICT\\b",
+        "reason": "owner name is a special district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N446FB"
+      ]
+    },
+    {
+      "tail": "N72612",
+      "icao_hex": "A9BC6C",
+      "hex_check": "match",
+      "faa_model": "CESSNA 182T",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "18280988",
+      "faa_owner": "WASHINGTON STATE DEPT OF TRANSP",
+      "faa_other_names": [
+        "AVIATION DIVISION"
+      ],
+      "faa_owner_city_state": "TUMWATER WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2029",
+      "mission": "other",
+      "category": "transportation",
+      "classification": {
+        "rule": "transportation",
+        "field": "NAME",
+        "matched": "WASHINGTON STATE DEPT OF TRANSP",
+        "pattern": "\\b(TRANSP|TRANSPORTATION|AERONAUTICS|AVIATION DIVISION|AIRPORTS?)\\b",
+        "reason": "owner name is a transportation or aeronautics agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N72612"
+      ]
+    },
+    {
+      "tail": "N471ZC",
+      "icao_hex": "A5C713",
+      "hex_check": "match",
+      "faa_model": "DJI AGRAS T50",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "63YBM8C00200D1",
+      "faa_owner": "COEUR D' ALENE TRIBE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SPOKANE VALLEY WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2032",
+      "mission": "other",
+      "category": "tribal",
+      "classification": {
+        "rule": "tribal",
+        "field": "NAME",
+        "matched": "COEUR D' ALENE TRIBE",
+        "pattern": "\\b(TRIBE|TRIBES|TRIBAL|NATION|INDIAN|RESERVATION)\\b",
+        "reason": "owner name is a tribal government"
+      },
+      "confidence": "tentative",
+      "needs_review": true,
+      "review_notes": [
+        "tribal owner with no department named; check whether a tribal police unit flies it"
+      ],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N471ZC"
+      ]
+    },
+    {
+      "tail": "N971RC",
+      "icao_hex": "AD88D6",
+      "hex_check": "match",
+      "faa_model": "DJI AGRAS T30",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "1581F446LK2F30301MJ",
+      "faa_owner": "BENTON COUNTY MOSQUITO CONTROL DISTRICT 1",
+      "faa_other_names": [],
+      "faa_owner_city_state": "WEST RICHLAND WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2030",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "BENTON COUNTY MOSQUITO CONTROL DISTRICT 1",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N971RC"
+      ]
+    },
+    {
+      "tail": "N807CC",
+      "icao_hex": "AAFC13",
+      "hex_check": "match",
+      "faa_model": "DJI AGRAS T30",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "3TNDK410027K22",
+      "faa_owner": "CLARK COUNTY MOSQUITO CONTROL DISTRICT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "VANCOUVER WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2030",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "CLARK COUNTY MOSQUITO CONTROL DISTRICT",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N807CC"
+      ]
+    },
+    {
+      "tail": "N6215M",
+      "icao_hex": "A81D07",
+      "hex_check": "match",
+      "faa_model": "THRUSH AIRCRAFT INC S2RHG-T65",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2016,
+      "serial": "T65HG-029DC",
+      "faa_owner": "GRANT COUNTY MOSQUITO CONTROL DISTRICT #1",
+      "faa_other_names": [],
+      "faa_owner_city_state": "MOSES LAKE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2028",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "GRANT COUNTY MOSQUITO CONTROL DISTRICT #1",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N6215M"
+      ]
+    },
+    {
+      "tail": "N77DN",
+      "icao_hex": "AA6706",
+      "hex_check": "match",
+      "faa_model": "CESSNA 337E",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1969,
+      "serial": "33701234",
+      "faa_owner": "GRANT COUNTY MOSQUITO DIST #1",
+      "faa_other_names": [],
+      "faa_owner_city_state": "MOSES LAKE WA",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2027",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "GRANT COUNTY MOSQUITO DIST #1",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N77DN"
+      ]
+    }
+  ],
+  "excluded": [
+    {
+      "tail": "N17476",
+      "faa_owner": "AVIATION MAINTENANCE TECHNOLOGY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N18966",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N1987L",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N2047A",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N2048A",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N2059L",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N22711",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N262PM",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N36137",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N3621X",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N3714X",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N3715X",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N3722X",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N3723X",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N4506M",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N5012M",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N5731V",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N6010C",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N60501",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N60503",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N6084C",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N625BB",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N62954",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N63866",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N6594R",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N6595R",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N6639D",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N66710",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N7911V",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N819BA",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N824BB",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N82964",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N82966",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N9182S",
+      "faa_owner": "BIG BEND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N521CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIV",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N360CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N422CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N423CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N44509",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N520CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N523CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N524CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N529CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N540CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N541CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N542CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N543CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N544CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N545CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N546CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N547CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N548CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N840CW",
+      "faa_owner": "CENTRAL WASHINGTON UNIVERSITY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N1294F",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N2391M",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N260JL",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N322HC",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N4725D",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N503NA",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N53351",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N53372",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N5363Z",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N5955E",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N5958E",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N736MJ",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N739MF",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N739QL",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N757KM",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N7592Y",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N772CP",
+      "faa_owner": "CLOVER PARK TECHNICAL COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N286KS",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N287BS",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N365WG",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N4454G",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N585GR",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N705GR",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N778DC",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N779AG",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N782HG",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N833MG",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N833NR",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N852QC",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N852RK",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N852SD",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N853UW",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N8646G",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N865BK",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N896WG",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N948SS",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N948TS",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N948US",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N948VS",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N997QG",
+      "faa_owner": "GREEN RIVER COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N4613Q",
+      "faa_owner": "SOUTH SEATTLE COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N69708",
+      "faa_owner": "SOUTH SEATTLE COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N751BX",
+      "faa_owner": "SOUTH SEATTLE COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N5951R",
+      "faa_owner": "SOUTH SEATTLE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N735K",
+      "faa_owner": "SOUTH SEATTLE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N6581E",
+      "faa_owner": "SPOKANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N6787U",
+      "faa_owner": "SPOKANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N609BS",
+      "faa_owner": "UNIVERSITY OF WASHINGTON",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N631VW",
+      "faa_owner": "UNIVERSITY OF WASHINGTON",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N632UW",
+      "faa_owner": "UNIVERSITY OF WASHINGTON",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N828UW",
+      "faa_owner": "UNIVERSITY OF WASHINGTON",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N842RW",
+      "faa_owner": "UNIVERSITY OF WASHINGTON",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N1722H",
+      "faa_owner": "WASHINGTON STATE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N31KC",
+      "faa_owner": "WASHINGTON STATE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N472EA",
+      "faa_owner": "WASHINGTON STATE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N704QA",
+      "faa_owner": "WASHINGTON STATE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N9745C",
+      "faa_owner": "WASHINGTON STATE COMMUNITY COLLEGE DISTRICT 17",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N332PW",
+      "faa_owner": "SUBMARINE GROUP 9",
+      "category": "military",
+      "reason": "owner name is a military unit"
+    },
+    {
+      "tail": "N819HG",
+      "faa_owner": "SUBMARINE GROUP 9",
+      "category": "military",
+      "reason": "owner name is a military unit"
+    }
+  ]
+}

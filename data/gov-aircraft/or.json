@@ -1,0 +1,1324 @@
+{
+  "state": "OR",
+  "source": {
+    "url": "https://registry.faa.gov/database/ReleasableAircraft.zip",
+    "faa_file_date": "2026-11-20",
+    "pulled": "2026-11-23"
+  },
+  "method": "FAA releasable aircraft database, MASTER rows with owner state OR: every government registrant (type 5) plus any other registrant whose name reads as a police agency. Mission from owner-name patterns (classification.rule records which). Every row is tentative until an agency source confirms it. Colleges, schools, museums and military units are listed under excluded, not aircraft.",
+  "counts": {
+    "total": 37,
+    "police_enforcement": 9,
+    "other": 28,
+    "needs_review": 2,
+    "by_category": {
+      "city_police": 2,
+      "sheriff": 3,
+      "state_police": 4,
+      "county_gov": 1,
+      "energy_utility": 5,
+      "fire": 1,
+      "fish_wildlife": 7,
+      "natural_resources": 3,
+      "port": 6,
+      "vector_control": 5
+    },
+    "excluded": 21
+  },
+  "aircraft": [
+    {
+      "tail": "N425EJ",
+      "icao_hex": "A50E9F",
+      "hex_check": "match",
+      "faa_model": "TEXTRON AVIATION INC 182T",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2015,
+      "serial": "18282372",
+      "faa_owner": "CITY OF PORTLAND",
+      "faa_other_names": [
+        "PORTLAND POLICE BUREAU"
+      ],
+      "faa_owner_city_state": "PORTLAND OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2030",
+      "mission": "police_enforcement",
+      "category": "city_police",
+      "classification": {
+        "rule": "city_police",
+        "field": "OTHER NAMES(1)",
+        "matched": "PORTLAND POLICE BUREAU",
+        "pattern": "\\bPOLICE\\b",
+        "reason": "owner name is a police department or bureau"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N425EJ"
+      ]
+    },
+    {
+      "tail": "N2163J",
+      "icao_hex": "A1D296",
+      "hex_check": "match",
+      "faa_model": "CESSNA 182T",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2003,
+      "serial": "18281279",
+      "faa_owner": "PORTLAND POLICE BUREAU",
+      "faa_other_names": [],
+      "faa_owner_city_state": "PORTLAND OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "11/30/2028",
+      "mission": "police_enforcement",
+      "category": "city_police",
+      "classification": {
+        "rule": "city_police",
+        "field": "NAME",
+        "matched": "PORTLAND POLICE BUREAU",
+        "pattern": "\\bPOLICE\\b",
+        "reason": "owner name is a police department or bureau"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N2163J"
+      ]
+    },
+    {
+      "tail": "N931EM",
+      "icao_hex": "ACE9D0",
+      "hex_check": "match",
+      "faa_model": "CESSNA 182P",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1975,
+      "serial": "18263643",
+      "faa_owner": "CLACKAMAS COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "OREGON CITY OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2028",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "CLACKAMAS COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N931EM"
+      ]
+    },
+    {
+      "tail": "N4343Z",
+      "icao_hex": "A534D3",
+      "hex_check": "match",
+      "faa_model": "PIPER PA-18-150",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1968,
+      "serial": "18-8661",
+      "faa_owner": "HOOD RIVER COUNTY SHERIFF'S OFFICE",
+      "faa_other_names": [
+        "STATE OF OREGON (DEPT OF ADMINISTRATIVE SVCS)"
+      ],
+      "faa_owner_city_state": "HOOD RIVER OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2029",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "HOOD RIVER COUNTY SHERIFF'S OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N4343Z"
+      ]
+    },
+    {
+      "tail": "N910TW",
+      "icao_hex": "AC9869",
+      "hex_check": "match",
+      "faa_model": "CESSNA R172K",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1979,
+      "serial": "R1723279",
+      "faa_owner": "MULTNOMAH COUNTY SHERIFFS OFFICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "PORTLAND OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2028",
+      "mission": "police_enforcement",
+      "category": "sheriff",
+      "classification": {
+        "rule": "sheriff",
+        "field": "NAME",
+        "matched": "MULTNOMAH COUNTY SHERIFFS OFFICE",
+        "pattern": "\\bSHERIFF'?S?\\b",
+        "reason": "owner name is a sheriff's office"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N910TW"
+      ]
+    },
+    {
+      "tail": "N17386",
+      "icao_hex": "A127E1",
+      "hex_check": "match",
+      "faa_model": "CESSNA T206H",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2007,
+      "serial": "T20608800",
+      "faa_owner": "OREGON STATE POLICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SALEM OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2028",
+      "mission": "police_enforcement",
+      "category": "state_police",
+      "classification": {
+        "rule": "state_police",
+        "field": "NAME",
+        "matched": "OREGON STATE POLICE",
+        "pattern": "\\b(STATE|HIGHWAY) (PATROL|POLICE)\\b",
+        "reason": "owner name is a state patrol or state police"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N17386"
+      ]
+    },
+    {
+      "tail": "N2237S",
+      "icao_hex": "A1EF84",
+      "hex_check": "match",
+      "faa_model": "CESSNA T182T",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2006,
+      "serial": "T18208488",
+      "faa_owner": "OREGON STATE POLICE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SALEM OR",
+      "faa_registrant_type": "Corporation",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "11/30/2027",
+      "mission": "police_enforcement",
+      "category": "state_police",
+      "classification": {
+        "rule": "state_police",
+        "field": "NAME",
+        "matched": "OREGON STATE POLICE",
+        "pattern": "\\b(STATE|HIGHWAY) (PATROL|POLICE)\\b",
+        "reason": "owner name is a state patrol or state police"
+      },
+      "confidence": "tentative",
+      "needs_review": true,
+      "review_notes": [
+        "registered as Corporation, not government; confirm the agency owns it"
+      ],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N2237S"
+      ]
+    },
+    {
+      "tail": "N2181N",
+      "icao_hex": "A1D9C2",
+      "hex_check": "match",
+      "faa_model": "CESSNA 182T",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2004,
+      "serial": "18281339",
+      "faa_owner": "STATE OF OREGON",
+      "faa_other_names": [
+        "DEPARTMENT OF STATE POLICE"
+      ],
+      "faa_owner_city_state": "SALEM OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "09/30/2028",
+      "mission": "police_enforcement",
+      "category": "state_police",
+      "classification": {
+        "rule": "state_police",
+        "field": "OTHER NAMES(1)",
+        "matched": "DEPARTMENT OF STATE POLICE",
+        "pattern": "\\b(STATE|HIGHWAY) (PATROL|POLICE)\\b",
+        "reason": "owner name is a state patrol or state police"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N2181N"
+      ]
+    },
+    {
+      "tail": "N427AM",
+      "icao_hex": "A515AC",
+      "hex_check": "match",
+      "faa_model": "CESSNA T182T",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2010,
+      "serial": "T18209018",
+      "faa_owner": "STATE OF OREGON",
+      "faa_other_names": [
+        "OREGON STATE POLICE"
+      ],
+      "faa_owner_city_state": "SALEM OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "12/31/2030",
+      "mission": "police_enforcement",
+      "category": "state_police",
+      "classification": {
+        "rule": "state_police",
+        "field": "OTHER NAMES(1)",
+        "matched": "OREGON STATE POLICE",
+        "pattern": "\\b(STATE|HIGHWAY) (PATROL|POLICE)\\b",
+        "reason": "owner name is a state patrol or state police"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N427AM"
+      ]
+    },
+    {
+      "tail": "N575RW",
+      "icao_hex": "A76288",
+      "hex_check": "match",
+      "faa_model": "CESSNA R172K",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1978,
+      "serial": "R1722881",
+      "faa_owner": "WASHINGTON COUNTY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "HILLSBORO OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2028",
+      "mission": "other",
+      "category": "county_gov",
+      "classification": {
+        "rule": "county_gov",
+        "field": "NAME",
+        "matched": "WASHINGTON COUNTY",
+        "pattern": "\\bCOUNTY\\b",
+        "reason": "owner name is a county government"
+      },
+      "confidence": "tentative",
+      "needs_review": true,
+      "review_notes": [
+        "county owner with no department named; check whether the sheriff flies it"
+      ],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N575RW"
+      ]
+    },
+    {
+      "tail": "N790BP",
+      "icao_hex": "AAB82C",
+      "hex_check": "match",
+      "faa_model": "BELL TEXTRON CANADA LTD 407",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 2023,
+      "serial": "56340",
+      "faa_owner": "BONNEVILLE POWER ADMINISTRATION",
+      "faa_other_names": [],
+      "faa_owner_city_state": "PORTLAND OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2030",
+      "mission": "other",
+      "category": "energy_utility",
+      "classification": {
+        "rule": "energy_utility",
+        "field": "NAME",
+        "matched": "BONNEVILLE POWER ADMINISTRATION",
+        "pattern": "\\b(POWER ADMINISTRATION|DEPARTMENT OF ENERGY|UTILITY|UTILITIES|PUD|ELECTRIC|NATIONAL LABORA?TORY|NATIONAL LABORTORY)\\b",
+        "reason": "owner name is a power, energy or utility agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N790BP"
+      ]
+    },
+    {
+      "tail": "N792BP",
+      "icao_hex": "AABF9A",
+      "hex_check": "match",
+      "faa_model": "PILATUS AIRCRAFT LTD PC-24",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 2024,
+      "serial": "507",
+      "faa_owner": "BONNEVILLE POWER ADMINISTRATION",
+      "faa_other_names": [],
+      "faa_owner_city_state": "PORTLAND OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2031",
+      "mission": "other",
+      "category": "energy_utility",
+      "classification": {
+        "rule": "energy_utility",
+        "field": "NAME",
+        "matched": "BONNEVILLE POWER ADMINISTRATION",
+        "pattern": "\\b(POWER ADMINISTRATION|DEPARTMENT OF ENERGY|UTILITY|UTILITIES|PUD|ELECTRIC|NATIONAL LABORA?TORY|NATIONAL LABORTORY)\\b",
+        "reason": "owner name is a power, energy or utility agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N792BP"
+      ]
+    },
+    {
+      "tail": "N796BP",
+      "icao_hex": "AACE76",
+      "hex_check": "match",
+      "faa_model": "BELL TEXTRON CANADA LTD 407",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 2021,
+      "serial": "54973",
+      "faa_owner": "BONNEVILLE POWER ADMINISTRATION",
+      "faa_other_names": [
+        "TAA/HANGAR"
+      ],
+      "faa_owner_city_state": "PORTLAND OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2029",
+      "mission": "other",
+      "category": "energy_utility",
+      "classification": {
+        "rule": "energy_utility",
+        "field": "NAME",
+        "matched": "BONNEVILLE POWER ADMINISTRATION",
+        "pattern": "\\b(POWER ADMINISTRATION|DEPARTMENT OF ENERGY|UTILITY|UTILITIES|PUD|ELECTRIC|NATIONAL LABORA?TORY|NATIONAL LABORTORY)\\b",
+        "reason": "owner name is a power, energy or utility agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N796BP"
+      ]
+    },
+    {
+      "tail": "N797BP",
+      "icao_hex": "AAD22D",
+      "hex_check": "match",
+      "faa_model": "BELL TEXTRON CANADA LTD 407",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 2023,
+      "serial": "56337",
+      "faa_owner": "BONNEVILLE POWER ADMINISTRATION",
+      "faa_other_names": [],
+      "faa_owner_city_state": "PORTLAND OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2030",
+      "mission": "other",
+      "category": "energy_utility",
+      "classification": {
+        "rule": "energy_utility",
+        "field": "NAME",
+        "matched": "BONNEVILLE POWER ADMINISTRATION",
+        "pattern": "\\b(POWER ADMINISTRATION|DEPARTMENT OF ENERGY|UTILITY|UTILITIES|PUD|ELECTRIC|NATIONAL LABORA?TORY|NATIONAL LABORTORY)\\b",
+        "reason": "owner name is a power, energy or utility agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N797BP"
+      ]
+    },
+    {
+      "tail": "N799BP",
+      "icao_hex": "AAD99B",
+      "hex_check": "match",
+      "faa_model": "BELL TEXTRON CANADA LTD 407",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": 2023,
+      "serial": "56338",
+      "faa_owner": "BONNEVILLE POWER ADMINISTRATION",
+      "faa_other_names": [],
+      "faa_owner_city_state": "PORTLAND OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2030",
+      "mission": "other",
+      "category": "energy_utility",
+      "classification": {
+        "rule": "energy_utility",
+        "field": "NAME",
+        "matched": "BONNEVILLE POWER ADMINISTRATION",
+        "pattern": "\\b(POWER ADMINISTRATION|DEPARTMENT OF ENERGY|UTILITY|UTILITIES|PUD|ELECTRIC|NATIONAL LABORA?TORY|NATIONAL LABORTORY)\\b",
+        "reason": "owner name is a power, energy or utility agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N799BP"
+      ]
+    },
+    {
+      "tail": "N397FD",
+      "icao_hex": "A49D4B",
+      "hex_check": "match",
+      "faa_model": "DJI PHANTOM 3 PROFESSION",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "P76DCH30A20613",
+      "faa_owner": "JACKSON COUNTY FIRE DISTRICT #3",
+      "faa_other_names": [],
+      "faa_owner_city_state": "WHITE CITY OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "11/30/2028",
+      "mission": "other",
+      "category": "fire",
+      "classification": {
+        "rule": "fire",
+        "field": "NAME",
+        "matched": "JACKSON COUNTY FIRE DISTRICT #3",
+        "pattern": "\\bFIRE\\b",
+        "reason": "owner name is a fire district or department"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N397FD"
+      ]
+    },
+    {
+      "tail": "N710FW",
+      "icao_hex": "A97C9F",
+      "hex_check": "match",
+      "faa_model": "3D ROBOTICS IRIS+",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "IRS1502200628",
+      "faa_owner": "OREGON DEPARTMENT OF FISH & WILDLIFE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "CORVALLIS OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2029",
+      "mission": "other",
+      "category": "fish_wildlife",
+      "classification": {
+        "rule": "fish_wildlife",
+        "field": "NAME",
+        "matched": "OREGON DEPARTMENT OF FISH & WILDLIFE",
+        "pattern": "\\b(FISH|WILDLIFE|GAME)\\b",
+        "reason": "owner name is a fish and wildlife agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N710FW"
+      ]
+    },
+    {
+      "tail": "N566SD",
+      "icao_hex": "A73EC8",
+      "hex_check": "match",
+      "faa_model": "TURBO ACE MATRIX E",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "MAT 10713",
+      "faa_owner": "OREGON DEPARTMENT OF FISH AND WILDLIFE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "CORVALLIS OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2028",
+      "mission": "other",
+      "category": "fish_wildlife",
+      "classification": {
+        "rule": "fish_wildlife",
+        "field": "NAME",
+        "matched": "OREGON DEPARTMENT OF FISH AND WILDLIFE",
+        "pattern": "\\b(FISH|WILDLIFE|GAME)\\b",
+        "reason": "owner name is a fish and wildlife agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N566SD"
+      ]
+    },
+    {
+      "tail": "N566TD",
+      "icao_hex": "A73EE1",
+      "hex_check": "match",
+      "faa_model": "TURBO ACE MATRIX E",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "MAT 10738",
+      "faa_owner": "OREGON DEPARTMENT OF FISH AND WILDLIFE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "CORVALLIS OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2028",
+      "mission": "other",
+      "category": "fish_wildlife",
+      "classification": {
+        "rule": "fish_wildlife",
+        "field": "NAME",
+        "matched": "OREGON DEPARTMENT OF FISH AND WILDLIFE",
+        "pattern": "\\b(FISH|WILDLIFE|GAME)\\b",
+        "reason": "owner name is a fish and wildlife agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N566TD"
+      ]
+    },
+    {
+      "tail": "N675RY",
+      "icao_hex": "A8EFD9",
+      "hex_check": "match",
+      "faa_model": "3D ROBOTICS SOLO",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "S111A5606047",
+      "faa_owner": "OREGON DEPT OF FISH & WILDLIFE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BAKER CITY OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2029",
+      "mission": "other",
+      "category": "fish_wildlife",
+      "classification": {
+        "rule": "fish_wildlife",
+        "field": "NAME",
+        "matched": "OREGON DEPT OF FISH & WILDLIFE",
+        "pattern": "\\b(FISH|WILDLIFE|GAME)\\b",
+        "reason": "owner name is a fish and wildlife agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N675RY"
+      ]
+    },
+    {
+      "tail": "N545XD",
+      "icao_hex": "A6EC90",
+      "hex_check": "match",
+      "faa_model": "OREGON DEPT OF FISH & WILDLIFE TURBO ACE - MATRIX E",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "0015-001",
+      "faa_owner": "OREGON DEPT OF FISH AND WILDLIFE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "CORVALLIS OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2028",
+      "mission": "other",
+      "category": "fish_wildlife",
+      "classification": {
+        "rule": "fish_wildlife",
+        "field": "NAME",
+        "matched": "OREGON DEPT OF FISH AND WILDLIFE",
+        "pattern": "\\b(FISH|WILDLIFE|GAME)\\b",
+        "reason": "owner name is a fish and wildlife agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N545XD"
+      ]
+    },
+    {
+      "tail": "N668JD",
+      "icao_hex": "A8D2BD",
+      "hex_check": "match",
+      "faa_model": "3D ROBOTICS SOLO",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "S111A5607929",
+      "faa_owner": "OREGON DEPT OF FISH AND WILDLIFE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "CORVALLIS OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "03/31/2029",
+      "mission": "other",
+      "category": "fish_wildlife",
+      "classification": {
+        "rule": "fish_wildlife",
+        "field": "NAME",
+        "matched": "OREGON DEPT OF FISH AND WILDLIFE",
+        "pattern": "\\b(FISH|WILDLIFE|GAME)\\b",
+        "reason": "owner name is a fish and wildlife agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N668JD"
+      ]
+    },
+    {
+      "tail": "N710LF",
+      "icao_hex": "A97D0D",
+      "hex_check": "match",
+      "faa_model": "DJI PHANTOM 2",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "PH645306448",
+      "faa_owner": "OREGON DEPT OF FISH AND WILDLIFE",
+      "faa_other_names": [],
+      "faa_owner_city_state": "CORVALLIS OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "05/31/2029",
+      "mission": "other",
+      "category": "fish_wildlife",
+      "classification": {
+        "rule": "fish_wildlife",
+        "field": "NAME",
+        "matched": "OREGON DEPT OF FISH AND WILDLIFE",
+        "pattern": "\\b(FISH|WILDLIFE|GAME)\\b",
+        "reason": "owner name is a fish and wildlife agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N710LF"
+      ]
+    },
+    {
+      "tail": "N528UG",
+      "icao_hex": "A6A86F",
+      "hex_check": "match",
+      "faa_model": "EAVISION EA-J150",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "JMZKJ150UAV602595075",
+      "faa_owner": "GRANT SOIL AND WATER CONSERVATION DISTRICT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "JOHN DAY OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2033",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "GRANT SOIL AND WATER CONSERVATION DISTRICT",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N528UG"
+      ]
+    },
+    {
+      "tail": "N905RT",
+      "icao_hex": "AC8348",
+      "hex_check": "match",
+      "faa_model": "DEHAVILLAND DHC-6-300",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1970,
+      "serial": "297",
+      "faa_owner": "OREGON DEPARTMENT OF FORESTRY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SALEM OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "08/31/2033",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "NAME",
+        "matched": "OREGON DEPARTMENT OF FORESTRY",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N905RT"
+      ]
+    },
+    {
+      "tail": "N9000V",
+      "icao_hex": "AC7198",
+      "hex_check": "match",
+      "faa_model": "PARTENAVIA S.P.A. P 68 OBSERVER",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": null,
+      "serial": "259-07-0B",
+      "faa_owner": "STATE OF OREGON",
+      "faa_other_names": [
+        "OREGON DEPARTMENT OF FORESTRY",
+        "AVIATION PROGRAM"
+      ],
+      "faa_owner_city_state": "SALEM OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2028",
+      "mission": "other",
+      "category": "natural_resources",
+      "classification": {
+        "rule": "natural_resources",
+        "field": "OTHER NAMES(1)",
+        "matched": "OREGON DEPARTMENT OF FORESTRY",
+        "pattern": "\\b(NATURAL RESOURCES|FORESTRY|FOREST SERVICE|FEPP|LAND MANAGEMENT|CONSERVATION|TIMBER)\\b",
+        "reason": "owner name is a forestry or natural resources agency"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N9000V"
+      ]
+    },
+    {
+      "tail": "N275SA",
+      "icao_hex": "A2BAA0",
+      "hex_check": "match",
+      "faa_model": "INIZIATIVE INDUSTRIALI ITALIAN SKY ARROW 650TCN",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 1999,
+      "serial": "CN008",
+      "faa_owner": "PORT OF TILLAMOOK BAY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "TILLAMOOK OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2030",
+      "mission": "other",
+      "category": "port",
+      "classification": {
+        "rule": "port",
+        "field": "NAME",
+        "matched": "PORT OF TILLAMOOK BAY",
+        "pattern": "\\bPORT OF\\b",
+        "reason": "owner name is a port authority"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N275SA"
+      ]
+    },
+    {
+      "tail": "N34TM",
+      "icao_hex": "A3BCAA",
+      "hex_check": "match",
+      "faa_model": "LUKE ERVIN G R-80 TIGER MOTH",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "TM 30",
+      "faa_owner": "PORT OF TILLAMOOK BAY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "TILLAMOOK OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2027",
+      "mission": "other",
+      "category": "port",
+      "classification": {
+        "rule": "port",
+        "field": "NAME",
+        "matched": "PORT OF TILLAMOOK BAY",
+        "pattern": "\\bPORT OF\\b",
+        "reason": "owner name is a port authority"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N34TM"
+      ]
+    },
+    {
+      "tail": "N422AU",
+      "icao_hex": "A50320",
+      "hex_check": "match",
+      "faa_model": "BOEING 377MG",
+      "aircraft_type": "Fixed wing multi engine",
+      "year_mfr": 1949,
+      "serial": "15937",
+      "faa_owner": "PORT OF TILLAMOOK BAY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "TILLAMOOK OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "01/31/2030",
+      "mission": "other",
+      "category": "port",
+      "classification": {
+        "rule": "port",
+        "field": "NAME",
+        "matched": "PORT OF TILLAMOOK BAY",
+        "pattern": "\\bPORT OF\\b",
+        "reason": "owner name is a port authority"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N422AU"
+      ]
+    },
+    {
+      "tail": "N532WE",
+      "icao_hex": "A6B9D4",
+      "hex_check": "match",
+      "faa_model": "HITSON STAN N/A",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "001",
+      "faa_owner": "PORT OF TILLAMOOK BAY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "TILLAMOOK OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2028",
+      "mission": "other",
+      "category": "port",
+      "classification": {
+        "rule": "port",
+        "field": "NAME",
+        "matched": "PORT OF TILLAMOOK BAY",
+        "pattern": "\\bPORT OF\\b",
+        "reason": "owner name is a port authority"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N532WE"
+      ]
+    },
+    {
+      "tail": "N600W",
+      "icao_hex": "A7C933",
+      "hex_check": "match",
+      "faa_model": "WILCOXON CVJETKOVIC CA65",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": null,
+      "serial": "1",
+      "faa_owner": "PORT OF TILLAMOOK BAY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "TILLAMOOK OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "10/31/2027",
+      "mission": "other",
+      "category": "port",
+      "classification": {
+        "rule": "port",
+        "field": "NAME",
+        "matched": "PORT OF TILLAMOOK BAY",
+        "pattern": "\\bPORT OF\\b",
+        "reason": "owner name is a port authority"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N600W"
+      ]
+    },
+    {
+      "tail": "N91373",
+      "icao_hex": "ACA539",
+      "hex_check": "match",
+      "faa_model": "PANKUCH PETER J RANS S-4",
+      "aircraft_type": "Fixed wing single engine",
+      "year_mfr": 2005,
+      "serial": "0407323",
+      "faa_owner": "PORT OF TILLAMOOK BAY",
+      "faa_other_names": [],
+      "faa_owner_city_state": "TILLAMOOK OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "12/31/2029",
+      "mission": "other",
+      "category": "port",
+      "classification": {
+        "rule": "port",
+        "field": "NAME",
+        "matched": "PORT OF TILLAMOOK BAY",
+        "pattern": "\\bPORT OF\\b",
+        "reason": "owner name is a port authority"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N91373"
+      ]
+    },
+    {
+      "tail": "N132BB",
+      "icao_hex": "A082BA",
+      "hex_check": "match",
+      "faa_model": "DJI AGRAS T40",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "64TBKAF002009M",
+      "faa_owner": "BAKER VALLEY VECTOR CONTROL DISTRICT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BAKER CITY OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "07/31/2030",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "BAKER VALLEY VECTOR CONTROL DISTRICT",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N132BB"
+      ]
+    },
+    {
+      "tail": "N697NA",
+      "icao_hex": "A945E4",
+      "hex_check": "match",
+      "faa_model": "HYLIO INC AG 230",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "17906100415",
+      "faa_owner": "COLUMBIA DRAINAGE VECTOR CONTROL DISTRICT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "SAINT HELENS OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "12/31/2032",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "COLUMBIA DRAINAGE VECTOR CONTROL DISTRICT",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N697NA"
+      ]
+    },
+    {
+      "tail": "N1788F",
+      "icao_hex": "A13A5B",
+      "hex_check": "match",
+      "faa_model": "LEADING EDGE AERIAL TECH INC PV35X",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "11178",
+      "faa_owner": "FOUR RIVERS VECTOR CONTROL DISTRICT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "BEND OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2031",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "FOUR RIVERS VECTOR CONTROL DISTRICT",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N1788F"
+      ]
+    },
+    {
+      "tail": "N523SR",
+      "icao_hex": "A695B3",
+      "hex_check": "match",
+      "faa_model": "DJI AGRAS T50",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "63YBAG0020073",
+      "faa_owner": "UMATILLA COUNTY WEED DEPARTMENT",
+      "faa_other_names": [],
+      "faa_owner_city_state": "PENDLETON OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "02/28/2033",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "NAME",
+        "matched": "UMATILLA COUNTY WEED DEPARTMENT",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N523SR"
+      ]
+    },
+    {
+      "tail": "N996GE",
+      "icao_hex": "ADE988",
+      "hex_check": "match",
+      "faa_model": "LEADING EDGE AERIAL TECH INC PRECISION VISION 35X",
+      "aircraft_type": "Rotorcraft",
+      "year_mfr": null,
+      "serial": "11196",
+      "faa_owner": "WASHINGTON COUNTY",
+      "faa_other_names": [
+        "PUBLIC HEALTH DIVISION MOSQUITO CONTROL"
+      ],
+      "faa_owner_city_state": "HILLSBORO OR",
+      "faa_registrant_type": "Government",
+      "faa_status": "Valid",
+      "faa_status_code": "V",
+      "faa_expiration": "04/30/2030",
+      "mission": "other",
+      "category": "vector_control",
+      "classification": {
+        "rule": "vector_control",
+        "field": "OTHER NAMES(1)",
+        "matched": "PUBLIC HEALTH DIVISION MOSQUITO CONTROL",
+        "pattern": "\\b(MOSQUITO|VECTOR|WEED|ABATEMENT)\\b",
+        "reason": "owner name is a mosquito, vector or weed control district"
+      },
+      "confidence": "tentative",
+      "needs_review": false,
+      "review_notes": [],
+      "sources": [
+        "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=N996GE"
+      ]
+    }
+  ],
+  "excluded": [
+    {
+      "tail": "N387UC",
+      "faa_owner": "COLUMBIA GORGE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N8569W",
+      "faa_owner": "COLUMBIA GORGE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N570WD",
+      "faa_owner": "DOUGLAS HIGH SCHOOL",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N2203M",
+      "faa_owner": "LANE AVIATION ACADEMY",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N28PG",
+      "faa_owner": "LANE COMMUNITY COLLEG",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N2272Q",
+      "faa_owner": "LANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N257CT",
+      "faa_owner": "LANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N366LC",
+      "faa_owner": "LANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N377LC",
+      "faa_owner": "LANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N39669",
+      "faa_owner": "LANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N4346D",
+      "faa_owner": "LANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N6471M",
+      "faa_owner": "LANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N8085A",
+      "faa_owner": "LANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N81016",
+      "faa_owner": "LANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N8133E",
+      "faa_owner": "LANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N9226C",
+      "faa_owner": "LANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N94959",
+      "faa_owner": "LANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N95840",
+      "faa_owner": "LANE COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N429QX",
+      "faa_owner": "PORTLAND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N54E",
+      "faa_owner": "PORTLAND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    },
+    {
+      "tail": "N6540V",
+      "faa_owner": "PORTLAND COMMUNITY COLLEGE",
+      "category": "education",
+      "reason": "owner name is a college, university or school (flight training)"
+    }
+  ]
+}
