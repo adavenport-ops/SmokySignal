@@ -86,3 +86,33 @@ export function nNumberToIcaoOrThrow(n: string): string {
   if (!hex) throw new Error(`Invalid N-number: ${n}`);
   return hex;
 }
+
+/**
+ * Registry spelling of an N-number: "305dk", " N305DK " and "n305dk" all
+ * become "N305DK". The FAA MASTER file drops the leading N. Returns null
+ * when the result is not a convertible US N-number.
+ */
+export function normalizeNNumber(raw: string): string | null {
+  const s = raw.trim().toUpperCase();
+  if (!s) return null;
+  const n = s.startsWith("N") ? s : `N${s}`;
+  return nNumberToIcao(n) ? n : null;
+}
+
+export type HexCheck = "match" | "computed" | "mismatch";
+
+/**
+ * Cross-check the FAA Mode S hex for a tail against the N-number
+ * algorithm. The FAA value wins when present (`match` or `mismatch`); an
+ * empty FAA value falls back to the computed one (`computed`). Hex is
+ * returned uppercase, the FAA spelling.
+ */
+export function crossCheckHex(
+  tail: string,
+  faaHex: string | null | undefined,
+): { hex: string | null; computed: string | null; check: HexCheck } {
+  const computed = nNumberToIcao(tail)?.toUpperCase() ?? null;
+  const faa = faaHex?.trim().toUpperCase() || null;
+  if (!faa) return { hex: computed, computed, check: "computed" };
+  return { hex: faa, computed, check: faa === computed ? "match" : "mismatch" };
+}
