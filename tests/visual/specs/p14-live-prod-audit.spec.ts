@@ -3692,4 +3692,77 @@ test.describe("p14 live-prod audit · towns + IndexNow", () => {
       await ctx.close();
     }
   });
+
+  test("96. /settings/alerts: tone before voice, three preview tones at 390px (B23)", async ({ browser }) => {
+    // Local-only: voice mode is a localStorage key and the tones are Web
+    // Audio. No push subscription, nothing written server side.
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+    try {
+      await ctx.addInitScript(() => {
+        try {
+          window.localStorage.setItem("ss_voice_mode", "1");
+        } catch {
+          /* storage blocked */
+        }
+        const w = window as unknown as { AudioContext?: typeof AudioContext; __ssOsc?: number[] };
+        const Real = w.AudioContext;
+        if (!Real) return;
+        w.__ssOsc = [];
+        const orig = Real.prototype.createOscillator;
+        Real.prototype.createOscillator = function (this: AudioContext) {
+          const o = orig.call(this);
+          const setFreq = o.frequency.setValueAtTime.bind(o.frequency);
+          o.frequency.setValueAtTime = (v: number, t: number) => {
+            w.__ssOsc!.push(v);
+            return setFreq(v, t);
+          };
+          return o;
+        };
+      });
+      const page = await ctx.newPage();
+      const r = await page.goto("/settings/alerts#voice", { waitUntil: "load" });
+      const toggle = page.locator('[data-testid="voice-tones-toggle"]');
+      const present = await toggle.waitFor({ state: "attached", timeout: 8000 }).then(() => true).catch(() => false);
+      const checked = present ? await toggle.isChecked() : false;
+      const enabled = present ? await toggle.isEnabled() : false;
+      const boxes = await Promise.all(
+        ["up", "near", "clear"].map((k) => page.locator(`[data-testid="voice-tone-${k}"]`).boundingBox()),
+      );
+      const sizes = boxes.map((b) => (b ? Math.round(b.height) : 0));
+      const minFont = await page.locator('[data-testid="voice-tones"]').evaluate((root) => {
+        let m = 99;
+        for (const el of Array.from(root.querySelectorAll("*"))) {
+          if (!(el as HTMLElement).innerText?.trim()) continue;
+          m = Math.min(m, parseFloat(getComputedStyle(el).fontSize));
+        }
+        return m;
+      }).catch(() => 0);
+      if (present) await page.locator('[data-testid="voice-tone-near"]').click();
+      await page
+        .waitForFunction(() => ((window as unknown as { __ssOsc?: number[] }).__ssOsc ?? []).length >= 3, null, {
+          timeout: 3000,
+        })
+        .catch(() => {});
+      const freqs = await page.evaluate(() => (window as unknown as { __ssOsc?: number[] }).__ssOsc ?? []);
+      const screenshot = await shot(page, "96-voice-tones");
+      const pass =
+        r?.status() === 200 &&
+        present &&
+        checked &&
+        enabled &&
+        sizes.every((h) => h >= 44) &&
+        minFont >= 12 &&
+        freqs.length === 3;
+      record({
+        claim: "/settings/alerts shows TONE FIRST (on by default with voice on) and three 44px tone buttons; Bird near plays three notes",
+        category: pass ? "working_as_designed" : "unshipped",
+        pass,
+        evidence: `HTTP ${r?.status()} · toggle=${present} checked=${checked} enabled=${enabled} heights=${sizes.join(",")} minFont=${minFont} notes=${JSON.stringify(freqs)}`,
+        screenshot,
+      });
+      expect(pass).toBe(true);
+    } finally {
+      await ctx.close();
+    }
+  });
 });

@@ -168,7 +168,7 @@ export const SETTING_ENTRIES: ReadonlyArray<SearchEntry> = [
     title: "Voice readback",
     subtitle: "Speaks the status when it changes",
     href: "/settings/alerts#voice",
-    keywords: ["voice", "speak", "read aloud", "audio", "tts"],
+    keywords: ["voice", "speak", "read aloud", "audio", "tts", "tone", "beep", "earcon", "helmet"],
   },
   {
     id: "setting:quiet-hours",

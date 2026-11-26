@@ -135,8 +135,9 @@ export async function fireProximityNotifications(
         data: { url: `/plane/${h.tail}`, tail: h.tail, kind: "proximity" },
       });
       // Voice-mode readback (no-op when off / unsupported). Title + body
-      // separated by a period so the synth pauses naturally.
-      speakAlert(`${title}. ${body}`);
+      // separated by a period so the synth pauses naturally; the "near"
+      // earcon goes first when tones are on.
+      speakAlert(`${title}. ${body}`, "near");
       markSeen(h.tail);
       posted += 1;
     } catch {
