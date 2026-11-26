@@ -97,7 +97,7 @@ test("changed files → URLs: posts, pages, dynamic expansion, exclusions", () =
     { "/near/[town]": ["fife", "puyallup"], "/road/[id]": ["i-5"] },
   );
   assert.deepEqual(urls, [
-    `${S}/blog/towns`,
+    `${S}/blog/2026-11-19-towns`,
     `${S}/blog`,
     `${S}/help`,
     `${S}/near`,
