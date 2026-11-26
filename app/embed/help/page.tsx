@@ -4,6 +4,8 @@
 // param parser.
 
 import Link from "next/link";
+import { JsonLd } from "@/components/JsonLd";
+import { simplePageJsonLd } from "@/lib/seo/jsonld";
 import { BASE_URL } from "@/lib/config";
 import {
   EMBED_HEIGHT,
@@ -52,6 +54,14 @@ export default function EmbedHelpPage() {
         color: SS_TOKENS.fg1,
       }}
     >
+      <JsonLd
+        data={simplePageJsonLd({
+          path: "/embed/help",
+          name: "Embed the status widget on your site",
+          description: "Paste an iframe into a club site or forum to show whether Smokey is up. Two sizes, one optional region.",
+          crumb: "Embed widget",
+        })}
+      />
       <div className="ss-page" style={{ gap: 20 }}>
         <BackLink />
         <span className="ss-eyebrow">SmokySignal &middot; Embed on your site</span>

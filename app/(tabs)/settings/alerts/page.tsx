@@ -4,6 +4,8 @@ import { getRegistry } from "@/lib/registry";
 import { displayNickname } from "@/lib/nickname-display";
 import { SS_TOKENS } from "@/lib/tokens";
 import { pageMeta } from "@/lib/seo/site";
+import { JsonLd } from "@/components/JsonLd";
+import { simplePageJsonLd } from "@/lib/seo/jsonld";
 
 export const metadata = pageMeta({
   title: "Alerts: a ping when Smokey takes off",
@@ -18,6 +20,14 @@ export default async function AlertsPage() {
   const registry = await getRegistry();
   return (
     <>
+      <JsonLd
+        data={simplePageJsonLd({
+          path: "/settings/alerts",
+          name: "Alerts: a ping when Smokey takes off",
+          description: "Get a push alert when a tracked aircraft takes off or enters one of your zones. No account; quiet hours by default.",
+          crumb: "Alerts",
+        })}
+      />
       <AlertsSettings
         tails={registry.map((f) => ({
           tail: f.tail,

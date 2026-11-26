@@ -29,6 +29,7 @@ Structured data by route:
 | `/plane/[tail]` | WebPage about the airframe (Thing typed as aircraft) and the operating GovernmentOrganization, BreadcrumbList |
 | `/road/[id]` | WebPage about a Place with a GeoShape line, BreadcrumbList |
 | `/near` | BreadcrumbList |
+| `/relay`, `/embed/help`, `/board`, `/settings/alerts`, `/legal`, `/help/iphone` and other plain pages | WebPage, BreadcrumbList (`simplePageJsonLd`) |
 | `/near/[town]` | Place with GeoCoordinates and its county, the page as `subjectOf`, BreadcrumbList |
 | `/flight/[tail]/[id]` | WebPage with dateCreated, about the airframe, BreadcrumbList |
 | `/wrap/[year]` | BreadcrumbList |

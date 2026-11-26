@@ -16,6 +16,8 @@ import { parseBoardRegion } from "@/lib/board";
 import type { Snapshot } from "@/lib/types";
 import { BoardView } from "./BoardView";
 import { pageMeta } from "@/lib/seo/site";
+import { JsonLd } from "@/components/JsonLd";
+import { simplePageJsonLd } from "@/lib/seo/jsonld";
 import { VisuallyHidden } from "@/components/VisuallyHidden";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +51,14 @@ export default async function BoardPage({ searchParams }: Props) {
 
   return (
     <>
+      <JsonLd
+        data={simplePageJsonLd({
+          path: "/board",
+          name: "Shop board: a departures board for the shop TV",
+          description: "Departures board for the shop TV. Which birds are up, which came down, on a 24-hour Pacific clock.",
+          crumb: "Shop board",
+        })}
+      />
       <VisuallyHidden as="h1">Shop board: patrol aircraft up and down</VisuallyHidden>
       <BoardView
         initialSnapshot={snapshot}
