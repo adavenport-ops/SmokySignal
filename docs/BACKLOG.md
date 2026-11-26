@@ -27,15 +27,7 @@ exclamation marks, none of the voice-gate words).
 
 ## This week
 
-### B23 · Alert earcon before voice
-- **Why:** Helmet coms (Cardo, Sena) duck or clip the first half second of phone audio, so spoken alerts lose their first word. A short tone wakes the channel, and different tones tell up, near and clear apart without words.
-- **Route:** `/settings/alerts`
-- **Size:** S
-- **One weekly run:** yes
-- **Files:** `lib/voice-mode.ts`, `lib/proximity-alert.ts`, `components/AlertsSettings.tsx`, `public/sounds/*`
-- **Acceptance:** with voice readback on, each spoken alert is preceded by a short tone (Web Audio, generated, no assets over 20 KB); three distinct tones for bird up, bird near, all clear; a toggle to turn tones off; works after the first user gesture on iOS.
-- **Blog line:** Spoken alerts now start with a short tone, so your coms are awake before the words arrive.
-- **Picked:** 2026-11-25
+_Nothing picked yet._
 
 ## Roadmap
 
@@ -405,6 +397,7 @@ current month into full items here and ranks them.
 ## Shipped
 
 <!-- The weekly job prepends one line per shipped item: - YYYY-MM-DD · B0x · Title · #PR -->
+- 2026-11-25 · B23 · Alert earcon before voice · #205
 - 2026-11-23 · B31 · State registry pipeline (WA, OR, ID pulled; `npm run registry:state`) · #203
 - 2026-11-23 · B22 · iPhone setup page · #202
 - 2026-11-21 · B21 · Alerts-reset nudge · #200

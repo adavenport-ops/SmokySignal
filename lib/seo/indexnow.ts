@@ -133,7 +133,8 @@ export function urlsForChangedFiles(files: ReadonlyArray<string>, dynamic: Dynam
     if (!f) continue;
     const blog = BLOG_POST_RE.exec(f);
     if (blog) {
-      paths.push(`/blog/${blog[2]}`, "/blog");
+      // The slug is the whole file stem, date included (lib/blog-core.ts).
+      paths.push(`/blog/${blog[1]}-${blog[2]}`, "/blog");
       continue;
     }
     if (f === "content/help.md") {

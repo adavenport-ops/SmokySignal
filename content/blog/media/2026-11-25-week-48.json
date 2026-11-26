@@ -1,0 +1,62 @@
+{
+  "post": "2026-11-25-week-48",
+  "shots": [
+    {
+      "id": "feature-phone",
+      "kind": "screenshot",
+      "url": "/settings/alerts",
+      "viewport": "phone",
+      "element": "#voice",
+      "steps": [
+        "waitfor #voice",
+        "scrollto #voice",
+        "click #voice input[type=\"checkbox\"]:not([data-testid])",
+        "waitfor [data-testid=\"voice-tone-near\"]",
+        "wait 800"
+      ],
+      "caption": "Voice readback on, tone first. One button per tone, so you can learn them with the helmet on.",
+      "alt": "The Voice card on the alerts settings page at phone width: voice readback enabled, a Tone first toggle switched on, a line explaining rising, three quick and falling tones, and three buttons labelled Bird up, Bird near and All clear."
+    },
+    {
+      "id": "feature-clip",
+      "kind": "clip",
+      "url": "/settings/alerts",
+      "viewport": "phone",
+      "steps": [
+        "waitfor #voice",
+        "scrollto #voice",
+        "click #voice input[type=\"checkbox\"]:not([data-testid])",
+        "waitfor [data-testid=\"voice-tone-near\"]",
+        "wait 600",
+        "start",
+        "wait 800",
+        "click [data-testid=\"voice-tone-up\"]",
+        "wait 1400",
+        "click [data-testid=\"voice-tone-near\"]",
+        "wait 1400",
+        "click [data-testid=\"voice-tone-clear\"]",
+        "wait 1600"
+      ],
+      "duration": 6,
+      "posterAt": 3,
+      "caption": "Tapping through the three tones. The clip is silent; your phone is not.",
+      "alt": "A phone-width clip of the Voice card: the Bird up, Bird near and All clear buttons are tapped in turn, each lighting up briefly as its tone plays."
+    },
+    {
+      "id": "feature-desktop",
+      "kind": "screenshot",
+      "url": "/settings/alerts",
+      "viewport": "desktop",
+      "steps": [
+        "waitfor #voice",
+        "click #voice input[type=\"checkbox\"]:not([data-testid])",
+        "waitfor [data-testid=\"voice-tone-near\"]",
+        "scrollto #voice",
+        "scroll -120",
+        "wait 800"
+      ],
+      "caption": "The same card on desktop, under the proximity ping.",
+      "alt": "The alerts settings page at desktop width with the sidebar, scrolled to the Voice card showing Tone first and the three tone buttons."
+    }
+  ]
+}

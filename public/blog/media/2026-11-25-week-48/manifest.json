@@ -1,0 +1,81 @@
+{
+  "post": "2026-11-25-week-48",
+  "generatedAt": "2026-11-26T05:42:05.316Z",
+  "totalBytes": 501678,
+  "items": [
+    {
+      "id": "feature-phone",
+      "kind": "screenshot",
+      "viewport": "phone",
+      "width": 708,
+      "height": 864,
+      "displayWidth": 354,
+      "caption": "Voice readback on, tone first. One button per tone, so you can learn them with the helmet on.",
+      "alt": "The Voice card on the alerts settings page at phone width: voice readback enabled, a Tone first toggle switched on, a line explaining rising, three quick and falling tones, and three buttons labelled Bird up, Bird near and All clear.",
+      "illustrative": false,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-25-week-48/feature-phone.webp",
+          "bytes": 31584
+        },
+        "png": {
+          "path": "/blog/media/2026-11-25-week-48/feature-phone.png",
+          "bytes": 24709
+        }
+      },
+      "source": "https://www.smokysignal.app/settings/alerts",
+      "capturedAt": "2026-11-26T05:41:34.780Z"
+    },
+    {
+      "id": "feature-clip",
+      "kind": "clip",
+      "viewport": "phone",
+      "width": 720,
+      "height": 1558,
+      "displayWidth": 390,
+      "caption": "Tapping through the three tones. The clip is silent; your phone is not.",
+      "alt": "A phone-width clip of the Voice card: the Bird up, Bird near and All clear buttons are tapped in turn, each lighting up briefly as its tone plays.",
+      "illustrative": false,
+      "duration": 6,
+      "files": {
+        "mp4": {
+          "path": "/blog/media/2026-11-25-week-48/feature-clip.mp4",
+          "bytes": 109284
+        },
+        "webm": {
+          "path": "/blog/media/2026-11-25-week-48/feature-clip.webm",
+          "bytes": 164651
+        },
+        "jpg": {
+          "path": "/blog/media/2026-11-25-week-48/feature-clip.jpg",
+          "bytes": 67863
+        }
+      },
+      "source": "https://www.smokysignal.app/settings/alerts",
+      "capturedAt": "2026-11-26T05:41:59.736Z"
+    },
+    {
+      "id": "feature-desktop",
+      "kind": "screenshot",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 900,
+      "displayWidth": 720,
+      "caption": "The same card on desktop, under the proximity ping.",
+      "alt": "The alerts settings page at desktop width with the sidebar, scrolled to the Voice card showing Tone first and the three tone buttons.",
+      "illustrative": false,
+      "files": {
+        "webp": {
+          "path": "/blog/media/2026-11-25-week-48/feature-desktop.webp",
+          "bytes": 48092
+        },
+        "png": {
+          "path": "/blog/media/2026-11-25-week-48/feature-desktop.png",
+          "bytes": 55495
+        }
+      },
+      "source": "https://www.smokysignal.app/settings/alerts",
+      "capturedAt": "2026-11-26T05:42:05.189Z"
+    }
+  ]
+}
