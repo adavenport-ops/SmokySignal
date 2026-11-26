@@ -73,7 +73,8 @@ function changedFiles(ref: string): string[] {
 function blogSlugs(): string[] {
   try {
     return readdirSync("content/blog")
-      .map((f) => /^\d{4}-\d{2}-\d{2}-([a-z0-9-]+)\.md$/.exec(f)?.[1])
+      // The slug is the whole stem, date included: /blog/2026-11-25-week-48.
+      .map((f) => /^(\d{4}-\d{2}-\d{2}-[a-z0-9-]+)\.md$/.exec(f)?.[1])
       .filter((s): s is string => Boolean(s));
   } catch {
     return [];
