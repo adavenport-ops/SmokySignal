@@ -10,7 +10,9 @@
 // bundle hydrates.
 
 import { useEffect } from "react";
-import { speakAlert } from "@/lib/voice-mode";
+import { earconForPushTitle } from "@/lib/earcon-core";
+import { primeEarcons } from "@/lib/earcon";
+import { isVoiceModeEnabled, speakAlert } from "@/lib/voice-mode";
 
 const RESYNC_KEY = "ss:push-resync-at";
 const RESYNC_EVERY_MS = 24 * 60 * 60 * 1000;
@@ -50,7 +52,25 @@ async function resyncPush(reg: ServiceWorkerRegistration): Promise<void> {
   }
 }
 
+// Gestures iOS Safari accepts for unlocking audio output.
+const PRIME_EVENTS = ["touchend", "click", "keydown"] as const;
+
 export function SwRegistrar() {
+  // Alert earcons (B23): iOS keeps audio suspended until a gesture. With
+  // voice readback on, the first tap anywhere resumes it, so the tone
+  // before a later alert is heard. Removed after it runs once.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const prime = () => {
+      for (const ev of PRIME_EVENTS) window.removeEventListener(ev, prime, true);
+      if (isVoiceModeEnabled()) void primeEarcons();
+    };
+    for (const ev of PRIME_EVENTS) window.addEventListener(ev, prime, true);
+    return () => {
+      for (const ev of PRIME_EVENTS) window.removeEventListener(ev, prime, true);
+    };
+  }, []);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
@@ -66,7 +86,7 @@ export function SwRegistrar() {
       const d = e.data as { kind?: string; title?: string; body?: string } | null;
       if (!d || d.kind !== "ss-voice-readback") return;
       const text = [d.title, d.body].filter(Boolean).join(". ");
-      if (text) speakAlert(text);
+      if (text) speakAlert(text, earconForPushTitle(d.title));
     };
     navigator.serviceWorker.addEventListener("message", onMsg);
     return () =>

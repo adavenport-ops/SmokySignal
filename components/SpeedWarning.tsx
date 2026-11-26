@@ -292,7 +292,7 @@ function SpeedWarningActive({
     } catch {
       // unsupported or blocked
     }
-    speakAlert(copy.spoken); // no-op unless voice mode is on
+    speakAlert(copy.spoken, "near"); // no-op unless voice mode is on
   }, [showing, copy]);
 
   if (!showing || !copy) return null;

@@ -43,6 +43,14 @@ import {
   setVoiceModeEnabled,
   speakAlert,
 } from "@/lib/voice-mode";
+import { EARCON_KINDS, EARCON_LABELS, type EarconKind } from "@/lib/earcon-core";
+import {
+  areEarconsEnabled,
+  isEarconSupported,
+  playEarcon,
+  primeEarcons,
+  setEarconsEnabled,
+} from "@/lib/earcon";
 
 type LoadState = "loading" | "ready";
 
@@ -69,6 +77,8 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
   const [proximityNm, setProximityNm] = useState<number>(DEFAULT_PROXIMITY_NM);
   const [voiceOn, setVoiceOn] = useState<boolean>(false);
   const [voiceSupported, setVoiceSupported] = useState<boolean>(true);
+  const [tonesOn, setTonesOn] = useState<boolean>(true);
+  const [tonesSupported, setTonesSupported] = useState<boolean>(true);
   // Blocked-permission copy only appears after the rider taps Arm.
   const [armTapped, setArmTapped] = useState<boolean>(false);
   useEffect(() => {
@@ -80,6 +90,8 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
     setProximityNm(getProximityThresholdNm());
     setVoiceOn(isVoiceModeEnabled());
     setVoiceSupported(isVoiceModeSupported());
+    setTonesOn(areEarconsEnabled());
+    setTonesSupported(isEarconSupported());
   }, []);
 
   // Hydrate from current SW state on mount.
@@ -586,7 +598,11 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                     setVoiceModeEnabled(next);
                     // Prime the API on first opt-in so iOS allows
                     // subsequent speak() calls without user gesture.
-                    if (next) speakAlert("Voice readback on.");
+                    // Same gesture unlocks Web Audio for the tones.
+                    if (next) {
+                      void primeEarcons();
+                      speakAlert("Voice readback on.");
+                    }
                   }}
                 />
                 <span className="ss-mono" style={{ fontSize: 13, letterSpacing: ".04em" }}>
@@ -602,6 +618,17 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
                 </span>
               )}
             </div>
+            {tonesSupported && (
+              <EarconControls
+                voiceOn={voiceOn}
+                tonesOn={tonesOn}
+                onTonesChange={(next) => {
+                  setTonesOn(next);
+                  setEarconsEnabled(next);
+                  if (next) void primeEarcons();
+                }}
+              />
+            )}
             <p
               data-testid="voice-telegram-pointer"
               style={{ margin: "8px 0 0", fontSize: 13, lineHeight: 1.5, color: SS_TOKENS.fg1 }}
@@ -699,6 +726,86 @@ export function AlertsSettings({ tails: registry = [] }: { tails?: TailOption[] 
         </div>
       )}
     </main>
+  );
+}
+
+/**
+ * Tone before voice (B23): on/off plus one button per tone so a rider can
+ * learn the three shapes with the helmet on. Each tap is a user gesture,
+ * which is what unlocks audio on iOS.
+ */
+function EarconControls({
+  voiceOn,
+  tonesOn,
+  onTonesChange,
+}: {
+  voiceOn: boolean;
+  tonesOn: boolean;
+  onTonesChange: (next: boolean) => void;
+}) {
+  const [playing, setPlaying] = useState<EarconKind | null>(null);
+  const preview = async (kind: EarconKind) => {
+    await primeEarcons();
+    if (playEarcon(kind)) {
+      setPlaying(kind);
+      window.setTimeout(() => setPlaying((p) => (p === kind ? null : p)), 700);
+    }
+  };
+  return (
+    <div data-testid="voice-tones" style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          minHeight: TAP_MIN,
+          cursor: voiceOn ? "pointer" : "not-allowed",
+          opacity: voiceOn ? 1 : 0.5,
+        }}
+      >
+        <input
+          type="checkbox"
+          data-testid="voice-tones-toggle"
+          checked={tonesOn}
+          disabled={!voiceOn}
+          onChange={(e) => onTonesChange(e.target.checked)}
+        />
+        <span className="ss-mono" style={{ fontSize: 13, letterSpacing: ".04em" }}>
+          TONE FIRST
+        </span>
+      </label>
+      <p style={{ fontSize: 13, color: SS_TOKENS.fg1, margin: 0, lineHeight: 1.45 }}>
+        A short tone before each spoken alert wakes helmet coms, so the first
+        word gets through. Rising: bird up. Three quick: bird near. Falling:
+        all clear.
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {EARCON_KINDS.map((kind) => (
+          <button
+            key={kind}
+            type="button"
+            data-testid={`voice-tone-${kind}`}
+            onClick={() => void preview(kind)}
+            aria-label={`Play the ${EARCON_LABELS[kind].toLowerCase()} tone`}
+            style={{
+              minHeight: TAP_MIN,
+              minWidth: TAP_MIN,
+              padding: "0 14px",
+              borderRadius: 10,
+              border: `1px solid ${SS_TOKENS.hairline2}`,
+              background: playing === kind ? SS_TOKENS.bg2 : "transparent",
+              color: SS_TOKENS.fg0,
+              fontSize: 12,
+              letterSpacing: ".06em",
+              cursor: "pointer",
+            }}
+            className="ss-mono"
+          >
+            {EARCON_LABELS[kind].toUpperCase()}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
