@@ -11,7 +11,7 @@
 
 import { useEffect } from "react";
 import { earconForPushTitle } from "@/lib/earcon-core";
-import { primeEarcons } from "@/lib/earcon";
+import { isEarconRunning, primeEarcons } from "@/lib/earcon";
 import { isVoiceModeEnabled, speakAlert } from "@/lib/voice-mode";
 
 const RESYNC_KEY = "ss:push-resync-at";
@@ -52,22 +52,25 @@ async function resyncPush(reg: ServiceWorkerRegistration): Promise<void> {
   }
 }
 
-// Gestures iOS Safari accepts for unlocking audio output.
+// Gestures iOS Safari can accept for unlocking audio output.
 const PRIME_EVENTS = ["touchend", "click", "keydown"] as const;
 
 export function SwRegistrar() {
-  // Alert earcons (B23): iOS keeps audio suspended until a gesture. With
-  // voice readback on, the first tap anywhere resumes it, so the tone
-  // before a later alert is heard. Removed after it runs once.
+  // Alert earcons (B23): iOS keeps audio suspended until a gesture, and
+  // suspends it again after a call or a lock. With voice readback on, any
+  // tap while audio is not running resumes it, so the tone before a later
+  // alert is heard. A touchend that ends a scroll does not count on iOS,
+  // so the listeners stay for the page's life; once audio runs each event
+  // is one cheap check.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const prime = () => {
-      for (const ev of PRIME_EVENTS) window.removeEventListener(ev, prime, true);
-      if (isVoiceModeEnabled()) void primeEarcons();
+      if (isEarconRunning() || !isVoiceModeEnabled()) return;
+      void primeEarcons();
     };
-    for (const ev of PRIME_EVENTS) window.addEventListener(ev, prime, true);
+    for (const ev of PRIME_EVENTS) window.addEventListener(ev, prime, { capture: true, passive: true });
     return () => {
-      for (const ev of PRIME_EVENTS) window.removeEventListener(ev, prime, true);
+      for (const ev of PRIME_EVENTS) window.removeEventListener(ev, prime, { capture: true });
     };
   }, []);
 

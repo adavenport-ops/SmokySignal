@@ -3738,7 +3738,11 @@ test.describe("p14 live-prod audit · towns + IndexNow", () => {
         return m;
       }).catch(() => 0);
       if (present) await page.locator('[data-testid="voice-tone-near"]').click();
-      await page.waitForTimeout(400);
+      await page
+        .waitForFunction(() => ((window as unknown as { __ssOsc?: number[] }).__ssOsc ?? []).length >= 3, null, {
+          timeout: 3000,
+        })
+        .catch(() => {});
       const freqs = await page.evaluate(() => (window as unknown as { __ssOsc?: number[] }).__ssOsc ?? []);
       const screenshot = await shot(page, "96-voice-tones");
       const pass =

@@ -73,16 +73,24 @@ export function primeEarcons(): Promise<void> {
   return Promise.resolve();
 }
 
-/** True when a tone played now would be heard (context exists and runs). */
+/** True when the AudioContext exists and runs. No side effects. */
+export function isEarconRunning(): boolean {
+  return ctx != null && ctx.state === "running";
+}
+
+/**
+ * True when a tone played now would be heard. When the context exists
+ * but is suspended, also asks it to resume (without waiting), so the next
+ * alert may get its tone even if this one goes out without.
+ */
 export function earconAudioReady(): boolean {
   if (!ctx) return false;
   if (ctx.state === "running") return true;
-  // Suspended outside a gesture: ask again, but do not wait on it.
   void ctx.resume().catch(() => {});
   return false;
 }
 
-/** Play one earcon. Returns false when nothing could be scheduled. */
+/** Schedule one earcon. Returns false when nothing could be scheduled. */
 export function playEarcon(kind: EarconKind): boolean {
   if (!ctx || ctx.state !== "running") return false;
   try {

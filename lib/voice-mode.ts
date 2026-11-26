@@ -17,6 +17,8 @@ import { areEarconsEnabled, earconAudioReady, playEarcon } from "./earcon";
 
 const ENABLED_KEY = "ss_voice_mode";
 
+let pendingSpeech: ReturnType<typeof setTimeout> | null = null;
+
 export function isVoiceModeEnabled(): boolean {
   if (typeof window === "undefined") return false;
   return window.localStorage.getItem(ENABLED_KEY) === "1";
@@ -25,14 +27,20 @@ export function isVoiceModeEnabled(): boolean {
 export function setVoiceModeEnabled(on: boolean): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(ENABLED_KEY, on ? "1" : "0");
+  if (!on) cancelPendingSpeech();
+}
+
+function cancelPendingSpeech(): void {
+  if (pendingSpeech != null) {
+    clearTimeout(pendingSpeech);
+    pendingSpeech = null;
+  }
 }
 
 export function isVoiceModeSupported(): boolean {
   if (typeof window === "undefined") return false;
   return "speechSynthesis" in window;
 }
-
-let pendingSpeech: ReturnType<typeof setTimeout> | null = null;
 
 /**
  * Speak the given text via the platform speech synthesizer. No-op when
@@ -51,10 +59,7 @@ export function speakAlert(text: string, kind?: EarconKind): void {
   if (!text) return;
   if (!isVoiceModeEnabled()) return;
   if (!isVoiceModeSupported()) return;
-  if (pendingSpeech != null) {
-    clearTimeout(pendingSpeech);
-    pendingSpeech = null;
-  }
+  cancelPendingSpeech();
   const plan = planSpokenAlert({
     kind,
     tonesOn: areEarconsEnabled(),
@@ -72,7 +77,8 @@ export function speakAlert(text: string, kind?: EarconKind): void {
   }
   pendingSpeech = setTimeout(() => {
     pendingSpeech = null;
-    say(text);
+    // Voice may have been turned off while the tone played.
+    if (isVoiceModeEnabled()) say(text);
   }, plan.speakDelayMs);
 }
 
