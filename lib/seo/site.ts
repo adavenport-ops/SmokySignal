@@ -131,6 +131,7 @@ export const STATIC_ROUTES: readonly StaticRoute[] = [
   { path: "/about", changeFrequency: "monthly", priority: 0.6 },
   { path: "/help", changeFrequency: "monthly", priority: 0.6 },
   { path: "/help/iphone", changeFrequency: "monthly", priority: 0.6 },
+  { path: "/settings/alerts", changeFrequency: "monthly", priority: 0.5 },
   { path: "/blog", changeFrequency: "weekly", priority: 0.6 },
   { path: "/relay", changeFrequency: "monthly", priority: 0.4 },
   { path: "/embed/help", changeFrequency: "monthly", priority: 0.4 },

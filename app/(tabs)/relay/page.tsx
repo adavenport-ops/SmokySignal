@@ -1,3 +1,5 @@
+import { JsonLd } from "@/components/JsonLd";
+import { simplePageJsonLd } from "@/lib/seo/jsonld";
 import { SS_TOKENS } from "@/lib/tokens";
 import { RelayCreate } from "@/components/RelayCreate";
 import { BotsCallout } from "@/components/BotsCallout";
@@ -46,6 +48,14 @@ export default async function RelayPage() {
   const bots = await getBotsPublicInfo();
   return (
     <main className="ss-page">
+      <JsonLd
+        data={simplePageJsonLd({
+          path: "/relay",
+          name: "Discord and webhooks: Smokey takeoff posts",
+          description: "Post Smokey takeoffs to a Discord channel or any HTTPS webhook. Feeds, Siri, and widget recipes. No accounts.",
+          crumb: "Discord and webhooks",
+        })}
+      />
       <BackLink />
       <span className="ss-eyebrow">SmokySignal · Discord and webhooks</span>
 
